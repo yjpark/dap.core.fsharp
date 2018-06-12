@@ -1,0 +1,53 @@
+{
+	"folders": [
+		{
+			"path": "src/Dap.Prelude"
+		},
+		{
+			"path": "src/Dap.Prelude.Net"
+		},
+		{
+			"path": "src/Dap.Prelude.Fable"
+		},
+		{
+			"path": "src/Dap.Platform"
+		},
+		{
+			"path": "src/Dap.Platform.Net"
+		},
+		{
+			"path": "src/Dap.Platform.Fable"
+		},
+		{
+			"path": "src/Dap.WebSocket.Net"
+		},
+		{
+			"path": "src/Dap.WebSocket.Fable"
+		},
+		{
+			"path": "src/Dap.Remote"
+		},
+		{
+			"path": "src/Dap.Remote.Net"
+		},
+		{
+			"path": "src/Dap.Remote.Fable"
+		},
+		{
+			"path": "demo/Dap.Platform.Demo"
+		},
+		{
+			"path": "demo/Dap.Platform.Fsx"
+		}
+	],
+    "settings": {
+        "files.exclude": {
+            "**/bin": true,
+            "**/obj": true,
+            "*.log": true,
+            "log" : true,
+            ".vs": true,
+            ".vscode": true
+        }
+    }
+}

@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <DefineConstants>FABLE_COMPILER</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Dap.Remote/Shared/JsonRecord.fs" />
+    <Compile Include="../Dap.Remote/Shared/Packet.fs" />
+    <Compile Include="../Dap.Remote/Shared/Util.fs" />
+    <Compile Include="WebSocketProxy/Types.fs" />
+    <Compile Include="WebSocketProxy/Logic.fs" />
+    <Compile Include="WebSocketProxy/Actor.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dap.Platform.Fable\Dap.Platform.Fable.fsproj" />
+    <ProjectReference Include="..\Dap.Remote\Dap.Remote.fsproj" />
+    <ProjectReference Include="..\Dap.WebSocket.Fable\Dap.WebSocket.Fable.fsproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Dap.Platform/Shared/Wrapping.fs" />
+    <Compile Include="../Dap.Platform/Shared/Util.fs" />
+    <Compile Include="Clock.fs" />
+    <Compile Include="Stats.fs" />
+    <Compile Include="Const.fs" />
+    <Compile Include="Runner.fs" />
+    <Compile Include="Dispatcher.fs" />
+    <Compile Include="Runnable.fs" />
+    <Compile Include="Replier.fs" />
+    <Compile Include="Types.fs" />
+    <Compile Include="Tasks.fs" />
+    <Compile Include="Internal.fs" />
+    <Compile Include="Agent.fs" />
+    <Compile Include="Play/Types.fs" />
+    <Compile Include="Replay/Types.fs" />
+    <Compile Include="Env.fs" />
+    <Compile Include="Helper.fs" />
+    <Compile Include="MailboxPlatform.fs" />
+    <Compile Include="Ticker/Types.fs" />
+    <Compile Include="Ticker/Logic.fs" />
+    <Compile Include="Ticker/Service.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dap.Prelude.Net\Dap.Prelude.Net.fsproj" />
+    <ProjectReference Include="..\Dap.Platform\Dap.Platform.fsproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

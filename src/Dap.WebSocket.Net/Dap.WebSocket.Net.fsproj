@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Const.fs" />
+    <Compile Include="Types.fs" />
+    <Compile Include="Internal/Tasks.fs" />
+    <Compile Include="Internal/Logic.fs" />
+    <Compile Include="Internal/Text.fs" />
+    <Compile Include="Client/Types.fs" />
+    <Compile Include="Client/Tasks.fs" />
+    <Compile Include="Client/Logic.fs" />
+    <Compile Include="Client/TextClient.fs" />
+    <Compile Include="Conn/Types.fs" />
+    <Compile Include="Conn/Tasks.fs" />
+    <Compile Include="Conn/Logic.fs" />
+    <Compile Include="Conn/TextConn.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dap.Platform.Net\Dap.Platform.Net.fsproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>
