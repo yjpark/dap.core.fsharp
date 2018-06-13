@@ -21,3 +21,20 @@ nuget Fable.Websockets.Elmish
 
 nuget Thoth.Json 1.0.0
 nuget Thoth.Json.Net 1.0.0
+
+group Build
+    storage:none
+    source https://www.nuget.org/api/v2
+    framework: netstandard2.0
+
+    clitool dotnet-fake
+    nuget Fake.Core.Target
+    nuget Fake.Core.Process
+    nuget Fake.Core.String
+    nuget Fake.Core.ReleaseNotes
+    nuget Fake.DotNet.Cli
+    nuget Fake.DotNet.NuGet
+    nuget Fake.IO.FileSystem
+    nuget Fake.Tools.Git
+
+

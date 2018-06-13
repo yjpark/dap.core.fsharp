@@ -1,3 +1,4 @@
+FSharp.Core
 Serilog
 Serilog.Sinks.Console
 Serilog.Sinks.File
