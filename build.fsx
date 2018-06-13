@@ -37,13 +37,16 @@ let cleanDirs =
 
 let projects =
     !! "src/Dap.Prelude/*.fsproj"
-    (*
     ++ "src/Dap.Prelude.Net/*.fsproj"
     ++ "src/Dap.Prelude.Fable/*.fsproj"
     ++ "src/Dap.Platform/*.fsproj"
     ++ "src/Dap.Platform.Net/*.fsproj"
     ++ "src/Dap.Platform.Fable/*.fsproj"
-    *)
+    ++ "src/Dap.WebSocket.Net/*.fsproj"
+    ++ "src/Dap.WebSocket.Fable/*.fsproj"
+    ++ "src/Dap.Remote/*.fsproj"
+    ++ "src/Dap.Remote.Net/*.fsproj"
+    ++ "src/Dap.Remote.Fable/*.fsproj"
 
 let checkVersion proj (releaseNotes : ReleaseNotes.ReleaseNotes) =
     let versionRegex = Regex("<Version>(.*?)</Version>", RegexOptions.IgnoreCase)

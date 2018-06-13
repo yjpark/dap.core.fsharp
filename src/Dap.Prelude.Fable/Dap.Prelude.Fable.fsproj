@@ -2,6 +2,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <DefineConstants>FABLE_COMPILER</DefineConstants>
+    <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
+    <PackageTags>fsharp;dap;</PackageTags>
+    <Authors>YJ Park</Authors>
+    <Version>0.5.0</Version>
+    <Description>Prelude on fable</Description>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Dap.Prelude/Shared/Union.fs" />

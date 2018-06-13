@@ -58,7 +58,7 @@ type AddSink = Serilog.LoggerConfiguration -> Serilog.LoggerConfiguration
 let setupSerilog (sinks : AddSink list) : SerilogLogging =
     let config = Serilog.LoggerConfiguration ()
     let config = config.Enrich.WithThreadId ()
-    let config = config.Enrich.WithDemystifiedStackTraces ()
+    //let config = config.Enrich.WithDemystifiedStackTraces ()
     let config = sinks |> List.fold (fun c addSink -> addSink c) config
     Serilog.Log.Logger <- config.CreateLogger()
     {
