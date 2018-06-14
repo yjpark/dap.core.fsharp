@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
+    <PackageTags>fsharp;dap;</PackageTags>
+    <Authors>YJ Park</Authors>
+    <Version>0.5.0</Version>
+    <Description>Record running of actors</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Types.fs" />
+    <Compile Include="Volume.fs" />
+    <Compile Include="Bundle.fs" />
+    <Compile Include="Storages/FileStorage.fs" />
+    <Compile Include="Profile.fs" />
+    <Compile Include="Recorder/Types.fs" />
+    <Compile Include="Recorder/Logic.fs" />
+    <Compile Include="Recorder/EventRecorder.fs" />
+    <Compile Include="WebSocket/TextRecorder.fs" />
+    <Compile Include="Helper.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dap.Platform.Net\Dap.Platform.Net.fsproj" />
+    <ProjectReference Include="..\Dap.Remote.Net\Dap.Remote.Net.fsproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

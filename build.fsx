@@ -13,6 +13,7 @@ let cleanDirs =
 
 let projects =
     !! "src/Dap.Build/*.fsproj"
+    (*
     ++ "src/Dap.Prelude/*.fsproj"
     ++ "src/Dap.Prelude.Net/*.fsproj"
     ++ "src/Dap.Prelude.Fable/*.fsproj"
@@ -24,6 +25,8 @@ let projects =
     ++ "src/Dap.Remote/*.fsproj"
     ++ "src/Dap.Remote.Net/*.fsproj"
     ++ "src/Dap.Remote.Fable/*.fsproj"
+    *)
+    ++ "src/Dap.Archive.Net/*.fsproj"
 
 let feed : NuGet.Feed = {
     NuGet.Source = "https://nuget.yjpark.org/nuget/dap"

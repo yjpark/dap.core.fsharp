@@ -34,6 +34,9 @@
 			"path": "src/Dap.Remote.Fable"
 		},
 		{
+			"path": "src/Dap.Archive.Net"
+		},
+		{
 			"path": "src/Dap.Build"
 		},
 		{
