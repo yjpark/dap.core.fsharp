@@ -34,6 +34,9 @@
 			"path": "src/Dap.Remote.Fable"
 		},
 		{
+			"path": "src/Dap.Build"
+		},
+		{
 			"path": "demo/Dap.Platform.Demo"
 		},
 		{
