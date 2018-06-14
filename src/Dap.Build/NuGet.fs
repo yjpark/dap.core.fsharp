@@ -148,3 +148,7 @@ let createTargets cleanDirs projects feed =
         ==> Pack
         ==> Publish
     |> ignore
+
+let run cleanDirs projects feed =
+    createTargets cleanDirs projects feed
+    Target.runOrDefault Pack

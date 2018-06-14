@@ -30,6 +30,4 @@ let feed : NuGet.Feed = {
     NuGet.ApiKey = NuGet.Environment "API_KEY_nuget_yjpark_org"
 }
 
-NuGet.createTargets cleanDirs projects feed
-
-Target.runOrDefault NuGet.Build
+NuGet.run cleanDirs projects feed
