@@ -9,8 +9,8 @@
     <Description>Dap Platform on dotnet core</Description>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Dap.Platform/Shared/Wrapping.fs" />
-    <Compile Include="../Dap.Platform/Shared/Util.fs" />
+    <Compile Include="../Dap.Platform.Fable/Shared/Wrapping.fs" />
+    <Compile Include="../Dap.Platform.Fable/Shared/Util.fs" />
     <Compile Include="Clock.fs" />
     <Compile Include="Stats.fs" />
     <Compile Include="Const.fs" />

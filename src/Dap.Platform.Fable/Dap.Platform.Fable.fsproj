@@ -5,12 +5,12 @@
     <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
     <PackageTags>fsharp;dap;</PackageTags>
     <Authors>YJ Park</Authors>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <Description>Dap Platform on fable</Description>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Dap.Platform/Shared/Wrapping.fs" />
-    <Compile Include="../Dap.Platform/Shared/Util.fs" />
+    <Compile Include="Shared/Wrapping.fs" />
+    <Compile Include="Shared/Util.fs" />
     <Compile Include="Const.fs" />
     <Compile Include="Replier.fs" />
     <Compile Include="Internal.fs" />
@@ -20,6 +20,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Dap.Prelude.Fable\Dap.Prelude.Fable.fsproj" />
     <ProjectReference Include="..\Dap.Platform\Dap.Platform.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.js" PackagePath="fable" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

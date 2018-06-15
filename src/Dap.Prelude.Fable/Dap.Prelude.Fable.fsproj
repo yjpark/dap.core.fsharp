@@ -9,11 +9,14 @@
     <Description>Prelude on fable</Description>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Dap.Prelude/Shared/Union.fs" />
+    <Compile Include="Shared/Union.fs" />
     <Compile Include="Logging.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.Prelude\Dap.Prelude.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.js" PackagePath="fable" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

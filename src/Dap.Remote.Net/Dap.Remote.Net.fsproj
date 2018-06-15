@@ -9,9 +9,9 @@
     <Description>Dap Remote on dotnet core</Description>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Dap.Remote/Shared/JsonRecord.fs" />
-    <Compile Include="../Dap.Remote/Shared/Packet.fs" />
-    <Compile Include="../Dap.Remote/Shared/Util.fs" />
+    <Compile Include="../Dap.Remote.Fable/Shared/JsonRecord.fs" />
+    <Compile Include="../Dap.Remote.Fable/Shared/Packet.fs" />
+    <Compile Include="../Dap.Remote.Fable/Shared/Util.fs" />
     <Compile Include="WebSocketService/PacketConn.fs" />
     <Compile Include="WebSocketService/Types.fs" />
     <Compile Include="WebSocketService/Tasks.fs" />

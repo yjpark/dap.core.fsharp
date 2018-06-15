@@ -5,13 +5,13 @@
     <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
     <PackageTags>fsharp;dap;</PackageTags>
     <Authors>YJ Park</Authors>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <Description>Dap Remote on fable</Description>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Dap.Remote/Shared/JsonRecord.fs" />
-    <Compile Include="../Dap.Remote/Shared/Packet.fs" />
-    <Compile Include="../Dap.Remote/Shared/Util.fs" />
+    <Compile Include="Shared/JsonRecord.fs" />
+    <Compile Include="Shared/Packet.fs" />
+    <Compile Include="Shared/Util.fs" />
     <Compile Include="WebSocketProxy/Types.fs" />
     <Compile Include="WebSocketProxy/Logic.fs" />
     <Compile Include="WebSocketProxy/Actor.fs" />
@@ -20,6 +20,9 @@
     <ProjectReference Include="..\Dap.Platform.Fable\Dap.Platform.Fable.fsproj" />
     <ProjectReference Include="..\Dap.Remote\Dap.Remote.fsproj" />
     <ProjectReference Include="..\Dap.WebSocket.Fable\Dap.WebSocket.Fable.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.js" PackagePath="fable" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
