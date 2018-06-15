@@ -54,6 +54,16 @@ let loadReleaseNotes proj =
     |> ReleaseNotes.load
     |> checkVersion proj
 
+let private setBuildParams _proj (options : DotNet.BuildOptions) =
+    { options with
+        Configuration = DotNet.Release
+        Common =
+            { options.Common with
+                CustomParams = Some "--no-restore"
+                DotNetCliPath = "dotnet"
+            }
+    } 
+
 let private setPackParams proj (options : DotNet.PackOptions) =
     let releaseNotes = loadReleaseNotes proj
     let pkgReleaseNotes = sprintf "/p:PackageReleaseNotes=\"%s\"" (String.toLines releaseNotes.Notes)
@@ -84,7 +94,7 @@ let restore proj =
 
 let build proj = 
     Trace.traceFAKE "Build Project: %s" proj
-    DotNet.build id proj
+    DotNet.build (setBuildParams proj) proj
 
 let pack proj = 
     Trace.traceFAKE "Pack Project: %s" proj
