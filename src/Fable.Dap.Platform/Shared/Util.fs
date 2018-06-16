@@ -9,10 +9,6 @@ open Fable.PowerPack
 
 open Dap.Prelude
 
-let (|>>) (first : Operate<'runner, 'model, 'msg>) (second : Operate<'runner, 'model, 'msg>) : Operate<'runner, 'model, 'msg> =
-    fun runner (model, cmd) ->
-        second runner <| first runner (model, cmd)
-
 let private tplOpInfo = LogEvent.Template4<string, IMsg, string, obj>(LogLevelInformation, "[{Section}] {Msg} ~> {Info}: {Detail}")
 
 let private tplOpError = LogEvent.Template4<string, IMsg, string, obj>(LogLevelError, "[{Section}] {Msg} ~> {Err}: {Detail}")

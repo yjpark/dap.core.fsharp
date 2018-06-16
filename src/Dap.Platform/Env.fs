@@ -69,7 +69,7 @@ let private doNewAgent msg ((kind, key, callback) : Kind * Key * Callback<IAgent
                 reply runner callback <| ack msg (agent, true)
                 let agents = Map.add kind (Map.add key agent kindAgents) model.Agents
                 updateModel <| fun m -> {m with Agents = agents}
-                |>> addCmd ^<| EnvEvt ^<| OnNewAgent (kind, key, agent)
+                |-|> addCmd ^<| EnvEvt ^<| OnNewAgent (kind, key, agent)
             with
             | e ->
                 reply runner callback <| nak msg "Spawn_Failed" e

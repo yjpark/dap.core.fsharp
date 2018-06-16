@@ -4,13 +4,14 @@
     <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
     <PackageTags>fsharp;dap;</PackageTags>
     <Authors>YJ Park</Authors>
-    <Version>0.6.0</Version>
+    <Version>0.6.1</Version>
     <Description>Dap Platform, elmish actor runtime</Description>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Fable.Dap.Platform/Shared/Logic.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Types.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Wrapping.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Operator.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Util.fs" />
     <Compile Include="Clock.fs" />
     <Compile Include="Stats.fs" />
