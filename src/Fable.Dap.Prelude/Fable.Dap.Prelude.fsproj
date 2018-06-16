@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <DefineConstants>FABLE_COMPILER</DefineConstants>
+    <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
+    <PackageTags>fsharp;dap;</PackageTags>
+    <Authors>YJ Park</Authors>
+    <Version>0.6.0</Version>
+    <Description>Dap Prelude on Fable, provide logging and other basic abstractions</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Shared/Operator.fs" />
+    <Compile Include="Shared/Logging.fs" />
+    <Compile Include="Shared/Result.fs" />
+    <Compile Include="Shared/Union.fs" />
+    <Compile Include="Logging.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.js" PackagePath="fable" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

@@ -5,17 +5,15 @@
     <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
     <PackageTags>fsharp;dap;</PackageTags>
     <Authors>YJ Park</Authors>
-    <Version>0.5.1</Version>
-    <Description>Prelude for Dap libraries, provide logging and other basic abstractions</Description>
+    <Version>0.6.0</Version>
+    <Description>Dap Prelude, provide logging and other basic abstractions, use SeriLog for logging</Description>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Operator.fs" />
+    <Compile Include="../Fable.Dap.Prelude/Shared/Operator.fs" />
+    <Compile Include="../Fable.Dap.Prelude/Shared/Logging.fs" />
+    <Compile Include="../Fable.Dap.Prelude/Shared/Result.fs" />
+    <Compile Include="../Fable.Dap.Prelude/Shared/Union.fs" />
     <Compile Include="Logging.fs" />
-    <Compile Include="Result.fs" />
-    <Compile Include="Union.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.js" PackagePath="fable" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

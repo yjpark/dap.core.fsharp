@@ -1,231 +1,107 @@
 [<AutoOpen>]
-module Dap.Prelude.Logging
+module Dap.Prelude.Logging'
 
-type LogLevel =
-    | LogLevelFatal
-    | LogLevelError
-    | LogLevelWarning
-    | LogLevelInformation
-    | LogLevelDebug
-    | LogLevelVerbose
-    member this.ToShortString =
+open System.IO
+open Serilog
+
+type ILogger = Dap.Prelude.Logging.ILogger
+
+type LogLevel with
+    member this.ToSerilogLevel =
         match this with
-        | LogLevelFatal -> "FTL"
-        | LogLevelError -> "ERR"
-        | LogLevelWarning -> "WRN"
-        | LogLevelInformation -> "INF"
-        | LogLevelDebug -> "DBG"
-        | LogLevelVerbose -> "VRB"
-    member this.ToInt : int =
-        match this with
-        | LogLevelFatal -> 5
-        | LogLevelError -> 4
-        | LogLevelWarning -> 3
-        | LogLevelInformation -> 2
-        | LogLevelDebug -> 1
-        | LogLevelVerbose -> 0
+        | LogLevelFatal -> Serilog.Events.LogEventLevel.Fatal
+        | LogLevelError -> Serilog.Events.LogEventLevel.Error
+        | LogLevelWarning -> Serilog.Events.LogEventLevel.Warning
+        | LogLevelInformation -> Serilog.Events.LogEventLevel.Information
+        | LogLevelDebug -> Serilog.Events.LogEventLevel.Debug
+        | LogLevelVerbose -> Serilog.Events.LogEventLevel.Verbose
 
-type LogEvent = {
-    Level : LogLevel
-    Format : string
-    Params : obj list
-    Exception : exn option
-}
+let private toSerilog (logger : Serilog.ILogger) (evt : LogEvent) =
+    match evt.Exception with
+    | None ->
+        match evt.Level with
+        | LogLevelFatal | LogLevelError ->
+            let stackTrace = (System.Diagnostics.StackTrace(2)).ToString()
+            let format = evt.Format + "\n{StackTrace}"
+            let params' = evt.Params @ [stackTrace]
+            logger.Write(evt.Level.ToSerilogLevel, format, List.toArray params')
+        | _ ->
+            logger.Write(evt.Level.ToSerilogLevel, evt.Format, List.toArray evt.Params)
+    | Some e ->
+        logger.Write(evt.Level.ToSerilogLevel, e, evt.Format, List.toArray evt.Params)
 
-type ILogger =
-    abstract Log : LogEvent -> unit
+type private ProxyLogger = { 
+    Target : Serilog.ILogger
+} with
+    interface ILogger with
+        member this.Log (evt : LogEvent) = 
+            toSerilog this.Target evt
 
-type ILogging =
-    inherit ILogger
-    abstract Close : unit -> unit
-    abstract GetLogger : string -> ILogger
-
-type FallbackLogger (prefix : string) =
-    member _this.Prefix = prefix
-    member this.Log (evt : LogEvent) =
-        printfn "[%s] %s%s" evt.Level.ToShortString this.Prefix evt.Format 
-        evt.Params
-        |> List.iter (fun p -> printfn "\t%A" p)
-        evt.Exception
-        |> Option.map (fun e -> printfn "Exception: %s\nStackTrace: %s" e.Message e.StackTrace)
-        |> ignore
-    with
-        interface ILogger with
-            member this.Log evt = this.Log evt
-
-type FallBackLogging () =
-    member _this.Logger = FallbackLogger ""
-    with
-        interface ILogging with
-            member _this.Close () = () 
-            member _this.GetLogger (context : string) =
-                FallbackLogger (sprintf "<%s> " context)
-                :> ILogger
-        interface ILogger with
-            member this.Log evt = this.Logger.Log evt
-
-let mutable private ``_Logging`` = FallBackLogging () :> ILogging
-
-let getLogger (context : string) =
-    _Logging.GetLogger context
-
-let setLogging'<'logging when 'logging :> ILogging> (logging : 'logging) =
-    _Logging <- logging 
-    logging
-
-let private checkTemplateParamCount (_format : string) (_count : int) : unit =
-    //TODO
-    ()
-    (*
-    let template' = parse template
-    if  template'.IsAllPositional || template'.Properties.Length <> count then
-        raise (System.ArgumentException (sprintf "Invalid Template: '%s' %d <> %d" template count template'.Properties.Length))
-     *)
-
-//Note: for these Template methods to work on fable, need to have different names
-//  also it's cleaner, so keep it this way.
-type LogEvent with
-    static member Template1<'T1> (level : LogLevel, format : string) : 'T1 -> LogEvent =
-        checkTemplateParamCount format 1
-        fun (p1 : 'T1) ->
+type SerilogLogging = {
+    Logger : Serilog.ILogger
+} with
+    member _this.Close () : unit =
+        Serilog.Log.CloseAndFlush()
+    interface ILogging with
+        member this.Close () = this.Close ()
+        member this.GetLogger (context : string) : ILogger =
             {
-                Level = level
-                Format = format
-                Params = [ box p1 ]
-                Exception = None
+                Target = this.Logger.ForContext("Context", context)
             }
-    static member Template2<'T1, 'T2> (level : LogLevel, format : string) : 'T1 -> 'T2 -> LogEvent =
-        checkTemplateParamCount format 2
-        fun (p1 : 'T1) (p2 : 'T2) ->
-            {
-                Level = level
-                Format = format
-                Params = [ box p1 ; box p2 ]
-                Exception = None
-            }
-    static member Template3<'T1, 'T2, 'T3> (level : LogLevel, format : string) : 'T1 -> 'T2 -> 'T3 -> LogEvent =
-        checkTemplateParamCount format 3
-        fun (p1 : 'T1) (p2 : 'T2) (p3 : 'T3) ->
-            {
-                Level = level
-                Format = format
-                Params = [ box p1 ; box p2 ; box p3 ]
-                Exception = None
-            }
+            :> ILogger
+    interface ILogger with
+        member this.Log (evt : LogEvent) =
+            toSerilog this.Logger evt
 
-    static member Template4<'T1, 'T2, 'T3, 'T4> (level : LogLevel, format : string)
-                                                : 'T1 -> 'T2 -> 'T3 -> 'T4 -> LogEvent =
-        checkTemplateParamCount format 4
-        fun (p1 : 'T1) (p2 : 'T2) (p3 : 'T3) (p4 : 'T4) ->
-            {
-                Level = level
-                Format = format
-                Params = [ box p1 ; box p2 ; box p3 ; box p4 ]
-                Exception = None
-            }
-    static member Template5<'T1, 'T2, 'T3, 'T4, 'T5> (level : LogLevel, format : string)
-                                                : 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> LogEvent =
-        checkTemplateParamCount format 5
-        fun (p1 : 'T1) (p2 : 'T2) (p3 : 'T3) (p4 : 'T4) (p5 : 'T5) ->
-            {
-                Level = level
-                Format = format
-                Params = [ box p1 ; box p2 ; box p3 ; box p4 ; box p5 ]
-                Exception = None
-            }
-    static member Template6<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> (level : LogLevel, format : string)
-                                                : 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> LogEvent =
-        checkTemplateParamCount format 6
-        fun (p1 : 'T1) (p2 : 'T2) (p3 : 'T3) (p4 : 'T4) (p5 : 'T5) (p6 : 'T6)->
-            {
-                Level = level
-                Format = format
-                Params = [ box p1 ; box p2 ; box p3 ; box p4 ; box p5 ; box p6 ]
-                Exception = None
-            }
-    static member Template1WithException<'T1> (level : LogLevel, format : string) : 'T1 -> exn -> LogEvent =
-        checkTemplateParamCount format 1
-        fun (p1 : 'T1) (e : exn) ->
-            {
-                Level = level
-                Format = format
-                Params = [ box p1 ]
-                Exception = Some e
-            }
-    static member Template2WithException<'T1, 'T2> (level : LogLevel, format : string) : 'T1 -> 'T2 -> exn -> LogEvent =
-        checkTemplateParamCount format 2
-        fun (p1 : 'T1) (p2 : 'T2) (e : exn) ->
-            {
-                Level = level
-                Format = format
-                Params = [ box p1 ; box p2 ]
-                Exception = Some e
-            }
-    static member Template3WithException<'T1, 'T2, 'T3> (level : LogLevel, format : string) : 'T1 -> 'T2 -> 'T3 -> exn -> LogEvent =
-        checkTemplateParamCount format 3
-        fun (p1 : 'T1) (p2 : 'T2) (p3 : 'T3) (e : exn) ->
-            {
-                Level = level
-                Format = format
-                Params = [ box p1 ; box p2 ; box p3 ]
-                Exception = Some e
-            }
+type AddSink = Serilog.LoggerConfiguration -> Serilog.LoggerConfiguration
 
-    static member Template4WithException<'T1, 'T2, 'T3, 'T4> (level : LogLevel, format : string)
-                                                : 'T1 -> 'T2 -> 'T3 -> 'T4 -> exn -> LogEvent =
-        checkTemplateParamCount format 4
-        fun (p1 : 'T1) (p2 : 'T2) (p3 : 'T3) (p4 : 'T4) (e : exn) ->
-            {
-                Level = level
-                Format = format
-                Params = [ box p1 ; box p2 ; box p3 ; box p4 ]
-                Exception = Some e
-            }
-    static member Template5WithException<'T1, 'T2, 'T3, 'T4, 'T5> (level : LogLevel, format : string)
-                                                : 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> exn -> LogEvent =
-        checkTemplateParamCount format 5
-        fun (p1 : 'T1) (p2 : 'T2) (p3 : 'T3) (p4 : 'T4) (p5 : 'T5) (e : exn) ->
-            {
-                Level = level
-                Format = format
-                Params = [ box p1 ; box p2 ; box p3 ; box p4 ; box p5 ]
-                Exception = Some e
-            }
+let setupSerilog (sinks : AddSink list) : SerilogLogging =
+    let config = Serilog.LoggerConfiguration ()
+    let config = config.Enrich.WithThreadId ()
+    //let config = config.Enrich.WithDemystifiedStackTraces ()
+    let config = sinks |> List.fold (fun c addSink -> addSink c) config
+    Serilog.Log.Logger <- config.CreateLogger()
+    {
+        Logger = Serilog.Log.Logger
+    }
+    |> setLogging'
 
-    static member Template6WithException<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> (level : LogLevel, format : string)
-                                                : 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> exn -> LogEvent =
-        checkTemplateParamCount format 6
-        fun (p1 : 'T1) (p2 : 'T2) (p3 : 'T3) (p4 : 'T4) (p5 : 'T5) (p6 : 'T6) (e : exn) ->
-            {
-                Level = level
-                Format = format
-                Params = [ box p1 ; box p2 ; box p3 ; box p4 ; box p5 ; box p6 ]
-                Exception = Some e
-            }
+let addConsoleSink (minimumLevel : LogLevel option) : AddSink =
+    fun config ->
+        let minimumLevel = defaultArg minimumLevel LogLevelInformation
+        let theme = Serilog.Sinks.SystemConsole.Themes.AnsiConsoleTheme.Code
+        Serilog.ConsoleLoggerConfigurationExtensions.Console(config.WriteTo,
+            restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
+            outputTemplate = "{Timestamp:HH:mm:ss.fff} {Level:u3} <{Context}> {Message:lj}{NewLine}{Exception}",
+            theme = theme)
 
-exception MessageException of LogEvent
+let private checkDirectory (path : string) =
+    let dirInfo = (new FileInfo (path)).Directory;
+    if not dirInfo.Exists then
+        dirInfo.Create();
+let addFileSink (path : string) : AddSink =
+    checkDirectory path
+    fun config ->
+        Serilog.FileLoggerConfigurationExtensions.File(config.WriteTo,
+            Serilog.Formatting.Compact.CompactJsonFormatter(),
+            path)
 
-let private tplInfo = LogEvent.Template3<string, string, obj>(LogLevelInformation, "[{Section}] {Info}: {Detail}")
+let addRollingFileSink (rollingInterval : RollingInterval) (path : string) : AddSink =
+    checkDirectory path
+    fun config ->
+        Serilog.FileLoggerConfigurationExtensions.File(config.WriteTo,
+            Serilog.Formatting.Compact.CompactJsonFormatter(),
+            path, rollingInterval = rollingInterval)
 
-let private tplError = LogEvent.Template3<string, string, obj>(LogLevelError, "[{Section}] {Err}: {Detail}")
+let addDailyFileSink : string -> AddSink = 
+    addRollingFileSink RollingInterval.Day
 
-let private tplException = LogEvent.Template3WithException<string, string, obj>(LogLevelError, "[{Section}] {Err}: {Detail}")
+let addHourlyFileSink : string -> AddSink = 
+    addRollingFileSink RollingInterval.Hour
 
-let log (evt : LogEvent) (logger : ILogger) =
-    logger.Log evt
-    logger
+let addSeqSink (uri : string) : AddSink =
+    fun config ->
+        Serilog.SeqLoggerConfigurationExtensions.Seq(config.WriteTo, uri)
 
-let raiseWith (evt : LogEvent) =
-    raise <| MessageException evt
-
-let logInfo (logger : ILogger) section info detail : unit =
-    logger.Log <| tplInfo section info detail
-
-let logError (logger : ILogger) section err detail : unit =
-    logger.Log <| tplError section err detail
-
-let logException (logger : ILogger) section err detail e : unit =
-    logger.Log <| tplException section err detail e
-
-let logWip (logger : ILogger) err detail =
-    logError logger "WIP" err detail
+let setupConsole (minimumLevel : LogLevel option) =
+    setupSerilog [ addConsoleSink minimumLevel ]

@@ -1,43 +1,34 @@
 {
 	"folders": [
 		{
+			"path": "src/Dap.Build"
+		},
+		{
+			"path": "src/Fable.Dap.Prelude"
+		},
+		{
 			"path": "src/Dap.Prelude"
 		},
 		{
-			"path": "src/Dap.Prelude.Net"
-		},
-		{
-			"path": "src/Dap.Prelude.Fable"
+			"path": "src/Fable.Dap.Platform"
 		},
 		{
 			"path": "src/Dap.Platform"
 		},
 		{
-			"path": "src/Dap.Platform.Net"
+			"path": "src/Fable.Dap.WebSocket"
 		},
 		{
-			"path": "src/Dap.Platform.Fable"
+			"path": "src/Dap.WebSocket"
 		},
 		{
-			"path": "src/Dap.WebSocket.Net"
-		},
-		{
-			"path": "src/Dap.WebSocket.Fable"
+			"path": "src/Fable.Dap.Remote"
 		},
 		{
 			"path": "src/Dap.Remote"
 		},
 		{
-			"path": "src/Dap.Remote.Net"
-		},
-		{
-			"path": "src/Dap.Remote.Fable"
-		},
-		{
-			"path": "src/Dap.Archive.Net"
-		},
-		{
-			"path": "src/Dap.Build"
+			"path": "src/Dap.Archive"
 		},
 		{
 			"path": "demo/Dap.Platform.Demo"

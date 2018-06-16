@@ -2,6 +2,5 @@
 * Logging abstraction
 * `^<|` as right associative `<|`
 * Result helpers: isOk isError get getError iter iterError
-* Result helpers: map' mapError' bind' for async usage
 * Union helpers: getKind fromKind
-* Logging provider with SeriLog
+* Logging provider with browser's console

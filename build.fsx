@@ -13,18 +13,15 @@ let cleanDirs =
 
 let projects =
     !! "src/Dap.Build/*.fsproj"
+    ++ "src/Fable.Dap.Prelude/*.fsproj"
     ++ "src/Dap.Prelude/*.fsproj"
-    ++ "src/Dap.Prelude.Net/*.fsproj"
-    ++ "src/Dap.Prelude.Fable/*.fsproj"
+    ++ "src/Fable.Dap.Platform/*.fsproj"
     ++ "src/Dap.Platform/*.fsproj"
-    ++ "src/Dap.Platform.Net/*.fsproj"
-    ++ "src/Dap.Platform.Fable/*.fsproj"
-    ++ "src/Dap.WebSocket.Net/*.fsproj"
-    ++ "src/Dap.WebSocket.Fable/*.fsproj"
+    ++ "src/Fable.Dap.WebSocket/*.fsproj"
+    ++ "src/Dap.WebSocket/*.fsproj"
+    ++ "src/Fable.Dap.Remote/*.fsproj"
     ++ "src/Dap.Remote/*.fsproj"
-    ++ "src/Dap.Remote.Net/*.fsproj"
-    ++ "src/Dap.Remote.Fable/*.fsproj"
-    ++ "src/Dap.Archive.Net/*.fsproj"
+    ++ "src/Dap.Archive/*.fsproj"
     (*
     *)
 
