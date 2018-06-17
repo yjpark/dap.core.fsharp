@@ -83,8 +83,8 @@ let nakOnFailed' (msg : IMsg) (callback : Callback<'res>) (runner : IRunner<'run
  * will stuck forever. Leave the codes here in case want to try more in the future
 
 let replyFunc (runner : IRunner) (msg : IMsg) (callback : Callback<'res>)
-               (getOnFailed: OnReplyFailed<'res>)
-               (func : Func<'res>) : unit =
+                (getOnFailed: OnReplyFailed<'res>)
+                (func : Func<'res>) : unit =
     match runner.RunFunc func with
     | Ok _res ->
         ()
@@ -92,8 +92,8 @@ let replyFunc (runner : IRunner) (msg : IMsg) (callback : Callback<'res>)
         getOnFailed msg callback runner e
 
 let replyFunc' (runner : IRunner<'runner>) (msg : IMsg) (callback : Callback<'res>)
-               (getOnFailed: OnReplyFailed'<'runner, 'res>)
-               (func : Func'<'runner, 'res>) : unit =
+                (getOnFailed: OnReplyFailed'<'runner, 'res>)
+                (func : Func'<'runner, 'res>) : unit =
     match runner.RunFunc' func with
     | Ok res ->
         reply runner callback <| ack msg res
@@ -102,8 +102,8 @@ let replyFunc' (runner : IRunner<'runner>) (msg : IMsg) (callback : Callback<'re
 *)
 
 let replyAsync (runner : IRunner) (msg : IMsg) (callback : Callback<'res>)
-               (getOnFailed: OnReplyFailed<'res>)
-               (getReplyTask : GetReplyTask<'res>) : unit =
+                (getOnFailed: OnReplyFailed<'res>)
+                (getReplyTask : GetReplyTask<'res>) : unit =
     let getTask = getReplyTask msg callback
     let onFailed = getOnFailed msg callback
     runner.RunTask onFailed getTask
