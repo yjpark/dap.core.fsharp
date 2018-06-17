@@ -1,3 +1,6 @@
+## 0.6.3
+* Include key in service lookup
+
 ## 0.6.2
 * Cleanup operators: |-|> |=|> |-|-
 

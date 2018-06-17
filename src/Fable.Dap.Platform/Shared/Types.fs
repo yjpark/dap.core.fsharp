@@ -15,6 +15,9 @@ type Scope = string
 type Kind = string
 type Key = string
 
+[<Literal>]
+let NoKey = ""
+
 type Ident = {
     Scope : Scope
     Kind : Kind

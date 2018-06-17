@@ -2,7 +2,6 @@
 [<RequireQualifiedAccess>]
 module Dap.Platform.Ticker.Service
 
-open Dap.Prelude
 open Dap.Platform
 
 [<Literal>]
@@ -24,13 +23,13 @@ let add' (kind : Kind) (key : Key) autoStart frameRate (env : IEnv) =
     getSpec autoStart frameRate
     |> Env.addService kind key
 
-let add autoStart frameRate env =
-    add' Kind "" autoStart frameRate env
+let add autoStart key frameRate env =
+    add' Kind key autoStart frameRate env
 
-let get' kind (env : IEnv) =
+let get' kind key (env : IEnv) =
     env
-    |> Env.getService kind
+    |> Env.getService kind key
     :?> Service
 
-let get env =
-    get' Kind env
+let get key env =
+    get' Kind key env

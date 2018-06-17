@@ -17,27 +17,40 @@ let private doQuit msg (forceQuit, callback) : EnvOperate =
         logOpError runner "Lifecycle" msg "Not_Implemented" (forceQuit, callback)
         (model, cmd)
 
-let private doAddService msg ((service, callback) : IAgent * Callback<int>)
+
+let private doAddService msg ((service, callback) : IAgent * Callback<int * int>)
                                 : EnvOperate =
     fun runner (model, cmd) ->
         let kind = service.Ident.Kind
-        match Map.tryFind kind model.Services with
-        | Some service' ->
-            reply runner callback <| nak msg "Already_Exist" (service', service)
-            (model, cmd)
-        | None ->
-            let services = Map.add kind service model.Services
-            reply runner callback <| ack msg ^<| Map.count services
+        let key = service.Ident.Key
+        let replyAck = fun kindServices ->
+            let kindServices = kindServices |> Map.add key service
+            let services = Map.add kind kindServices model.Services
+            reply runner callback <| ack msg ^<| (Map.count services, Map.count kindServices)
             logOpInfo runner "Service" msg "Service_Added" service
             ({model with Services = services}, cmd)
+        match Map.tryFind kind model.Services with
+        | Some kindServices ->
+            match Map.tryFind key kindServices with
+            | Some service' ->
+                reply runner callback <| nak msg "Already_Exist" service'
+                (model, cmd)
+            | None ->
+                replyAck kindServices
+        | None ->
+            replyAck Map.empty
 
-let private doGetService msg (kind, callback) : EnvOperate =
+let private doGetService msg (kind, key, callback) : EnvOperate =
     fun runner (model, cmd) ->
         match Map.tryFind kind model.Services with
-        | Some service ->
-            reply runner callback <| ack msg service
+        | Some kindServices ->
+            match Map.tryFind key kindServices with
+            | Some service ->
+                reply runner callback <| ack msg service
+            | None ->
+                reply runner callback <| nak msg "Key_Not_Exist" kindServices.Count
         | None ->
-            reply runner callback <| nak msg "Not_Exist" model.Services.Count
+            reply runner callback <| nak msg "Kind_Not_Exist" model.Services.Count
         (model, cmd)
 
 let private doRegister msg ((kind, spawner, callback) : Kind * Spawner * Callback<int>)
@@ -98,7 +111,7 @@ let private handleReq msg (req : EnvReq) : EnvOperate =
     match req with
     | DoQuit (a, b) -> doQuit msg (a, b)
     | DoAddService (a, b) -> doAddService msg (a, b)
-    | DoGetService (a, b) -> doGetService msg (a, b)
+    | DoGetService (a, b, c) -> doGetService msg (a, b, c)
     | DoRegister (a, b, c) -> doRegister msg (a, b, c)
     | DoGetAgent (a, b, c) -> doGetAgent msg (a, b, c)
 
@@ -169,6 +182,7 @@ let addService kind key spec (env : IEnv) =
     env.Handle <| DoAddService (service, None)
     env
 
-let getService (kind : Kind) (env : IEnv) =
+let getService (kind : Kind) (key : Key) (env : IEnv) =
     let state = Option.get env.State
-    Map.find kind state.Services
+    let kindServices = Map.find kind state.Services
+    Map.find key kindServices

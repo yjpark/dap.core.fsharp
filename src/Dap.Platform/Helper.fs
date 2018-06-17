@@ -9,8 +9,8 @@ let DoQuit' (forceQuit : bool) callback =
 let DoAddService' (service : IAgent) callback =
     DoAddService (service, callback)
 
-let DoGetService' (kind : Kind) callback =
-    DoGetService (kind, callback)
+let DoGetService' (kind : Kind) (key : Key) callback =
+    DoGetService (kind, key, callback)
 
 let DoRegister' (kind : Kind) (spawner : Spawner) callback =
     DoRegister (kind, spawner, callback)

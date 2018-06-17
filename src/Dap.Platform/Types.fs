@@ -31,15 +31,15 @@ and Spawner =
     Ident -> IAgent
 
 and EnvModel = {
-    Services : Map<Kind, IAgent>
+    Services : Map<Kind, Map<Key, IAgent>>
     Spawners : Map<Kind, Spawner>
     Agents : Map<Kind, Map<Key, IAgent>>
 }
 
 and EnvReq =
     | DoQuit of bool * Callback<QuitStats>                  // forceQuit -> willQuit
-    | DoAddService of IAgent * Callback<int>                // -> servicesCount
-    | DoGetService of Kind * Callback<IAgent>               // -> service
+    | DoAddService of IAgent * Callback<int * int>                // -> servicesCount * kindServicesCount
+    | DoGetService of Kind * Key * Callback<IAgent>               // -> service
     | DoRegister of Kind * Spawner * Callback<int>          // -> spawnersCount
     | DoGetAgent of Kind * Key * Callback<IAgent * bool>    // -> (agent, isNew)
 
