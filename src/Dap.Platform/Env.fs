@@ -68,16 +68,16 @@ let private doNewAgent msg ((kind, key, callback) : Kind * Key * Callback<IAgent
                 logOpInfo runner "Spawn" msg "Agent_Created" agent
                 reply runner callback <| ack msg (agent, true)
                 let agents = Map.add kind (Map.add key agent kindAgents) model.Agents
-                updateModel <| fun m -> {m with Agents = agents}
-                |-|> addCmd ^<| EnvEvt ^<| OnNewAgent (kind, key, agent)
+                (runner, model, cmd)
+                |-|> updateModel ^<| fun m -> {m with Agents = agents}
+                |=|> addCmd ^<| EnvEvt ^<| OnNewAgent (kind, key, agent)
             with
             | e ->
                 reply runner callback <| nak msg "Spawn_Failed" e
-                noOperation
+                (model, cmd)
         | None ->
             reply runner callback <| nak msg "Spawner_Not_Exist" kind
-            noOperation
-        <| runner <| (model, cmd)
+            (model, cmd)
 
 let private doGetAgent msg (kind, key, callback) : EnvOperate =
     fun runner (model, cmd) ->
@@ -88,20 +88,19 @@ let private doGetAgent msg (kind, key, callback) : EnvOperate =
                 reply runner callback <| ack msg (agent, false)
                 (model, cmd)
             | None ->
-                doNewAgent msg (kind, key, callback) kindAgents runner (model, cmd)
+                (runner, model, cmd)
+                |=|> doNewAgent msg (kind, key, callback) kindAgents
         | None ->
             reply runner callback <| nak msg "Not_Registered" model.Spawners.Count
             (model, cmd)
 
 let private handleReq msg (req : EnvReq) : EnvOperate =
-    fun runner (model, cmd) ->
-        match req with
-        | DoQuit (a, b) -> doQuit msg (a, b)
-        | DoAddService (a, b) -> doAddService msg (a, b)
-        | DoGetService (a, b) -> doGetService msg (a, b)
-        | DoRegister (a, b, c) -> doRegister msg (a, b, c)
-        | DoGetAgent (a, b, c) -> doGetAgent msg (a, b, c)
-        <| runner <| (model, cmd)
+    match req with
+    | DoQuit (a, b) -> doQuit msg (a, b)
+    | DoAddService (a, b) -> doAddService msg (a, b)
+    | DoGetService (a, b) -> doGetService msg (a, b)
+    | DoRegister (a, b, c) -> doRegister msg (a, b, c)
+    | DoGetAgent (a, b, c) -> doGetAgent msg (a, b, c)
 
 let private update : Update<IEnv, EnvModel, EnvMsg> =
     fun runner model msg ->

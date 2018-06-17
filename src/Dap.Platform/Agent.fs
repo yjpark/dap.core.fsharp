@@ -18,10 +18,8 @@ let private doStop msg (forceStop, callback) : AgentOperate<'args, 'model, 'msg,
         (model, cmd)
 
 let private handleReq msg req : AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
-    fun runner (model, cmd) ->
-        match req with
-        | DoStop (a, b) -> doStop msg (a, b)
-        <| runner <| (model, cmd)
+    match req with
+    | DoStop (a, b) -> doStop msg (a, b)
 
 let private update wrapper
                     : Update<IAgent, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>> =

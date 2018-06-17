@@ -1,3 +1,6 @@
+## 0.6.2
+* Cleanup operators: |-|> |=|> |-|-
+
 ## 0.6.1
 * Change |>> to |-|>
 
