@@ -19,12 +19,12 @@ let getSpec (autoStart : bool) (frameRate : int) =
         }
     |> Logic.getSpec
 
-let add' (kind : Kind) (key : Key) autoStart frameRate (env : IEnv) =
+let add' (kind : Kind) (key : Key) autoStart frameRate =
     getSpec autoStart frameRate
     |> Env.addService kind key
 
-let add autoStart key frameRate env =
-    add' Kind key autoStart frameRate env
+let add autoStart key frameRate =
+    add' Kind key autoStart frameRate
 
 let get' kind key (env : IEnv) =
     env
