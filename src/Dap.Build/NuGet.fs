@@ -109,19 +109,6 @@ let createTargets (config : DotNet.BuildConfiguration) projects =
     Dap.Build.DotNet.Build
         ==> Pack
     |> ignore
-
-let run projects feed =
-    createTargets DotNet.Release projects
-    Target.setLastDescription "Publishing..."
-    Target.create Publish (fun _ ->
-        projects
-        |> Seq.iter (publish feed)
-    )
-    Pack
-        ==> Publish
-    |> ignore
-    Target.runOrDefault Pack
-
 let homePath =
     match Environment.OSVersion.Platform with
     | PlatformID.Unix | PlatformID.MacOSX -> Environment.GetEnvironmentVariable("HOME")
@@ -155,27 +142,20 @@ let inject (config : DotNet.BuildConfiguration) proj =
     |> Array.find (fun pkg -> pkg.Contains(releaseNotes.NugetVersion))
     |> doInject package releaseNotes.NugetVersion
 
-let clear proj =
-    Trace.traceFAKE "Clear Project: %s" proj
-    let dir = Path.GetDirectoryName(proj)
-    let package = Path.GetFileName(dir)
-    let path = getNugetCachePath package None
-    Shell.cleanDir path
-    Trace.traceFAKE "    -> %s" path
-
-let dev projects _feed =
-    createTargets DotNet.Debug projects
-    Target.setLastDescription "Clearing Local NuGet Cache..."
-    Target.create Clear (fun _ ->
-        projects
-        |> Seq.iter clear
-    )
+let run projects feed =
+    createTargets DotNet.Release projects
     Target.setLastDescription "Injecting to Local NuGet Cache..."
     Target.create Inject (fun _ ->
         projects
         |> Seq.iter (inject DotNet.Debug)
     )
+    Target.setLastDescription "Publishing..."
+    Target.create Publish (fun _ ->
+        projects
+        |> Seq.iter (publish feed)
+    )
     Pack
         ==> Inject
+        ==> Publish
     |> ignore
     Target.runOrDefault Inject
