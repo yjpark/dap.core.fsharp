@@ -1,3 +1,6 @@
+## 0.6.2
+* Create targets for each projects
+
 ## 0.6.1
 * Dap.Build.DotNet for common targets
 

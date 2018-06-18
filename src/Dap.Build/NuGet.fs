@@ -98,7 +98,7 @@ let publish (feed : Feed) proj =
 
 let createTargets (config : DotNet.BuildConfiguration) projects =
     Dap.Build.DotNet.createTargets config projects
-    Target.setLastDescription "Packing..."
+    Target.setLastDescription <| sprintf "Pack %i Projects" (Seq.length projects)
     Target.create Pack (fun _ ->
         projects
         |> Seq.iter (pack config)
@@ -139,18 +139,33 @@ let inject (config : DotNet.BuildConfiguration) proj =
     |> Array.find (fun pkg -> pkg.Contains(releaseNotes.NugetVersion))
     |> doInject package releaseNotes.NugetVersion
 
+let buildProject (config : DotNet.BuildConfiguration) proj =
+    let package = Dap.Build.DotNet.getPackage proj
+    Target.setLastDescription <| sprintf "Inject %s" package
+    Target.create package (fun _ ->
+        Dap.Build.DotNet.build config false proj
+        pack config proj
+        inject config proj
+    )
+    Dap.Build.DotNet.Restore ==> package |> ignore
+
+let createProjectTargets (config : DotNet.BuildConfiguration) projects =
+    projects
+    |> Seq.iter (buildProject config)
+
 let run projects feed =
     createTargets DotNet.Release projects
-    Target.setLastDescription "Injecting to Local NuGet Cache..."
+    Target.setLastDescription <| sprintf "Inject %i Projects to Local NuGet Cache" (Seq.length projects)
     Target.create Inject (fun _ ->
         projects
         |> Seq.iter (inject DotNet.Release)
     )
-    Target.setLastDescription "Publishing..."
+    Target.setLastDescription <| sprintf "Publish %i Projects to NuGet Server" (Seq.length projects)
     Target.create Publish (fun _ ->
         projects
         |> Seq.iter (publish feed)
     )
+    createProjectTargets DotNet.Release projects
     Pack
         ==> Inject
         ==> Publish
