@@ -40,6 +40,7 @@ and EnvReq =
     | DoQuit of bool * Callback<QuitStats>                  // forceQuit -> willQuit
     | DoAddService of IAgent * Callback<int * int>                // -> servicesCount * kindServicesCount
     | DoGetService of Kind * Key * Callback<IAgent>               // -> service
+    | TryFindService of Kind * Key * Callback<IAgent option>               // -> service
     | DoRegister of Kind * Spawner * Callback<int>          // -> spawnersCount
     | DoGetAgent of Kind * Key * Callback<IAgent * bool>    // -> (agent, isNew)
 

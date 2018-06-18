@@ -1,3 +1,7 @@
+## 0.6.4
+* Add Env Req: TryFindService
+* Add Registry Service
+
 ## 0.6.3
 * Include key in service lookup
 

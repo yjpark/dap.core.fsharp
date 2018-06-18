@@ -53,6 +53,19 @@ let private doGetService msg (kind, key, callback) : EnvOperate =
             reply runner callback <| nak msg "Kind_Not_Exist" model.Services.Count
         (model, cmd)
 
+let private tryFindService msg (kind, key, callback) : EnvOperate =
+    fun runner (model, cmd) ->
+        match Map.tryFind kind model.Services with
+        | Some kindServices ->
+            match Map.tryFind key kindServices with
+            | Some service ->
+                reply runner callback <| ack msg ^<| Some service
+            | None ->
+                reply runner callback <| ack msg None
+        | None ->
+            reply runner callback <| ack msg None
+        (model, cmd)
+
 let private doRegister msg ((kind, spawner, callback) : Kind * Spawner * Callback<int>)
                                 : EnvOperate =
     fun runner (model, cmd) ->
@@ -112,6 +125,7 @@ let private handleReq msg (req : EnvReq) : EnvOperate =
     | DoQuit (a, b) -> doQuit msg (a, b)
     | DoAddService (a, b) -> doAddService msg (a, b)
     | DoGetService (a, b, c) -> doGetService msg (a, b, c)
+    | TryFindService (a, b, c) -> tryFindService msg (a, b, c)
     | DoRegister (a, b, c) -> doRegister msg (a, b, c)
     | DoGetAgent (a, b, c) -> doGetAgent msg (a, b, c)
 

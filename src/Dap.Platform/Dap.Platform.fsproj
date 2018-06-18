@@ -4,7 +4,7 @@
     <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
     <PackageTags>fsharp;dap;</PackageTags>
     <Authors>YJ Park</Authors>
-    <Version>0.6.3</Version>
+    <Version>0.6.4</Version>
     <Description>Dap Platform, elmish actor runtime</Description>
   </PropertyGroup>
   <ItemGroup>
@@ -32,6 +32,9 @@
     <Compile Include="Ticker/Types.fs" />
     <Compile Include="Ticker/Logic.fs" />
     <Compile Include="Ticker/Service.fs" />
+    <Compile Include="Registry/Types.fs" />
+    <Compile Include="Registry/Logic.fs" />
+    <Compile Include="Registry/Service.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.Prelude\Dap.Prelude.fsproj" />
