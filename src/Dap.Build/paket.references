@@ -8,4 +8,5 @@ group Build
     Fake.DotNet.Cli
     Fake.DotNet.NuGet
     Fake.IO.FileSystem
+    Fake.IO.Zip
     Fake.Tools.Git

@@ -12,6 +12,9 @@ let DoAddService' (service : IAgent) callback =
 let DoGetService' (kind : Kind) (key : Key) callback =
     DoGetService (kind, key, callback)
 
+let TryFindService' (kind : Kind) (key : Key) callback =
+    TryFindService (kind, key, callback)
+
 let DoRegister' (kind : Kind) (spawner : Spawner) callback =
     DoRegister (kind, spawner, callback)
 

@@ -1,6 +1,7 @@
 [<RequireQualifiedAccess>]
 module Dap.Build.NuGet
 
+open System
 open System.IO
 open System.Text.RegularExpressions
 open Fake.Core
@@ -8,6 +9,7 @@ open Fake.DotNet
 open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.Core.TargetOperators
+open Fake.IO
 
 [<Literal>]
 let Clean = "Clean"
@@ -23,6 +25,15 @@ let Pack = "Pack"
 
 [<Literal>]
 let Publish = "Publish"
+
+[<Literal>]
+let Develop = "Develop"
+
+[<Literal>]
+let Inject = "Inject"
+
+[<Literal>]
+let Clear = "Clear"
 
 type ApiKey =
     | Environment of string
@@ -54,28 +65,6 @@ let loadReleaseNotes proj =
     |> ReleaseNotes.load
     |> checkVersion proj
 
-let private setBuildParams _proj (options : DotNet.BuildOptions) =
-    { options with
-        Configuration = DotNet.Release
-        Common =
-            { options.Common with
-                CustomParams = Some "--no-restore"
-                DotNetCliPath = "dotnet"
-            }
-    } 
-
-let private setPackParams proj (options : DotNet.PackOptions) =
-    let releaseNotes = loadReleaseNotes proj
-    let pkgReleaseNotes = sprintf "/p:PackageReleaseNotes=\"%s\"" (String.toLines releaseNotes.Notes)
-    { options with
-        Configuration = DotNet.Release
-        Common =
-            { options.Common with
-                CustomParams = Some pkgReleaseNotes
-                DotNetCliPath = "dotnet"
-            }
-    } 
-
 let private getApiKeyParam (apiKey : ApiKey) =
     match apiKey with
     | Environment key ->
@@ -88,17 +77,61 @@ let private getApiKeyParam (apiKey : ApiKey) =
         sprintf " -k %s" key
     | NoAuth -> ""
 
+//Copied from https://github.com/fsharp/FAKE/blob/master/src/app/Fake.DotNet.Cli/DotNet.fs
+let buildConfigurationArg (param: DotNet.BuildConfiguration) =
+    sprintf "--configuration %s"
+        (match param with
+        | DotNet.Debug -> "Debug"
+        | DotNet.Release -> "Release"
+        | DotNet.Custom config -> config)
+
+let clean (config : DotNet.BuildConfiguration) proj =
+    Trace.traceFAKE "Clean Project: %s" proj
+    let setOptions = fun (options : DotNet.Options) ->
+        { options with
+            WorkingDirectory = Path.GetDirectoryName(proj)
+        } 
+    buildConfigurationArg config 
+    |> DotNet.exec setOptions "clean"
+    |> ignore
+
 let restore proj = 
     Trace.traceFAKE "Restore Project: %s" proj
-    DotNet.restore id proj
+    let setOptions = fun (options : DotNet.RestoreOptions) ->
+        { options with
+            Common =
+                { options.Common with
+                    CustomParams = Some "--no-dependencies"
+                }
+        } 
+    DotNet.restore setOptions proj
 
-let build proj = 
+let build (config : DotNet.BuildConfiguration) proj = 
     Trace.traceFAKE "Build Project: %s" proj
-    DotNet.build (setBuildParams proj) proj
+    let setOptions = fun (options : DotNet.BuildOptions) ->
+        { options with
+            Configuration = config
+            Common =
+                { options.Common with
+                    CustomParams = Some "--no-restore"
+                }
+        } 
+    DotNet.build setOptions proj
 
-let pack proj = 
+let pack (config : DotNet.BuildConfiguration) proj = 
     Trace.traceFAKE "Pack Project: %s" proj
-    DotNet.pack (setPackParams proj) proj
+    let setOptions = fun (options : DotNet.PackOptions) ->
+        let releaseNotes = loadReleaseNotes proj
+        let pkgReleaseNotes = sprintf "/p:PackageReleaseNotes=\"%s\"" (String.toLines releaseNotes.Notes)
+        { options with
+            Configuration = config
+            NoBuild = true
+            Common =
+                { options.Common with
+                    CustomParams = Some pkgReleaseNotes
+                }
+        } 
+    DotNet.pack setOptions proj
 
 let publish (feed : Feed) proj =
     Trace.traceFAKE "Publish Project: %s" proj
@@ -109,22 +142,17 @@ let publish (feed : Feed) proj =
     |> Array.find (fun pkg -> pkg.Contains(releaseNotes.NugetVersion))
     |> (fun pkg ->
         pkgPath <- pkg
-        pkg
-    )|> (fun pkg ->
         sprintf "push %s -s %s%s" pkg feed.Source <| getApiKeyParam feed.ApiKey
     )|> DotNet.exec id "nuget"
     |> fun result ->
         if not result.OK then
             failwith <| sprintf "Push nupkg failed: %s -> [%i] %A %A" pkgPath result.ExitCode result.Messages result.Errors
 
-let createTargets cleanDirs projects feed =
+let createTargets (config : DotNet.BuildConfiguration) projects =
     Target.setLastDescription "Cleaning..."
     Target.create Clean (fun _ ->
-        cleanDirs
-        |> Seq.iter (fun dir ->
-            Trace.traceFAKE "Clean Dir: %s" dir
-            Shell.cleanDir dir
-        )
+        projects
+        |> Seq.iter (clean config)
     )
 
     Target.setLastDescription "Restoring..."
@@ -136,19 +164,13 @@ let createTargets cleanDirs projects feed =
     Target.setLastDescription "Building..."
     Target.create Build (fun _ ->
         projects
-        |> Seq.iter build
+        |> Seq.iter (build config)
     )
 
     Target.setLastDescription "Packing..."
     Target.create Pack (fun _ ->
         projects
-        |> Seq.iter pack
-    )
-
-    Target.setLastDescription "Publishing..."
-    Target.create Publish (fun _ ->
-        projects
-        |> Seq.iter (publish feed)
+        |> Seq.iter (pack config)
     )
 
     // *** Define Dependencies ***
@@ -156,9 +178,78 @@ let createTargets cleanDirs projects feed =
         ==> Restore
         ==> Build
         ==> Pack
-        ==> Publish
     |> ignore
 
-let run cleanDirs projects feed =
-    createTargets cleanDirs projects feed
+let run projects feed =
+    createTargets DotNet.Release projects
+    Target.setLastDescription "Publishing..."
+    Target.create Publish (fun _ ->
+        projects
+        |> Seq.iter (publish feed)
+    )
+    Pack
+        ==> Publish
+    |> ignore
     Target.runOrDefault Pack
+
+let homePath =
+    match Environment.OSVersion.Platform with
+    | PlatformID.Unix | PlatformID.MacOSX -> Environment.GetEnvironmentVariable("HOME")
+    | _ -> Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
+let getNugetCachePath (package : string) (version : string option) =
+    let path = Path.Combine [| homePath ; ".nuget" ; "packages" ; (package.ToLower ()) |]
+    version
+    |> Option.map (fun version ->
+        Path.Combine [| path ; version |]
+    )|> Option.defaultValue path
+
+let doInject (package : string) (version : string) (pkg : string) =
+    let path = getNugetCachePath package <| Some version
+    Directory.ensure path
+    Shell.cleanDir path
+    Shell.copyFile path pkg
+    Zip.unzip path pkg
+    File.writeNew (Path.Combine [| path ; "Dap.Build_Inject.txt" |]) [
+        sprintf "Injected At: %A" System.DateTime.Now 
+        pkg
+    ]
+    Trace.traceFAKE "    -> %s/%s" path <| Path.GetFileName pkg
+
+let inject (config : DotNet.BuildConfiguration) proj =
+    Trace.traceFAKE "Inject Project: %s" proj
+    let dir = Path.GetDirectoryName(proj)
+    let package = Path.GetFileName(dir)
+    let releaseNotes = loadReleaseNotes proj
+    let folder =
+        match config with
+        | DotNet.Debug -> "Debug"
+        | DotNet.Release -> "Release"
+        | _ -> failwith <| sprintf "Unsupported Configuration: %A" config
+    Directory.GetFiles(dir </> "bin" </> folder, "*.nupkg")
+    |> Array.find (fun pkg -> pkg.Contains(releaseNotes.NugetVersion))
+    |> doInject package releaseNotes.NugetVersion
+
+let clear proj =
+    Trace.traceFAKE "Clear Project: %s" proj
+    let dir = Path.GetDirectoryName(proj)
+    let package = Path.GetFileName(dir)
+    let path = getNugetCachePath package None
+    Shell.cleanDir path
+    Trace.traceFAKE "    -> %s" path
+
+let dev projects _feed =
+    createTargets DotNet.Debug projects
+    Target.setLastDescription "Clearing Local NuGet Cache..."
+    Target.create Clear (fun _ ->
+        projects
+        |> Seq.iter clear
+    )
+    Target.setLastDescription "Injecting to Local NuGet Cache..."
+    Target.create Inject (fun _ ->
+        projects
+        |> Seq.iter (inject DotNet.Debug)
+    )
+    Pack
+        ==> Inject
+    |> ignore
+    Target.runOrDefault Inject

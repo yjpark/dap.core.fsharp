@@ -7,10 +7,6 @@ open Fake.IO.Globbing.Operators
 #load "src/Dap.Build/NuGet.fs"
 module NuGet = Dap.Build.NuGet
 
-let cleanDirs =
-    !! "src/**/bin"
-    ++ "src/**/obj"
-
 let projects =
     !! "src/Dap.Build/*.fsproj"
     ++ "src/Fable.Dap.Prelude/*.fsproj"
@@ -30,4 +26,4 @@ let feed : NuGet.Feed = {
     NuGet.ApiKey = NuGet.Plain "wnHZEG9N_OrmO3XKoAGT"
 }
 
-NuGet.run cleanDirs projects feed
+NuGet.run projects feed
