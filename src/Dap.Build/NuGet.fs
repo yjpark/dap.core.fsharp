@@ -12,15 +12,6 @@ open Fake.Core.TargetOperators
 open Fake.IO
 
 [<Literal>]
-let Clean = "Clean"
-
-[<Literal>]
-let Restore = "Restore"
-
-[<Literal>]
-let Build = "Build"
-
-[<Literal>]
 let Pack = "Pack"
 
 [<Literal>]
@@ -77,47 +68,6 @@ let private getApiKeyParam (apiKey : ApiKey) =
         sprintf " -k %s" key
     | NoAuth -> ""
 
-//Copied from https://github.com/fsharp/FAKE/blob/master/src/app/Fake.DotNet.Cli/DotNet.fs
-let buildConfigurationArg (param: DotNet.BuildConfiguration) =
-    sprintf "--configuration %s"
-        (match param with
-        | DotNet.Debug -> "Debug"
-        | DotNet.Release -> "Release"
-        | DotNet.Custom config -> config)
-
-let clean (config : DotNet.BuildConfiguration) proj =
-    Trace.traceFAKE "Clean Project: %s" proj
-    let setOptions = fun (options : DotNet.Options) ->
-        { options with
-            WorkingDirectory = Path.GetDirectoryName(proj)
-        } 
-    buildConfigurationArg config 
-    |> DotNet.exec setOptions "clean"
-    |> ignore
-
-let restore proj = 
-    Trace.traceFAKE "Restore Project: %s" proj
-    let setOptions = fun (options : DotNet.RestoreOptions) ->
-        { options with
-            Common =
-                { options.Common with
-                    CustomParams = Some "--no-dependencies"
-                }
-        } 
-    DotNet.restore setOptions proj
-
-let build (config : DotNet.BuildConfiguration) proj = 
-    Trace.traceFAKE "Build Project: %s" proj
-    let setOptions = fun (options : DotNet.BuildOptions) ->
-        { options with
-            Configuration = config
-            Common =
-                { options.Common with
-                    CustomParams = Some "--no-restore"
-                }
-        } 
-    DotNet.build setOptions proj
-
 let pack (config : DotNet.BuildConfiguration) proj = 
     Trace.traceFAKE "Pack Project: %s" proj
     let setOptions = fun (options : DotNet.PackOptions) ->
@@ -129,6 +79,7 @@ let pack (config : DotNet.BuildConfiguration) proj =
             Common =
                 { options.Common with
                     CustomParams = Some pkgReleaseNotes
+                    DotNetCliPath = "dotnet"
                 }
         } 
     DotNet.pack setOptions proj
@@ -149,34 +100,13 @@ let publish (feed : Feed) proj =
             failwith <| sprintf "Push nupkg failed: %s -> [%i] %A %A" pkgPath result.ExitCode result.Messages result.Errors
 
 let createTargets (config : DotNet.BuildConfiguration) projects =
-    Target.setLastDescription "Cleaning..."
-    Target.create Clean (fun _ ->
-        projects
-        |> Seq.iter (clean config)
-    )
-
-    Target.setLastDescription "Restoring..."
-    Target.create Restore (fun _ ->
-        projects
-        |> Seq.iter restore
-    )
-
-    Target.setLastDescription "Building..."
-    Target.create Build (fun _ ->
-        projects
-        |> Seq.iter (build config)
-    )
-
+    Dap.Build.DotNet.createTargets config projects
     Target.setLastDescription "Packing..."
     Target.create Pack (fun _ ->
         projects
         |> Seq.iter (pack config)
     )
-
-    // *** Define Dependencies ***
-    Clean
-        ==> Restore
-        ==> Build
+    Dap.Build.DotNet.Build
         ==> Pack
     |> ignore
 
@@ -220,11 +150,7 @@ let inject (config : DotNet.BuildConfiguration) proj =
     let dir = Path.GetDirectoryName(proj)
     let package = Path.GetFileName(dir)
     let releaseNotes = loadReleaseNotes proj
-    let folder =
-        match config with
-        | DotNet.Debug -> "Debug"
-        | DotNet.Release -> "Release"
-        | _ -> failwith <| sprintf "Unsupported Configuration: %A" config
+    let folder = Dap.Build.DotNet.getConfigFolder config
     Directory.GetFiles(dir </> "bin" </> folder, "*.nupkg")
     |> Array.find (fun pkg -> pkg.Contains(releaseNotes.NugetVersion))
     |> doInject package releaseNotes.NugetVersion
