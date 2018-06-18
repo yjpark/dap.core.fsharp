@@ -1,4 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
@@ -6,6 +7,7 @@
     <Authors>YJ Park</Authors>
     <Version>0.6.4</Version>
     <Description>Dap Platform, elmish actor runtime</Description>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Fable.Dap.Platform/Shared/Logic.fs" />
@@ -38,6 +40,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.Prelude\Dap.Prelude.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-62925-02" PrivateAssets="All" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

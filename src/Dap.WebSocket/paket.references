@@ -1,1 +1,5 @@
 FSharp.Core
+
+group Build
+    dotnet-sourcelink
+    Microsoft.SourceLink.GitHub

@@ -10,3 +10,4 @@ group Build
     Fake.IO.FileSystem
     Fake.IO.Zip
     Fake.Tools.Git
+    dotnet-sourcelink

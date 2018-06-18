@@ -38,4 +38,5 @@ group Build
     nuget Fake.IO.Zip
     nuget Fake.Tools.Git
 
-
+    clitool dotnet-sourcelink
+    nuget Microsoft.SourceLink.GitHub

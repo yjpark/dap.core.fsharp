@@ -7,6 +7,7 @@
     <Authors>YJ Park</Authors>
     <Version>0.6.0</Version>
     <Description>Dap Prelude, provide logging and other basic abstractions, use SeriLog for logging</Description>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Fable.Dap.Prelude/Shared/Operator.fs" />
@@ -14,6 +15,9 @@
     <Compile Include="../Fable.Dap.Prelude/Shared/Result.fs" />
     <Compile Include="../Fable.Dap.Prelude/Shared/Union.fs" />
     <Compile Include="Logging.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-62925-02" PrivateAssets="All" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

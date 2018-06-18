@@ -1,3 +1,7 @@
 Elmish
 NodaTime
 TaskBuilder.fs
+
+group Build
+    dotnet-sourcelink
+    Microsoft.SourceLink.GitHub

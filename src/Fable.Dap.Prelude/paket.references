@@ -1,3 +1,7 @@
 Fable.Core
 Fable.Import.Browser
 Fable.PowerPack
+
+group Build
+    dotnet-sourcelink
+    Microsoft.SourceLink.GitHub

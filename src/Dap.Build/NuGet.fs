@@ -81,31 +81,6 @@ let pack (config : DotNet.BuildConfiguration) proj =
         } 
     DotNet.pack setOptions proj
 
-let publish (feed : Feed) proj =
-    Trace.traceFAKE "Publish Project: %s" proj
-    let dir = Path.GetDirectoryName(proj)
-    let releaseNotes = loadReleaseNotes proj
-    let mutable pkgPath = ""
-    Directory.GetFiles(dir </> "bin" </> "Release", "*.nupkg")
-    |> Array.find (fun pkg -> pkg.Contains(releaseNotes.NugetVersion))
-    |> (fun pkg ->
-        pkgPath <- pkg
-        sprintf "push %s -s %s%s" pkg feed.Source <| getApiKeyParam feed.ApiKey
-    )|> DotNet.exec id "nuget"
-    |> fun result ->
-        if not result.OK then
-            failwith <| sprintf "Push nupkg failed: %s -> [%i] %A %A" pkgPath result.ExitCode result.Messages result.Errors
-
-let createTargets (config : DotNet.BuildConfiguration) projects =
-    Dap.Build.DotNet.createTargets config projects
-    Target.setLastDescription <| sprintf "Pack %i Projects" (Seq.length projects)
-    Target.create Pack (fun _ ->
-        projects
-        |> Seq.iter (pack config)
-    )
-    Dap.Build.DotNet.Build
-        ==> Pack
-    |> ignore
 let homePath =
     match Environment.OSVersion.Platform with
     | PlatformID.Unix | PlatformID.MacOSX -> Environment.GetEnvironmentVariable("HOME")
@@ -139,6 +114,44 @@ let inject (config : DotNet.BuildConfiguration) proj =
     |> Array.find (fun pkg -> pkg.Contains(releaseNotes.NugetVersion))
     |> doInject package releaseNotes.NugetVersion
 
+let publish (feed : Feed) proj =
+    Trace.traceFAKE "Publish Project: %s" proj
+    let dir = Path.GetDirectoryName(proj)
+    let releaseNotes = loadReleaseNotes proj
+    let mutable pkgPath = ""
+    Directory.GetFiles(dir </> "bin" </> "Release", "*.nupkg")
+    |> Array.find (fun pkg -> pkg.Contains(releaseNotes.NugetVersion))
+    |> (fun pkg ->
+        pkgPath <- pkg
+        sprintf "push %s -s %s%s" pkg feed.Source <| getApiKeyParam feed.ApiKey
+    )|> DotNet.exec id "nuget"
+    |> fun result ->
+        if not result.OK then
+            failwith <| sprintf "Push nupkg failed: %s -> [%i] %A %A" pkgPath result.ExitCode result.Messages result.Errors
+
+let createTargets (config : DotNet.BuildConfiguration) projects feed =
+    Dap.Build.DotNet.createTargets config projects
+    Target.setLastDescription <| sprintf "Pack %i Projects" (Seq.length projects)
+    Target.create Pack (fun _ ->
+        projects
+        |> Seq.iter (pack config)
+    )
+    Target.setLastDescription <| sprintf "Inject %i Projects to Local NuGet Cache" (Seq.length projects)
+    Target.create Inject (fun _ ->
+        projects
+        |> Seq.iter (inject DotNet.Release)
+    )
+    Target.setLastDescription <| sprintf "Publish %i Projects to NuGet Server" (Seq.length projects)
+    Target.create Publish (fun _ ->
+        projects
+        |> Seq.iter (publish feed)
+    )
+    Dap.Build.DotNet.Build
+        ==> Pack
+        ==> Inject
+        ==> Publish
+    |> ignore
+
 let buildProject (config : DotNet.BuildConfiguration) proj =
     let package = Dap.Build.DotNet.getPackage proj
     Target.setLastDescription <| sprintf "Inject %s" package
@@ -154,20 +167,6 @@ let createProjectTargets (config : DotNet.BuildConfiguration) projects =
     |> Seq.iter (buildProject config)
 
 let run projects feed =
-    createTargets DotNet.Release projects
-    Target.setLastDescription <| sprintf "Inject %i Projects to Local NuGet Cache" (Seq.length projects)
-    Target.create Inject (fun _ ->
-        projects
-        |> Seq.iter (inject DotNet.Release)
-    )
-    Target.setLastDescription <| sprintf "Publish %i Projects to NuGet Server" (Seq.length projects)
-    Target.create Publish (fun _ ->
-        projects
-        |> Seq.iter (publish feed)
-    )
+    createTargets DotNet.Release projects feed
     createProjectTargets DotNet.Release projects
-    Pack
-        ==> Inject
-        ==> Publish
-    |> ignore
     Target.runOrDefault Inject
