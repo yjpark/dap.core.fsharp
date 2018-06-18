@@ -144,7 +144,7 @@ let run projects feed =
     Target.setLastDescription "Injecting to Local NuGet Cache..."
     Target.create Inject (fun _ ->
         projects
-        |> Seq.iter (inject DotNet.Debug)
+        |> Seq.iter (inject DotNet.Release)
     )
     Target.setLastDescription "Publishing..."
     Target.create Publish (fun _ ->
