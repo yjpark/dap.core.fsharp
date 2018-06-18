@@ -23,9 +23,6 @@ let Develop = "Develop"
 [<Literal>]
 let Inject = "Inject"
 
-[<Literal>]
-let Clear = "Clear"
-
 type ApiKey =
     | Environment of string
     | Plain of string
