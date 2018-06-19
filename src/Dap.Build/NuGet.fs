@@ -10,6 +10,7 @@ open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.Core.TargetOperators
 open Fake.IO
+open Fake.IO
 
 [<Literal>]
 let Pack = "Pack"
@@ -22,6 +23,9 @@ let Develop = "Develop"
 
 [<Literal>]
 let Inject = "Inject"
+
+[<Literal>]
+let Recover = "Recover"
 
 type ApiKey =
     | Environment of string
@@ -85,6 +89,7 @@ let homePath =
     match Environment.OSVersion.Platform with
     | PlatformID.Unix | PlatformID.MacOSX -> Environment.GetEnvironmentVariable("HOME")
     | _ -> Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
+
 let getNugetCachePath (package : string) (version : string option) =
     let path = Path.Combine [| homePath ; ".nuget" ; "packages" ; (package.ToLower ()) |]
     version
@@ -92,14 +97,34 @@ let getNugetCachePath (package : string) (version : string option) =
         Path.Combine [| path ; version |]
     )|> Option.defaultValue path
 
+let getOriginalNugetCachePath (package : string) (version : string) =
+    getNugetCachePath package <| Some (version + "-original")
+
+let getSha512Stream (stream:Stream) =
+    use hasher = System.Security.Cryptography.SHA512.Create() :> System.Security.Cryptography.HashAlgorithm
+    Convert.ToBase64String(hasher.ComputeHash(stream))
+
+let getSha512File (filePath:string) =
+    use stream = File.OpenRead(filePath)
+    getSha512Stream stream
+
 let doInject (package : string) (version : string) (pkg : string) =
     let path = getNugetCachePath package <| Some version
     Directory.ensure path
+    let nupkgPath = Path.GetFileName(pkg)
+    let hashPath = Path.Combine [| path ; nupkgPath + ".sha512" |]
+    let injectPath = Path.Combine [| path ; "Dap.Build_Inject.txt" |]
+    if not (File.exists injectPath) then
+        let originalPath = getOriginalNugetCachePath package version
+        Shell.copyDir originalPath path (fun _ -> true)
     Shell.cleanDir path
     Shell.copyFile path pkg
+    let hash = getSha512File pkg
+    File.writeNew hashPath [hash]
     Zip.unzip path pkg
-    File.writeNew (Path.Combine [| path ; "Dap.Build_Inject.txt" |]) [
+    File.writeNew injectPath [
         sprintf "Injected At: %A" System.DateTime.Now 
+        sprintf "SHA512 Hash: %s" hash
         pkg
     ]
     Trace.traceFAKE "    -> %s/%s" path <| Path.GetFileName pkg
@@ -113,6 +138,21 @@ let inject (config : DotNet.BuildConfiguration) proj =
     Directory.GetFiles(dir </> "bin" </> folder, "*.nupkg")
     |> Array.find (fun pkg -> pkg.Contains(releaseNotes.NugetVersion))
     |> doInject package releaseNotes.NugetVersion
+
+let doRecover (package : string) (version : string) =
+    let path = getNugetCachePath package <| Some version
+    let originalPath = getOriginalNugetCachePath package version
+    if DirectoryInfo.exists (DirectoryInfo.ofPath originalPath) then
+        Shell.cleanDir path
+        Shell.copyDir path originalPath (fun _ -> true)
+        Trace.traceFAKE "    -> %s" path
+
+let recover proj =
+    Trace.traceFAKE "Recover Project: %s" proj
+    let dir = Path.GetDirectoryName(proj)
+    let package = Path.GetFileName(dir)
+    let releaseNotes = loadReleaseNotes proj
+    doRecover package releaseNotes.NugetVersion
 
 let publish (feed : Feed) proj =
     Trace.traceFAKE "Publish Project: %s" proj
@@ -145,6 +185,11 @@ let createTargets (config : DotNet.BuildConfiguration) projects feed =
     Target.create Publish (fun _ ->
         projects
         |> Seq.iter (publish feed)
+    )
+    Target.setLastDescription <| sprintf "Recover %i Projects to Local NuGet Cache" (Seq.length projects)
+    Target.create Recover (fun _ ->
+        projects
+        |> Seq.iter recover
     )
     Dap.Build.DotNet.Build
         ==> Pack
