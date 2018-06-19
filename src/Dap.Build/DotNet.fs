@@ -18,6 +18,23 @@ let Restore = "Restore"
 [<Literal>]
 let Build = "Build"
 
+type Options = {
+    UseDebugConfig : bool
+    CreatePerProjectTargets : bool
+} with
+    member this.Configuration =
+        if this.UseDebugConfig then DotNet.Debug else DotNet.Release
+
+let debug = {
+    UseDebugConfig = true
+    CreatePerProjectTargets = true
+}
+
+let release = {
+    UseDebugConfig = true
+    CreatePerProjectTargets = true
+}
+
 let getConfigFolder (config : DotNet.BuildConfiguration) =
     match config with
     | DotNet.Debug -> "Debug"
@@ -28,13 +45,13 @@ let getPackage proj =
     let dir = Path.GetDirectoryName(proj)
     Path.GetFileName(dir)
 
-let clean (config : DotNet.BuildConfiguration) proj =
+let clean (options : Options) proj =
     Trace.traceFAKE "Clean Project: %s" proj
     (*
     //Dotnet clean might left some extra files (e.g .nuspec) which
     //will break pack process
-    let setOptions = fun (options : DotNet.Options) ->
-        { options with
+    let setOptions = fun (options' : DotNet.Options) ->
+        { options' with
             WorkingDirectory = Path.GetDirectoryName(proj)
         } 
     sprintf "--configuration %s" <| getConfigFolder config
@@ -42,7 +59,7 @@ let clean (config : DotNet.BuildConfiguration) proj =
     |> ignore
      *)
     let dir = Path.GetDirectoryName(proj)
-    let folder = getConfigFolder config
+    let folder = getConfigFolder options.Configuration
     Shell.cleanDirs [
         Path.Combine [| dir ; "bin" ; folder |]
         Path.Combine [| dir ; "obj" ; folder |]
@@ -50,68 +67,64 @@ let clean (config : DotNet.BuildConfiguration) proj =
 
 let restore proj = 
     Trace.traceFAKE "Restore Project: %s" proj
-    let setOptions = fun (options : DotNet.RestoreOptions) ->
-        { options with
+    let setOptions = fun (options' : DotNet.RestoreOptions) ->
+        { options' with
             Common =
-                { options.Common with
+                { options'.Common with
                     CustomParams = Some "--no-dependencies"
                 }
         } 
     DotNet.restore setOptions proj
 
-let build (config : DotNet.BuildConfiguration) (noDependencies : bool) proj = 
+let build (options : Options) (noDependencies : bool) proj = 
     Trace.traceFAKE "Build Project: %s" proj
-    let setOptions = fun (options : DotNet.BuildOptions) ->
+    let setOptions = fun (options' : DotNet.BuildOptions) ->
         let mutable param = "--no-restore"
         if noDependencies then
             param <- sprintf "%s --no-dependencies" param
-        { options with
-            Configuration = config
+        { options' with
+            Configuration = options.Configuration
             Common =
-                { options.Common with
+                { options'.Common with
                     CustomParams = Some param
                 }
         } 
     DotNet.build setOptions proj
 
-let createTargets (config : DotNet.BuildConfiguration) projects =
-    Target.setLastDescription <| sprintf "Clean %i Projects" (Seq.length projects)
-    Target.create Clean (fun _ ->
-        projects
-        |> Seq.iter (clean config)
-    )
+let getLabelAndPrefix (projects : seq<string>) =
+    let len = Seq.length projects
+    if len = 1 then
+        let dir = Path.GetDirectoryName(Seq.head projects)
+        let label = Path.GetFileName(dir)
+        (label, label + ":")
+    else
+        (sprintf "%i Projects" len, "")
 
-    Target.setLastDescription <| sprintf "Restore %i Projects" (Seq.length projects)
-    Target.create Restore (fun _ ->
+let createTargets (options : Options) (projects : seq<string>) =
+    let (label, prefix) = getLabelAndPrefix projects
+    Target.setLastDescription <| sprintf "Clean %s" label
+    Target.create (prefix + Clean) (fun _ ->
+        projects
+        |> Seq.iter (clean options)
+    )
+    Target.setLastDescription <| sprintf "Restore %s" label
+    Target.create (prefix + Restore) (fun _ ->
         projects
         |> Seq.iter restore
     )
-
-    Target.setLastDescription <| sprintf "Build %i Projects" (Seq.length projects)
-    Target.create Build (fun _ ->
+    Target.setLastDescription <| sprintf "Build %s" label
+    Target.create (prefix + Build) (fun _ ->
         projects
-        |> Seq.iter (build config true)
+        |> Seq.iter (build options (Seq.length projects > 1))
     )
-
-    // *** Define Dependencies ***
-    Clean
-        ==> Restore
-        ==> Build
+    prefix + Clean
+        ==> prefix + Restore
+        ==> prefix + Build
     |> ignore
 
-let buildProject (config : DotNet.BuildConfiguration) proj =
-    let package = getPackage proj
-    Target.setLastDescription <| sprintf "Build %s" package
-    Target.create package (fun _ ->
-        build config false proj
-    )
-    Restore ==> package |> ignore
-
-let createProjectTargets (config : DotNet.BuildConfiguration) projects =
-    projects
-    |> Seq.iter (buildProject config)
-
-let run projects =
-    createTargets DotNet.Release projects
-    createProjectTargets DotNet.Release projects
+let run (options : Options) projects =
+    createTargets options projects
+    if options.CreatePerProjectTargets && Seq.length projects > 1 then
+        projects
+        |> Seq.iter (fun proj -> createTargets options [proj])
     Target.runOrDefault Build

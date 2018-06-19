@@ -27,4 +27,4 @@ let feed : NuGet.Feed = {
     NuGet.ApiKey = NuGet.Plain "wnHZEG9N_OrmO3XKoAGT"
 }
 
-NuGet.run projects feed
+NuGet.run NuGet.release projects feed

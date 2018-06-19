@@ -12,6 +12,8 @@ open Fake.Core.TargetOperators
 open Fake.IO
 open Fake.IO
 
+module DapDotNet = Dap.Build.DotNet
+
 [<Literal>]
 let Pack = "Pack"
 
@@ -35,6 +37,21 @@ type ApiKey =
 type Feed = {
     Source : string
     ApiKey : ApiKey
+}
+
+type Options = {
+    DotNet : DapDotNet.Options
+    CreateInjectTargets : bool
+}
+
+let debug = {
+    DotNet = DapDotNet.debug
+    CreateInjectTargets = true
+}
+
+let release = {
+    DotNet = DapDotNet.release
+    CreateInjectTargets = true
 }
 
 let checkVersion proj (releaseNotes : ReleaseNotes.ReleaseNotes) =
@@ -69,16 +86,16 @@ let private getApiKeyParam (apiKey : ApiKey) =
         sprintf " -k %s" key
     | NoAuth -> ""
 
-let pack (config : DotNet.BuildConfiguration) proj = 
+let pack (options : Options) proj = 
     Trace.traceFAKE "Pack Project: %s" proj
-    let setOptions = fun (options : DotNet.PackOptions) ->
+    let setOptions = fun (options' : DotNet.PackOptions) ->
         let releaseNotes = loadReleaseNotes proj
         let pkgReleaseNotes = sprintf "/p:PackageReleaseNotes=\"%s\"" (String.toLines releaseNotes.Notes)
-        { options with
-            Configuration = config
+        { options' with
+            Configuration = options.DotNet.Configuration
             NoBuild = true
             Common =
-                { options.Common with
+                { options'.Common with
                     CustomParams = Some pkgReleaseNotes
                     DotNetCliPath = "dotnet"
                 }
@@ -129,12 +146,12 @@ let doInject (package : string) (version : string) (pkg : string) =
     ]
     Trace.traceFAKE "    -> %s/%s" path <| Path.GetFileName pkg
 
-let inject (config : DotNet.BuildConfiguration) proj =
+let inject (options : Options) proj =
     Trace.traceFAKE "Inject Project: %s" proj
     let dir = Path.GetDirectoryName(proj)
     let package = Path.GetFileName(dir)
     let releaseNotes = loadReleaseNotes proj
-    let folder = Dap.Build.DotNet.getConfigFolder config
+    let folder = DapDotNet.getConfigFolder options.DotNet.Configuration
     Directory.GetFiles(dir </> "bin" </> folder, "*.nupkg")
     |> Array.find (fun pkg -> pkg.Contains(releaseNotes.NugetVersion))
     |> doInject package releaseNotes.NugetVersion
@@ -169,49 +186,44 @@ let publish (feed : Feed) proj =
         if not result.OK then
             failwith <| sprintf "Push nupkg failed: %s -> [%i] %A %A" pkgPath result.ExitCode result.Messages result.Errors
 
-let createTargets (config : DotNet.BuildConfiguration) projects feed =
-    Dap.Build.DotNet.createTargets config projects
-    Target.setLastDescription <| sprintf "Pack %i Projects" (Seq.length projects)
-    Target.create Pack (fun _ ->
+let createTargets (options : Options) projects feed =
+    DapDotNet.createTargets options.DotNet projects
+    let (label, prefix) = DapDotNet.getLabelAndPrefix projects
+    Target.setLastDescription <| sprintf "Pack %s" label
+    Target.create (prefix + Pack) (fun _ ->
         projects
-        |> Seq.iter (pack config)
+        |> Seq.iter (pack options)
     )
-    Target.setLastDescription <| sprintf "Inject %i Projects to Local NuGet Cache" (Seq.length projects)
-    Target.create Inject (fun _ ->
-        projects
-        |> Seq.iter (inject DotNet.Release)
-    )
-    Target.setLastDescription <| sprintf "Publish %i Projects to NuGet Server" (Seq.length projects)
-    Target.create Publish (fun _ ->
+    Target.setLastDescription <| sprintf "Publish %s" label
+    Target.create (prefix + Publish) (fun _ ->
         projects
         |> Seq.iter (publish feed)
     )
-    Target.setLastDescription <| sprintf "Recover %i Projects to Local NuGet Cache" (Seq.length projects)
-    Target.create Recover (fun _ ->
-        projects
-        |> Seq.iter recover
-    )
-    Dap.Build.DotNet.Build
-        ==> Pack
-        ==> Inject
-        ==> Publish
+    |> ignore
+    if options.CreateInjectTargets then
+        Target.setLastDescription <| sprintf "Inject %s" label
+        Target.create (prefix + Inject) (fun _ ->
+            projects
+            |> Seq.iter (inject options)
+        )
+        Target.setLastDescription <| sprintf "Recover %s" label
+        Target.create (prefix + Recover) (fun _ ->
+            projects
+            |> Seq.iter recover
+        )
+        prefix + DapDotNet.Build
+            ==> prefix + Pack
+            ==> prefix + Inject
+            ==> prefix + Publish
+    else
+        prefix + DapDotNet.Build
+            ==> prefix + Pack
+            ==> prefix + Publish
     |> ignore
 
-let buildProject (config : DotNet.BuildConfiguration) proj =
-    let package = Dap.Build.DotNet.getPackage proj
-    Target.setLastDescription <| sprintf "Inject %s" package
-    Target.create package (fun _ ->
-        Dap.Build.DotNet.build config false proj
-        pack config proj
-        inject config proj
-    )
-    Dap.Build.DotNet.Restore ==> package |> ignore
-
-let createProjectTargets (config : DotNet.BuildConfiguration) projects =
-    projects
-    |> Seq.iter (buildProject config)
-
-let run projects feed =
-    createTargets DotNet.Release projects feed
-    createProjectTargets DotNet.Release projects
+let run (options : Options) projects feed =
+    createTargets options projects feed
+    if options.DotNet.CreatePerProjectTargets && Seq.length projects > 1 then
+        projects
+        |> Seq.iter (fun proj -> createTargets options [proj] feed)
     Target.runOrDefault Inject
