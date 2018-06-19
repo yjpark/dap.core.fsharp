@@ -131,6 +131,8 @@ let doInject (package : string) (version : string) (pkg : string) =
     let injectPath = Path.Combine [| path ; "Dap.Build_Inject.txt" |]
     if not (File.exists injectPath) then
         let originalPath = getOriginalNugetCachePath package version
+        Directory.ensure originalPath
+        Shell.cleanDir originalPath
         Shell.copyDir originalPath path (fun _ -> true)
     Shell.cleanDir path
     Shell.copyFile path pkg
