@@ -91,17 +91,18 @@ let build (options : Options) (noDependencies : bool) proj =
         } 
     DotNet.build setOptions proj
 
-let getLabelAndPrefix (projects : seq<string>) =
+let getLabelAndPrefix (noPrefix : bool) (projects : seq<string>) =
     let len = Seq.length projects
     if len = 1 then
         let dir = Path.GetDirectoryName(Seq.head projects)
         let label = Path.GetFileName(dir)
-        (label, label + ":")
+        let prefix = if noPrefix then "" else label + ":"
+        (label, prefix)
     else
         (sprintf "%i Projects" len, "")
 
-let createTargets (options : Options) (projects : seq<string>) =
-    let (label, prefix) = getLabelAndPrefix projects
+let createTargets' (options : Options) (noPrefix : bool) (projects : seq<string>) =
+    let (label, prefix) = getLabelAndPrefix noPrefix projects
     Target.setLastDescription <| sprintf "Clean %s" label
     Target.create (prefix + Clean) (fun _ ->
         projects
@@ -121,10 +122,19 @@ let createTargets (options : Options) (projects : seq<string>) =
         ==> prefix + Restore
         ==> prefix + Build
     |> ignore
+    (label, prefix)
+
+let createTargets options projects =
+    createTargets' options true projects
+    |> ignore
+
+let createPerProjectTargets options proj =
+    createTargets' options false [proj]
+    |> ignore
 
 let run (options : Options) projects =
     createTargets options projects
     if options.CreatePerProjectTargets && Seq.length projects > 1 then
         projects
-        |> Seq.iter (fun proj -> createTargets options [proj])
+        |> Seq.iter (createPerProjectTargets options)
     Target.runOrDefault Build

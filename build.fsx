@@ -8,6 +8,11 @@ open Fake.IO.Globbing.Operators
 #load "src/Dap.Build/NuGet.fs"
 module NuGet = Dap.Build.NuGet
 
+let feed : NuGet.Feed = {
+    NuGet.Source = "https://nuget.yjpark.org/nuget/dap"
+    NuGet.ApiKey = NuGet.Plain "wnHZEG9N_OrmO3XKoAGT"
+}
+
 let projects =
     !! "src/Dap.Build/*.fsproj"
     ++ "src/Fable.Dap.Prelude/*.fsproj"
@@ -22,9 +27,4 @@ let projects =
     (*
     *)
 
-let feed : NuGet.Feed = {
-    NuGet.Source = "https://nuget.yjpark.org/nuget/dap"
-    NuGet.ApiKey = NuGet.Plain "wnHZEG9N_OrmO3XKoAGT"
-}
-
-NuGet.run NuGet.release projects feed
+NuGet.run NuGet.release feed projects
