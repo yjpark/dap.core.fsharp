@@ -80,15 +80,18 @@ let clean (options : Options) proj =
         Path.Combine [| dir ; "obj" ; folder |]
     ]
 
-let restore proj = 
+let restore (_options : Options) (noDependencies : bool) proj = 
     Trace.traceFAKE "Restore Project: %s" proj
     let setOptions = fun (options' : DotNet.RestoreOptions) ->
-        { options' with
-            Common =
-                { options'.Common with
-                    CustomParams = Some "--no-dependencies"
-                }
-        } 
+        if noDependencies then
+            { options' with
+                Common =
+                    { options'.Common with
+                        CustomParams = Some "--no-dependencies"
+                    }
+            } 
+        else
+            options'
     DotNet.restore setOptions proj
 
 let build (options : Options) (noDependencies : bool) proj = 
@@ -145,7 +148,9 @@ let createTargets' (options : Options) (noPrefix : bool) (projects : seq<string>
     Target.setLastDescription <| sprintf "Restore %s" label
     Target.create (prefix + Restore) (fun _ ->
         projects
-        |> Seq.iter restore
+        |> Seq.iteri (fun i proj ->
+            restore options (i > 0) proj
+        )
     )
     Target.setLastDescription <| sprintf "Build %s" label
     Target.create (prefix + Build) (fun _ ->
