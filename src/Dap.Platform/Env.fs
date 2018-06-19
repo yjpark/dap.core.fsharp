@@ -3,6 +3,7 @@
 module Dap.Platform.Env
 
 open Elmish
+open FSharp.Control.Tasks
 
 open Dap.Prelude
 open Dap.Platform.Internal
@@ -190,13 +191,22 @@ let register (kind : Kind)
     env.Handle <| DoRegister (kind, spawner, None)
     env
 
-let addService kind key spec (env : IEnv) =
+let newService kind key spec (env : IEnv) =
     let param = Agent.param env kind key
-    let service = Agent.spawn spec param
-    env.Handle <| DoAddService (service, None)
-    env
+    Agent.spawn spec param
+
+let addServiceAsync kind key spec (env : IEnv) = task {
+    let service = newService kind key spec env
+    let _ = env.HandleAsync <| DoAddService' service
+    return service
+}
 
 let getService (kind : Kind) (key : Key) (env : IEnv) =
     let state = Option.get env.State
     let kindServices = Map.find kind state.Services
     Map.find key kindServices
+
+let findService (kind : Kind) (key : Key) (env : IEnv) =
+    let state = Option.get env.State
+    Map.tryFind kind state.Services
+    |> Option.bind (Map.tryFind key)

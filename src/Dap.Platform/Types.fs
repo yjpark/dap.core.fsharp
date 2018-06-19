@@ -43,6 +43,14 @@ and EnvReq =
     | TryFindService of Kind * Key * Callback<IAgent option>               // -> service
     | DoRegister of Kind * Spawner * Callback<int>          // -> spawnersCount
     | DoGetAgent of Kind * Key * Callback<IAgent * bool>    // -> (agent, isNew)
+with
+    override this.ToString() =
+        //TODO: Find proper way to override %A behaviour
+        match this with
+        | DoAddService (service, callback) ->
+            sprintf "(DoAddService %s %A)" (service.ToString ()) callback
+        | _ ->
+            sprintf "%A" this
 
 and EnvEvt =
     | OnQuit of QuitStats
@@ -51,7 +59,15 @@ and EnvEvt =
 and EnvMsg =
     | EnvReq of EnvReq
     | EnvEvt of EnvEvt
-with interface IMsg
+with
+    override this.ToString() =
+        //TODO: Find proper way to override %A behaviour
+        match this with
+        | EnvReq req ->
+            sprintf "(EnvReq %s)" <| req.ToString ()
+        | _ ->
+            sprintf "%A" this
+    interface IMsg
 
 and EnvOperate =
         Operate<IEnv, EnvModel, EnvMsg>
@@ -129,3 +145,25 @@ let identOf (scope : Scope) (kind : Kind) (key : Key) : Ident =
         Kind = kind
         Key = key
     }
+
+let DoQuit' (forceQuit : bool) callback =
+    DoQuit (forceQuit, callback)
+
+let DoAddService' (service : IAgent) callback =
+    DoAddService (service, callback)
+
+let DoGetService' (kind : Kind) (key : Key) callback =
+    DoGetService (kind, key, callback)
+
+let TryFindService' (kind : Kind) (key : Key) callback =
+    TryFindService (kind, key, callback)
+
+let DoRegister' (kind : Kind) (spawner : Spawner) callback =
+    DoRegister (kind, spawner, callback)
+
+let DoGetAgent' (kind : Kind) (key : Key) callback =
+    DoGetAgent (kind, key, callback)
+
+let DoStop' (forceStop : bool) callback =
+    DoStop (forceStop, callback)
+

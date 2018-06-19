@@ -2,6 +2,7 @@
 [<RequireQualifiedAccess>]
 module Dap.Platform.Ticker.Service
 
+open FSharp.Control.Tasks
 open Dap.Platform
 
 [<Literal>]
@@ -19,12 +20,14 @@ let getSpec (autoStart : bool) (frameRate : int) =
         }
     |> Logic.getSpec
 
-let add' (kind : Kind) (key : Key) autoStart frameRate =
-    getSpec autoStart frameRate
-    |> Env.addService kind key
+let addAsync' (kind : Kind) (key : Key) autoStart frameRate env = task {
+    let spec = getSpec autoStart frameRate
+    let! service = env |> Env.addServiceAsync kind key spec
+    return service
+}
 
-let add autoStart key frameRate =
-    add' Kind key autoStart frameRate
+let addAsync autoStart key frameRate =
+    addAsync' Kind key autoStart frameRate
 
 let get' kind key (env : IEnv) =
     env
