@@ -3,10 +3,10 @@ module Dap.Build.DotNet
 
 open System
 open System.IO
+open System.Text.RegularExpressions
 open Fake.Core
 open Fake.DotNet
 open Fake.IO
-open Fake.IO.FileSystemOperators
 open Fake.Core.TargetOperators
 
 [<Literal>]
@@ -17,6 +17,9 @@ let Restore = "Restore"
 
 [<Literal>]
 let Build = "Build"
+
+[<Literal>]
+let Run = "Run"
 
 type Options = {
     UseDebugConfig : bool
@@ -45,6 +48,18 @@ let getPackage proj =
     let dir = Path.GetDirectoryName(proj)
     Path.GetFileName(dir)
 
+let isRunnable proj =
+    let versionRegex = Regex("<OutputType>(.*?)</OutputType>", RegexOptions.IgnoreCase)
+    File.ReadLines(proj)
+    |> Seq.tryPick (fun line ->
+        let m = versionRegex.Match(line)
+        if m.Success then Some m else None)
+    |> function
+        | None -> false
+        | Some m ->
+            let v = m.Groups.[1].Value
+            v.ToLower () = "exe"
+
 let clean (options : Options) proj =
     Trace.traceFAKE "Clean Project: %s" proj
     (*
@@ -54,7 +69,7 @@ let clean (options : Options) proj =
         { options' with
             WorkingDirectory = Path.GetDirectoryName(proj)
         } 
-    sprintf "--configuration %s" <| getConfigFolder config
+    sprintf "--configuration %s" <| getConfigFolder options.Configuration
     |> DotNet.exec setOptions "clean"
     |> ignore
      *)
@@ -91,11 +106,30 @@ let build (options : Options) (noDependencies : bool) proj =
         } 
     DotNet.build setOptions proj
 
+let run (options : Options) proj = 
+    Trace.traceFAKE "Run Project: %s" proj
+    let setOptions = fun (options' : DotNet.Options) ->
+        { options' with
+            WorkingDirectory = Path.GetDirectoryName(proj)
+        } 
+    let package = getPackage proj
+    let key = "RunArgs_" + package.Replace(".", "_")
+    match Environment.environVarOrNone key with
+    | Some v ->
+        v
+    | None ->
+        Trace.traceFAKE "    Pass Args by Set Environment: %s" key 
+        ""
+    |> sprintf "--no-build --configuration %s -- %s" (getConfigFolder options.Configuration)
+    |> DotNet.exec setOptions "run"
+    |> fun result ->
+        if not result.OK then
+            failwith <| sprintf "Run Project Failed: %s -> [%i] %A %A" package result.ExitCode result.Messages result.Errors
+
 let getLabelAndPrefix (noPrefix : bool) (projects : seq<string>) =
     let len = Seq.length projects
     if len = 1 then
-        let dir = Path.GetDirectoryName(Seq.head projects)
-        let label = Path.GetFileName(dir)
+        let label = getPackage(Seq.head projects)
         let prefix = if noPrefix then "" else label + ":"
         (label, prefix)
     else
@@ -124,6 +158,15 @@ let createTargets' (options : Options) (noPrefix : bool) (projects : seq<string>
         ==> prefix + Restore
         ==> prefix + Build
     |> ignore
+    if Seq.length projects = 1 && isRunnable (Seq.head projects) then
+        Target.setLastDescription <| sprintf "Run %s" label
+        Target.create (prefix + Run) (fun _ ->
+            projects
+            |> Seq.iter (run options)
+        )
+        prefix + Build
+            ==> prefix + Run
+        |> ignore
     (label, prefix)
 
 let createTargets options projects =
@@ -134,9 +177,12 @@ let createPerProjectTargets options proj =
     createTargets' options false [proj]
     |> ignore
 
-let run (options : Options) projects =
+let create (options : Options) projects =
     createTargets options projects
     if options.CreatePerProjectTargets && Seq.length projects > 1 then
         projects
         |> Seq.iter (createPerProjectTargets options)
+
+let createAndRun (options : Options) projects =
+    create options projects
     Target.runOrDefault Build

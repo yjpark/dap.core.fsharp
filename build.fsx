@@ -27,4 +27,4 @@ let projects =
     (*
     *)
 
-NuGet.run NuGet.release feed projects
+NuGet.createAndRun NuGet.release feed projects

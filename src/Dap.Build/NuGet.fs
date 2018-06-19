@@ -9,8 +9,6 @@ open Fake.DotNet
 open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.Core.TargetOperators
-open Fake.IO
-open Fake.IO
 
 module DapDotNet = Dap.Build.DotNet
 
@@ -184,7 +182,7 @@ let publish (feed : Feed) proj =
     )|> DotNet.exec id "nuget"
     |> fun result ->
         if not result.OK then
-            failwith <| sprintf "Push nupkg failed: %s -> [%i] %A %A" pkgPath result.ExitCode result.Messages result.Errors
+            failwith <| sprintf "Push nupkg Failed: %s -> [%i] %A %A" pkgPath result.ExitCode result.Messages result.Errors
 
 let createTargets' (options : Options) noPrefix feed projects =
     let (label, prefix) = DapDotNet.createTargets' options.DotNet noPrefix projects
@@ -226,9 +224,12 @@ let createTargets options =
 let createPerProjectTargets options feed proj =
     createTargets' options false feed [proj]
 
-let run (options : Options) feed projects =
+let create (options : Options) feed projects =
     createTargets options feed projects
     if options.DotNet.CreatePerProjectTargets && Seq.length projects > 1 then
         projects
         |> Seq.iter (createPerProjectTargets options feed)
+
+let createAndRun (options : Options) feed projects =
+    create options feed projects
     Target.runOrDefault Inject
