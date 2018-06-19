@@ -31,7 +31,7 @@ let debug = {
 }
 
 let release = {
-    UseDebugConfig = true
+    UseDebugConfig = false
     CreatePerProjectTargets = true
 }
 
@@ -116,7 +116,9 @@ let createTargets' (options : Options) (noPrefix : bool) (projects : seq<string>
     Target.setLastDescription <| sprintf "Build %s" label
     Target.create (prefix + Build) (fun _ ->
         projects
-        |> Seq.iter (build options (Seq.length projects > 1))
+        |> Seq.iteri (fun i proj -> 
+            build options (i > 0) proj
+        )
     )
     prefix + Clean
         ==> prefix + Restore
