@@ -68,22 +68,10 @@ let isRunnable proj =
 
 let clean (options : Options) proj =
     Trace.traceFAKE "Clean Project: %s" proj
-    (*
-    //Dotnet clean might left some extra files (e.g .nuspec) which
-    //will break pack process
-    let setOptions = fun (options' : DotNet.Options) ->
-        { options' with
-            WorkingDirectory = Path.GetDirectoryName(proj)
-        } 
-    sprintf "--configuration %s" <| getConfigFolder options.Configuration
-    |> DotNet.exec setOptions "clean"
-    |> ignore
-     *)
     let dir = Path.GetDirectoryName(proj)
-    let folder = getConfigFolder options.Configuration
     Shell.cleanDirs [
-        Path.Combine [| dir ; "bin" ; folder |]
-        Path.Combine [| dir ; "obj" ; folder |]
+        Path.Combine [| dir ; "bin" |]
+        Path.Combine [| dir ; "obj" |]
     ]
 
 let restore (_options : Options) (noDependencies : bool) proj = 
