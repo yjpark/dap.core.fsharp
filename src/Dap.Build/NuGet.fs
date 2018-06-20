@@ -210,14 +210,12 @@ let createTargets' (options : Options) noPrefix feed projects =
             projects
             |> Seq.iter recover
         )
-        prefix + DapDotNet.Build
-            ==> prefix + Pack
+        prefix + Pack
             ==> prefix + Inject
-            ==> prefix + Publish
-    else
-        prefix + DapDotNet.Build
-            ==> prefix + Pack
-            ==> prefix + Publish
+        |> ignore
+    prefix + DapDotNet.Build
+        ==> prefix + Pack
+        ==> prefix + Publish
     |> ignore
 
 let createTargets options =
@@ -234,4 +232,4 @@ let create (options : Options) feed projects =
 
 let createAndRun (options : Options) feed projects =
     create options feed projects
-    Target.runOrDefault Inject
+    Target.runOrDefault Pack

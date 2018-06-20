@@ -7,6 +7,26 @@ open Dap.Remote
 open Fable.Core
 #endif
 
+// http://fable.io/docs/interacting.html#json-serialization
+#if FABLE_COMPILER
+open Fable.Core.JsInterop
+
+let [<PassGenericsAttribute>] fableDecodeJson<'t> (str : string) =
+    ofJson<'t> str
+
+let fableEncodeJson v =
+    toJson v
+
+#else
+open Newtonsoft.Json
+
+let private fableJsonConverter = Fable.JsonConverter () :> JsonConverter
+let fableDecodeJson<'t> (str : string) =
+    JsonConvert.DeserializeObject<'t>(str, [| fableJsonConverter |])
+let fableEncodeJson v =
+    JsonConvert.SerializeObject(v, [| fableJsonConverter |])
+#endif
+
 let checkKind (kind : string) (req : IRequest) : unit =
     if kind <> req.Kind then
         failwith <| sprintf "Kind_Not_Matched: %s -> %A" kind req

@@ -1,4 +1,5 @@
 Thoth.Json.Net
+Fable.JsonConverter
 
 group Build
     dotnet-sourcelink
