@@ -16,7 +16,7 @@ module DapDotNet = Dap.Build.DotNet
 let Pack = "Pack"
 
 [<Literal>]
-let Publish = "Publish"
+let Push = "Push"
 
 [<Literal>]
 let Develop = "Develop"
@@ -171,8 +171,8 @@ let recover proj =
     let releaseNotes = loadReleaseNotes proj
     doRecover package releaseNotes.NugetVersion
 
-let publish (feed : Feed) proj =
-    Trace.traceFAKE "Publish Project: %s" proj
+let push (feed : Feed) proj =
+    Trace.traceFAKE "Push Project: %s" proj
     let dir = Path.GetDirectoryName(proj)
     let releaseNotes = loadReleaseNotes proj
     let mutable pkgPath = ""
@@ -193,10 +193,10 @@ let createTargets' (options : Options) noPrefix feed projects =
         projects
         |> Seq.iter (pack options)
     )
-    Target.setLastDescription <| sprintf "Publish %s" label
-    Target.create (prefix + Publish) (fun _ ->
+    Target.setLastDescription <| sprintf "Push %s" label
+    Target.create (prefix + Push) (fun _ ->
         projects
-        |> Seq.iter (publish feed)
+        |> Seq.iter (push feed)
     )
     |> ignore
     if options.CreateInjectTargets then
@@ -215,7 +215,7 @@ let createTargets' (options : Options) noPrefix feed projects =
         |> ignore
     prefix + DapDotNet.Build
         ==> prefix + Pack
-        ==> prefix + Publish
+        ==> prefix + Push
     |> ignore
 
 let createTargets options =

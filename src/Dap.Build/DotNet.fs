@@ -21,6 +21,9 @@ let Build = "Build"
 [<Literal>]
 let Run = "Run"
 
+[<Literal>]
+let Publish = "Publish"
+
 type Options = {
     UseDebugConfig : bool
     CreatePerProjectTargets : bool
@@ -129,6 +132,19 @@ let run (options : Options) proj =
         if not result.OK then
             failwith <| sprintf "Run Project Failed: %s -> [%i] %A %A" package result.ExitCode result.Messages result.Errors
 
+let publish (options : Options) proj = 
+    Trace.traceFAKE "Publish Project: %s" proj
+    let setOptions = fun (options' : DotNet.Options) ->
+        { options' with
+            WorkingDirectory = Path.GetDirectoryName(proj)
+        } 
+    let package = getPackage proj
+    sprintf "--no-build --configuration %s" (getConfigFolder options.Configuration)
+    |> DotNet.exec setOptions "publish"
+    |> fun result ->
+        if not result.OK then
+            failwith <| sprintf "Publish Project Failed: %s -> [%i] %A %A" package result.ExitCode result.Messages result.Errors
+
 let getLabelAndPrefix (noPrefix : bool) (projects : seq<string>) =
     let len = Seq.length projects
     if len = 1 then
@@ -169,8 +185,16 @@ let createTargets' (options : Options) (noPrefix : bool) (projects : seq<string>
             projects
             |> Seq.iter (run options)
         )
+        Target.setLastDescription <| sprintf "Publish %s" label
+        Target.create (prefix + Publish) (fun _ ->
+            projects
+            |> Seq.iter (publish options)
+        )
         prefix + Build
             ==> prefix + Run
+        |> ignore
+        prefix + Build
+            ==> prefix + Publish
         |> ignore
     (label, prefix)
 
