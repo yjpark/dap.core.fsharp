@@ -37,20 +37,12 @@ and EnvModel = {
 }
 
 and EnvReq =
-    | DoQuit of bool * Callback<QuitStats>                  // forceQuit -> willQuit
-    | DoAddService of IAgent * Callback<int * int>                // -> servicesCount * kindServicesCount
-    | DoGetService of Kind * Key * Callback<IAgent>               // -> service
-    | TryFindService of Kind * Key * Callback<IAgent option>               // -> service
-    | DoRegister of Kind * Spawner * Callback<int>          // -> spawnersCount
-    | DoGetAgent of Kind * Key * Callback<IAgent * bool>    // -> (agent, isNew)
-with
-    override this.ToString() =
-        //TODO: Find proper way to override %A behaviour
-        match this with
-        | DoAddService (service, callback) ->
-            sprintf "(DoAddService %s %A)" (service.ToString ()) callback
-        | _ ->
-            sprintf "%A" this
+    | DoQuit of bool * Callback<QuitStats>                      // forceQuit -> willQuit
+    | DoAddService of IAgent * Callback<int * int>              // -> servicesCount * kindServicesCount
+    | DoGetService of Kind * Key * Callback<IAgent>             // -> service
+    | TryFindService of Kind * Key * Callback<IAgent option>    // -> service
+    | DoRegister of Kind * Spawner * Callback<int>              // -> spawnersCount
+    | DoGetAgent of Kind * Key * Callback<IAgent * bool>        // -> (agent, isNew)
 
 and EnvEvt =
     | OnQuit of QuitStats
@@ -60,13 +52,6 @@ and EnvMsg =
     | EnvReq of EnvReq
     | EnvEvt of EnvEvt
 with
-    override this.ToString() =
-        //TODO: Find proper way to override %A behaviour
-        match this with
-        | EnvReq req ->
-            sprintf "(EnvReq %s)" <| req.ToString ()
-        | _ ->
-            sprintf "%A" this
     interface IMsg
 
 and EnvOperate =
