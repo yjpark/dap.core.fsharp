@@ -22,6 +22,9 @@ let Build = "Build"
 let Run = "Run"
 
 [<Literal>]
+let WatchRun = "WatchRun"
+
+[<Literal>]
 let Publish = "Publish"
 
 type Options = {
@@ -112,7 +115,7 @@ let build (options : Options) (noDependencies : bool) proj =
         } 
     DotNet.build setOptions proj
 
-let run (options : Options) proj = 
+let private run' (cmd : string) (options : Options) proj = 
     Trace.traceFAKE "Run Project: %s" proj
     let setOptions = fun (options' : DotNet.Options) ->
         { options' with
@@ -127,10 +130,16 @@ let run (options : Options) proj =
         Trace.traceFAKE "    Pass Args by Set Environment: %s" key 
         ""
     |> sprintf "--no-build --configuration %s -- %s" (getConfigFolder options.Configuration)
-    |> DotNet.exec setOptions "run"
+    |> DotNet.exec setOptions cmd
     |> fun result ->
         if not result.OK then
             failwith <| sprintf "Run Project Failed: %s -> [%i] %A %A" package result.ExitCode result.Messages result.Errors
+
+let run (options : Options) proj = 
+    run' "run" options proj
+
+let watchRun (options : Options) proj = 
+    run' "watch run" options proj
 
 let publish (options : Options) proj = 
     Trace.traceFAKE "Publish Project: %s" proj
@@ -185,6 +194,11 @@ let createTargets' (options : Options) (noPrefix : bool) (projects : seq<string>
             projects
             |> Seq.iter (run options)
         )
+        Target.setLastDescription <| sprintf "Watch Run %s" label
+        Target.create (prefix + WatchRun) (fun _ ->
+            projects
+            |> Seq.iter (watchRun options)
+        )
         Target.setLastDescription <| sprintf "Publish %s" label
         Target.create (prefix + Publish) (fun _ ->
             projects
@@ -192,6 +206,9 @@ let createTargets' (options : Options) (noPrefix : bool) (projects : seq<string>
         )
         prefix + Build
             ==> prefix + Run
+        |> ignore
+        prefix + Build
+            ==> prefix + WatchRun
         |> ignore
         prefix + Build
             ==> prefix + Publish
@@ -202,7 +219,7 @@ let createTargets options projects =
     createTargets' options true projects
     |> ignore
 
-let createPerProjectTargets options proj =
+let createPerProjectTarget options proj =
     createTargets' options false [proj]
     |> ignore
 
@@ -210,7 +227,7 @@ let create (options : Options) projects =
     createTargets options projects
     if options.CreatePerProjectTargets && Seq.length projects > 1 then
         projects
-        |> Seq.iter (createPerProjectTargets options)
+        |> Seq.iter (createPerProjectTarget options)
 
 let createAndRun (options : Options) projects =
     create options projects

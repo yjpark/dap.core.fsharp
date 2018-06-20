@@ -198,6 +198,9 @@ let createTargets' (options : Options) noPrefix feed projects =
         projects
         |> Seq.iter (push feed)
     )
+    prefix + DapDotNet.Build
+        ==> prefix + Pack
+        ==> prefix + Push
     |> ignore
     if options.CreateInjectTargets then
         Target.setLastDescription <| sprintf "Inject %s" label
@@ -213,22 +216,18 @@ let createTargets' (options : Options) noPrefix feed projects =
         prefix + Pack
             ==> prefix + Inject
         |> ignore
-    prefix + DapDotNet.Build
-        ==> prefix + Pack
-        ==> prefix + Push
-    |> ignore
 
 let createTargets options =
     createTargets' options true
 
-let createPerProjectTargets options feed proj =
+let createPerProjectTarget options feed proj =
     createTargets' options false feed [proj]
 
 let create (options : Options) feed projects =
     createTargets options feed projects
     if options.DotNet.CreatePerProjectTargets && Seq.length projects > 1 then
         projects
-        |> Seq.iter (createPerProjectTargets options feed)
+        |> Seq.iter (createPerProjectTarget options feed)
 
 let createAndRun (options : Options) feed projects =
     create options feed projects
