@@ -126,16 +126,18 @@ let getSha512File (filePath:string) =
 let doInject (package : string) (version : string) (pkg : string) =
     let path = getNugetCachePath package <| Some version
     Directory.ensure path
-    let nupkgPath = Path.GetFileName(pkg)
-    let hashPath = Path.Combine [| path ; nupkgPath + ".sha512" |]
-    let injectPath = Path.Combine [| path ; "Dap.Build_Inject.txt" |]
+    let nupkgName = Path.GetFileName (pkg)
+    let nupkgName = nupkgName.ToLower ()
+    let nupkgPath = Path.Combine [| path ; nupkgName |]
+    let hashPath = nupkgPath + ".sha512"
+    let injectPath = Path.Combine [| path ; "dap.build_inject.txt" |]
     if not (File.exists injectPath) then
         let originalPath = getOriginalNugetCachePath package version
         Directory.ensure originalPath
         Shell.cleanDir originalPath
         Shell.copyDir originalPath path (fun _ -> true)
     Shell.cleanDir path
-    Shell.copyFile path pkg
+    Shell.copyFile nupkgPath pkg
     let hash = getSha512File pkg
     File.writeNew hashPath [hash]
     Zip.unzip path pkg
