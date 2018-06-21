@@ -198,6 +198,9 @@ let doFetch (feed : Feed) (package : string) (version : string) =
         sprintf "SHA512 Hash: %s" hash
         url
     ]
+    let originalPath = getOriginalNugetCachePath package version
+    if DirectoryInfo.exists (DirectoryInfo.ofPath originalPath) then
+        Shell.deleteDir originalPath
 
 let fetch (feed : Feed) proj =
     Trace.traceFAKE "Fatch NuGet Project: %s" proj
