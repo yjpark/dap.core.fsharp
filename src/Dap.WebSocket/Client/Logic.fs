@@ -70,8 +70,9 @@ let private init : Init<IRunner,Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
             State = None
         }, Cmd.none)
 
-let private subscribe (runner : IRunner) (model : Model<'pkt>) : Cmd<Msg<'pkt>> =
-    subscribeEvent runner model WebSocketEvt model.Args.OnEvent
+let private subscribe : Subscribe<IRunner, Model<'pkt>, Msg<'pkt>> =
+    fun runner model ->
+        subscribeEvent runner model WebSocketEvt model.Args.OnEvent
 
 let logic : Logic<'runner, Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
     {
