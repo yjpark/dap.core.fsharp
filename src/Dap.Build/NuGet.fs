@@ -146,7 +146,8 @@ let doInject (package : string) (version : string) (pkg : string) =
         sprintf "SHA512 Hash: %s" hash
         pkg
     ]
-    Trace.traceFAKE "    -> %s/%s" path <| Path.GetFileName pkg
+    Trace.traceFAKE "    -> %s" nupkgPath
+    Trace.traceFAKE "    -> %s" hash
 
 let inject (options : Options) proj =
     Trace.traceFAKE "Inject Project: %s" proj

@@ -66,7 +66,7 @@ let isRunnable proj =
             let v = m.Groups.[1].Value
             v.ToLower () = "exe"
 
-let clean (options : Options) proj =
+let clean (_options : Options) proj =
     Trace.traceFAKE "Clean Project: %s" proj
     let dir = Path.GetDirectoryName(proj)
     Shell.cleanDirs [
