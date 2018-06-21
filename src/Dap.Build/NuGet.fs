@@ -8,9 +8,13 @@ open Fake.Core
 open Fake.DotNet
 open Fake.IO
 open Fake.IO.FileSystemOperators
+open Fake.Net
 open Fake.Core.TargetOperators
 
 module DapDotNet = Dap.Build.DotNet
+
+[<Literal>]
+let Fetch = "Fetch"
 
 [<Literal>]
 let Pack = "Pack"
@@ -85,7 +89,7 @@ let private getApiKeyParam (apiKey : ApiKey) =
     | NoAuth -> ""
 
 let pack (options : Options) proj = 
-    Trace.traceFAKE "Pack Project: %s" proj
+    Trace.traceFAKE "Pack NuGet Project: %s" proj
     let setOptions = fun (options' : DotNet.PackOptions) ->
         let releaseNotes = loadReleaseNotes proj
         let pkgReleaseNotes = sprintf "/p:PackageReleaseNotes=\"%s\"" (String.toLines releaseNotes.Notes)
@@ -123,13 +127,21 @@ let getSha512File (filePath:string) =
     use stream = File.OpenRead(filePath)
     getSha512Stream stream
 
+let extractNupkg path nupkgPath =
+    let hash = getSha512File nupkgPath
+    let hashPath = nupkgPath + ".sha512"
+    File.writeNew hashPath [hash]
+    Zip.unzip path nupkgPath
+    Trace.traceFAKE "    -> %s" nupkgPath
+    Trace.traceFAKE "    -> %s" hash
+    hash
+
 let doInject (package : string) (version : string) (pkg : string) =
     let path = getNugetCachePath package <| Some version
     Directory.ensure path
     let nupkgName = Path.GetFileName (pkg)
     let nupkgName = nupkgName.ToLower ()
     let nupkgPath = Path.Combine [| path ; nupkgName |]
-    let hashPath = nupkgPath + ".sha512"
     let injectPath = Path.Combine [| path ; "dap.build_inject.txt" |]
     if not (File.exists injectPath) then
         let originalPath = getOriginalNugetCachePath package version
@@ -138,19 +150,15 @@ let doInject (package : string) (version : string) (pkg : string) =
         Shell.copyDir originalPath path (fun _ -> true)
     Shell.cleanDir path
     Shell.copyFile nupkgPath pkg
-    let hash = getSha512File pkg
-    File.writeNew hashPath [hash]
-    Zip.unzip path pkg
+    let hash = extractNupkg path nupkgPath
     File.writeNew injectPath [
         sprintf "Injected At: %A" System.DateTime.Now 
         sprintf "SHA512 Hash: %s" hash
         pkg
     ]
-    Trace.traceFAKE "    -> %s" nupkgPath
-    Trace.traceFAKE "    -> %s" hash
 
 let inject (options : Options) proj =
-    Trace.traceFAKE "Inject Project: %s" proj
+    Trace.traceFAKE "Inject NuGet Project: %s" proj
     let dir = Path.GetDirectoryName(proj)
     let package = Path.GetFileName(dir)
     let releaseNotes = loadReleaseNotes proj
@@ -168,14 +176,38 @@ let doRecover (package : string) (version : string) =
         Trace.traceFAKE "    -> %s" path
 
 let recover proj =
-    Trace.traceFAKE "Recover Project: %s" proj
+    Trace.traceFAKE "Recover NuGet Project: %s" proj
     let dir = Path.GetDirectoryName(proj)
     let package = Path.GetFileName(dir)
     let releaseNotes = loadReleaseNotes proj
     doRecover package releaseNotes.NugetVersion
 
+let doFetch (feed : Feed) (package : string) (version : string) =
+    let path = getNugetCachePath package <| Some version
+    Shell.cleanDir path
+    let nupkgName = sprintf "%s.%s.nupkg" package version
+    let nupkgName = nupkgName.ToLower ()
+    let nupkgPath = Path.Combine [| path ; nupkgName |]
+    let url = sprintf "%s/package/%s/%s" feed.Source package version
+    Http.downloadFile nupkgPath url
+    |> ignore
+    let hash = extractNupkg path nupkgPath
+    let fetchPath = Path.Combine [| path ; "dap.build_fetch.txt" |]
+    File.writeNew fetchPath [
+        sprintf "Download At: %A" System.DateTime.Now 
+        sprintf "SHA512 Hash: %s" hash
+        url
+    ]
+
+let fetch (feed : Feed) proj =
+    Trace.traceFAKE "Fatch NuGet Project: %s" proj
+    let dir = Path.GetDirectoryName(proj)
+    let package = Path.GetFileName(dir)
+    let releaseNotes = loadReleaseNotes proj
+    doFetch feed package releaseNotes.NugetVersion
+
 let push (feed : Feed) proj =
-    Trace.traceFAKE "Push Project: %s" proj
+    Trace.traceFAKE "Push NuGet Project: %s" proj
     let dir = Path.GetDirectoryName(proj)
     let releaseNotes = loadReleaseNotes proj
     let mutable pkgPath = ""
@@ -191,6 +223,11 @@ let push (feed : Feed) proj =
 
 let createTargets' (options : Options) noPrefix feed projects =
     let (label, prefix) = DapDotNet.createTargets' options.DotNet noPrefix projects
+    Target.setLastDescription <| sprintf "Fetch %s" label
+    Target.create (prefix + Fetch) (fun _ ->
+        projects
+        |> Seq.iter (fetch feed)
+    )
     Target.setLastDescription <| sprintf "Pack %s" label
     Target.create (prefix + Pack) (fun _ ->
         projects

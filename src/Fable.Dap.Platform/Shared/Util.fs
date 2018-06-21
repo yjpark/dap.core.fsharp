@@ -27,6 +27,24 @@ let setModel (newModel : 'model) : Operate<'runner, 'model, 'msg> =
     fun _runner (_model, cmd) ->
         (newModel, cmd)
 
+#if FABLE_COMPILER
+#else
+let inline updateState (update : 'state -> 'state) : Operate<'runner, ^model, 'msg> =
+    fun _runner (model, cmd) ->
+        let state = (^model : (member State : 'state option) model)
+        match state with
+        | None ->
+            (model, cmd)
+        | Some state ->
+            let newState = update state
+            let newModel = (^model : (member WithState : 'state -> ^model) (model, newState))
+            (newModel, cmd)
+
+let inline setState (newState : 'state) : Operate<'runner, ^model, 'msg> =
+    fun _runner (model, cmd) ->
+        let newModel = (^model : (member WithState : 'state -> ^model) (model, newState))
+        (newModel, cmd)
+#endif
 let noCmd = Cmd.none
 
 let addCmd' (newCmd : Cmd<'msg>) : Operate<'runner, 'model, 'msg> =

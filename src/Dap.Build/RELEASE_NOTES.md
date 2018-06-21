@@ -2,6 +2,7 @@
 * Generate .sha512 file when inject
 * Save original version before inject
 * Create Recover target to remove the injected version
+* Create Fetch target to fetch nupkg from feed
 * Create sub tragets per project
 * Add Run and WatchRun targets
 * Add Fable targets
