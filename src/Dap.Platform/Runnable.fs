@@ -15,6 +15,8 @@ type IRunnable<'runner, 'args, 'model, 'msg>
     abstract Process : 'msg -> Cmd<'msg>
     abstract Deliver : Cmd<'msg> -> unit
 
+let private tplRunTaskFailed = LogEvent.Template2WithException<string, obj>(LogLevelError, "[{Section}] {Msg} -> Failed")
+
 let private tplRunnableErr = LogEvent.Template3<string, obj, obj>(LogLevelFatal, "[{Section}] {Err}: {Detail}")
 
 let private tplSlowStats = LogEvent.Template4<string, float<ms>, IMsg, DurationStats<ms>>(LogLevelWarning, "[{Section}] {Duration}<ms> {Msg} ~> {Detail}")
@@ -25,17 +27,25 @@ let private raiseRunnableErr err detail =
 let internal start' (runnable : IRunnable<'runner, 'args, 'model, 'msg>)
                 (setState : 'model -> unit) : Cmd<'msg> =
     let runner = runnable.Self
-    let (model, cmd) =
-        match runnable.State with
-        | None ->
-            runnable.Logic.Init runner runnable.Args
-        | Some state ->
-            raiseRunnableErr "Already_Started" state
-    setState model
-    Cmd.batch [
-        cmd
-        runnable.Logic.Subscribe runner model
-    ]
+    try
+        let (model, cmd) =
+            match runnable.State with
+            | None ->
+                runnable.Logic.Init runner runnable.Args
+            | Some state ->
+                raiseRunnableErr "Already_Started" state
+        setState model
+        Cmd.batch [
+            cmd
+            runnable.Logic.Subscribe runner model
+        ]
+    with
+    | MessageException msg ->
+        runner.Log msg
+        Cmd.none
+    | e ->
+        runner.Log <| tplRunTaskFailed "Init" runnable.Args e
+        Cmd.none
 
 let private getSlowProcessMessage (msg : IMsg) (duration, stats) =
     tplSlowStats "Slow_Process" duration msg stats
@@ -51,16 +61,24 @@ let internal process' (runnable : IRunnable<'runner, 'args, 'model, 'msg>)
                 (setState : 'model -> unit)
                 : Cmd<'msg> =
     let runner = runnable.Self
-    let time = runner.Clock.Now'
-    let (model, cmd) =
-        match runnable.State with
-        | None ->
-            raiseRunnableErr "Not_Started" msg
-        | Some state ->
-            runnable.Logic.Update runner state msg
-    setState model
-    trackDurationStatsInMs runner time runnable.Stats.Process (getSlowProcessMessage msg) |> ignore
-    cmd
+    try
+        let time = runner.Clock.Now'
+        let (model, cmd) =
+            match runnable.State with
+            | None ->
+                raiseRunnableErr "Not_Started" msg
+            | Some state ->
+                runnable.Logic.Update runner state msg
+        setState model
+        trackDurationStatsInMs runner time runnable.Stats.Process (getSlowProcessMessage msg) |> ignore
+        cmd
+    with
+    | MessageException msg ->
+        runner.Log msg
+        Cmd.none
+    | e ->
+        runner.Log <| tplRunTaskFailed "Update" msg e
+        Cmd.none
 
 let internal deliver' (runnable : IRunnable<'runner, 'args, 'model, 'msg>)
                 (cmd : Cmd<'msg>) : unit =
