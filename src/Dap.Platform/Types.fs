@@ -116,13 +116,14 @@ and AgentMsg<'args, 'model, 'msg, 'req, 'evt> =
     | AgentReq of AgentReq
     | AgentEvt of AgentEvt
     | ActorMsg of 'msg
-    | ActorMsg' of AgentOperate<'args, 'model, 'msg, 'req, 'evt>
+    | ActorMsg' of AgentWrapping<'args, 'model, 'msg, 'req, 'evt>
 with interface IMsg
 
 and AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
-    Operate<IAgent,
-            AgentModel<'args, 'model, 'msg, 'req, 'evt>,
-            AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    Operate<IAgent, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+
+and AgentWrapping<'args, 'model, 'msg, 'req, 'evt> =
+    IWrapping<IAgent, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 
 let identOf (scope : Scope) (kind : Kind) (key : Key) : Ident =
     {

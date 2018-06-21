@@ -31,8 +31,11 @@ type Logic<'runner, 'args, 'model, 'msg> = {
 type Operate<'runner, 'model, 'msg> =
     'runner -> 'model * Cmd<'msg> -> 'model * Cmd<'msg>
 
+type IWrapping<'runner, 'model, 'msg> =
+    abstract Operate : Operate<'runner, 'model, 'msg> with get
+
 type Wrap<'runner, 'model, 'msg> =
-    Operate<'runner, 'model, 'msg> -> 'msg
+    IWrapping<'runner, 'model, 'msg> -> 'msg
 
 type React<'runner, 'model, 'msg, 'subModel, 'subMsg> =
     'runner -> 'subMsg -> 'subModel -> 'model -> 'model * Cmd<'msg>

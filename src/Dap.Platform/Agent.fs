@@ -28,7 +28,7 @@ let private update wrapper
         | AgentReq req -> handleReq msg req
         | AgentEvt _evt -> noOperation
         | ActorMsg actorMsg -> addSubCmd wrapper actorMsg
-        | ActorMsg' op -> op
+        | ActorMsg' wrapping -> wrapping.Operate
         <| runner <| (model, [])
 
 let private init wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
