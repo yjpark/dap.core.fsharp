@@ -17,6 +17,7 @@
     <Compile Include="Shared/Operator.fs" />
     <Compile Include="Shared/Util.fs" />
     <Compile Include="Const.fs" />
+    <Compile Include="Types.fs" />
     <Compile Include="Replier.fs" />
     <Compile Include="Internal.fs" />
     <Compile Include="Actor.fs" />
