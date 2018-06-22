@@ -15,8 +15,7 @@ type internal Env = {
     mutable Dispatch : DispatchMsg<EnvMsg> option
     mutable State : EnvModel option
 } with
-    override this.ToString () = sprintf "[<Env>%s]" this.Scope
-    member this.AsString = this.ToString ()
+    member this.AsString = sprintf "[<Env>%s]" this.Scope
     member this.SetState (state : EnvModel) = this.State <- Some state
     member this.Handle (req : EnvReq) = dispatch' this (EnvReq req)
     member this.HandleAsync (getReq : Callback<'res> -> EnvReq) = dispatchAsync' this (EnvReq << getReq)
@@ -64,8 +63,7 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
     mutable State : AgentModel<'args, 'model, 'msg, 'req, 'evt> option
     mutable Actor : IActor<'model, 'req, 'evt> option
 } with
-    override this.ToString () = sprintf "[<Agent>%s.%s.%s]" this.Ident.Scope this.Ident.Kind this.Ident.Key
-    member this.AsString = this.ToString ()
+    member this.AsString = sprintf "[<Agent>%s.%s.%s]" this.Ident.Scope this.Ident.Kind this.Ident.Key
     member this.SetState (state : AgentModel<'args, 'model, 'msg, 'req, 'evt>) = this.State <- Some state
     member this.Handle (req : AgentReq) = dispatch' this (AgentReq req)
     member this.HandleAsync (getReq : Callback<'res> -> AgentReq) =
