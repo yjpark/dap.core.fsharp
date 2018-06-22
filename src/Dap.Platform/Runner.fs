@@ -74,7 +74,7 @@ let trackDurationStatsInMs (runner : IRunner) (fromTime : Instant)
                             : Instant * Duration * float<ms> * bool =
     let (time, duration) = runner.Clock.CalcDuration' fromTime
     let durationInMs = msOfDuration duration
-    let isSlow = updateDurationStats durationInMs stats
+    let isSlow = stats.AddDuration durationInMs
     if isSlow then
         runner.Log <| getSlowMessage (durationInMs, stats)
     (time, duration, durationInMs, isSlow)

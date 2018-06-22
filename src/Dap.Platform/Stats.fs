@@ -6,15 +6,22 @@ type DurationStats<[<Measure>] 'u> = {
     mutable SlowCount : int
     mutable TotalCount : int
     mutable TotalDuration : float<'u>
-}
+} with
+    member this.AddDuration (duration : float<'u>) : bool =
+        this.TotalCount <- this.TotalCount + 1
+        this.TotalDuration <- this.TotalDuration + duration
+        if duration > this.SlowCap then
+            this.SlowCount <- this.SlowCount + 1
+            true
+        else
+            false
 
 type FuncStats<[<Measure>] 'u> = {
     mutable StartedCount : int
     mutable SucceedCount : int
     mutable FailedCount : int
     Duration : DurationStats<'u>
-}
-with 
+} with 
     member this.IncStartedCount () : unit =
         this.StartedCount <- this.StartedCount + 1
     member this.IncSucceedCount () : unit =
@@ -42,12 +49,3 @@ let funcStatsOfCap (cap : float<'u>) = {
     FailedCount = 0
     Duration = durationStatsOfCap cap
 }
-
-let updateDurationStats (duration : float<'u>) (stats : DurationStats<'u>) : bool =
-    stats.TotalCount <- stats.TotalCount + 1
-    stats.TotalDuration <- stats.TotalDuration + duration
-    if duration > stats.SlowCap then
-        stats.SlowCount <- stats.SlowCount + 1
-        true
-    else
-        false
