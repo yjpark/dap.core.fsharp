@@ -16,13 +16,26 @@ type Kind = string
 type Key = string
 
 [<Literal>]
-let NoKey = ""
+let noScope = ""
+
+[<Literal>]
+let noKind = ""
+
+[<Literal>]
+let noKey = ""
 
 type Ident = {
     Scope : Scope
     Kind : Kind
     Key : Key
 }
+
+let noIdent = 
+    {
+        Scope = noScope
+        Kind = noKind
+        Key = noKey
+    }
 
 type IMsg = interface end
 
