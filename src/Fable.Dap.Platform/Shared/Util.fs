@@ -27,8 +27,7 @@ let setModel (newModel : 'model) : Operate<'runner, 'model, 'msg> =
     fun _runner (_model, cmd) ->
         (newModel, cmd)
 
-#if FABLE_COMPILER
-#else
+#if !FABLE_COMPILER
 let inline updateState (update : 'state -> 'state) : Operate<'runner, ^model, 'msg> =
     fun _runner (model, cmd) ->
         let state = (^model : (member State : 'state option) model)
@@ -90,6 +89,12 @@ let noActor<'runner> : ActorSpec<'runner, NoArgs, NoModel, NoMsg, NoReq, NoEvt> 
         WrapReq = fun _ -> NoMsg
         GetOnEvent = fun _model -> evt.Publish
     }
+
+let onEvent (f : 'evt -> unit) =
+    Handler<'evt> (
+        fun _sender evt ->
+            f evt
+    )
 
 // Note: Use this form to force the caller to provide proper type
 // of 'model and 'msg, otherwise will get error of 
