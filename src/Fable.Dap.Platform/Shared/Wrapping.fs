@@ -6,7 +6,7 @@ open Elmish
 // This warpper logic is mostly following elm-component-updater
 // https://github.com/mpdairy/elm-component-updater/blob/master/src/Updater.elm
 
-[<StructuredFormatDisplay("Wrapping {SubMsg}")>]
+[<StructuredFormatDisplay("{SubMsg}")>]
 type Wrapping<'runner, 'model, 'msg, 'subModel, 'subMsg> (wrap', spec', subMsg') =
     let wrap : Wrap<'runner, 'model, 'msg> = wrap'
     let spec : WrapperSpec<'runner, 'model, 'msg, 'subModel, 'subMsg> = spec'
