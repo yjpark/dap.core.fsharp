@@ -56,6 +56,9 @@ type Spec<'runner, 'model, 'msg, 'subArgs, 'subModel, 'subMsg> = {
     ReactSub : React<'runner, 'model, 'msg, 'subModel, 'subMsg>
 }
 
+type SubUpdate<'runner, 'model, 'msg, 'subMsg> =
+    'runner -> 'model -> 'subMsg -> 'model * Cmd<'msg>
+
 type StateAction<'runner, 'state> =
     'runner -> 'state -> unit
 
