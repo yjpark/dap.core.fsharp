@@ -54,7 +54,7 @@ let private doGetService msg (kind, key, callback) : EnvOperate =
             reply runner callback <| nak msg "Kind_Not_Exist" model.Services.Count
         (model, cmd)
 
-let private tryFindService msg (kind, key, callback) : EnvOperate =
+let private tryFindService' msg (kind, key, callback) : EnvOperate =
     fun runner (model, cmd) ->
         match Map.tryFind kind model.Services with
         | Some kindServices ->
@@ -126,7 +126,7 @@ let private handleReq msg (req : EnvReq) : EnvOperate =
     | DoQuit (a, b) -> doQuit msg (a, b)
     | DoAddService (a, b) -> doAddService msg (a, b)
     | DoGetService (a, b, c) -> doGetService msg (a, b, c)
-    | TryFindService (a, b, c) -> tryFindService msg (a, b, c)
+    | TryFindService (a, b, c) -> tryFindService' msg (a, b, c)
     | DoRegister (a, b, c) -> doRegister msg (a, b, c)
     | DoGetAgent (a, b, c) -> doGetAgent msg (a, b, c)
 
@@ -206,7 +206,7 @@ let getService (kind : Kind) (key : Key) (env : IEnv) =
     let kindServices = Map.find kind state.Services
     Map.find key kindServices
 
-let findService (kind : Kind) (key : Key) (env : IEnv) =
+let tryFindService (kind : Kind) (key : Key) (env : IEnv) =
     let state = Option.get env.State
     Map.tryFind kind state.Services
     |> Option.bind (Map.tryFind key)
