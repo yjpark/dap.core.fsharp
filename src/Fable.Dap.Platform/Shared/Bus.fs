@@ -20,11 +20,9 @@ let private tplBusError = LogEvent.Template2WithException<string, obj>(LogLevelE
 
 let private tplDisposedInfo = LogEvent.Template3<string, obj, obj>(LogLevelInformation, "[{Section}] {Owner} {Detail}")
 
-let private tplWatcherInfo = LogEvent.Template3<string, obj, obj>(LogLevelInformation, "[{Section}] {Watcher} {Detail}")
-
 let private tplWatchersInfo = LogEvent.Template3<string, obj, obj>(LogLevelInformation, "[{Section}] {Watchers} {Detail}")
 
-let private tplWatcherError = LogEvent.Template3<string, obj, obj>(LogLevelError, "[{Section}] {Watcher} {Detail} -> Failed")
+let private tplWatcherSucceed = LogEvent.Template3<string, obj, obj>(LogLevelDebug, "[{Section}] {Watcher} {Detail}")
 
 let private tplWatcherFailed = LogEvent.Template3WithException<string, obj, obj>(LogLevelError, "[{Section}] {Watcher} {Detail} -> Failed")
 
@@ -82,6 +80,7 @@ type Bus<'evt> (owner') =
                     else
                         try
                             watcher.Action evt
+                            owner.Log <| tplWatcherSucceed "Bus:Notify_Succeed" watcher evt
                         with e ->
                             owner.Log <| tplWatcherFailed "Bus:Notify_Failed" watcher evt e
                         false
