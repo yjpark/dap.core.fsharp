@@ -24,7 +24,5 @@ let projects =
     ++ "src/Fable.Dap.Remote/*.fsproj"
     ++ "src/Dap.Remote/*.fsproj"
     ++ "src/Dap.Archive/*.fsproj"
-    (*
-    *)
 
 NuGet.createAndRun NuGet.release feed projects
