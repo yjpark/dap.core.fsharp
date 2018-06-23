@@ -8,7 +8,7 @@ open Dap.Remote
 open Dap.Archive
 
 type Args<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame = {
-    Event' : Event<Evt<'extra, 'frame>> 
+    Event' : Bus<Evt<'extra, 'frame>> 
 } with
     member this.FireEvent' = this.Event'.Trigger
     member this.OnEvent = this.Event'.Publish

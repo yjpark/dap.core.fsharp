@@ -34,7 +34,7 @@ let private update wrapper
 let private init wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
                             : Init<IAgent, NoArgs, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>> =
     fun runner (args : NoArgs) ->
-        let args = spec.Actor.NewArgs ()
+        let args = spec.Actor.NewArgs (runner :> IOwner)
         let (actorModel, actorCmd) = spec.Actor.Logic.Init runner args
         let model = {
             Spec = spec
@@ -64,13 +64,14 @@ let spawn (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
     let agent = {
         Spec = spec
         Env = param.Env
-        Ident = identOf param.Env.Scope param.Kind param.Key
+        Ident = Ident.Create param.Env.Scope param.Kind param.Key
         Logger = logger
         Logic = logic
         Stats = statsOfCap <| defaultArg spec.GetSlowCap getDefaultSlowCap
         State = None
         Actor = None
         Dispatch = None
+        Disposed = false
     }
     param.Env.Platform.Start agent
     agent :> IAgent<'model, 'req, 'evt>

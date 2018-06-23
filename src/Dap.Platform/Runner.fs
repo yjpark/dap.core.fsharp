@@ -17,9 +17,9 @@ and Func<'res> = IRunner -> 'res
 and OnFailed = IRunner -> exn -> unit
 and GetTask<'res> = IRunner -> Task<'res>
 
-and Func'<'runner, 'res> = IRunner<'runner> -> 'res
-and OnFailed'<'runner> = IRunner<'runner> -> exn -> unit
-and GetTask'<'runner, 'res> = IRunner<'runner> -> Task<'res>
+and Func'<'runner, 'res> = 'runner -> 'res
+and OnFailed'<'runner> = 'runner -> exn -> unit
+and GetTask'<'runner, 'res> = 'runner -> Task<'res>
 
 and Stats = {
     Deliver : DurationStats<ms>
@@ -39,7 +39,7 @@ and IRunner =
 
 and IRunner<'runner> =
     inherit IRunner
-    abstract Self : 'runner with get
+    abstract Self' : 'runner with get
     abstract RunFunc' : Func'<'runner, 'res> -> Result<'res, exn>
     abstract RunTask' : OnFailed'<'runner> -> GetTask'<'runner, unit> -> unit
     //abstract AwaitTask' : GetTask'<'runner, 'res> -> Result<'res, exn>
@@ -112,7 +112,7 @@ let internal runFunc'' (runner : IRunner<'runner>) (func : Func'<'runner, 'res>)
     let time = runner.Clock.Now'
     runner.Stats.Func.IncStartedCount ()
     try
-        let res = func runner
+        let res = func runner.Self'
         Ok res
     with
     | e ->

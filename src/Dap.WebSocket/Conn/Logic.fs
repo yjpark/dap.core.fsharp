@@ -13,7 +13,7 @@ open Dap.WebSocket.Conn.Types
 open Dap.WebSocket.Conn.Tasks
 module BaseLogic = Dap.WebSocket.Internal.Logic
 
-let private doConnect msg (ident, token, socket, callback) : Operate<'runner, Model<'pkt>, Msg<'pkt>> =
+let private doConnect msg (ident, token, socket, callback) : Operate<IAgent, Model<'pkt>, Msg<'pkt>> =
     fun runner (model, cmd) ->
         match model.State with
         | Some state ->
@@ -34,19 +34,19 @@ let private doConnect msg (ident, token, socket, callback) : Operate<'runner, Mo
             setModel {model with State = Some state}
         <| runner <| (model, cmd)
 
-let private doSend msg ((pkt, callback) : 'pkt * Callback<SendStats>) : Operate<'runner, Model<'pkt>, Msg<'pkt>> =
+let private doSend msg ((pkt, callback) : 'pkt * Callback<SendStats>) : Operate<IAgent, Model<'pkt>, Msg<'pkt>> =
     fun runner (model, cmd) ->
         BaseLogic.doSend runner OnSent model.State msg (pkt, callback)
         (model, cmd)
 
-let private handleReq msg req : Operate<'runner, Model<'pkt>, Msg<'pkt>> =
+let private handleReq msg req : Operate<IAgent, Model<'pkt>, Msg<'pkt>> =
     fun runner (model, cmd) ->
         match req with
         | DoConnect (a, b, c, d) -> doConnect msg (a, b, c, d)
         | DoSend (a, b) -> doSend msg (a, b)
         <| runner <| (model, cmd)
 
-let private handleEvt _msg evt : Operate<'runner, Model<'pkt>, Msg<'pkt>> =
+let private handleEvt _msg evt : Operate<IAgent, Model<'pkt>, Msg<'pkt>> =
     fun runner (model, cmd) ->
         match evt with
         | OnConnected -> 
@@ -56,30 +56,30 @@ let private handleEvt _msg evt : Operate<'runner, Model<'pkt>, Msg<'pkt>> =
         | _ -> noOperation
         <| runner <| (model, cmd)
 
-let private update : Update<'runner, Model<'pkt>, Msg<'pkt>> =
+let private update : Update<IAgent, Model<'pkt>, Msg<'pkt>> =
     fun runner model msg -> 
         match msg with
         | WebSocketReq req -> handleReq msg req
         | WebSocketEvt evt -> handleEvt msg evt
         <| runner <| (model, [])
 
-let private init : Init<'runner,Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
+let private init : Init<IAgent,Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
     fun _runner args ->
         ({
             Args = args
             State = None
         }, Cmd.none)
 
-let private subscribe (runner : IRunner) (model : Model<'pkt>) : Cmd<Msg<'pkt>> =
+let private subscribe (runner : IAgent) (model : Model<'pkt>) : Cmd<Msg<'pkt>> =
     subscribeEvent runner model WebSocketEvt model.Args.OnEvent
 
-let logic : Logic<'runner, Args<'pkt>, Model<'pkt>, Msg<'pkt>> = {
+let logic : Logic<IAgent, Args<'pkt>, Model<'pkt>, Msg<'pkt>> = {
     Init = init
     Update = update
     Subscribe = subscribe
 }
 
-let getSpec (newArgs : unit -> Args<'pkt>) : AgentSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
+let getSpec (newArgs : IOwner -> Args<'pkt>) : AgentSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
     {
         Actor =
             {

@@ -15,7 +15,7 @@ type IRunnable<'runner, 'args, 'model, 'msg>
     abstract Process : 'msg -> Cmd<'msg>
     abstract Deliver : Cmd<'msg> -> unit
 
-let private tplRunTaskFailed = LogEvent.Template2WithException<string, obj>(LogLevelError, "[{Section}] {Msg} -> Failed")
+let private tplRunnableFailed = LogEvent.Template2WithException<string, obj>(LogLevelError, "[{Section}] {Msg} -> Failed")
 
 let private tplRunnableErr = LogEvent.Template3<string, obj, obj>(LogLevelFatal, "[{Section}] {Err}: {Detail}")
 
@@ -26,7 +26,7 @@ let private raiseRunnableErr err detail =
 
 let internal start' (runnable : IRunnable<'runner, 'args, 'model, 'msg>)
                 (setState : 'model -> unit) : Cmd<'msg> =
-    let runner = runnable.Self
+    let runner = runnable.Self'
     try
         let (model, cmd) =
             match runnable.State with
@@ -44,7 +44,7 @@ let internal start' (runnable : IRunnable<'runner, 'args, 'model, 'msg>)
         runner.Log msg
         Cmd.none
     | e ->
-        runner.Log <| tplRunTaskFailed "Init" runnable.Args e
+        runner.Log <| tplRunnableFailed "Init" runnable.Args e
         Cmd.none
 
 let private getSlowProcessMessage (msg : IMsg) (duration, stats) =
@@ -60,7 +60,7 @@ let internal process' (runnable : IRunnable<'runner, 'args, 'model, 'msg>)
                 (msg : 'msg)
                 (setState : 'model -> unit)
                 : Cmd<'msg> =
-    let runner = runnable.Self
+    let runner = runnable.Self'
     try
         let time = runner.Clock.Now'
         let (model, cmd) =
@@ -77,7 +77,7 @@ let internal process' (runnable : IRunnable<'runner, 'args, 'model, 'msg>)
         runner.Log msg
         Cmd.none
     | e ->
-        runner.Log <| tplRunTaskFailed "Update" msg e
+        runner.Log <| tplRunnableFailed "Update" msg e
         Cmd.none
 
 let internal deliver' (runnable : IRunnable<'runner, 'args, 'model, 'msg>)

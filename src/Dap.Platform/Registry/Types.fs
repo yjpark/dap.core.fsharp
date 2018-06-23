@@ -5,7 +5,7 @@ module Dap.Platform.Registry.Types
 open Dap.Platform
 
 type Model<'k, 'v when 'k : comparison> = {
-    Event' : Event<Evt<'k, 'v>>
+    Event' : Bus<Evt<'k, 'v>>
     Entries : Map<'k, 'v>
 }
 

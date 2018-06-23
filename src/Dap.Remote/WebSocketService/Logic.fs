@@ -41,7 +41,7 @@ let private handleReq msg (req : Req) : Operate<IAgent, Model<'req, 'evt>, Msg<'
     fun runner (model, cmd) ->
         match req with
         | DoAttach (token, socket, callback) ->
-            let ident = runner.Self.Ident.Key
+            let ident = runner.Ident.Key
             replyAsync runner msg callback nakOnFailed <| doAttachAsync model.State ident token socket
         (model, cmd)
 
@@ -82,7 +82,7 @@ let private init : Init<IAgent, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, '
             Hub = None
             Socket = None
         }
-        args.HubSpec.GetHub runner.Self.Ident.Key <| setHub state
+        args.HubSpec.GetHub runner.Ident.Key <| setHub state
         runner.RunTask' ignoreOnFailed' <| setSocketAsync state
         let link : Service.Link = {
             Send = doSend runner state
@@ -116,15 +116,14 @@ let logic : Logic<IAgent, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>> 
         Subscribe = subscribe
     }
 
-let getSpec (newArgs : unit -> Args<'req, 'evt>) : AgentSpec<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
-    let evt = new Event<NoEvt>()
+let getSpec (newArgs : IOwner -> Args<'req, 'evt>) : AgentSpec<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     {
         Actor =
             {
                 NewArgs = newArgs
                 Logic = logic
                 WrapReq = ServiceReq
-                GetOnEvent = fun _model -> evt.Publish
+                GetOnEvent = fun _model -> noEvent
             }
         OnAgentEvent = None
         GetSlowCap = None

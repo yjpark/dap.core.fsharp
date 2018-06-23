@@ -66,8 +66,8 @@ let internal runTask' (runner : IRunner) (onFailed : OnFailed) (getTask : GetTas
 let internal runTask'' (runner : IRunner<'runner>) (onFailed : OnFailed'<'runner>) (getTask : GetTask'<'runner, unit>) : unit =
     let time = runner.Clock.Now'
     runner.Stats.Task.StartedCount <- runner.Stats.Task.StartedCount + 1
-    getTask runner
-    |> tryRunTask (logRunResult' runner "RunTask'" runner.Stats.Task (getTask.ToString()) time (onFailed runner))
+    getTask runner.Self'
+    |> tryRunTask (logRunResult' runner "RunTask'" runner.Stats.Task (getTask.ToString()) time (onFailed runner.Self'))
 
 (* Note: These AwaitTask way is not working, since dotnet is not happy with mixing 
  * async codes and sync codes, did try with some async tricks here, still no luck

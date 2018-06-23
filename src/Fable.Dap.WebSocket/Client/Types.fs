@@ -26,7 +26,7 @@ type Args<'pkt> = {
     LogTraffic : bool
     Encode : Encode<'pkt>
     Decode : Decode<'pkt>
-    Event' : Event<Evt<'pkt>>
+    Event' : Bus<Evt<'pkt>>
 } with
     member this.FireEvent' = this.Event'.Trigger
     member this.OnEvent = this.Event'.Publish
@@ -42,4 +42,4 @@ type Msg<'pkt> =
     | WebSocketEvt of Evt<'pkt>
 with interface IMsg
 
-type Actor<'pkt> = IActor<Model<'pkt>, Req<'pkt>, Evt<'pkt>>
+type Agent<'pkt> = IAgent<Model<'pkt>, Req<'pkt>, Evt<'pkt>>

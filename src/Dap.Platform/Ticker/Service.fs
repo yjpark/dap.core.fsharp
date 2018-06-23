@@ -11,12 +11,12 @@ let Kind = "Ticker"
 type Service = IAgent<Model, Req, Evt>
 
 let getSpec (autoStart : bool) (frameRate : int) =
-    fun () ->
+    fun owner ->
         {
             AutoStart = autoStart
             FrameRate = frameRate
-            Event' = new Event<Evt>()
-            InternalEvent' = new Event<InternalEvt>()
+            Event' = new Bus<Evt>(owner)
+            InternalEvent' = new Bus<InternalEvt>(owner)
         }
     |> Logic.getSpec
 

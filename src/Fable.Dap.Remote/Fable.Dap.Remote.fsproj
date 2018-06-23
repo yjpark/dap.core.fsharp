@@ -19,7 +19,7 @@
     <Compile Include="Shared/Util.fs" />
     <Compile Include="WebSocketProxy/Types.fs" />
     <Compile Include="WebSocketProxy/Logic.fs" />
-    <Compile Include="WebSocketProxy/Actor.fs" />
+    <Compile Include="WebSocketProxy/Agent.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Platform\Fable.Dap.Platform.fsproj" />

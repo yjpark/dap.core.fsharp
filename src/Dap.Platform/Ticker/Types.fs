@@ -15,8 +15,8 @@ type TickStats = {
 type Args = {
     AutoStart : bool
     FrameRate : int
-    Event' : Event<Evt>
-    InternalEvent' : Event<InternalEvt>
+    Event' : Bus<Evt>
+    InternalEvent' : Bus<InternalEvt>
 } with
     member this.FireEvent' = this.Event'.Trigger
     member this.OnEvent = this.Event'.Publish

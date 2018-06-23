@@ -69,9 +69,9 @@ let updateExtra (extra : Extra) (frame : Frame) : Extra * Frame =
     ({extra with Events = events}, {frame with Packet = packet})
     
 let getSpec () =
-    fun () ->
+    fun owner ->
         {
-            Event' = new Event<Evt>()
+            Event' = new Bus<Evt> (owner)
         }
     |> Logic.getSpec
 

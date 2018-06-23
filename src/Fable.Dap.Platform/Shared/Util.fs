@@ -81,29 +81,34 @@ let noReaction : React<'runner, 'model, 'msg, 'subModel, 'subMsg> =
     fun _runner _subMsg _subModel model ->
         (model, []) 
 
-let noActor<'runner> : ActorSpec<'runner, NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
-    let evt = new Event<NoEvt>()
-    {
-        NewArgs = fun () -> NoArgs
-        Logic = noLogic
-        WrapReq = fun _ -> NoMsg
-        GetOnEvent = fun _model -> evt.Publish
+let noOwner =
+    let logger = getLogger "<noOwner>"
+    { new IOwner with
+        member _this.Log m = logger.Log m
+        member _this.Ident = noIdent.Ident
+        member _this.Disposed = false
     }
 
-let onEvent (f : 'evt -> unit) =
-    Handler<'evt> (
-        fun _sender evt ->
-            f evt
-    )
+let noEvent =
+    let bus = new Bus<NoEvt>(noOwner)
+    bus.Publish
+let noActor<'runner> : ActorSpec<'runner, NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
+    {
+        NewArgs = fun _owner -> NoArgs
+        Logic = noLogic
+        WrapReq = fun _ -> NoMsg
+        GetOnEvent = fun _model -> noEvent
+    }
 
 // Note: Use this form to force the caller to provide proper type
 // of 'model and 'msg, otherwise will get error of 
 // FS0030: Value restriction
-let subscribeEvent (_runner : ILogger) (_model : 'model)
+let subscribeEvent (owner : IOwner) (_model : 'model)
                     (wrapper : 'evt -> 'msg)
-                    (onEvent : IEvent<'evt>) : Cmd<'msg> =
+                    (onEvent : IBus<'evt>) : Cmd<'msg> =
     let sub = fun dispatch ->
-        onEvent.Add(dispatch << wrapper)
+        let ident = sprintf "%A" wrapper
+        onEvent.AddWatcher owner ident (dispatch << wrapper)
     Elmish.Cmd.ofSub sub
 
 #if FABLE_COMPILER

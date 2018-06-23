@@ -11,6 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Fable.Dap.Platform/Shared/Logic.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Bus.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Types.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Wrapping.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Operator.fs" />

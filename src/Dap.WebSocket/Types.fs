@@ -33,7 +33,7 @@ type Args<'pkt, 'evt> = {
     BufferSize : int
     Encode : Encode<'pkt>
     Decode : Decode<'pkt>
-    Event' : Event<'evt>
+    Event' : Bus<'evt>
 } with
     member this.FireEvent' = this.Event'.Trigger
     member this.OnEvent = this.Event'.Publish

@@ -88,7 +88,7 @@ let private doNewAgent msg ((kind, key, callback) : Kind * Key * Callback<IAgent
         match Map.tryFind kind model.Spawners with
         | Some spawner ->
             try
-                let ident = identOf runner.Self.Scope kind key
+                let ident = Ident.Create runner.Scope kind key
                 let agent = spawner ident
                 if agent.Ident <> ident
                     then raiseSpawnErr "Invalid_Agent" ident agent.Ident

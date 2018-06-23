@@ -9,17 +9,17 @@ module WebSocket = Dap.WebSocket.Client.Types
 module WebSocketActor = Dap.WebSocket.Client.Actor
 
 let create (spec : StubSpec<'res, 'evt>) (key : string) (uri : string) (logTraffic : bool) =
-    fun () ->
+    fun owner ->
         {
             Spec = spec
             Uri = uri
             LogTraffic = logTraffic
-            Event' = new Event<'evt>()
-            ResponseEvent' = new Event<'res>()
-            InternalEvent' = new Event<InternalEvt>()
+            Event' = new Bus<'evt> (owner)
+            ResponseEvent' = new Bus<'res> (owner)
+            InternalEvent' = new Bus<InternalEvt> (owner)
         }
     |> Logic.getSpec
-    |> Actor.create Kind key
+    |> Agent.create Kind key
 
-let getOnResponse (actor : Actor<'req, 'res, 'evt>) : IEvent<'res> =
-    (Option.get actor.State).Args.OnResponse
+let getOnResponse (agent : Agent<'req, 'res, 'evt>) : IBus<'res> =
+    (Option.get agent.Actor.State).Args.OnResponse

@@ -66,6 +66,7 @@ and EnvParam = {
 }
 
 and IAgent =
+    inherit IOwner
     inherit IRunner<IAgent>
     inherit IHandler<AgentReq>
     inherit IAsyncHandler<AgentReq>
@@ -124,13 +125,6 @@ and AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
 
 and AgentWrapping<'args, 'model, 'msg, 'req, 'evt> =
     IWrapping<IAgent, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
-
-let identOf (scope : Scope) (kind : Kind) (key : Key) : Ident =
-    {
-        Scope = scope
-        Kind = kind
-        Key = key
-    }
 
 let DoQuit' (forceQuit : bool) callback =
     DoQuit (forceQuit, callback)

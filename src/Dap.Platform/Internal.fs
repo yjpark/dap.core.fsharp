@@ -3,7 +3,7 @@ namespace Dap.Platform.Internal
 open Dap.Prelude
 open Dap.Platform
 
-[<StructuredFormatDisplay("{AsString}")>]
+[<StructuredFormatDisplay("<Env>{Scope}")>]
 type internal Env = {
     Platform : IPlatform
     Logging : ILogging
@@ -15,7 +15,6 @@ type internal Env = {
     mutable Dispatch : DispatchMsg<EnvMsg> option
     mutable State : EnvModel option
 } with
-    member this.AsString = sprintf "[<Env>%s]" this.Scope
     member this.SetState (state : EnvModel) = this.State <- Some state
     member this.Handle (req : EnvReq) = dispatch' this (EnvReq req)
     member this.HandleAsync (getReq : Callback<'res> -> EnvReq) = dispatchAsync' this (EnvReq << getReq)
@@ -29,7 +28,7 @@ type internal Env = {
         member this.Process parcel = process' this parcel this.SetState
         member this.Deliver msg = deliver' this msg
     interface IRunner<IEnv> with
-        member this.Self = this :> IEnv
+        member this.Self' = this :> IEnv
         member this.RunFunc' func = runFunc'' this func
         member this.RunTask' onFailed getTask = runTask'' this onFailed getTask
         //member this.AwaitTask' getTask = awaitTask'' this getTask
@@ -48,7 +47,7 @@ type internal Env = {
         member this.Handle req = this.Handle req
         member this.HandleAsync getReq = this.HandleAsync getReq
 
-[<StructuredFormatDisplay("{AsString}")>]
+[<StructuredFormatDisplay("<Agent>{Ident}")>]
 type internal Agent<'args, 'model, 'msg, 'req, 'evt>
                                     when 'msg :> IMsg = {
     Spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>
@@ -59,11 +58,11 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
                     AgentModel<'args, 'model, 'msg, 'req, 'evt>,
                     AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
     Stats : Stats
+    mutable Disposed : bool
     mutable Dispatch : DispatchMsg<AgentMsg<'args, 'model, 'msg, 'req, 'evt>> option
     mutable State : AgentModel<'args, 'model, 'msg, 'req, 'evt> option
-    mutable Actor : IActor<'model, 'req, 'evt> option
+    mutable Actor : Actor<'args, 'model, 'msg, 'req, 'evt> option
 } with
-    member this.AsString = sprintf "[<Agent>%s.%s.%s]" this.Ident.Scope this.Ident.Kind this.Ident.Key
     member this.SetState (state : AgentModel<'args, 'model, 'msg, 'req, 'evt>) = this.State <- Some state
     member this.Handle (req : AgentReq) = dispatch' this (AgentReq req)
     member this.HandleAsync (getReq : Callback<'res> -> AgentReq) =
@@ -83,17 +82,21 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
 
         member this.Deliver msg = deliver' this msg
     interface IRunner<IAgent> with
-        member this.Self = this :> IAgent
+        member this.Self' = this :> IAgent
         member this.RunFunc' getFunc = runFunc'' this getFunc
         member this.RunTask' onFailed getTask = runTask'' this onFailed getTask
         //member this.AwaitTask' getTask = awaitTask'' this getTask
     interface IRunner with
-        member this.Log m = this.Logger.Log m
         member this.Clock = this.Env.Clock
         member this.Stats = this.Stats
         member this.RunFunc getFunc = runFunc' this getFunc
         member this.RunTask onFailed getTask = runTask' this onFailed getTask
         //member this.AwaitTask getTask = awaitTask' this getTask
+    interface ILogger with
+        member this.Log m = this.Logger.Log m
+    interface IOwner with
+        member this.Ident = this.Ident.Ident
+        member this.Disposed = this.Disposed
     interface IAgent<'req, 'evt> with
         member this.Env = this.Env
         member this.Ident = this.Ident
@@ -109,26 +112,26 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
                 let actor = {
                     Agent = this
                 }
-                let actor = actor :> IActor<'model, 'req, 'evt>
                 this.Actor <- Some actor
                 actor :> IActor<'req, 'evt>
     interface IAgent<'model, 'req, 'evt> with
         member this.Actor =
             match this.Actor with
             | Some actor ->
-                actor
+                actor :> IActor<'model, 'req, 'evt>
             | None ->
                 let actor = {
                     Agent = this
                 }
-                let actor = actor :> IActor<'model, 'req, 'evt>
                 this.Actor <- Some actor
-                actor
+                actor :> IActor<'model, 'req, 'evt>
 
-and internal Proxy<'args, 'model, 'msg, 'req, 'evt>
+and [<StructuredFormatDisplay("<Actor>{Ident}")>]
+    internal Actor<'args, 'model, 'msg, 'req, 'evt>
                                     when 'msg :> IMsg = {
     Agent : Agent<'args, 'model, 'msg, 'req, 'evt>
 } with
+    member this.Ident = this.Agent.Ident
     interface IActor<'model, 'req, 'evt> with
         member this.Log m = this.Agent.Logger.Log m
         member this.Handle req = this.Agent.Post req

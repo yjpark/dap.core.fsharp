@@ -12,6 +12,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Shared/Logic.fs" />
+    <Compile Include="Shared/Bus.fs" />
     <Compile Include="Shared/Types.fs" />
     <Compile Include="Shared/Wrapping.fs" />
     <Compile Include="Shared/Operator.fs" />
@@ -20,7 +21,7 @@
     <Compile Include="Types.fs" />
     <Compile Include="Replier.fs" />
     <Compile Include="Internal.fs" />
-    <Compile Include="Actor.fs" />
+    <Compile Include="Agent.fs" />
     <Compile Include="Helper.fs" />
   </ItemGroup>
   <ItemGroup>

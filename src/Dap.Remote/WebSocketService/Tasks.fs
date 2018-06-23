@@ -11,12 +11,11 @@ module WebSocket = Dap.WebSocket.Conn.Types
 
 let internal setSocketAsync (state : State<'req, 'evt>) : GetTask'<IAgent, unit> =
     fun runner -> task {
-        let agent = runner.Self
-        let socketKey = sprintf "%s_%s" agent.Ident.Kind agent.Ident.Key
-        let! (socket, _) = agent.Env.HandleAsync <| DoGetAgent' PacketConn.Kind socketKey
+        let socketKey = sprintf "%s_%s" runner.Ident.Kind runner.Ident.Key
+        let! (socket, _) = runner.Env.HandleAsync <| DoGetAgent' PacketConn.Kind socketKey
         let socket = socket :?> PacketConn.Agent
         state.Socket <- Some socket
-        socket.Actor.OnEvent.Add(state.Args.FireInternalEvent' << SocketEvt)
+        socket.Actor.OnEvent.AddWatcher runner "SocketEvt" (state.Args.FireInternalEvent' << SocketEvt)
     }
 
 let internal doAttachAsync (state : State<'req, 'evt>)

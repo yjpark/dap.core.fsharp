@@ -17,9 +17,9 @@ type Args<'res, 'evt> = {
     Spec : StubSpec<'res, 'evt>
     Uri : string
     LogTraffic : bool
-    Event' : Event<'evt>
-    ResponseEvent' : Event<'res>
-    InternalEvent' : Event<InternalEvt>
+    Event' : Bus<'evt>
+    ResponseEvent' : Bus<'res>
+    InternalEvent' : Bus<InternalEvt>
 } with
     member this.FireEvent' = this.Event'.Trigger
     member this.OnEvent = this.Event'.Publish
@@ -38,10 +38,10 @@ with interface IMsg
 
 type Model<'res, 'evt> = {
     Args : Args<'res, 'evt>
-    Socket : WebSocket.Actor<Packet'>
+    Socket : WebSocket.Agent<Packet'>
     Client : Client.Model
     SendQueue : (IRequest * Packet') list
 }
 
-type Actor<'req, 'res, 'evt> when 'req :> IRequest =
-    IActor<Model<'res, 'evt>, 'req, 'evt>
+type Agent<'req, 'res, 'evt> when 'req :> IRequest =
+    IAgent<Model<'res, 'evt>, 'req, 'evt>

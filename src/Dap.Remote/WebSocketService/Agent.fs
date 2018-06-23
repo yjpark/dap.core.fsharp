@@ -7,11 +7,11 @@ open Dap.Remote.WebSocketService
 open Dap.Remote.WebSocketService.Types
 
 let getSpec (hubSpec : HubSpec<'req, 'evt>) (logTraffic : bool) =
-    fun () ->
+    fun owner ->
         {
             HubSpec = hubSpec
             LogTraffic = logTraffic
-            InternalEvent' = new Event<InternalEvt<'evt>>()
+            InternalEvent' = new Bus<InternalEvt<'evt>>(owner)
         }
     |> Logic.getSpec
 

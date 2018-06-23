@@ -16,8 +16,8 @@ module TextClient = Dap.WebSocket.Client.TextClient
 module ConnTypes = Dap.WebSocket.Conn.Types
 module TextConn = Dap.WebSocket.Conn.TextConn
 
-let watchClient (agent : EventRecorder.Agent) (onEvent : IEvent<ClientTypes.Evt<string>>) =
-    onEvent.Add (fun evt ->
+let watchClient (agent : EventRecorder.Agent) (onEvent : IBus<ClientTypes.Evt<string>>) =
+    onEvent.AddWatcher agent "TextRecorder.watchClient" (fun evt ->
         match evt with
         | ClientTypes.OnSent (_stat, pkt) ->
             EventRecorder.appendEvent' agent "OnSent" pkt
@@ -26,8 +26,8 @@ let watchClient (agent : EventRecorder.Agent) (onEvent : IEvent<ClientTypes.Evt<
         | _ -> ()
     )
 
-let watchConn (agent : EventRecorder.Agent) (onEvent : IEvent<ConnTypes.Evt<string>>) =
-    onEvent.Add (fun evt ->
+let watchConn (agent : EventRecorder.Agent) (onEvent : IBus<ConnTypes.Evt<string>>) =
+    onEvent.AddWatcher agent "TextRecorder.watchClient" (fun evt ->
         match evt with
         | ConnTypes.OnSent (_stat, pkt) ->
             EventRecorder.appendEvent' agent "OnSent" pkt

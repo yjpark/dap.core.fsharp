@@ -19,14 +19,14 @@ type Event = Evt<string>
 type OnEvent = Event -> unit
 
 let getSpec (encoding: Encoding) (logTraffic : bool) (bufferSize : int option) =
-    fun () ->
+    fun owner ->
         {
             LogTraffic = logTraffic
             SendType = WebSocketMessageType.Text
             BufferSize = defaultArg bufferSize DefaultBufferSize
             Encode = Dap.WebSocket.Internal.Text.encode encoding
             Decode = Dap.WebSocket.Internal.Text.decode encoding
-            Event' = new Event<Evt<string>>()
+            Event' = new Bus<Evt<string>> (owner)
         }
     |> Logic.getSpec
 

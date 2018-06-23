@@ -110,7 +110,7 @@ let logic : Logic<IAgent, Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extr
         Subscribe = subscribe
     }
 
-let getSpec (newArgs : unit -> Args<'extra, 'frame>) : AgentSpec<Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
+let getSpec (newArgs : IOwner -> Args<'extra, 'frame>) : AgentSpec<Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
     {
         Actor =
             {

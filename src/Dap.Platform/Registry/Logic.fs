@@ -95,9 +95,9 @@ let private update : Update<IRunner, Model<'k, 'v>, Msg<'k, 'v>> =
             |=|> handleReq msg req
 
 let private init : Init<IAgent, NoArgs, Model<'k, 'v>, Msg<'k, 'v>> =
-    fun _runner _args ->
+    fun runner _args ->
         ({
-            Event' = new Event<Evt<'k, 'v>> ()
+            Event' = new Bus<Evt<'k, 'v>> (runner)
             Entries = Map.empty
         }, noCmd)
 

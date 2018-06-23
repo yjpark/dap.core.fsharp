@@ -26,14 +26,14 @@ let decode : Decode<Packet'> =
         Packet.decode <| Dap.WebSocket.Internal.Text.decode Encoding.UTF8 (buffer, index, count)
 
 let getSpec (logTraffic : bool) (bufferSize : int option) =
-    fun () ->
+    fun owner ->
         {
             LogTraffic = logTraffic
             SendType = WebSocketMessageType.Text
             BufferSize = defaultArg bufferSize DefaultBufferSize
             Encode = encode
             Decode = decode
-            Event' = new Event<Evt<Packet'>>()
+            Event' = new Bus<Evt<Packet'>> (owner)
         }
     |> Dap.WebSocket.Conn.Logic.getSpec
 

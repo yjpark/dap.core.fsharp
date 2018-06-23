@@ -24,17 +24,44 @@ let noKind = ""
 [<Literal>]
 let noKey = ""
 
+let private calVersion scope kind key =
+    let locker = obj()
+    let mutable versions : Map<string, int> = Map.empty
+    let ident = sprintf "%s:%s:%s" scope kind key 
+    lock locker (fun () ->
+        versions
+        |> Map.tryFind ident
+        |> function
+            | None ->
+                versions <- versions |> Map.add ident 1
+                1
+            | Some v ->
+                versions <- versions |> Map.add ident (v + 1)
+                (v + 1)
+    )
+
+[<StructuredFormatDisplay("{Ident}")>]
 type Ident = {
     Scope : Scope
     Kind : Kind
     Key : Key
-}
+    Ver : int
+} with
+    static member Create scope kind key =
+        {
+            Scope = scope
+            Kind = kind
+            Key = key
+            Ver = calVersion scope kind key
+        }
+    member this.Ident = sprintf "[%s:%s:%s]<%i>" this.Scope this.Kind this.Key this.Ver
 
 let noIdent = 
     {
         Scope = noScope
         Kind = noKind
         Key = noKey
+        Ver = 0
     }
 
 type IMsg = interface end
@@ -56,7 +83,7 @@ type IPoster<'msg> =
     abstract Post : 'msg -> unit
 
 and IChannel<'evt> =
-    abstract OnEvent : IEvent<'evt> with get
+    abstract OnEvent : IBus<'evt> with get
 
 and IActor =
     inherit ILogger
@@ -73,9 +100,9 @@ and IActor<'model, 'req, 'evt> =
 
 and ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt> = {
     Logic : Logic<'runner, 'args, 'model, 'msg>
-    NewArgs : unit -> 'args
+    NewArgs : IOwner -> 'args
     WrapReq : Wrapper<'msg, 'req>
-    GetOnEvent : 'model -> IEvent<'evt>
+    GetOnEvent : 'model -> IBus<'evt>
 }
 
 type NoArgs = NoArgs

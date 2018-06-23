@@ -16,7 +16,7 @@ type InternalEvt<'evt> =
 and Args<'req, 'evt> = {
     HubSpec : HubSpec<'req, 'evt>
     LogTraffic : bool
-    InternalEvent' : Event<InternalEvt<'evt>>
+    InternalEvent' : Bus<InternalEvt<'evt>>
 } with
     member this.FireInternalEvent' = this.InternalEvent'.Trigger
     member this.OnInternalEvent = this.InternalEvent'.Publish
