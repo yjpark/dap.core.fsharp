@@ -2,6 +2,8 @@ namespace Dap.Remote
 
 type Second = float
 
+open Dap.Platform
+
 module Const =
     [<Literal>]
     let KindUnknown = "N/A"

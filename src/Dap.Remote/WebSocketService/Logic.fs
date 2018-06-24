@@ -62,9 +62,10 @@ let private onRequest runner (state : State<'req, 'evt>) (pkt : Packet') : unit 
         let req = state.Args.HubSpec.DecodeReq pkt.Kind pkt.Payload callback
         hub.PostReq req
 
-let private setHub (state : State<'req, 'evt>) hub =
-    state.Hub <- Some hub
-    hub.OnEvent.Add(state.Args.FireInternalEvent' << HubEvt)
+let private setHub (state : State<'req, 'evt>) =
+    fun runner hub ->
+        state.Hub <- Some hub
+        hub.OnEvent.AddWatcher runner "HubEvt" (state.Args.FireInternalEvent' << HubEvt)
 
 let private doSend runner (state : State<'req, 'evt>) pkt =
     match state.Socket with
@@ -82,7 +83,7 @@ let private init : Init<IAgent, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, '
             Hub = None
             Socket = None
         }
-        args.HubSpec.GetHub runner.Ident.Key <| setHub state
+        args.HubSpec.GetHub runner.Ident.Key <| setHub state runner
         runner.RunTask' ignoreOnFailed' <| setSocketAsync state
         let link : Service.Link = {
             Send = doSend runner state
@@ -90,7 +91,6 @@ let private init : Init<IAgent, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, '
         let hub' : Service.Hub = {
             OnRequest = onRequest runner state
         }
-
         let serviceArgs : Service.Args = {
             Link = link
             Hub = hub'
