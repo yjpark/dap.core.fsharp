@@ -32,18 +32,13 @@ type internal Env = {
         member this.Process parcel = process' this parcel this.SetState
         member this.Deliver msg = deliver' this msg
         member this.Initer = this :> IEnv
-    interface IRunner<IEnv> with
-        member this.Self' = this :> IEnv
-        member this.RunFunc' func = runFunc'' this func
-        member this.RunTask' onFailed getTask = runTask'' this onFailed getTask
-        //member this.AwaitTask' getTask = awaitTask'' this getTask
+        member this.Runner = this :> IEnv
     interface IRunner with
         member this.Log m = this.Logger.Log m
         member this.Clock = this.Clock
         member this.Stats = this.Stats
         member this.RunFunc func = runFunc' this func
         member this.RunTask onFailed getTask = runTask' this onFailed getTask
-        //member this.AwaitTask getTask = awaitTask' this getTask
     interface IEnv with
         member this.Platform = this.Platform
         member this.Logging = this.Logging
@@ -93,34 +88,29 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
 
         member this.Deliver msg = deliver' this msg
         member this.Initer = this :> IAgent<'req, 'evt>
-    interface IRunner<IAgent<'model, 'req, 'evt>> with
-        member this.Self' = this :> IAgent<'model, 'req, 'evt>
-        member this.RunFunc' getFunc = runFunc'' this getFunc
-        member this.RunTask' onFailed getTask = runTask'' this onFailed getTask
-        //member this.AwaitTask' getTask = awaitTask'' this getTask
-    interface IRunner'<IAgent<'req, 'evt>> with
-        member this.Self' = this :> IAgent<'req, 'evt>
-        member this.RunFunc' getFunc = runFunc''' this getFunc
-        member this.RunTask' onFailed getTask = runTask''' this onFailed getTask
-        //member this.AwaitTask' getTask = awaitTask''' this getTask
+        member this.Runner = this :> IAgent<'model, 'req, 'evt>
     interface IRunner with
         member this.Clock = this.Env.Clock
         member this.Stats = this.Stats
-        member this.RunFunc getFunc = runFunc' this getFunc
+        member this.RunFunc func = runFunc' this func
         member this.RunTask onFailed getTask = runTask' this onFailed getTask
-        //member this.AwaitTask getTask = awaitTask' this getTask
     interface ILogger with
         member this.Log m = this.Logger.Log m
     interface IOwner with
         member this.Ident = this.Ident.Ident
         member this.Disposed = this.Disposed
-    interface IAgent<'req, 'evt> with
+    interface IAgent with
         member this.Env = this.Env
         member this.Ident = this.Ident
         member this.Handle req = this.Handle req
         member this.HandleAsync getReq = this.HandleAsync getReq
+        member this.RunFunc1 func = runFunc' this func
+        member this.RunTask1 onFailed getTask = runTask' this onFailed getTask
+    interface IAgent<'req, 'evt> with
         member this.Post req = this.Post req
         member this.PostAsync getSubMsg = this.PostAsync getSubMsg
+        member this.RunFunc2 func = runFunc' this func
+        member this.RunTask2 onFailed getTask = runTask' this onFailed getTask
         member this.Actor =
             match this.Actor with
             | Some actor ->
@@ -132,6 +122,9 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
                 this.Actor <- Some actor
                 actor :> IActor<'req, 'evt>
     interface IAgent<'model, 'req, 'evt> with
+        member this.RunFunc3 func = runFunc' this func
+        //Note: `((onFailed, getTask))` is needed, for the replyAsync type constraint to work
+        member this.RunTask3 onFailed getTask = runTask' this onFailed getTask
         member this.Actor =
             match this.Actor with
             | Some actor ->

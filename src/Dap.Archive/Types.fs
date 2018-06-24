@@ -95,7 +95,7 @@ type IStorage<'extra> when 'extra :> JsonRecord =
     abstract OpenFramesStream : IRunner -> string -> Stream
 
 type IStorage'<'extra> when 'extra :> JsonRecord =
-    abstract WriteMetaAsync : Meta<'extra> -> GetTask<unit>
+    abstract WriteMetaAsync : Meta<'extra> -> GetTask<IRunner, unit>
     abstract NewFramesStream : IRunner -> string -> Stream
 
 let newMeta kind key version extra (beginTime : Instant) memo =

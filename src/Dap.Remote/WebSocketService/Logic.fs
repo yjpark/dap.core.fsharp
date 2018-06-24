@@ -44,7 +44,7 @@ let private handleReq msg (req : Req) : ActorOperate<'req, 'evt> =
         match req with
         | DoAttach (token, socket, callback) ->
             let ident = runner.Ident.Key
-            replyAsync runner msg callback nakOnFailed <| doAttachAsync model.State ident token socket
+            replyAsync3 runner msg callback nakOnFailed <| doAttachAsync model.State ident token socket
         (model, cmd)
 
 let private update : ActorUpdate<Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
@@ -86,7 +86,7 @@ let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt
             Socket = None
         }
         args.HubSpec.GetHub runner.Ident.Key <| setHub state runner
-        runner.RunTask' ignoreOnFailed' <| setSocketAsync state
+        runner.RunTask2 ignoreOnFailed <| setSocketAsync state
         let link : Service.Link = {
             Send = doSend runner state
         }

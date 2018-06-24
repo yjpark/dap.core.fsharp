@@ -14,7 +14,9 @@ type ConnectStats = {
     ConnectDuration : Duration
 }
 
-type Args<'pkt> = Args<'pkt, Evt<'pkt>>
+type Agent<'pkt> =  IAgent<Model<'pkt>, Req<'pkt>, Evt<'pkt>>
+
+and Args<'pkt> = Args<'pkt, Evt<'pkt>>
 
 and State<'pkt> = IState<'pkt, Evt<'pkt>, ClientWebSocket>
 

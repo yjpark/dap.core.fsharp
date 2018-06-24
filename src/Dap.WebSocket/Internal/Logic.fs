@@ -14,7 +14,7 @@ let internal doSend runner onSent (state : IState<'pkt, 'evt, 'socket> option)
     | Some state ->
         match state.Socket.State with
         | WebSocketState.Open ->
-            replyAsync runner msg callback nakOnFailed <| doSendAsync onSent state pkt
+            replyAsync3 runner msg callback nakOnFailed <| doSendAsync onSent state pkt
         | state ->
             reply runner callback <| nak msg "Invalid_State" state
     | None ->

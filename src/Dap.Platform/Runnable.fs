@@ -6,7 +6,7 @@ open Dap.Prelude
 
 type IRunnable<'initer, 'runner, 'args, 'model, 'msg>
                                 when 'initer :> IRunner and 'runner :> IRunner and 'msg :> IMsg =
-    inherit IRunner<'runner>
+    inherit IRunner
     inherit IDispatcher<'msg>
     abstract Args : 'args with get
     abstract Logic : Logic<'initer, 'runner, 'args, 'model, 'msg> with get
@@ -14,7 +14,8 @@ type IRunnable<'initer, 'runner, 'args, 'model, 'msg>
     abstract Start : unit -> Cmd<'msg>
     abstract Process : 'msg -> Cmd<'msg>
     abstract Deliver : Cmd<'msg> -> unit
-    abstract Initer : 'initer with get
+    abstract Initer : 'initer
+    abstract Runner : 'runner
 
 let private tplRunnableFatal = LogEvent.Template3<string, obj, obj>(LogLevelFatal, "[{Section}] {Err}: {Detail}")
 
@@ -36,7 +37,7 @@ let internal start' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>
             | Some state ->
                 raiseRunnableFatal "Already_Started" state
         setState model
-        let runner = runnable.Self'
+        let runner = runnable.Runner
         try
             Cmd.batch [
                 cmd
@@ -66,7 +67,7 @@ let internal process' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'ms
                 (msg : 'msg)
                 (setState : 'model -> unit)
                 : Cmd<'msg> =
-    let runner = runnable.Self'
+    let runner = runnable.Runner
     try
         let time = runner.Clock.Now'
         let (model, cmd) =

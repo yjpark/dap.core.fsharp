@@ -9,7 +9,7 @@ open Dap.Platform
 open Dap.Remote.WebSocketService.Types
 module WebSocket = Dap.WebSocket.Conn.Types
 
-let internal setSocketAsync (state : State<'req, 'evt>) : GetTask'<IAgent, unit> =
+let internal setSocketAsync (state : State<'req, 'evt>) : GetTask<IAgent<Req, NoEvt>, unit> =
     fun runner -> task {
         let socketKey = sprintf "%s_%s" runner.Ident.Kind runner.Ident.Key
         let! (socket, _) = runner.Env.HandleAsync <| DoGetAgent' PacketConn.Kind socketKey
@@ -20,7 +20,7 @@ let internal setSocketAsync (state : State<'req, 'evt>) : GetTask'<IAgent, unit>
 
 let internal doAttachAsync (state : State<'req, 'evt>)
                             (ident : string) (token : CancellationToken)
-                            (socket : WebSocket) : GetReplyTask<Task> =
+                            (socket : WebSocket) : GetReplyTask<Agent<'req, 'evt>, Task> =
     fun msg callback runner -> task {
         while Option.isNone state.Socket do
             do! Task.Delay 20

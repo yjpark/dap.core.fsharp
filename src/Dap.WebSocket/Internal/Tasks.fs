@@ -10,7 +10,7 @@ open Dap.WebSocket.Types
 
 let private doReadPktAsync (onReceived : ReceiveStats * 'pkt -> 'evt)
                             (state : IState<'pkt, 'evt, 'socket>)
-                            : IRunner -> Task<bool> =
+                            : GetTask<IAgent<'model, 'req, 'evt>, bool> =
     fun runner -> task {
         let mutable closed = false;
         let mutable offset = 0
@@ -55,13 +55,13 @@ let private doReadPktAsync (onReceived : ReceiveStats * 'pkt -> 'evt)
         return closed
     }
 
-let internal doReceiveFailed (onDisconnected : 'evt) (state : IState<'pkt, 'evt, 'socket>) : OnFailed =
+let internal doReceiveFailed (onDisconnected : 'evt) (state : IState<'pkt, 'evt, 'socket>) : OnFailed<IAgent<'model, 'req, 'evt>> =
     fun runner e ->
         logInfo runner "Link" "Disconnected" (state.Ident, e)
         state.FireEvent onDisconnected
 
 let internal doReceiveAsync (onReceived : ReceiveStats * 'pkt -> 'evt) (onDisconnected : 'evt)
-                            (state : IState<'pkt, 'evt, 'socket>) : GetTask<unit> =
+                            (state : IState<'pkt, 'evt, 'socket>) : GetTask<'runner, unit> =
     fun runner -> task {
         let mutable closed = false
         while not closed do
@@ -75,15 +75,13 @@ let internal doReceiveAsync (onReceived : ReceiveStats * 'pkt -> 'evt) (onDiscon
         state.FireEvent onDisconnected
     }
 
-let internal doSendAsync onSent (state : IState<'pkt, 'evt, 'socket>) (pkt : 'pkt) : GetReplyTask<SendStats> =
+let internal doSendAsync onSent (state : IState<'pkt, 'evt, 'socket>) (pkt : 'pkt) : GetReplyTask<'runner, SendStats> =
     fun msg callback runner -> task {
         let time = runner.Clock.Now
         let buffer = state.Args.Encode pkt
         let (time, encodeDuration) = runner.Clock.CalcDuration(time)
         let socket = state.Socket :> WebSocket
-        //logInfo runner "Dev" "SendAsync" "Begin"
         do! socket.SendAsync (buffer, state.Args.SendType, true, state.Token)
-        //logInfo runner "Dev" "SendAsync" "End"
         let (_time, transferDuration) = runner.Clock.CalcDuration(time)
         let stats : SendStats = {
             ProcessTime = time

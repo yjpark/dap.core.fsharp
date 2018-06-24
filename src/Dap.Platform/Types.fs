@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Dap.Platform.Types'
 
+open System.Threading.Tasks
 open Dap.Prelude
 
 type QuitStats = {
@@ -15,10 +16,21 @@ type StopStats = {
     StopDuration : Duration
 }
 
+type IAsyncHandler<'req> =
+    abstract HandleAsync<'res> : (Callback<'res> -> 'req) -> Task<'res>
+
+type IAsyncPoster<'msg> =
+    abstract PostAsync<'res> : (Callback<'res> -> 'msg) -> Task<'res>
+
+and GetReplyTask<'runner, 'res when 'runner :> IRunner> =
+    IMsg -> Callback<'res> -> GetTask<'runner, unit>
+and OnReplyFailed<'runner, 'res when 'runner :> IRunner> =
+    IMsg -> Callback<'res> -> 'runner -> exn -> unit
+
 type IPlatform =
     abstract Start : IRunnable<'initer, 'runner, 'args, 'model, 'msg> -> unit
 
-type IEnv =
+and IEnv =
     inherit IRunner
     inherit IHandler<EnvReq>
     inherit IAsyncHandler<EnvReq>
@@ -73,18 +85,22 @@ and IAgent =
     //inherit IChannel<AgentEvt>
     abstract Env : IEnv with get
     abstract Ident : Ident with get
+    abstract RunFunc1<'res> : Func<IAgent, 'res> -> Result<'res, exn>
+    abstract RunTask1 : OnFailed<IAgent> -> GetTask<IAgent, unit> -> unit
 
 and IAgent<'req, 'evt> =
     inherit IAgent
-    inherit IRunner'<IAgent<'req, 'evt>>
     inherit IPoster<'req>
     inherit IAsyncPoster<'req>
     abstract Actor : IActor<'req, 'evt> with get
+    abstract RunFunc2<'res> : Func<IAgent<'req, 'evt>, 'res> -> Result<'res, exn>
+    abstract RunTask2 : OnFailed<IAgent<'req, 'evt>> -> GetTask<IAgent<'req, 'evt>, unit> -> unit
 
 and IAgent<'model, 'req, 'evt> =
     inherit IAgent<'req, 'evt>
-    inherit IRunner<IAgent<'model, 'req, 'evt>>
     abstract Actor : IActor<'model, 'req, 'evt> with get
+    abstract RunFunc3<'res> : Func<IAgent<'model, 'req, 'evt>, 'res> -> Result<'res, exn>
+    abstract RunTask3 : OnFailed<IAgent<'model, 'req, 'evt>> -> GetTask<IAgent<'model, 'req, 'evt>, unit> -> unit
 
 and AgentSpec<'args, 'model, 'msg, 'req, 'evt> = {
     Actor : ActorSpec'<IAgent<'req, 'evt>, IAgent<'model, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>

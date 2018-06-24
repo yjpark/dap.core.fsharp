@@ -8,7 +8,9 @@ open Dap.Remote
 open Dap.Platform
 module WebSocket = Dap.WebSocket.Conn.Types
 
-type InternalEvt<'evt> =
+type Agent<'req, 'evt> = IAgent<Model<'req, 'evt>, Req, NoEvt>
+
+and InternalEvt<'evt> =
     | HubEvt of 'evt
     | SocketEvt of WebSocket.Evt<Packet'>
     | OnHandled of PacketId * Result<IResponse, HubReason>
@@ -40,8 +42,6 @@ and Msg<'req, 'evt> =
     | InternalEvt of InternalEvt<'evt>
     | ServiceReq of Req
 with interface IMsg
-
-type Agent<'req, 'evt> = IAgent<Model<'req, 'evt>, Req, NoEvt>
 
 let DoAttach' (token : CancellationToken) (socket : WebSocket) callback =
     DoAttach (token, socket, callback)

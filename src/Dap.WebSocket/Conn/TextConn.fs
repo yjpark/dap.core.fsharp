@@ -13,7 +13,7 @@ open Dap.WebSocket.Conn.Types
 [<Literal>]
 let Kind = "WebSocketTextConn"
 
-type Agent = IAgent<Model<string>, Req<string>, Evt<string>>
+type Agent = Agent<string>
 
 type Event = Evt<string>
 

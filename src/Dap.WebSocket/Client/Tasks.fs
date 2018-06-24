@@ -11,16 +11,16 @@ open Dap.WebSocket.Client.Types
 
 module BaseTasks = Dap.WebSocket.Internal.Tasks
 
-let internal doReceiveFailed (state : State<'pkt>) : OnFailed =
+let internal doReceiveFailed (state : State<'pkt>) : OnFailed<Agent<'pkt>> =
     BaseTasks.doReceiveFailed OnDisconnected state
 
-let internal doReceiveAsync (state : State<'pkt>) : GetTask<unit> =
+let internal doReceiveAsync (state : State<'pkt>) : GetTask<Agent<'pkt>, unit> =
     BaseTasks.doReceiveAsync OnReceived OnDisconnected state
 
-let internal doSendAsync (state : State<'pkt>) (pkt : 'pkt) : GetReplyTask<SendStats> =
+let internal doSendAsync (state : State<'pkt>) (pkt : 'pkt) : GetReplyTask<Agent<'pkt>, SendStats> =
     BaseTasks.doSendAsync OnSent state pkt
 
-let internal doConnectAsync (state : State<'pkt>) : GetReplyTask<ConnectStats> =
+let internal doConnectAsync (state : State<'pkt>) : GetReplyTask<Agent<'pkt>, ConnectStats> =
     fun msg callback runner -> task {
         let time = runner.Clock.Now
         logInfo runner "Link" "Connecting" state.Ident
