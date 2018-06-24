@@ -110,7 +110,7 @@ type HubReason =
 
 type Hub<'req, 'evt> = {
     PostReq : 'req -> unit
-    OnEvent : IEvent<'evt>
+    OnEvent : IBus<'evt>
 }
 
 type OnHandled = Result<IResponse, HubReason> -> unit

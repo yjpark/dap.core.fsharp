@@ -100,10 +100,12 @@ and IActor<'model, 'req, 'evt> =
 
 and ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt> = {
     Logic : Logic<'runner, 'args, 'model, 'msg>
-    NewArgs : IOwner -> 'args
+    NewArgs : NewArgs<'args>
     WrapReq : Wrapper<'msg, 'req>
     GetOnEvent : 'model -> IBus<'evt>
 }
+
+and NewArgs<'args> = IOwner -> 'args
 
 type NoArgs = NoArgs
 
