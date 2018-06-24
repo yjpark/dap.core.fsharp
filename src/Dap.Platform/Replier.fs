@@ -14,7 +14,7 @@ and GetReplyTask<'res> = IMsg -> Callback<'res> -> GetTask<unit>
 and GetReplyTask'<'runner, 'res> = IMsg -> Callback<'res> -> GetTask'<'runner, unit>
 
 and OnReplyFailed<'res> = IMsg -> Callback<'res> -> IRunner -> exn -> unit
-and OnReplyFailed'<'runner, 'res> = IMsg -> Callback<'res> -> IRunner<'runner> -> exn -> unit
+and OnReplyFailed'<'runner, 'res> = IMsg -> Callback<'res> -> 'runner -> exn -> unit
 
 let private tplAckReply = LogEvent.Template2<IMsg, obj>(AckLogLevel, "[Ack] {Req} ~> {Res}")
 let private tplNakReply = LogEvent.Template3<IMsg, string, obj>(LogLevelError, "[Nak] {Req} ~> {Err}: {Detail}")
