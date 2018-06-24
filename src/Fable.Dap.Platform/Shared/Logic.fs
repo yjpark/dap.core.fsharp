@@ -10,8 +10,8 @@ type Sub<'msg> = Dispatch<'msg> -> unit
 type Cmd<'msg> = Sub<'msg> list
 
 /// Initialize model and may generate cmds.
-type Init<'runner, 'args, 'model, 'msg> =
-    'runner -> 'args -> 'model * Cmd<'msg>
+type Init<'initer, 'args, 'model, 'msg> =
+    'initer -> 'args -> 'model * Cmd<'msg>
 
 /// Change model according to msg, also may generate cmds.
 type Update<'runner, 'model, 'msg> =
@@ -22,8 +22,8 @@ type Subscribe<'runner, 'model, 'msg> =
     'runner -> 'model -> Cmd<'msg>
 
 /// Abstraction of reactive logic, which have model, and can accept msg
-type Logic<'runner, 'args, 'model, 'msg> = {
-    Init : Init<'runner, 'args, 'model, 'msg>
+type Logic<'initer, 'runner, 'args, 'model, 'msg> = {
+    Init : Init<'initer, 'args, 'model, 'msg>
     Update : Update<'runner, 'model, 'msg>
     Subscribe : Subscribe<'runner, 'model, 'msg>
 }
@@ -50,9 +50,9 @@ type WrapperSpec<'runner, 'model, 'msg, 'subModel, 'subMsg> = {
 type Wrapper<'msg, 'subMsg> =
     'subMsg -> 'msg
 
-type Spec<'runner, 'model, 'msg, 'subArgs, 'subModel, 'subMsg> = {
+type Spec<'initer, 'runner, 'model, 'msg, 'subArgs, 'subModel, 'subMsg> = {
     SubArgs : 'subArgs
-    SubLogic : Logic<'runner, 'subArgs, 'subModel, 'subMsg>
+    SubLogic : Logic<'initer, 'runner, 'subArgs, 'subModel, 'subMsg>
     ReactSub : React<'runner, 'model, 'msg, 'subModel, 'subMsg>
 }
 

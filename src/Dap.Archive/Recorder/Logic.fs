@@ -5,11 +5,14 @@ open System.IO
 open Elmish
 open Dap.Prelude
 open Dap.Platform
-
+open Dap.Remote
 open Dap.Archive
 
+type ActorOperate<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame> =
+    ActorOperate<Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
+
 let private doBeginRecording msg ((bundle, callback) : Bundle'<'extra, 'frame> * Callback<Meta<'extra>>)
-                            : Operate<IRunner, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
+                            : ActorOperate<'extra, 'frame> =
     fun runner (model, cmd) ->
         match model.Bundle with
         | None -> ()
@@ -27,7 +30,7 @@ let private doBeginRecording msg ((bundle, callback) : Bundle'<'extra, 'frame> *
             ({model with Bundle = None}, cmd)
 
 let private doFinishRecording msg (callback : Callback<Meta<'extra>>)
-                            : Operate<IRunner, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
+                            : ActorOperate<'extra, 'frame> =
     fun runner (model, cmd) ->
         match model.Bundle with
         | Some bundle ->
@@ -60,7 +63,7 @@ let private doAppendFrame' (args : Args<'extra, 'frame>) msg ((frame, callback) 
             args.FireEvent' <| OnAppendFrameFailed (frame, e)
 
 let private doAppendFrame msg ((frame, callback) : 'frame * Callback<Meta<'extra> * 'frame>)
-                            : Operate<IRunner, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
+                            : ActorOperate<'extra, 'frame> =
     fun runner (model, cmd) ->
         match model.Bundle with
         | Some bundle ->
@@ -69,7 +72,7 @@ let private doAppendFrame msg ((frame, callback) : 'frame * Callback<Meta<'extra
             reply runner callback <| nak msg "Not_Recording" None
         (model, cmd)
 
-let private handleReq msg req : Operate<IRunner, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
+let private handleReq msg req : ActorOperate<'extra, 'frame> =
     fun runner (model, cmd) ->
         match req with
         | DoBeginRecording (a, b) -> doBeginRecording msg (a, b)
@@ -77,7 +80,7 @@ let private handleReq msg req : Operate<IRunner, Model<'extra, 'frame>, Msg<'ext
         | DoAppendFrame (a, b) -> doAppendFrame msg (a, b)
         <| runner <| (model, cmd)
 
-let private handleEvt _msg evt : Operate<IRunner, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
+let private handleEvt _msg evt : ActorOperate<'extra, 'frame> =
     fun runner (model, cmd) ->
         match evt with
         | OnAppendFrameFailed (_frame, _e) -> 
@@ -86,24 +89,25 @@ let private handleEvt _msg evt : Operate<IRunner, Model<'extra, 'frame>, Msg<'ex
         | _ -> noOperation
         <| runner <| (model, cmd)
 
-let private update : Update<IRunner, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
+let private update : ActorUpdate<Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
     fun runner model msg -> 
         match msg with
         | RecorderReq req -> handleReq msg req
         | RecorderEvt evt -> handleEvt msg evt
         <| runner <| (model, [])
 
-let private init : Init<IAgent, Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
+let private init : ActorInit<Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
     fun _runner args ->
         ({
             Args = args
             Bundle = None
         }, noCmd)
 
-let private subscribe (runner : IAgent) (model : Model<'extra, 'frame>) : Cmd<Msg<'extra, 'frame>> =
-    subscribeEvent runner model RecorderEvt model.Args.OnEvent
+let private subscribe : ActorSubscribe<Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
+    fun runner model ->
+        subscribeEvent runner model RecorderEvt model.Args.OnEvent
 
-let logic : Logic<IAgent, Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
+let logic =
     {
         Init = init
         Update = update

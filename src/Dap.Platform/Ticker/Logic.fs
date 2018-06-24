@@ -7,7 +7,9 @@ open NodaTime
 open Dap.Prelude
 open Dap.Platform
 
-let private doStartTimer msg (callback : Callback<Instant>) : Operate<IRunner, Model, Msg> =
+type private ActorOperate = ActorOperate<Model, Msg, Req, Evt>
+
+let private doStartTimer msg (callback : Callback<Instant>) : ActorOperate =
     fun runner (model, cmd) ->
         match model.State with
         | None ->
@@ -38,7 +40,7 @@ let private doStartTimer msg (callback : Callback<Instant>) : Operate<IRunner, M
             reply runner callback <| nak msg "Already_Started" model
             (model, cmd)
 
-let private doStopTimer msg (callback : Callback<Instant>) : Operate<IRunner, Model, Msg> =
+let private doStopTimer msg (callback : Callback<Instant>) : ActorOperate =
     fun runner (model, cmd) ->
         match model.State with
         | Some state ->
@@ -53,14 +55,14 @@ let private doStopTimer msg (callback : Callback<Instant>) : Operate<IRunner, Mo
             reply runner callback <| nak msg "Not_Started" model
             (model, cmd)
 
-let private handleReq msg req : Operate<IRunner, Model, Msg> =
+let private handleReq msg req : ActorOperate =
     fun runner (model, cmd) ->
         match req with
         | DoStartTimer a -> doStartTimer msg a
         | DoStopTimer a -> doStopTimer msg a
         <| runner <| (model, cmd)
 
-let private doTick : Operate<IRunner, Model, Msg> =
+let private doTick : ActorOperate =
     fun runner (model, cmd) ->
         let time = runner.Clock.Now
         let time' = runner.Clock.Now'
@@ -80,14 +82,14 @@ let private doTick : Operate<IRunner, Model, Msg> =
         model.Args.FireEvent' <| OnLateTick' stats
         (model, cmd)
 
-let private handleInternalEvt msg evt : Operate<IRunner, Model, Msg> =
+let private handleInternalEvt msg evt : ActorOperate =
     fun runner (model, cmd) ->
         match evt with
         | DoTick ->
             doTick
         <| runner <| (model, cmd)
 
-let private handleEvt msg evt : Operate<IRunner, Model, Msg> =
+let private handleEvt msg evt : ActorOperate =
     fun runner (model, cmd) ->
         match evt with
         | OnWillTick time ->
@@ -99,7 +101,7 @@ let private handleEvt msg evt : Operate<IRunner, Model, Msg> =
         | _ -> noOperation
         <| runner <| (model, cmd)
 
-let private update : Update<IRunner, Model, Msg> =
+let private update : ActorUpdate<Model, Msg, Req, Evt> =
     fun runner model msg -> 
         match msg with
         | InternalEvt evt -> handleInternalEvt msg evt
@@ -107,7 +109,7 @@ let private update : Update<IRunner, Model, Msg> =
         | TickerReq req -> handleReq msg req
         <| runner <| (model, [])
 
-let private init : Init<IAgent, Args, Model, Msg> =
+let private init : ActorInit<Args, Model, Msg, Req, Evt> =
     fun runner args ->
         let cmd =
             if args.AutoStart then
@@ -125,14 +127,14 @@ let private init : Init<IAgent, Args, Model, Msg> =
             State = None
         }, cmd)
 
-let private subscribe : Subscribe<IAgent, Model, Msg> =
+let private subscribe : ActorSubscribe<Model, Msg, Req, Evt> =
     fun runner model ->
         Cmd.batch [
             subscribeEvent runner model InternalEvt model.Args.OnInternalEvent
             subscribeEvent runner model TickerEvt model.Args.OnEvent
         ]
 
-let logic : Logic<IAgent, Args, Model, Msg> =
+let logic : ActorLogic<Args, Model, Msg, Req, Evt> =
     {
         Init = init
         Update = update

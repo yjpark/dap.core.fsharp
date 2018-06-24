@@ -1,7 +1,7 @@
 [<AutoOpen>]
 module Dap.Platform.MailboxPlatform
 
-let private loop (runnable : IRunnable<'runner, 'args, 'model, 'msg>)
+let private loop (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>)
                     (mailbox : MailboxProcessor<Parcel<'msg>>) : Async<unit> =
     let rec handle() =
         async {
@@ -13,7 +13,7 @@ let private loop (runnable : IRunnable<'runner, 'args, 'model, 'msg>)
         }
     handle()
 
-let private start (runnable : IRunnable<'runner, 'args, 'model, 'msg>) : unit =
+let private start (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>) : unit =
     let mailbox = MailboxProcessor.Start(loop runnable)
     runnable.SetDispatch mailbox.Post
     runnable.Start() |> runnable.Deliver

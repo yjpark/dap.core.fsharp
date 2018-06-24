@@ -96,10 +96,10 @@ and IActor<'req, 'evt> =
 
 and IActor<'model, 'req, 'evt> =
     inherit IActor<'req, 'evt>
-    abstract State : 'model option with get
+    abstract State : 'model with get
 
-and ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt> = {
-    Logic : Logic<'runner, 'args, 'model, 'msg>
+and ActorSpec'<'initer, 'runner, 'args, 'model, 'msg, 'req, 'evt> = {
+    Logic : Logic<'initer, 'runner, 'args, 'model, 'msg>
     NewArgs : NewArgs<'args>
     WrapReq : Wrapper<'msg, 'req>
     GetOnEvent : 'model -> IBus<'evt>

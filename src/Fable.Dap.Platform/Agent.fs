@@ -23,7 +23,7 @@ let getLogger (kind : string) (key : string) =
     Logging.getLogger <| sprintf "%s.%s" kind key
 
 let create (kind : Kind) (key : Key) 
-            (spec : ActorSpec<IAgent, 'args, 'model, 'msg, 'req, 'evt>)
+            (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
                 : IAgent<'model, 'req, 'evt> =
     let agent : Agent<'args, 'model, 'msg, 'req, 'evt> = {
         Spec = spec

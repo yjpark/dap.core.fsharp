@@ -3,6 +3,10 @@ namespace Dap.Platform.Internal
 open Dap.Prelude
 open Dap.Platform
 
+
+type internal EnvLogic =
+    Logic<IEnv, IEnv, NoArgs, EnvModel, EnvMsg>
+
 [<StructuredFormatDisplay("<Env>{Scope}")>]
 type internal Env = {
     Platform : IPlatform
@@ -10,7 +14,7 @@ type internal Env = {
     Scope : Scope
     Clock : IClock
     Logger : ILogger
-    Logic : Logic<IEnv, NoArgs, EnvModel, EnvMsg>
+    Logic : EnvLogic
     Stats : Stats
     mutable Dispatch : DispatchMsg<EnvMsg> option
     mutable State : EnvModel option
@@ -18,7 +22,7 @@ type internal Env = {
     member this.SetState (state : EnvModel) = this.State <- Some state
     member this.Handle (req : EnvReq) = dispatch' this (EnvReq req)
     member this.HandleAsync (getReq : Callback<'res> -> EnvReq) = dispatchAsync' this (EnvReq << getReq)
-    interface IRunnable<IEnv, NoArgs, EnvModel, EnvMsg> with
+    interface IRunnable<IEnv, IEnv, NoArgs, EnvModel, EnvMsg> with
         member _this.Args = NoArgs
         member this.Logic = this.Logic
         member this.Dispatch = this.Dispatch
@@ -27,6 +31,7 @@ type internal Env = {
         member this.Start () = start' this this.SetState
         member this.Process parcel = process' this parcel this.SetState
         member this.Deliver msg = deliver' this msg
+        member this.Initer = this :> IEnv
     interface IRunner<IEnv> with
         member this.Self' = this :> IEnv
         member this.RunFunc' func = runFunc'' this func
@@ -47,6 +52,12 @@ type internal Env = {
         member this.Handle req = this.Handle req
         member this.HandleAsync getReq = this.HandleAsync getReq
 
+type internal AgentLogic<'args, 'model, 'msg, 'req, 'evt> =
+    Logic<IAgent<'req, 'evt>, IAgent<'model, 'req, 'evt>,
+            NoArgs,
+            AgentModel<'args, 'model, 'msg, 'req, 'evt>,
+            AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+
 [<StructuredFormatDisplay("<Agent>{Ident}")>]
 type internal Agent<'args, 'model, 'msg, 'req, 'evt>
                                     when 'msg :> IMsg = {
@@ -54,9 +65,7 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
     Env : IEnv
     Ident : Ident
     Logger : ILogger
-    Logic : Logic<IAgent, NoArgs,
-                    AgentModel<'args, 'model, 'msg, 'req, 'evt>,
-                    AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    Logic : AgentLogic<'args, 'model, 'msg, 'req, 'evt>
     Stats : Stats
     mutable Disposed : bool
     mutable Dispatch : DispatchMsg<AgentMsg<'args, 'model, 'msg, 'req, 'evt>> option
@@ -69,7 +78,9 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
         dispatchAsync' this (AgentReq << getReq)
     member this.Post (subReq : 'req) = dispatch' this (ActorMsg <| this.Spec.Actor.WrapReq subReq)
     member this.PostAsync (getSubReq : Callback<'res> -> 'req) = dispatchAsync' this (ActorMsg  << this.Spec.Actor.WrapReq << getSubReq)
-    interface IRunnable<IAgent, NoArgs,
+    interface IRunnable<IAgent<'req, 'evt>,
+                        IAgent<'model, 'req, 'evt>,
+                        NoArgs,
                         AgentModel<'args, 'model, 'msg, 'req, 'evt>,
                         AgentMsg<'args, 'model, 'msg, 'req, 'evt>> with
         member _this.Args = NoArgs
@@ -81,11 +92,17 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
         member this.Process parcel = process' this parcel this.SetState
 
         member this.Deliver msg = deliver' this msg
-    interface IRunner<IAgent> with
-        member this.Self' = this :> IAgent
+        member this.Initer = this :> IAgent<'req, 'evt>
+    interface IRunner<IAgent<'model, 'req, 'evt>> with
+        member this.Self' = this :> IAgent<'model, 'req, 'evt>
         member this.RunFunc' getFunc = runFunc'' this getFunc
         member this.RunTask' onFailed getTask = runTask'' this onFailed getTask
         //member this.AwaitTask' getTask = awaitTask'' this getTask
+    interface IRunner'<IAgent<'req, 'evt>> with
+        member this.Self' = this :> IAgent<'req, 'evt>
+        member this.RunFunc' getFunc = runFunc''' this getFunc
+        member this.RunTask' onFailed getTask = runTask''' this onFailed getTask
+        //member this.AwaitTask' getTask = awaitTask''' this getTask
     interface IRunner with
         member this.Clock = this.Env.Clock
         member this.Stats = this.Stats
@@ -142,3 +159,4 @@ and [<StructuredFormatDisplay("<Actor>{Ident}")>]
         member this.State =
             this.Agent.State
             |> Option.map (fun s -> s.Actor)
+            |> Option.get

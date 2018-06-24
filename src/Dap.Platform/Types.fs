@@ -16,10 +16,10 @@ type StopStats = {
 }
 
 type IPlatform =
-    abstract Start : IRunnable<'runner, 'args, 'model, 'msg> -> unit
+    abstract Start : IRunnable<'initer, 'runner, 'args, 'model, 'msg> -> unit
 
 type IEnv =
-    inherit IRunner<IEnv>
+    inherit IRunner
     inherit IHandler<EnvReq>
     inherit IAsyncHandler<EnvReq>
     abstract Platform : IPlatform with get
@@ -67,7 +67,7 @@ and EnvParam = {
 
 and IAgent =
     inherit IOwner
-    inherit IRunner<IAgent>
+    inherit IRunner
     inherit IHandler<AgentReq>
     inherit IAsyncHandler<AgentReq>
     //inherit IChannel<AgentEvt>
@@ -76,19 +76,18 @@ and IAgent =
 
 and IAgent<'req, 'evt> =
     inherit IAgent
+    inherit IRunner'<IAgent<'req, 'evt>>
     inherit IPoster<'req>
     inherit IAsyncPoster<'req>
     abstract Actor : IActor<'req, 'evt> with get
 
 and IAgent<'model, 'req, 'evt> =
     inherit IAgent<'req, 'evt>
+    inherit IRunner<IAgent<'model, 'req, 'evt>>
     abstract Actor : IActor<'model, 'req, 'evt> with get
 
-and IAsyncAgent<'model, 'req, 'evt> =
-    inherit IHandler<'req>
-
 and AgentSpec<'args, 'model, 'msg, 'req, 'evt> = {
-    Actor : ActorSpec<IAgent, 'args, 'model, 'msg, 'req, 'evt>
+    Actor : ActorSpec'<IAgent<'req, 'evt>, IAgent<'model, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
     OnAgentEvent : OnAgentEvent<'model> option
     GetSlowCap : GetSlowCap option
 }
@@ -120,11 +119,8 @@ and AgentMsg<'args, 'model, 'msg, 'req, 'evt> =
     | ActorMsg' of AgentWrapping<'args, 'model, 'msg, 'req, 'evt>
 with interface IMsg
 
-and AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
-    Operate<IAgent, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
-
 and AgentWrapping<'args, 'model, 'msg, 'req, 'evt> =
-    IWrapping<IAgent, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    IWrapping<IAgent<'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 
 let DoQuit' (forceQuit : bool) callback =
     DoQuit (forceQuit, callback)

@@ -13,14 +13,14 @@ let private raiseAgentErr err detail =
 //Can NOT use same name in Actor implementation in Fable 1.x
 //https://github.com/fable-compiler/Fable/issues/1343
 type internal Agent<'args, 'model, 'msg, 'req, 'evt> = {
-    Spec : ActorSpec<IAgent, 'args, 'model, 'msg, 'req, 'evt>
+    Spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>
     Ident' : Ident
     Logger' : ILogger
     mutable Dispatch : Elmish.Dispatch<'msg> option
     mutable State' : 'model option
 } with
     member this.Start () =
-        let runner = this :> IAgent
+        let runner = this :> IAgent<'req, 'evt>
         try
             let (model, cmd) =
                 match this.State' with
@@ -30,10 +30,16 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt> = {
                 | Some state ->
                     raiseAgentErr "Already_Started" state
             this.State' <- Some model
-            Cmd.batch [
-                cmd
-                this.Spec.Logic.Subscribe runner model
-            ]
+            let runner = this :> IAgent<'model, 'req, 'evt>
+            try
+                Cmd.batch [
+                    cmd
+                    this.Spec.Logic.Subscribe runner model
+                ]
+            with
+            | e ->
+                runner.Log <| tplAgentFailed "Subscribe" () e
+                Cmd.none
         with
         | MessageException msg ->
             runner.Log msg
@@ -42,7 +48,7 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt> = {
             runner.Log <| tplAgentFailed "Init" () e
             Cmd.none
     member this.Process msg =
-        let runner = this :> IAgent
+        let runner = this :> IAgent<'model, 'req, 'evt>
         try
             let (model, cmd) =
                 match this.State' with
@@ -75,7 +81,7 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt> = {
             let model = Option.get this.State'
             this.Spec.GetOnEvent model
         member this.Ident = this.Ident'
-        member this.State = this.State'
+        member this.State = this.State' |> Option.get
     interface IOwner with
         member this.Ident = this.Ident'.Ident
         member _this.Disposed = false

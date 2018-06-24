@@ -24,6 +24,7 @@
     <Compile Include="Runnable.fs" />
     <Compile Include="Replier.fs" />
     <Compile Include="Types.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Actor.fs" />
     <Compile Include="Tasks.fs" />
     <Compile Include="Internal.fs" />
     <Compile Include="Agent.fs" />

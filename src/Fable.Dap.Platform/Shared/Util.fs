@@ -70,9 +70,9 @@ let noOperation : Operate<'runner, 'model, 'msg> =
     fun _runner ->
         id
 
-let noLogic : Logic<'runner, NoArgs, NoModel, NoMsg> =
+let noLogic : Logic<'initer, 'runner, NoArgs, NoModel, NoMsg> =
     {
-        Init = fun _runner _args -> (NoModel, Cmd.none)
+        Init = fun _initer _args -> (NoModel, Cmd.none)
         Update = fun _runner model _msg -> (model, Cmd.none)
         Subscribe = noSubscription
     }
@@ -92,7 +92,7 @@ let noOwner =
 let noEvent =
     let bus = new Bus<NoEvt>(noOwner)
     bus.Publish
-let noActor<'runner> : ActorSpec<'runner, NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
+let noActor<'initer, 'runner> : ActorSpec'<'initer, 'runner, NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
     {
         NewArgs = fun _owner -> NoArgs
         Logic = noLogic

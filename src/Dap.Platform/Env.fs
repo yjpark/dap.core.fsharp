@@ -147,7 +147,7 @@ let private init : Init<IEnv, NoArgs, EnvModel, EnvMsg> =
         (model, Cmd.none)
 
 let create (param : EnvParam) : IEnv =
-    let logic = {
+    let logic : EnvLogic = {
         Init = init
         Update = update
         Subscribe = noSubscription

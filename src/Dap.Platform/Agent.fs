@@ -9,6 +9,15 @@ open Dap.Platform.Internal
 
 let private tplSpawnErr = LogEvent.Template3<obj, Scope, Ident>(LogLevelFatal, "[Spawn] {Err}: {Scope}  ~> {Ident}")
 
+type AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
+    Operate<IAgent<'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+type AgentInit<'args, 'model, 'msg, 'req, 'evt> =
+    Init<IAgent<'req, 'evt>, NoArgs, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+type AgentUpdate<'args, 'model, 'msg, 'req, 'evt> =
+    Update<IAgent<'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+type AgentSubscribe<'args, 'model, 'msg, 'req, 'evt> =
+    Subscribe<IAgent<'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+
 let private raiseSpawnErr err scope ident = 
     raiseWith <| tplSpawnErr err scope ident
 
@@ -22,7 +31,7 @@ let private handleReq msg req : AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
     | DoStop (a, b) -> doStop msg (a, b)
 
 let private update wrapper
-                    : Update<IAgent, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>> =
+                    : AgentUpdate<'args, 'model, 'msg, 'req, 'evt> =
     fun runner model msg ->
         match msg with
         | AgentReq req -> handleReq msg req
@@ -32,8 +41,8 @@ let private update wrapper
         <| runner <| (model, [])
 
 let private init wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
-                            : Init<IAgent, NoArgs, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>> =
-    fun runner (args : NoArgs) ->
+                            : AgentInit<'args, 'model, 'msg, 'req, 'evt> =
+    fun runner (_args : NoArgs) ->
         let args = spec.Actor.NewArgs (runner :> IOwner)
         let (actorModel, actorCmd) = spec.Actor.Logic.Init runner args
         let model = {
@@ -43,7 +52,7 @@ let private init wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
         (model, Cmd.map wrapper actorCmd)
 
 let private subscribe wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
-                            : Subscribe<IAgent, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>> =
+                            : AgentSubscribe<'args, 'model, 'msg, 'req, 'evt> =
     fun runner (model : AgentModel<'args, 'model, 'msg, 'req, 'evt>) ->
         Cmd.map wrapper <| spec.Actor.Logic.Subscribe runner model.Actor
 
@@ -55,7 +64,7 @@ let spawn (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
         UpdateSub = spec.Actor.Logic.Update
         ReactSub = noReaction
     }
-    let logic = {
+    let logic : AgentLogic<'args, 'model, 'msg, 'req, 'evt> = {
         Init = init wrapper spec
         Update = update wrapper
         Subscribe = subscribe wrapper spec

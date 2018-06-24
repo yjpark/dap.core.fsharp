@@ -11,12 +11,14 @@ open Dap.Remote.WebSocketService.Types
 open Dap.Remote.WebSocketService.Tasks
 module WebSocket = Dap.WebSocket.Conn.Types
 
-let private handleService (msg : Service.Msg) : Operate<IAgent, Model<'req, 'evt>, Msg<'req, 'evt>> = 
+type ActorOperate<'req, 'evt> = ActorOperate<Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
+
+let private handleService (msg : Service.Msg) : ActorOperate<'req, 'evt> = 
     fun _runner (model, cmd) ->
         let service = Service.handle msg model.Service
         ({model with Service = service}, cmd)
 
-let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : Operate<IAgent, Model<'req, 'evt>, Msg<'req, 'evt>> =
+let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req, 'evt> =
     match evt with 
     | WebSocket.OnReceived (_stats, pkt) ->
         handleService <| Service.OnReceived pkt
@@ -25,10 +27,10 @@ let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : Operate<IAgent, Mo
     | _ ->
         noOperation
 
-let private handleHubEvt (evt : 'evt) : Operate<IAgent, Model<'req, 'evt>, Msg<'req, 'evt>> =
+let private handleHubEvt (evt : 'evt) : ActorOperate<'req, 'evt> =
     handleService <| Service.DoSendEvent evt
 
-let private handleInternalEvt (evt : InternalEvt<'evt>) : Operate<IAgent, Model<'req, 'evt>, Msg<'req, 'evt>> =
+let private handleInternalEvt (evt : InternalEvt<'evt>) : ActorOperate<'req, 'evt> =
     match evt with 
     | HubEvt evt ->
         handleHubEvt evt
@@ -37,7 +39,7 @@ let private handleInternalEvt (evt : InternalEvt<'evt>) : Operate<IAgent, Model<
     | OnHandled (packetId, res) ->
         handleService <| Service.DoSendResponse (packetId, res)
 
-let private handleReq msg (req : Req) : Operate<IAgent, Model<'req, 'evt>, Msg<'req, 'evt>> =
+let private handleReq msg (req : Req) : ActorOperate<'req, 'evt> =
     fun runner (model, cmd) ->
         match req with
         | DoAttach (token, socket, callback) ->
@@ -45,7 +47,7 @@ let private handleReq msg (req : Req) : Operate<IAgent, Model<'req, 'evt>, Msg<'
             replyAsync runner msg callback nakOnFailed <| doAttachAsync model.State ident token socket
         (model, cmd)
 
-let private update : Update<IAgent, Model<'req, 'evt>, Msg<'req, 'evt>> =
+let private update : ActorUpdate<Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     fun runner model msg -> 
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
@@ -76,7 +78,7 @@ let private doSend runner (state : State<'req, 'evt>) pkt =
         socket.Post <| WebSocket.DoSend (pkt, None)
         None
     
-let private init : Init<IAgent, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>> =
+let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     fun runner args ->
         let state = {
             Args = args
@@ -103,13 +105,13 @@ let private init : Init<IAgent, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, '
             State = state
         }, Cmd.none)
 
-let private subscribe : Subscribe<IAgent, Model<'req, 'evt>, Msg<'req, 'evt>> =
+let private subscribe : ActorSubscribe<Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     fun runner model ->
         Cmd.batch [
             subscribeEvent runner model InternalEvt model.Args.OnInternalEvent
         ]
 
-let logic : Logic<IAgent, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>> =
+let logic =
     {
         Init = init
         Update = update

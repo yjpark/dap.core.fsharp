@@ -11,7 +11,9 @@ open Dap.Remote.WebSocketProxy.Types
 module WebSocket = Dap.WebSocket.Client.Types
 module WebSocketActor = Dap.WebSocket.Client.Actor
 
-let private handleClient (msg : Client.Msg) : Operate<IAgent, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> = 
+type ActorOperate<'req, 'res, 'evt> = ActorOperate<Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt>
+
+let private handleClient (msg : Client.Msg) : ActorOperate<'req, 'res, 'evt> = 
     fun _runner (model, cmd) ->
         let client = Client.handle msg model.Client
         ({model with Client = client}, cmd)
@@ -20,7 +22,7 @@ let private doEnqueue (req, pkt) (model : Model<'res, 'evt>) =
     let sendQueue = model.SendQueue |> List.append [(req, pkt)]
     {model with SendQueue = sendQueue}
 
-let private doReconnect : Operate<IAgent, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> =
+let private doReconnect : ActorOperate<'req, 'res, 'evt> =
     fun _runner (model, cmd) ->
         model.Socket.Actor.Handle WebSocket.DoConnect
         (model, cmd)
@@ -34,13 +36,13 @@ let private doSend' (runner : IAgent) (args : Args<'res, 'evt>) (socket : WebSoc
         args.FireInternalEvent' <| OnSent ^<| (req, pkt, Error <| SendFailed err)
     socket.Actor.Handle <| WebSocket.DoSend (pkt, callback' runner onAck onNak)
 
-let private doSendQueue : Operate<IAgent, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> =
+let private doSendQueue : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         model.SendQueue
         |> List.iter ^<| doSend' runner model.Args model.Socket
         ({model with SendQueue = []}, cmd)
 
-let private handleInternalEvt (evt : InternalEvt) : Operate<IAgent, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> =
+let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         match evt with 
         | OnSent (req, pkt, res) ->
@@ -51,10 +53,10 @@ let private handleInternalEvt (evt : InternalEvt) : Operate<IAgent, Model<'res, 
             doReconnect
         <| runner <| (model, Cmd.none)
 
-let private handleProxyReq (req : 'req) : Operate<IAgent, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> =
+let private handleProxyReq (req : 'req) : ActorOperate<'req, 'res, 'evt> =
     handleClient <| Client.DoSend req
 
-let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : Operate<IAgent, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> =
+let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         match evt with 
         | WebSocket.OnConnected ->
@@ -67,7 +69,7 @@ let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : Operate<IAgent, Mo
             noOperation
         <| runner <| (model, Cmd.none)
 
-let private update : Update<IAgent, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> =
+let private update : ActorUpdate<Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     fun runner model msg ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
@@ -82,15 +84,11 @@ let private doEnqueue' (runner : IAgent) (args : Args<'res, 'evt>) ((req, pkt) :
 
 let private doSend (runner : IAgent) (args : Args<'res, 'evt>) (socket : WebSocket.Agent<Packet'>)
                    ((req, pkt) : IRequest * Packet') : LocalReason option =
-    match socket.Actor.State with
-    | None ->
+    match socket.Actor.State.Ready with
+    | false ->
         doEnqueue' runner args (req, pkt)
-    | Some model ->
-        match model.Ready with
-        | false ->
-            doEnqueue' runner args (req, pkt)
-        | true ->
-            doSend' runner args socket (req, pkt)
+    | true ->
+        doSend' runner args socket (req, pkt)
     None
 
 let private onResponse (args : Args<'res, 'evt>) ((req, res) : IRequest * Result<string, Reason'>) : unit =
@@ -108,7 +106,7 @@ let private onResponse (args : Args<'res, 'evt>) ((req, res) : IRequest * Result
 let private onEvent (args : Args<'res, 'evt>) ((kind, json) : PacketKind * string) : unit =
     args.FireEvent' <| args.Spec.DecodeEvt kind json
 
-let private init : Init<IAgent, Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> =
+let private init : ActorInit<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     fun runner args ->
         let socket = WebSocketActor.create Packet.encode Packet.decode runner.Ident.Key args.Uri false
         let link : Client.Link = {
@@ -131,7 +129,7 @@ let private init : Init<IAgent, Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, '
             SendQueue = []
         }, Cmd.none)
 
-let private subscribe : Subscribe<IAgent, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> =
+let private subscribe : ActorSubscribe<Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     fun runner model ->
         Cmd.batch [
             subscribeEvent runner model ProxyEvt model.Args.OnEvent
@@ -140,14 +138,14 @@ let private subscribe : Subscribe<IAgent, Model<'res, 'evt>, Msg<'req, 'res, 'ev
             subscribeEvent runner model SocketEvt model.Socket.Actor.OnEvent
         ]
 
-let logic : Logic<IAgent, Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> =
+let logic =
     {
         Init = init
         Update = update
         Subscribe = subscribe
     }
 
-let getSpec (newArgs : NewArgs<Args<'res, 'evt>>) : ActorSpec<IAgent, Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
+let getSpec (newArgs : NewArgs<Args<'res, 'evt>>) : ActorSpec<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     {
         Logic = logic
         NewArgs = newArgs

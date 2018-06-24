@@ -39,7 +39,16 @@ and IRunner =
 
 and IRunner<'runner> =
     inherit IRunner
-    abstract Self' : 'runner with get
+    abstract Self' : 'runner
+    abstract RunFunc' : Func'<'runner, 'res> -> Result<'res, exn>
+    abstract RunTask' : OnFailed'<'runner> -> GetTask'<'runner, unit> -> unit
+    //abstract AwaitTask' : GetTask'<'runner, 'res> -> Result<'res, exn>
+
+//Hacky here, F# won't allow implement IRunner<IAgent<'req, 'evt>> for IAgent<'req, 'evt>
+//Since IAgent<'model, 'req, 'evt> already implement IRunner<IAGent<'model, 'req, 'evt>>
+and IRunner'<'runner> =
+    inherit IRunner
+    abstract Self' : 'runner
     abstract RunFunc' : Func'<'runner, 'res> -> Result<'res, exn>
     abstract RunTask' : OnFailed'<'runner> -> GetTask'<'runner, unit> -> unit
     //abstract AwaitTask' : GetTask'<'runner, 'res> -> Result<'res, exn>
@@ -109,6 +118,17 @@ let internal runFunc' (runner : IRunner) (func : Func<'res>) : Result<'res, exn>
     |> logRunResult runner "RunFunc" runner.Stats.Func (func.ToString()) time
 
 let internal runFunc'' (runner : IRunner<'runner>) (func : Func'<'runner, 'res>) : Result<'res, exn> =
+    let time = runner.Clock.Now'
+    runner.Stats.Func.IncStartedCount ()
+    try
+        let res = func runner.Self'
+        Ok res
+    with
+    | e ->
+        Result.Error e
+    |> logRunResult runner "RunFunc'" runner.Stats.Func (func.ToString()) time
+
+let internal runFunc''' (runner : IRunner'<'runner>) (func : Func'<'runner, 'res>) : Result<'res, exn> =
     let time = runner.Clock.Now'
     runner.Stats.Func.IncStartedCount ()
     try
