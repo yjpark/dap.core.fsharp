@@ -96,7 +96,7 @@ type SerilogLogging (target' : Serilog.ILogger) =
     static member Create (sinks : AddSink list) =
         let config = Serilog.LoggerConfiguration ()
         let config = config.Enrich.WithThreadId ()
-        //let config = config.Enrich.WithDemystifiedStackTraces ()
+        let config = config.Enrich.WithDemystifiedStackTraces ()
         let config = sinks |> List.fold (fun c addSink -> addSink c) config
         let logger = config.CreateLogger()
         if isSilentLogger Serilog.Log.Logger then

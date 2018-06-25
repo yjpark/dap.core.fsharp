@@ -4,7 +4,7 @@ Serilog.Sinks.Console
 Serilog.Sinks.File
 Serilog.Sinks.Seq
 Serilog.Formatting.Compact
-# Serilog.Enrichers.Demystify
+Serilog.Enrichers.Demystify
 Serilog.Enrichers.Thread
 
 group Build
