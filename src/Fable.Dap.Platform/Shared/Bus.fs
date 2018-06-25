@@ -52,8 +52,10 @@ type Watcher<'evt> = {
 type IBus<'evt> =
     abstract AddWatcher : IOwner -> string -> ('evt -> unit) -> unit
     abstract SetWatcher : IOwner -> string -> ('evt -> unit) -> bool    // -> isNew
-    abstract RemoveWatcher : IOwner -> string list                      // -> ident list
-    abstract RemoveWatcher : IOwner * string -> string list             // -> ident list
+    abstract RemoveWatcher' : IOwner -> string list                      // -> ident list
+    abstract RemoveWatcher' : IOwner * string -> string list             // -> ident list
+    abstract RemoveWatcher : IOwner -> unit
+    abstract RemoveWatcher : IOwner * string -> unit
 
 [<StructuredFormatDisplay("{AsString}")>]
 type Bus<'evt> (owner') =
@@ -151,18 +153,22 @@ type Bus<'evt> (owner') =
                     removeWatchers old
                     watchers <- watchers @ [ watcher ]
                     false
-            member _x.RemoveWatcher (owner, ident) =
-                match this.TryFindWatchers owner (Some ident) with
-                | [] ->
-                    []
-                | old ->
-                    removeWatchers old
-                    old |> List.map (fun w -> w.Ident)
-            member _x.RemoveWatcher owner =
+            member _x.RemoveWatcher' owner =
                 match this.TryFindWatchers owner None with
                 | [] ->
                     []
                 | old ->
                     removeWatchers old
                     old |> List.map (fun w -> w.Ident)
+            member _x.RemoveWatcher' (owner, ident) =
+                match this.TryFindWatchers owner (Some ident) with
+                | [] ->
+                    []
+                | old ->
+                    removeWatchers old
+                    old |> List.map (fun w -> w.Ident)
+            member x.RemoveWatcher owner =
+                x.RemoveWatcher' owner |> ignore
+            member x.RemoveWatcher (owner, ident) =
+                x.RemoveWatcher' (owner, ident) |> ignore
         }
