@@ -3,7 +3,6 @@ module Dap.Platform.Bus
 
 open System
 open Dap.Prelude
-open System
 
 // This is to provide some extra feature to Event<> and IEvent<>
 //
@@ -30,14 +29,22 @@ let private tplAddWatcherError = LogEvent.Template5<string, IOwner, string, obj,
 
 type Watcher<'evt> = {
     OwnerIdent : string
+#if FABLE_COMPILER
+    OwnerRef : IOwner
+#else
     OwnerRef : WeakReference<IOwner>
+#endif
     Ident : string
     Action : 'evt -> unit
 } with
     static member Create (owner : IOwner) ident action =
         {
             OwnerIdent = owner.Ident
+        #if FABLE_COMPILER
+            OwnerRef = owner
+        #else
             OwnerRef = new WeakReference<IOwner> (owner)
+        #endif
             Ident = ident
             Action = action
         }
@@ -62,8 +69,18 @@ type Bus<'evt> (owner') =
                 not (List.exists check toRemove)
             )
         owner.Log <| tplWatchersInfo "Bus:Watchers_Removed" toRemove ()
+    let tryGetTarget (watcher : Watcher<'evt>) =
+    #if FABLE_COMPILER
+        (true, watcher.OwnerRef)
+    #else
+        watcher.OwnerRef.TryGetTarget ()
+    #endif
     override _this.ToString () : string =
+    #if FABLE_COMPILER
+        let prefixFormat = sprintf "[Bus %s <%i>]" owner.Ident
+    #else
         let prefixFormat = sprintf "[Bus<%s> %s <%i>]" (typeof<'evt>.FullName) owner.Ident
+    #endif
         prefixFormat watchers.Length
     member this.AsString =
         this.ToString ()
@@ -72,7 +89,7 @@ type Bus<'evt> (owner') =
             owner.Log <| tplDisposedInfo "Bus:Self_Disposed" owner evt
         else
             let folder = fun garbage watcher ->
-                match watcher.OwnerRef.TryGetTarget () with
+                match tryGetTarget watcher with
                 | (true, owner) ->
                     if owner.Disposed then
                         owner.Log <| tplDisposedInfo "Bus:Watcher_Disposed" owner evt
@@ -107,7 +124,7 @@ type Bus<'evt> (owner') =
             |> Option.defaultValue true
             |> function
             | true ->
-                match watcher.OwnerRef.TryGetTarget () with
+                match tryGetTarget watcher with
                 | (true, owner') ->
                     owner.Ident = owner'.Ident
                 | (false, _) ->
@@ -120,24 +137,12 @@ type Bus<'evt> (owner') =
             member _x.AddWatcher owner ident action =
                 match this.TryFindWatchers owner (Some ident) with
                 | [] ->
-                    let watcher =
-                        {
-                            OwnerIdent = owner.Ident
-                            Ident = ident
-                            Action = action
-                            OwnerRef = new WeakReference<IOwner> (owner)
-                        }
+                    let watcher = Watcher<'evt>.Create owner ident action
                     watchers <- watchers @ [ watcher ]
                 | old ->
                     owner.Log <| tplAddWatcherError "Bus:Watcher_Already_Exist" owner ident action old
             member _x.SetWatcher owner ident action =
-                let watcher =
-                    {
-                        OwnerIdent = owner.Ident
-                        Ident = ident
-                        Action = action
-                        OwnerRef = new WeakReference<IOwner> (owner)
-                    }
+                let watcher = Watcher<'evt>.Create owner ident action
                 match this.TryFindWatchers owner (Some ident) with
                 | [] ->
                     watchers <- watchers @ [ watcher ]

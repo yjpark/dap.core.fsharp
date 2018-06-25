@@ -25,10 +25,9 @@ let noKind = ""
 let noKey = ""
 
 let private calVersion scope kind key =
-    let locker = obj()
     let mutable versions : Map<string, int> = Map.empty
     let ident = sprintf "%s:%s:%s" scope kind key 
-    lock locker (fun () ->
+    let calc = fun () ->
         versions
         |> Map.tryFind ident
         |> function
@@ -38,7 +37,12 @@ let private calVersion scope kind key =
             | Some v ->
                 versions <- versions |> Map.add ident (v + 1)
                 (v + 1)
-    )
+#if FABLE_COMPILER
+    calc ()
+#else
+    let locker = obj()
+    lock locker calc
+#endif
 
 [<StructuredFormatDisplay("{Ident}")>]
 type Ident = {
