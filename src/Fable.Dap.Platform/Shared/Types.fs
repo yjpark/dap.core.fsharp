@@ -26,7 +26,7 @@ let noKey = ""
 
 let private calVersion scope kind key =
     let mutable versions : Map<string, int> = Map.empty
-    let ident = sprintf "%s:%s:%s" scope kind key 
+    let ident = sprintf "%s:%s:%s" scope kind key
     let calc = fun () ->
         versions
         |> Map.tryFind ident
@@ -60,7 +60,7 @@ type Ident = {
         }
     member this.Ident = sprintf "[%s:%s:%s]<%i>" this.Scope this.Kind this.Key this.Ver
 
-let noIdent = 
+let noIdent =
     {
         Scope = noScope
         Kind = noKind
