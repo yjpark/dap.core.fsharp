@@ -13,6 +13,7 @@
   <ItemGroup>
     <Compile Include="Shared/Operator.fs" />
     <Compile Include="Shared/Logging.fs" />
+    <Compile Include="Shared/Option.fs" />
     <Compile Include="Shared/Result.fs" />
     <Compile Include="Shared/Union.fs" />
     <Compile Include="Logging.fs" />
