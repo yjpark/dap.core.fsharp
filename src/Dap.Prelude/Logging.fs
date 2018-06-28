@@ -143,10 +143,10 @@ let addRollingFileSink (rollingInterval : RollingInterval) (path : string) : Add
             Serilog.Formatting.Compact.CompactJsonFormatter(),
             path, rollingInterval = rollingInterval)
 
-let addDailyFileSink : string -> AddSink = 
+let addDailyFileSink : string -> AddSink =
     addRollingFileSink RollingInterval.Day
 
-let addHourlyFileSink : string -> AddSink = 
+let addHourlyFileSink : string -> AddSink =
     addRollingFileSink RollingInterval.Hour
 
 let addSeqSink (uri : string) : AddSink =
