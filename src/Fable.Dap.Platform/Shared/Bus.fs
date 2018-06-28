@@ -21,7 +21,13 @@ let private tplDisposedInfo = LogEvent.Template3<string, obj, obj>(LogLevelInfor
 
 let private tplWatchersInfo = LogEvent.Template3<string, obj, obj>(LogLevelInformation, "[{Section}] {Watchers} {Detail}")
 
+let private tplWatchersDebug = LogEvent.Template3<string, obj, obj>(LogLevelDebug, "[{Section}] {Watchers} {Detail}")
+
 let private tplWatcherSucceed = LogEvent.Template3<string, obj, obj>(LogLevelDebug, "[{Section}] {Watcher} {Detail}")
+
+let private tplWatcherInfo = LogEvent.Template3<string, obj, obj>(LogLevelInformation, "[{Section}] {Watcher} {Detail}")
+
+let private tplWatcherDebug = LogEvent.Template3<string, obj, obj>(LogLevelDebug, "[{Section}] {Watcher} {Detail}")
 
 let private tplWatcherFailed = LogEvent.Template3WithException<string, obj, obj>(LogLevelError, "[{Section}] {Watcher} {Detail} -> Failed")
 
@@ -60,9 +66,18 @@ type IBus<'evt> =
 [<StructuredFormatDisplay("{AsString}")>]
 type Bus<'evt> (owner') =
     let owner : IOwner = owner'
+    let mutable logAddRemove = true
     let mutable watchers : Watcher<'evt> list = []
+    let setLogAddRemove (v : bool) =
+        logAddRemove <- v
+    let addWatcher watcher =
+        watchers <- watchers @ [ watcher ]
+        if logAddRemove then
+            owner.Log <| tplWatcherInfo "Bus:Watcher_Added" watcher ()
+        else
+            owner.Log <| tplWatcherDebug "Bus:Watcher_Added" watcher ()
     let removeWatchers (toRemove : Watcher<'evt> list) =
-        watchers <- 
+        watchers <-
             watchers
             |> List.filter (fun w ->
                 let check = fun w' ->
@@ -70,7 +85,10 @@ type Bus<'evt> (owner') =
                     && w.Ident = w'.Ident
                 not (List.exists check toRemove)
             )
-        owner.Log <| tplWatchersInfo "Bus:Watchers_Removed" toRemove ()
+        if logAddRemove then
+            owner.Log <| tplWatcherInfo "Bus:Watchers_Removed" toRemove ()
+        else
+            owner.Log <| tplWatcherDebug "Bus:Watchers_Removed" toRemove ()
     let tryGetTarget (watcher : Watcher<'evt>) =
     #if FABLE_COMPILER
         (true, watcher.OwnerRef)
@@ -147,11 +165,11 @@ type Bus<'evt> (owner') =
                 let watcher = Watcher<'evt>.Create owner ident action
                 match this.TryFindWatchers owner (Some ident) with
                 | [] ->
-                    watchers <- watchers @ [ watcher ]
+                    addWatcher watcher
                     true
                 | old ->
                     removeWatchers old
-                    watchers <- watchers @ [ watcher ]
+                    addWatcher watcher
                     false
             member _x.RemoveWatcher' owner =
                 match this.TryFindWatchers owner None with
