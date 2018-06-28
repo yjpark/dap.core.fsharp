@@ -21,7 +21,7 @@ type FuncStats<[<Measure>] 'u> = {
     mutable SucceedCount : int
     mutable FailedCount : int
     Duration : DurationStats<'u>
-} with 
+} with
     member this.IncStartedCount () : unit =
         this.StartedCount <- this.StartedCount + 1
     member this.IncSucceedCount () : unit =

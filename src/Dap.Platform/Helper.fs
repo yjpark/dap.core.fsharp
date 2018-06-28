@@ -17,3 +17,9 @@ let calcSha256Sum (content : string) : string =
 
 let calcSha256SumWithSalt (content : string) (salt : string) : string =
     calcSha256Sum <| content + salt
+
+let checkDirectory (runner : IRunner) (path : string) (section : string) =
+    let dirInfo = (new FileInfo (path)).Directory;
+    if not dirInfo.Exists then
+        dirInfo.Create();
+        logInfo runner section "Directory_Created" dirInfo

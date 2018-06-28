@@ -38,7 +38,7 @@ let private logRunResult' runner section states getTask startTime (onFailed : ex
     | None -> ()
     | Some e -> onFailed e
 
-let private tryWaitTask (runner : 'runner) (getTask : GetTask<'runner, unit>) : exn option = 
+let private tryWaitTask (runner : 'runner) (getTask : GetTask<'runner, unit>) : exn option =
     try
         let task = getTask runner
         task.Wait()

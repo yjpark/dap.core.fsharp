@@ -36,18 +36,13 @@ type Param' = {
 
 type Storage'<'extra> when 'extra :> JsonRecord (param') =
     let param : Param' = param'
-    let checkDirectory (runner : IRunner) (path : string) =
-        let dirInfo = (new FileInfo (path)).Directory;
-        if not dirInfo.Exists then
-            logInfo runner "FileStorage" "Create_Directory" dirInfo
-            dirInfo.Create();
     member _this.Param with get () = param
     interface IStorage'<'extra> with
         member _this.WriteMetaAsync (meta : Meta<'extra>) =
             fun runner -> task {
                 let relPath = param.CalcRelPath meta.Key
                 let path = Path.Combine (param.Root, relPath)
-                checkDirectory runner path
+                checkDirectory runner path "FileStorage"
                 use stream = new FileStream (path + MetaExtension, FileMode.CreateNew, FileAccess.Write)
                 use writer = new StreamWriter (stream)
                 let json = (meta :> JsonRecord).ToJsonString 4
@@ -56,7 +51,7 @@ type Storage'<'extra> when 'extra :> JsonRecord (param') =
         member _this.NewFramesStream (runner : IRunner) (key : string) =
             let relPath = param.CalcRelPath key
             let path = Path.Combine (param.Root, relPath)
-            checkDirectory runner path
+            checkDirectory runner path "FileStorage"
             new FileStream (path + FramesExtension, FileMode.CreateNew, FileAccess.Write) :> Stream
 
 let calRelPathWithPrefixes (prefixes : int list) (key : string) =
