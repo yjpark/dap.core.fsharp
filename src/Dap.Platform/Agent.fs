@@ -69,11 +69,12 @@ let spawn (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
         Update = update wrapper
         Subscribe = subscribe wrapper spec
     }
-    let logger = param.Env.Logging.GetLogger <| String.concat "." [ param.Env.Scope; param.Kind; param.Key ]
+    let ident = Ident.Create param.Env.Scope param.Kind param.Key
+    let logger = param.Env.Logging.GetLogger ident.Ident
     let agent = {
         Spec = spec
         Env = param.Env
-        Ident = Ident.Create param.Env.Scope param.Kind param.Key
+        Ident = ident
         Logger = logger
         Logic = logic
         Stats = statsOfCap <| defaultArg spec.GetSlowCap getDefaultSlowCap

@@ -152,7 +152,7 @@ let create (param : EnvParam) : IEnv =
         Update = update
         Subscribe = noSubscription
     }
-    let logger = param.Logging.GetLogger param.Scope 
+    let logger = param.Logging.GetLogger param.Scope
     let env = {
         Platform = param.Platform
         Logging = param.Logging
