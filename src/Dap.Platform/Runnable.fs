@@ -79,7 +79,7 @@ let internal process' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'ms
         setState model
         trackDurationStatsInMs runner time runnable.Stats.Process (getSlowProcessMessage msg) |> ignore
         cmd
-    with 
+    with
     | MessageException m ->
         runner.Log m
         Cmd.none

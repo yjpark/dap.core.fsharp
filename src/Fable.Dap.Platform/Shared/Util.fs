@@ -100,6 +100,12 @@ let noActor<'initer, 'runner> : ActorSpec'<'initer, 'runner, NoArgs, NoModel, No
         GetOnEvent = fun _model -> noEvent
     }
 
+let noVersion =
+    {
+        StateVer = 0
+        MsgCount = -1
+    }
+
 // Note: Use this form to force the caller to provide proper type
 // of 'model and 'msg, otherwise will get error of 
 // FS0030: Value restriction

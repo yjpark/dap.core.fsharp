@@ -68,6 +68,16 @@ let noIdent =
         Ver = 0
     }
 
+[<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
+type ActorVersion = {
+    StateVer : int
+    MsgCount : int
+} with
+    override this.ToString () =
+        sprintf "<S:%i M:%i>" this.StateVer this.MsgCount
+    member this.AsDisplay = this.ToString ()
+
+
 type IMsg = interface end
 
 type Response<'req, 'res> =
@@ -101,6 +111,7 @@ and IActor<'req, 'evt> =
 and IActor<'model, 'req, 'evt> =
     inherit IActor<'req, 'evt>
     abstract State : 'model with get
+    abstract Version : ActorVersion with get
 
 and ActorSpec'<'initer, 'runner, 'args, 'model, 'msg, 'req, 'evt> = {
     Logic : Logic<'initer, 'runner, 'args, 'model, 'msg>

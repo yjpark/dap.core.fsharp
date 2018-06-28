@@ -3,15 +3,35 @@ module Dap.Prelude.Logging'
 
 open Dap.Prelude
 
-type ConsoleLogger (minimumLevel : int, prefix : string) =
+type ConsoleLoggerEnricher = {
+    Prefix : (string -> string) option
+} with
+    static member Nothing =
+        {
+            Prefix = None
+        }
+    static member ForPrefix enrich =
+        {
+            Prefix = Some enrich
+        }
+    member this.EnrichPrefix (prefix : string) =
+        this.Prefix
+        |> Option.map (fun enrich ->
+            enrich prefix
+        )|> Option.defaultValue prefix
+
+type ConsoleLogger (minimumLevel : int, prefix : string,
+                    enricher : ConsoleLoggerEnricher) =
     member _this.MinimumLevel = minimumLevel
     member _this.Prefix = prefix
+    member _this.Enricher = enricher
     member this.Log (evt : LogEvent) =
         if this.MinimumLevel <= evt.Level.ToInt then
-            let message = sprintf "[%s] %s%s" evt.Level.ToShortString this.Prefix evt.Format
+            let prefix = this.Enricher.EnrichPrefix this.Prefix
+            let message = sprintf "[%s] %s%s" evt.Level.ToShortString prefix evt.Format
             let args = List.toArray evt.Params
             match evt.Level with
-            | LogLevelFatal | LogLevelError -> 
+            | LogLevelFatal | LogLevelError ->
                 Fable.Import.Browser.console.error (message, args)
             | LogLevelWarning ->
                 Fable.Import.Browser.console.warn (message, args)
@@ -30,12 +50,12 @@ type ConsoleLogger (minimumLevel : int, prefix : string) =
             member this.Log evt = this.Log evt
 
 type ConsoleLogging (minimumLevel : int) =
-    member this.Logger = ConsoleLogger (minimumLevel, "")
+    member this.Logger = ConsoleLogger (minimumLevel, "", ConsoleLoggerEnricher.Nothing)
     with
         interface ILogging with
             member this.Close () = ()
             member this.GetLogger (context : string) : ILogger =
-                ConsoleLogger (this.Logger.MinimumLevel, sprintf "<%s> " context)
+                ConsoleLogger (this.Logger.MinimumLevel, sprintf "<%s> " context, ConsoleLoggerEnricher.Nothing)
                 :> ILogger
         interface ILogger with
             member this.Log evt = this.Logger.Log evt

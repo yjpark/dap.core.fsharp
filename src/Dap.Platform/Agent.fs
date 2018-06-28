@@ -80,6 +80,7 @@ let spawn (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
         Stats = statsOfCap <| defaultArg spec.GetSlowCap getDefaultSlowCap
         State = None
         Actor = None
+        Version = noVersion
         Dispatch = None
         Disposed = false
     }

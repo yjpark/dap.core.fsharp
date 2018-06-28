@@ -12,24 +12,41 @@ let private raiseAgentErr err detail =
 
 //Can NOT use same name in Actor implementation in Fable 1.x
 //https://github.com/fable-compiler/Fable/issues/1343
-type internal Agent<'args, 'model, 'msg, 'req, 'evt> = {
+[<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
+type internal Agent<'args, 'model, 'msg, 'req, 'evt when 'model : not struct> = {
     Spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>
     Ident' : Ident
-    Logger' : ILogger
+    mutable Logger' : ILogger
     mutable Dispatch : Elmish.Dispatch<'msg> option
     mutable State' : 'model option
+    mutable Version' : ActorVersion
 } with
+    member this.AsDisplay = (this.Ident', this.Version')
+    member this.SetState state =
+        if this.State'.IsSome && (state =? Option.get this.State') then
+            this.Version' <-
+                {this.Version' with
+                    MsgCount = this.Version'.MsgCount + 1
+                }
+        else
+            this.Version' <-
+                {this.Version' with
+                    StateVer = this.Version'.StateVer + 1
+                    MsgCount = this.Version'.MsgCount + 1
+                }
+            this.State' <- Some state
     member this.Start () =
         let runner = this :> IAgent<'req, 'evt>
         try
             let (model, cmd) =
                 match this.State' with
                 | None ->
+                    this.Logger' <- enrichLoggerForAgent this this.Logger'
                     let args = this.Spec.NewArgs (this :> IOwner)
                     this.Spec.Logic.Init runner args
                 | Some state ->
                     raiseAgentErr "Already_Started" state
-            this.State' <- Some model
+            this.SetState model
             let runner = this :> IAgent<'model, 'req, 'evt>
             try
                 Cmd.batch [
@@ -56,7 +73,7 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt> = {
                     raiseAgentErr "Not_Started" msg
                 | Some state ->
                     this.Spec.Logic.Update runner state msg
-            this.State' <- Some model
+            this.SetState model
             cmd
         with
         | MessageException msg ->
@@ -82,6 +99,7 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt> = {
             this.Spec.GetOnEvent model
         member this.Ident = this.Ident'
         member this.State = this.State' |> Option.get
+        member this.Version = this.Version'
     interface IOwner with
         member this.Ident = this.Ident'.Ident
         member _this.Disposed = false

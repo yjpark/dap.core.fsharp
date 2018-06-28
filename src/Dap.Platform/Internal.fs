@@ -53,21 +53,35 @@ type internal AgentLogic<'args, 'model, 'msg, 'req, 'evt> =
             AgentModel<'args, 'model, 'msg, 'req, 'evt>,
             AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 
-[<StructuredFormatDisplay("<Agent>{Ident}")>]
+[<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
 type internal Agent<'args, 'model, 'msg, 'req, 'evt>
                                     when 'msg :> IMsg = {
     Spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>
     Env : IEnv
     Ident : Ident
-    Logger : ILogger
+    mutable Logger : ILogger
     Logic : AgentLogic<'args, 'model, 'msg, 'req, 'evt>
     Stats : Stats
     mutable Disposed : bool
     mutable Dispatch : DispatchMsg<AgentMsg<'args, 'model, 'msg, 'req, 'evt>> option
     mutable State : AgentModel<'args, 'model, 'msg, 'req, 'evt> option
     mutable Actor : Actor<'args, 'model, 'msg, 'req, 'evt> option
+    mutable Version : ActorVersion
 } with
-    member this.SetState (state : AgentModel<'args, 'model, 'msg, 'req, 'evt>) = this.State <- Some state
+    member this.AsDisplay = (this.Ident, this.Version)
+    member this.SetState (state : AgentModel<'args, 'model, 'msg, 'req, 'evt>) =
+        if this.State.IsSome && (state =? Option.get this.State) then
+            this.Version <-
+                {this.Version with
+                    MsgCount = this.Version.MsgCount + 1
+                }
+        else
+            this.Version <-
+                {this.Version with
+                    StateVer = this.Version.StateVer + 1
+                    MsgCount = this.Version.MsgCount + 1
+                }
+            this.State <- Some state
     member this.Handle (req : AgentReq) = dispatch' this (AgentReq req)
     member this.HandleAsync (getReq : Callback<'res> -> AgentReq) =
         dispatchAsync' this (AgentReq << getReq)
@@ -83,7 +97,10 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
         member this.Dispatch = this.Dispatch
         member this.State = this.State
         member this.SetDispatch dispatch = this.Dispatch <- Some dispatch
-        member this.Start () = start' this this.SetState
+        member this.Start () =
+            if this.State.IsNone then
+                this.Logger <- enrichLoggerForAgent this this.Logger
+            start' this this.SetState
         member this.Process parcel = process' this parcel this.SetState
 
         member this.Deliver msg = deliver' this msg
@@ -153,3 +170,5 @@ and [<StructuredFormatDisplay("<Actor>{Ident}")>]
             this.Agent.State
             |> Option.map (fun s -> s.Actor)
             |> Option.get
+        member this.Version =
+            this.Agent.Version

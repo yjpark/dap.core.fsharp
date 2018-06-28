@@ -31,6 +31,7 @@ let create (kind : Kind) (key : Key)
         Logger' = getLogger kind key
         Dispatch = None
         State' = None
+        Version' = noVersion
     }
     start agent
     agent :> IAgent<'model, 'req, 'evt>

@@ -63,10 +63,11 @@ let forContext (context : string) (logger : Serilog.ILogger) =
 type SerilogLogger (target' : Serilog.ILogger, mainTarget' : Serilog.ILogger option) =
     let target = target'
     let mainTarget = mainTarget'
-    member _this.Target = target
     member _this.IsMain = mainTarget.IsNone
-    member _this.Log (evt : LogEvent) = 
+    member _this.Log (evt : LogEvent) =
         toSerilog target mainTarget evt
+    member _this.Target = target
+    member _this.MainTarget = mainTarget
     member _this.ForContext (context : string) =
         new SerilogLogger
             (
