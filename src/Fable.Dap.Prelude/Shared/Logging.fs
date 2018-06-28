@@ -43,7 +43,7 @@ type ILogging =
 type FallbackLogger (prefix : string) =
     member _this.Prefix = prefix
     member this.Log (evt : LogEvent) =
-        printfn "[%s] %s%s" evt.Level.ToShortString this.Prefix evt.Format 
+        printfn "[%s] %s%s" evt.Level.ToShortString this.Prefix evt.Format
         evt.Params
         |> List.iter (fun p -> printfn "\t%A" p)
         evt.Exception
@@ -57,7 +57,7 @@ type FallBackLogging () =
     member _this.Logger = FallbackLogger ""
     with
         interface ILogging with
-            member _this.Close () = () 
+            member _this.Close () = ()
             member _this.GetLogger (context : string) =
                 FallbackLogger (sprintf "<%s> " context)
                 :> ILogger
@@ -70,7 +70,7 @@ let getLogger (context : string) =
     _Logging.GetLogger context
 
 let setLogging'<'logging when 'logging :> ILogging> (logging : 'logging) =
-    _Logging <- logging 
+    _Logging <- logging
     logging
 
 let private checkTemplateParamCount (_format : string) (_count : int) : unit =

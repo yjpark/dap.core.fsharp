@@ -89,6 +89,8 @@ let private getMainTargetForLogging (logger : Serilog.ILogger) =
 
 type SerilogLogging (target' : Serilog.ILogger) =
     let logger = new SerilogLogger (target', getMainTargetForLogging target')
+    member _this.IsMain =
+        logger.IsMain
     member _this.Close () : unit =
         if logger.IsMain then
             Serilog.Log.CloseAndFlush ()
@@ -113,8 +115,12 @@ type SerilogLogging (target' : Serilog.ILogger) =
             logger.Log evt
 
 let setupSerilog (sinks : AddSink list) : SerilogLogging =
-    SerilogLogging.Create sinks
-    |> setLogging'
+    let logging = SerilogLogging.Create sinks
+    if logging.IsMain then
+        logging
+        |> setLogging'
+        |> ignore
+    logging
 
 let addConsoleSink (minimumLevel : LogLevel option) : AddSink =
     fun config ->

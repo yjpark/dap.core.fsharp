@@ -79,19 +79,19 @@ let noLogic : Logic<'initer, 'runner, NoArgs, NoModel, NoMsg> =
 
 let noReaction : React<'runner, 'model, 'msg, 'subModel, 'subMsg> =
     fun _runner _subMsg _subModel model ->
-        (model, []) 
-
-let noOwner =
-    let logger = getLogger "<noOwner>"
-    { new IOwner with
-        member _this.Log m = logger.Log m
-        member _this.Ident = noIdent.Ident
-        member _this.Disposed = false
-    }
+        (model, [])
 
 let noEvent =
+    let noOwner =
+        let logger = getLogger "<noOwner>"
+        { new IOwner with
+            member _this.Log m = logger.Log m
+            member _this.Ident = noIdent.Ident
+            member _this.Disposed = false
+        }
     let bus = new Bus<NoEvt>(noOwner)
     bus.Publish
+
 let noActor<'initer, 'runner> : ActorSpec'<'initer, 'runner, NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
     {
         NewArgs = fun _owner -> NoArgs
