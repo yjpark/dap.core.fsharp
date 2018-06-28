@@ -11,3 +11,8 @@ let bind3 (binder : 'a -> 'b -> 'c -> Option<'r> ) (a : Option<'a>) (b : Option<
     match (a, b, c) with
     | (Some a, Some b, Some c) -> binder a b c
     | _ -> None
+
+let defaultWith (creater : unit -> 'a) (a : Option<'a>) =
+    match a with
+    | Some v -> v
+    | None -> creater ()
