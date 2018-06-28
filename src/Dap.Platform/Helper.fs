@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Dap.Platform.Helper
 
+open System.IO
 open Dap.Prelude
 
 let noAgent : AgentSpec<NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
