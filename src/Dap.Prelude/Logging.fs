@@ -28,13 +28,14 @@ let inline private write (logger : Serilog.ILogger) (mainLogger : Serilog.ILogge
     logger.Write(level, format, params')
 
 let inline private write' (logger : Serilog.ILogger) (mainLogger : Serilog.ILogger option)
-        (level : LogLevel) (format : string) (params' : obj list) (e : exn) =
-    let level = level.ToSerilogLevel
+        (level' : LogLevel) (format : string) (params' : obj list) (e : exn) =
+    let level = level'.ToSerilogLevel
     let params' = List.toArray params'
-    mainLogger
-    |> Option.iter (fun l ->
-        l.Write(level, e, format, params')
-    )
+    if level'.ToInt >= LogLevelError.ToInt then
+        mainLogger
+        |> Option.iter (fun l ->
+            l.Write(level, e, format, params')
+        )
     logger.Write(level, e, format, params')
 
 let private toSerilog (logger : Serilog.ILogger) (mainLogger : Serilog.ILogger option) (evt : LogEvent) =
@@ -83,6 +84,8 @@ type AddSink = Serilog.LoggerConfiguration -> Serilog.LoggerConfiguration
 
 let private getMainTargetForLogging (logger : Serilog.ILogger) =
     if Serilog.Log.Logger =? logger then
+        None
+    elif isSilentLogger Serilog.Log.Logger then
         None
     else
         Some Serilog.Log.Logger
