@@ -21,10 +21,11 @@ let inline private write (logger : Serilog.ILogger) (mainLogger : Serilog.ILogge
         (level : LogLevel) (format : string) (params' : obj list) =
     let level = level.ToSerilogLevel
     let params' = List.toArray params'
-    mainLogger
-    |> Option.iter (fun l ->
-        l.Write(level, format, params')
-    )
+    if level'.ToInt >= LogLevelError.ToInt then
+        mainLogger
+        |> Option.iter (fun l ->
+            l.Write(level, format, params')
+        )
     logger.Write(level, format, params')
 
 let inline private write' (logger : Serilog.ILogger) (mainLogger : Serilog.ILogger option)
