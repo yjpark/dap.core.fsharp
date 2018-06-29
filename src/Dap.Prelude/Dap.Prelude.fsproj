@@ -12,6 +12,7 @@
   <ItemGroup>
     <Compile Include="../Fable.Dap.Prelude/Shared/Operator.fs" />
     <Compile Include="../Fable.Dap.Prelude/Shared/Logging.fs" />
+    <Compile Include="../Fable.Dap.Prelude/Shared/String.fs" />
     <Compile Include="../Fable.Dap.Prelude/Shared/Option.fs" />
     <Compile Include="../Fable.Dap.Prelude/Shared/Result.fs" />
     <Compile Include="../Fable.Dap.Prelude/Shared/Union.fs" />

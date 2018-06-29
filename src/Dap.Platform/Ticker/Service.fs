@@ -10,7 +10,7 @@ let Kind = "Ticker"
 
 type Service = IAgent<Model, Req, Evt>
 
-let getSpec (autoStart : bool) (frameRate : int) =
+let getSpec (autoStart : bool) (frameRate : double) =
     fun owner ->
         {
             AutoStart = autoStart
@@ -26,8 +26,8 @@ let addAsync' (kind : Kind) (key : Key) autoStart frameRate env = task {
     return service
 }
 
-let addAsync autoStart key frameRate =
-    addAsync' Kind key autoStart frameRate
+let addAsync key frameRate =
+    addAsync' Kind key true frameRate
 
 let get' kind key (env : IEnv) =
     env

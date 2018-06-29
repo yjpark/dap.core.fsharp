@@ -14,7 +14,7 @@ type TickStats = {
 
 type Args = {
     AutoStart : bool
-    FrameRate : int
+    FrameRate : double
     Event' : Bus<Evt>
     InternalEvent' : Bus<InternalEvt>
 } with

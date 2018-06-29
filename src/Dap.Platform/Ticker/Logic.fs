@@ -13,7 +13,7 @@ let private doStartTimer msg (callback : Callback<Instant>) : ActorOperate =
     fun runner (model, cmd) ->
         match model.State with
         | None ->
-            let interval = 1000.0 / double (model.Args.FrameRate)
+            let interval = 1000.0 / model.Args.FrameRate
             if (interval > 0.0) then
                 let timer = new System.Timers.Timer(Interval = interval, Enabled = true, AutoReset = true)
                 timer.Elapsed.AddHandler(new System.Timers.ElapsedEventHandler(fun _src _evt ->
@@ -102,7 +102,7 @@ let private handleEvt msg evt : ActorOperate =
         <| runner <| (model, cmd)
 
 let private update : ActorUpdate<Model, Msg, Req, Evt> =
-    fun runner model msg -> 
+    fun runner model msg ->
         match msg with
         | InternalEvt evt -> handleInternalEvt msg evt
         | TickerEvt evt -> handleEvt msg evt

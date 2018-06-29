@@ -45,6 +45,9 @@
             "log" : true,
             ".vs": true,
             ".vscode": true
-        }
-    }
+		},
+		"cSpell.words": [
+			"sprintf"
+		]
+	}
 }

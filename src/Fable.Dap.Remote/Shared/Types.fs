@@ -2,6 +2,7 @@ namespace Dap.Remote
 
 type Second = float
 
+open Dap.Prelude
 open Dap.Platform
 
 module Const =
@@ -63,17 +64,21 @@ type Reason' =
     | Local' of LocalReason
     | Remote' of RemoteReason'
 
-(* 
- In Fable, have a type with same name as module
- is not working, it will compile, though will get
- runtime error, seems it access the type instead
- of the module.
+(*
+In Fable, have a type with same name as module
+is not working, it will compile, though will get
+runtime error, seems it access the type instead
+of the module.
  *)
+[<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
 type Packet' = {
-    Id : PacketId 
+    Id : PacketId
     Kind : PacketKind
     Payload : string
-}
+} with
+    override this.ToString () =
+        sprintf "[Packet: <%s> <%s> %s]" this.Id this.Kind <| String.capped 256 this.Payload
+    member this.AsDisplay = this.ToString ()
 
 type NoRemoteError = NoRemoteError
     with
