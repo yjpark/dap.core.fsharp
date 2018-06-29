@@ -34,7 +34,7 @@ type Args<'pkt> = {
 type Model<'pkt> = {
     Args : Args<'pkt>
     Socket : Fable.Import.Browser.WebSocket option
-    Ready : bool
+    Connected : bool
 }
 
 type Msg<'pkt> =

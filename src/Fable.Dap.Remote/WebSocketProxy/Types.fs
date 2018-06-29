@@ -41,7 +41,8 @@ type Model<'res, 'evt> = {
     Socket : WebSocket.Agent<Packet'>
     Client : Client.Model
     SendQueue : (IRequest * Packet') list
-}
+} with
+    member this.Connected = this.Socket.Actor.State.Connected
 
 type Agent<'req, 'res, 'evt> when 'req :> IRequest =
     IAgent<Model<'res, 'evt>, 'req, 'evt>

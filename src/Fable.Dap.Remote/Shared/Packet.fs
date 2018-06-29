@@ -13,7 +13,7 @@ module D = Thoth.Json.Net.Decode
 
 type Packet' with
     static member Create id kind payload = {
-        Id = id 
+        Id = id
         Kind = kind
         Payload = payload
     }

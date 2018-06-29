@@ -13,17 +13,25 @@ module WebSocket = Dap.WebSocket.Conn.Types
 
 type ActorOperate<'req, 'evt> = ActorOperate<Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
 
-let private handleService (msg : Service.Msg) : ActorOperate<'req, 'evt> = 
+let private handleService (msg : Service.Msg) : ActorOperate<'req, 'evt> =
     fun _runner (model, cmd) ->
         let service = Service.handle msg model.Service
         ({model with Service = service}, cmd)
 
 let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req, 'evt> =
-    match evt with 
+    match evt with
     | WebSocket.OnReceived (_stats, pkt) ->
         handleService <| Service.OnReceived pkt
     | WebSocket.OnSent (_stats, pkt) ->
         handleService <| Service.OnSent pkt
+    | WebSocket.OnDisconnected ->
+        fun _runner (model, msg) ->
+            model.State.Hub
+            |> Option.map (fun hub ->
+                hub.OnDisconnected ()
+            )
+            |> ignore
+            (model, msg)
     | _ ->
         noOperation
 
@@ -31,7 +39,7 @@ let private handleHubEvt (evt : 'evt) : ActorOperate<'req, 'evt> =
     handleService <| Service.DoSendEvent evt
 
 let private handleInternalEvt (evt : InternalEvt<'evt>) : ActorOperate<'req, 'evt> =
-    match evt with 
+    match evt with
     | HubEvt evt ->
         handleHubEvt evt
     | SocketEvt evt ->
@@ -48,7 +56,7 @@ let private handleReq msg (req : Req) : ActorOperate<'req, 'evt> =
         (model, cmd)
 
 let private update : ActorUpdate<Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
-    fun runner model msg -> 
+    fun runner model msg ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
         | ServiceReq req -> handleReq msg req
@@ -77,7 +85,7 @@ let private doSend runner (state : State<'req, 'evt>) pkt =
     | Some socket ->
         socket.Post <| WebSocket.DoSend (pkt, None)
         None
-    
+
 let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     fun runner args ->
         let state = {

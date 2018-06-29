@@ -28,6 +28,7 @@ let private doConnect msg (ident, token, socket, callback) : ActorOperate<'pkt> 
                 Token = token
                 Socket = socket
                 Buffer = Array.create<byte> model.Args.BufferSize 0uy
+                Connected = true
             }
             let task = doReceiveAsync state runner
             reply runner callback <| ack msg (task :> Task)
@@ -50,7 +51,7 @@ let private handleReq msg req : ActorOperate<'pkt> =
 let private handleEvt _msg evt : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match evt with
-        | OnConnected -> 
+        | OnConnected ->
             noOperation
         | OnDisconnected ->
             setModel {model with State = None}
@@ -58,7 +59,7 @@ let private handleEvt _msg evt : ActorOperate<'pkt> =
         <| runner <| (model, cmd)
 
 let private update : ActorUpdate<Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    fun runner model msg -> 
+    fun runner model msg ->
         match msg with
         | WebSocketReq req -> handleReq msg req
         | WebSocketEvt evt -> handleEvt msg evt

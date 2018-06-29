@@ -20,7 +20,7 @@ let ack (req : 'req) (res : 'res) =
 let nak (req : 'req) (err : string) (detail : obj) =
     Nak (req, err, detail)
 
-let reply (runner : IRunner) (callback : Callback<'res>) (reply : Reply<'res>) : unit = 
+let reply (runner : IRunner) (callback : Callback<'res>) (reply : Reply<'res>) : unit =
     match callback with
     | Some callback ->
         callback reply

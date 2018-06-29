@@ -27,18 +27,19 @@ type ConsoleLogger (minimumLevel : int, prefix : string,
     member _this.Enricher = enricher
     member this.Log (evt : LogEvent) =
         if this.MinimumLevel <= evt.Level.ToInt then
+            let time = System.DateTime.UtcNow.ToString("HH:mm:ss.fff")
             let prefix = this.Enricher.EnrichPrefix this.Prefix
             let message = sprintf "[%s] %s%s" evt.Level.ToShortString prefix evt.Format
             let args = List.toArray evt.Params
             match evt.Level with
             | LogLevelFatal | LogLevelError ->
-                Fable.Import.Browser.console.error (message, args)
+                Fable.Import.Browser.console.error (time, message, args)
             | LogLevelWarning ->
-                Fable.Import.Browser.console.warn (message, args)
+                Fable.Import.Browser.console.warn (time, message, args)
             | LogLevelInformation ->
-                Fable.Import.Browser.console.info (message, args)
+                Fable.Import.Browser.console.info (time, message, args)
             | LogLevelDebug | LogLevelVerbose ->
-                Fable.Import.Browser.console.trace (message, args)
+                Fable.Import.Browser.console.trace (time, message, args)
             match evt.Exception with
             | None -> ()
             | Some e ->

@@ -23,7 +23,11 @@ and State<'pkt> = IState<'pkt, Evt<'pkt>, ClientWebSocket>
 and Model<'pkt> = {
     Args : Args<'pkt>
     State : State<'pkt> option
-}
+} with
+    member this.Connected =
+        this.State
+        |> Option.map (fun s -> s.Connected)
+        |> Option.defaultValue false
 
 and Req<'pkt> =
     | DoConnect of string * CancellationToken * Callback<ConnectStats>

@@ -58,6 +58,7 @@ let private doReadPktAsync (onReceived : ReceiveStats * 'pkt -> 'evt)
 let internal doReceiveFailed (onDisconnected : 'evt) (state : IState<'pkt, 'evt, 'socket>) : OnFailed<IAgent<'model, 'req, 'evt>> =
     fun runner e ->
         logInfo runner "Link" "Disconnected" (state.Ident, e)
+        state.Connected <- false
         state.FireEvent onDisconnected
 
 let internal doReceiveAsync (onReceived : ReceiveStats * 'pkt -> 'evt) (onDisconnected : 'evt)

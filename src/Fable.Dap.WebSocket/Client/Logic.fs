@@ -74,9 +74,9 @@ let private handleEvt (evt : Evt<'pkt>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match evt with 
         | OnConnected -> 
-            updateModel <| fun m -> {m with Ready = true}
+            updateModel <| fun m -> {m with Connected = true}
         | OnDisconnected -> 
-            updateModel <| fun m -> {m with Socket = None ; Ready = false}
+            updateModel <| fun m -> {m with Socket = None ; Connected = false}
         | _ ->
             noOperation
         <| runner <| (model, cmd)
@@ -95,7 +95,7 @@ let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<
         ({
             Args = args
             Socket = None
-            Ready = false
+            Connected = false
         }, Cmd.ofMsg <| WebSocketReq DoConnect)
 
 let private subscribe : ActorSubscribe<Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =

@@ -13,7 +13,7 @@ module WebSocketActor = Dap.WebSocket.Client.Actor
 
 type ActorOperate<'req, 'res, 'evt> = ActorOperate<Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt>
 
-let private handleClient (msg : Client.Msg) : ActorOperate<'req, 'res, 'evt> = 
+let private handleClient (msg : Client.Msg) : ActorOperate<'req, 'res, 'evt> =
     fun _runner (model, cmd) ->
         let client = Client.handle msg model.Client
         ({model with Client = client}, cmd)
@@ -44,11 +44,11 @@ let private doSendQueue : ActorOperate<'req, 'res, 'evt> =
 
 let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
-        match evt with 
+        match evt with
         | OnSent (req, pkt, res) ->
             handleClient <| Client.OnSent (req, pkt, res)
         | DoEnqueue (req, pkt) ->
-            updateModel <| doEnqueue (req, pkt) 
+            updateModel <| doEnqueue (req, pkt)
         | DoReconnect ->
             doReconnect
         <| runner <| (model, Cmd.none)
@@ -58,7 +58,7 @@ let private handleProxyReq (req : 'req) : ActorOperate<'req, 'res, 'evt> =
 
 let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
-        match evt with 
+        match evt with
         | WebSocket.OnConnected ->
             doSendQueue
         | WebSocket.OnDisconnected ->
@@ -84,7 +84,7 @@ let private doEnqueue' (runner : IAgent) (args : Args<'res, 'evt>) ((req, pkt) :
 
 let private doSend (runner : IAgent) (args : Args<'res, 'evt>) (socket : WebSocket.Agent<Packet'>)
                    ((req, pkt) : IRequest * Packet') : LocalReason option =
-    match socket.Actor.State.Ready with
+    match socket.Actor.State.Connected with
     | false ->
         doEnqueue' runner args (req, pkt)
     | true ->

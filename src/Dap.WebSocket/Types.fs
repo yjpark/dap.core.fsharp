@@ -45,4 +45,5 @@ and IState<'pkt, 'evt, 'socket> when 'socket :> WebSocket = {
     Token : CancellationToken
     Socket : 'socket
     Buffer : byte[]
+    mutable Connected : bool
 }

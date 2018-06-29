@@ -25,7 +25,7 @@ type Model = {
 
 type Msg =
     | DoSendResponse of PacketId * Result<IResponse, HubReason>
-    | DoSendEvent of IEvent 
+    | DoSendEvent of IEvent
     | OnSent of Packet'
     | OnReceived of Packet'
 
@@ -37,7 +37,7 @@ let create args =
 let private doSendPacket' (section : string) (pkt: Packet') (model : Model) : Model =
     try
         match model.Args.Link.Send pkt with
-        | Some err -> 
+        | Some err ->
             logError model.Args.Logger section "Link_Failed" (pkt, err)
         | None ->
             ()

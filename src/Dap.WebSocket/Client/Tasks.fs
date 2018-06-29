@@ -35,8 +35,10 @@ let internal doConnectAsync (state : State<'pkt>) : GetReplyTask<Agent<'pkt>, Co
             }
             logInfo runner "Link" "Connected" state.Ident
             reply runner callback <| ack msg stats
+            state.Connected <- true
             state.FireEvent <| OnConnected stats
         | state' ->
             reply runner callback <| nak msg "Connect_Failed" (time, duration, state')
+            state.Connected <- false
             state.FireEvent <| OnDisconnected
     }

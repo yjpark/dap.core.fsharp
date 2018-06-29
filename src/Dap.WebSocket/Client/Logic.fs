@@ -29,6 +29,7 @@ let private doConnect msg (uri, token, callback) : ActorOperate<'pkt> =
                 Token = token
                 Socket = new ClientWebSocket()
                 Buffer = Array.create<byte> model.Args.BufferSize 0uy
+                Connected = false
             }
             replyAsync3 runner msg callback nakOnFailed <| doConnectAsync state
             setModel {model with State = Some state}
@@ -49,7 +50,7 @@ let private handleReq msg req : ActorOperate<'pkt> =
 let private handleEvt _msg evt : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match evt with
-        | OnConnected _stats -> 
+        | OnConnected _stats ->
             let state = Option.get model.State
             runner.RunTask3 (doReceiveFailed state) <| doReceiveAsync state
             noOperation
@@ -59,7 +60,7 @@ let private handleEvt _msg evt : ActorOperate<'pkt> =
         <| runner <| (model, cmd)
 
 let private update : ActorUpdate<Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    fun runner model msg -> 
+    fun runner model msg ->
         match msg with
         | WebSocketReq req -> handleReq msg req
         | WebSocketEvt evt -> handleEvt msg evt
