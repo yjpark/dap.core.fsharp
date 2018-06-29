@@ -18,8 +18,8 @@ type LogLevel with
         | LogLevelVerbose -> Serilog.Events.LogEventLevel.Verbose
 
 let inline private write (logger : Serilog.ILogger) (mainLogger : Serilog.ILogger option)
-        (level : LogLevel) (format : string) (params' : obj list) =
-    let level = level.ToSerilogLevel
+        (level' : LogLevel) (format : string) (params' : obj list) =
+    let level = level'.ToSerilogLevel
     let params' = List.toArray params'
     if level'.ToInt >= LogLevelError.ToInt then
         mainLogger
