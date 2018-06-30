@@ -10,28 +10,26 @@ open Dap.Archive
 module RecorderTypes = Dap.Archive.Recorder.Types
 module EventRecorder = Dap.Archive.Recorder.EventRecorder
 
-module ClientTypes = Dap.WebSocket.Client.Types
+module WebSocketTypes = Dap.WebSocket.Types
 module TextClient = Dap.WebSocket.Client.TextClient
-
-module ConnTypes = Dap.WebSocket.Conn.Types
 module TextConn = Dap.WebSocket.Conn.TextConn
 
-let watchClient (agent : EventRecorder.Agent) (onEvent : IBus<ClientTypes.Evt<string>>) =
+let watchClient (agent : EventRecorder.Agent) (onEvent : IBus<WebSocketTypes.Evt<string>>) =
     onEvent.AddWatcher agent "TextRecorder.watchClient" (fun evt ->
         match evt with
-        | ClientTypes.OnSent (_stat, pkt) ->
+        | WebSocketTypes.OnSent (_stat, pkt) ->
             EventRecorder.appendEvent' agent "OnSent" pkt
-        | ClientTypes.OnReceived (_stat, pkt) ->
+        | WebSocketTypes.OnReceived (_stat, pkt) ->
             EventRecorder.appendEvent' agent "OnReceived" pkt
         | _ -> ()
     )
 
-let watchConn (agent : EventRecorder.Agent) (onEvent : IBus<ConnTypes.Evt<string>>) =
+let watchConn (agent : EventRecorder.Agent) (onEvent : IBus<WebSocketTypes.Evt<string>>) =
     onEvent.AddWatcher agent "TextRecorder.watchClient" (fun evt ->
         match evt with
-        | ConnTypes.OnSent (_stat, pkt) ->
+        | WebSocketTypes.OnSent (_stat, pkt) ->
             EventRecorder.appendEvent' agent "OnSent" pkt
-        | ConnTypes.OnReceived (_stat, pkt) ->
+        | WebSocketTypes.OnReceived (_stat, pkt) ->
             EventRecorder.appendEvent' agent "OnReceived" pkt
         | _ -> ()
     )

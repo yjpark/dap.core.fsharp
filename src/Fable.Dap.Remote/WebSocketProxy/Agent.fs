@@ -22,4 +22,4 @@ let create (spec : StubSpec<'res, 'evt>) (key : string) (uri : string) (logTraff
     |> Agent.create Kind key
 
 let getOnResponse (agent : Agent<'req, 'res, 'evt>) : IBus<'res> =
-    agent.Actor.State.Args.OnResponse
+    agent.Actor.Args.OnResponse

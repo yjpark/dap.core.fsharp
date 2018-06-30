@@ -20,6 +20,6 @@ and IAgent<'req, 'evt> =
     inherit IPoster<'req>
     abstract Actor : IActor<'req, 'evt> with get
 
-and IAgent<'model, 'req, 'evt> =
+and IAgent<'args, 'model, 'req, 'evt> =
     inherit IAgent<'req, 'evt>
-    abstract Actor : IActor<'model, 'req, 'evt> with get
+    abstract Actor : IActor<'args, 'model, 'req, 'evt> with get

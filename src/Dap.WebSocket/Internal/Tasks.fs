@@ -8,23 +8,22 @@ open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket.Types
 
-let private doReadPktAsync (onReceived : ReceiveStats * 'pkt -> 'evt)
-                            (state : IState<'pkt, 'evt, 'socket>)
-                            : GetTask<IAgent<'model, 'req, 'evt>, bool> =
+let private doReadPktAsync (link : Link<'socket>)
+                            : GetTask<Agent<'socket, 'pkt, 'req>, bool> =
     fun runner -> task {
         let mutable closed = false;
         let mutable offset = 0
-        let mutable capacity = state.Buffer.Length
+        let mutable capacity = link.Buffer.Length
         try
             let time = runner.Clock.Now
             let mutable finished = false
-            let socket = state.Socket :> WebSocket
+            let socket = link.Socket :> WebSocket
             while not finished do
                 //logInfo runner "Dev" "ReceiveAsync" "Begin"
-                let! result = socket.ReceiveAsync(ArraySegment<byte>(state.Buffer, offset, capacity), state.Token)
+                let! result = socket.ReceiveAsync(ArraySegment<byte>(link.Buffer, offset, capacity), link.Token)
                 //logInfo runner "Dev" "ReceiveAsync" "End"
                 if result.CloseStatus.HasValue then
-                    logInfo runner "Link" "Closed" state.Ident
+                    logInfo runner "Link" "Closed" link
                     finished <- true
                     closed <- true
                 else
@@ -34,65 +33,65 @@ let private doReadPktAsync (onReceived : ReceiveStats * 'pkt -> 'evt)
                         let length = offset
                         finished <- true
                         let (time, transferDuration) = runner.Clock.CalcDuration(time)
-                        match runner.RunFunc<'pkt> (fun _ -> state.Args.Decode (state.Buffer, 0, length)) with
+                        match runner.RunFunc<'pkt> (fun _ -> runner.Actor.Args.Decode (link.Buffer, 0, length)) with
                         | Ok pkt ->
                             let (_time, decodeDuration) = runner.Clock.CalcDuration(time)
                             let stats : ReceiveStats = {
                                 ProcessTime = time
                                 BytesCount = length
-                                TrasferDuration = transferDuration
+                                TransferDuration = transferDuration
                                 DecodeDuration = decodeDuration
                             }
-                            if state.Args.LogTraffic then
-                                logInfo runner "Traffic" "Received" (stats, pkt)
-                            state.FireEvent <| onReceived (stats, pkt)
+                            if runner.Actor.Args.LogTraffic then
+                                logInfo runner "Traffic" "Received" (link, stats, pkt)
+                            runner.Actor.Args.FireEvent' <| OnReceived (stats, pkt)
                         | Error e ->
-                            logError runner "Received" "Decode_Failed" (length, e)
+                            logException runner "Received" "Decode_Failed" (link, length) e
         with
         | e ->
-            logError runner "Received" "Exception_Raised" e
+            logInfo runner "Received" "Exception_Raised" (link, e)
             closed <- true
         return closed
     }
 
-let internal doReceiveFailed (onDisconnected : 'evt) (state : IState<'pkt, 'evt, 'socket>) : OnFailed<IAgent<'model, 'req, 'evt>> =
+let internal doReceiveFailed : OnFailed<Agent<'socket, 'pkt, 'req>> =
     fun runner e ->
-        logInfo runner "Link" "Disconnected" (state.Ident, e)
-        state.Connected <- false
-        state.FireEvent onDisconnected
+        logInfo runner "Link" "Disconnected" (runner.Actor.State.Link, e)
+        runner.Actor.Args.FireEvent' OnDisconnected
 
-let internal doReceiveAsync (onReceived : ReceiveStats * 'pkt -> 'evt) (onDisconnected : 'evt)
-                            (state : IState<'pkt, 'evt, 'socket>) : GetTask<'runner, unit> =
+let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
     fun runner -> task {
+        let link = runner.Actor.State.Link |> Option.get
         let mutable closed = false
         while not closed do
-            let! closed' = doReadPktAsync onReceived state runner
+            let! closed' = doReadPktAsync link runner
             closed <- closed'
-        let socket = state.Socket :> WebSocket
+        let socket = link.Socket :> WebSocket
         if socket.State = WebSocketState.Open then
-            logInfo runner "Link" "Closing" state.Ident
-            do! socket.CloseAsync (WebSocketCloseStatus.Empty, "", state.Token)
-        logInfo runner "Link" "Disconnected" state.Ident
-        state.FireEvent onDisconnected
+            logInfo runner "Link" "Closing" link.Ident
+            do! socket.CloseAsync (WebSocketCloseStatus.Empty, "", link.Token)
+        logInfo runner "Link" "Disconnected" link.Ident
+        runner.Actor.Args.FireEvent' OnDisconnected
     }
 
-let internal doSendAsync onSent (state : IState<'pkt, 'evt, 'socket>) (pkt : 'pkt) : GetReplyTask<'runner, SendStats> =
+let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'socket, 'pkt, 'req>, SendStats> =
     fun msg callback runner -> task {
         let time = runner.Clock.Now
-        let buffer = state.Args.Encode pkt
+        let buffer = runner.Actor.Args.Encode pkt
         let (time, encodeDuration) = runner.Clock.CalcDuration(time)
-        let socket = state.Socket :> WebSocket
-        do! socket.SendAsync (buffer, state.Args.SendType, true, state.Token)
+        let link = runner.Actor.State.Link |> Option.get
+        let socket = link.Socket :> WebSocket
+        do! socket.SendAsync (buffer, runner.Actor.Args.SendType, true, link.Token)
         let (_time, transferDuration) = runner.Clock.CalcDuration(time)
         let stats : SendStats = {
             ProcessTime = time
             BytesCount = buffer.Count
             EncodeDuration = encodeDuration
-            TrasferDuration = transferDuration
+            TransferDuration = transferDuration
         }
-        if state.Args.LogTraffic then
+        if runner.Actor.Args.LogTraffic then
             logInfo runner "Traffic" "Sent" (stats, pkt)
         reply runner callback <| ack msg stats
-        state.FireEvent <| onSent (stats, pkt)
+        runner.Actor.Args.FireEvent' <| OnSent (stats, pkt)
     }
 

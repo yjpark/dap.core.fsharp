@@ -84,9 +84,9 @@ let replyAsync2 (runner : IAgent<'req, 'evt>) (msg : IMsg) (callback : Callback<
     let getTask = getReplyTask msg callback
     runner.RunTask2 onFailed getTask
 
-let replyAsync3 (runner : IAgent<'model, 'req, 'evt>) (msg : IMsg) (callback : Callback<'res>)
-                (getOnFailed: OnReplyFailed<IAgent<'model, 'req, 'evt>, 'res>)
-                (getReplyTask : GetReplyTask<IAgent<'model, 'req, 'evt>, 'res>) : unit =
+let replyAsync3 (runner : IAgent<'args, 'model, 'req, 'evt>) (msg : IMsg) (callback : Callback<'res>)
+                (getOnFailed: OnReplyFailed<IAgent<'args, 'model, 'req, 'evt>, 'res>)
+                (getReplyTask : GetReplyTask<IAgent<'args, 'model, 'req, 'evt>, 'res>) : unit =
     let onFailed = getOnFailed msg callback
     let getTask = getReplyTask msg callback
     runner.RunTask3 onFailed getTask

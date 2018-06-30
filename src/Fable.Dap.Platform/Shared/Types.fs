@@ -108,8 +108,9 @@ and IActor<'req, 'evt> =
     inherit IHandler<'req>
     inherit IChannel<'evt>
 
-and IActor<'model, 'req, 'evt> =
+and IActor<'args, 'model, 'req, 'evt> =
     inherit IActor<'req, 'evt>
+    abstract Args : 'args with get
     abstract State : 'model with get
     abstract Version : ActorVersion with get
 
@@ -117,7 +118,7 @@ and ActorSpec'<'initer, 'runner, 'args, 'model, 'msg, 'req, 'evt> = {
     Logic : Logic<'initer, 'runner, 'args, 'model, 'msg>
     NewArgs : NewArgs<'args>
     WrapReq : Wrapper<'msg, 'req>
-    GetOnEvent : 'model -> IBus<'evt>
+    GetOnEvent : 'args -> IBus<'evt>
 }
 
 and NewArgs<'args> = IOwner -> 'args

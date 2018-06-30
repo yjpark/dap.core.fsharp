@@ -10,13 +10,13 @@ open Dap.Platform.Internal
 let private tplSpawnErr = LogEvent.Template3<obj, Scope, Ident>(LogLevelFatal, "[Spawn] {Err}: {Scope}  ~> {Ident}")
 
 type AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
-    Operate<IAgent<'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    Operate<IAgent<'args, 'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 type AgentInit<'args, 'model, 'msg, 'req, 'evt> =
-    Init<IAgent<'req, 'evt>, NoArgs, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    Init<IAgent<'args, 'model, 'req, 'evt>, NoArgs, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 type AgentUpdate<'args, 'model, 'msg, 'req, 'evt> =
-    Update<IAgent<'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    Update<IAgent<'args, 'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 type AgentSubscribe<'args, 'model, 'msg, 'req, 'evt> =
-    Subscribe<IAgent<'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    Subscribe<IAgent<'args, 'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 
 let private raiseSpawnErr err scope ident = 
     raiseWith <| tplSpawnErr err scope ident
@@ -43,8 +43,8 @@ let private update wrapper
 let private init wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
                             : AgentInit<'args, 'model, 'msg, 'req, 'evt> =
     fun runner (_args : NoArgs) ->
-        let args = spec.Actor.NewArgs (runner :> IOwner)
-        let (actorModel, actorCmd) = spec.Actor.Logic.Init runner args
+        let args = runner.Actor.Args
+        let (actorModel, actorCmd) = spec.Actor.Logic.Init (runner :> IAgent<'req, 'evt>) args
         let model = {
             Spec = spec
             Actor = actorModel
@@ -57,7 +57,7 @@ let private subscribe wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>
         Cmd.map wrapper <| spec.Actor.Logic.Subscribe runner model.Actor
 
 let spawn (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
-            (param : AgentParam) : IAgent<'model, 'req, 'evt> =
+            (param : AgentParam) : IAgent<'args, 'model, 'req, 'evt> =
     let wrapper = wrap ActorMsg' {
         GetSub = fun m -> m.Actor
         SetSub = fun s m -> {m with Actor = s}
@@ -85,7 +85,7 @@ let spawn (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
         Disposed = false
     }
     param.Env.Platform.Start agent
-    agent :> IAgent<'model, 'req, 'evt>
+    agent :> IAgent<'args, 'model, 'req, 'evt>
 
 let param env kind key =
     {

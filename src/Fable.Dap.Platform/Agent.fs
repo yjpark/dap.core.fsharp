@@ -22,16 +22,17 @@ let private start (agent : Agent<'args, 'model, 'msg, 'req, 'evt>) : unit =
 let getLogger (kind : string) (key : string) =
     Logging.getLogger <| sprintf "%s.%s" kind key
 
-let create (kind : Kind) (key : Key) 
+let create (kind : Kind) (key : Key)
             (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
-                : IAgent<'model, 'req, 'evt> =
+                : IAgent<'args, 'model, 'req, 'evt> =
     let agent : Agent<'args, 'model, 'msg, 'req, 'evt> = {
         Spec = spec
         Ident' = Ident.Create noScope kind key
         Logger' = getLogger kind key
         Dispatch = None
         State' = None
+        Actor' = None
         Version' = noVersion
     }
     start agent
-    agent :> IAgent<'model, 'req, 'evt>
+    agent :> IAgent<'args, 'model, 'req, 'evt>

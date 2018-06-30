@@ -32,7 +32,6 @@ type Args<'pkt> = {
     member this.OnEvent = this.Event'.Publish
 
 type Model<'pkt> = {
-    Args : Args<'pkt>
     Socket : Fable.Import.Browser.WebSocket option
     Connected : bool
 }
@@ -42,4 +41,4 @@ type Msg<'pkt> =
     | WebSocketEvt of Evt<'pkt>
 with interface IMsg
 
-type Agent<'pkt> = IAgent<Model<'pkt>, Req<'pkt>, Evt<'pkt>>
+type Agent<'pkt> = IAgent<Args<'pkt>, Model<'pkt>, Req<'pkt>, Evt<'pkt>>

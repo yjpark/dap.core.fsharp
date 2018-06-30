@@ -24,12 +24,10 @@ type Args = {
     member this.OnInternalEvent = this.InternalEvent'.Publish
 
 and State = {
-    Args : Args
     Timer : System.Timers.Timer
 }
 
 and Model = {
-    Args : Args
     BeginTime : Instant option
     FinishTime : Instant option
     FrameIndex : int

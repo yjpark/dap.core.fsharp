@@ -11,7 +11,7 @@ let getSpec (hubSpec : HubSpec<'req, 'evt>) (logTraffic : bool) =
         {
             HubSpec = hubSpec
             LogTraffic = logTraffic
-            InternalEvent' = new Bus<InternalEvt<'evt>>(owner)
+            InternalEvent' = new Bus<InternalEvt<'req, 'evt>>(owner)
         }
     |> Logic.getSpec
 

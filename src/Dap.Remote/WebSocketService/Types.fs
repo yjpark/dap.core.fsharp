@@ -6,11 +6,13 @@ open System.Net.WebSockets
 open Dap.Prelude
 open Dap.Remote
 open Dap.Platform
-module WebSocket = Dap.WebSocket.Conn.Types
+module WebSocket = Dap.WebSocket.Types
 
-type Agent<'req, 'evt> = IAgent<Model<'req, 'evt>, Req, NoEvt>
+type Agent<'req, 'evt> = IAgent<Args<'req, 'evt>, Model<'req, 'evt>, Req, NoEvt>
 
-and InternalEvt<'evt> =
+and InternalEvt<'req, 'evt> =
+    | SetHub of Hub<'req, 'evt>
+    | SetSocket of PacketConn.Agent
     | HubEvt of 'evt
     | SocketEvt of WebSocket.Evt<Packet'>
     | OnHandled of PacketId * Result<IResponse, HubReason>
@@ -18,28 +20,22 @@ and InternalEvt<'evt> =
 and Args<'req, 'evt> = {
     HubSpec : HubSpec<'req, 'evt>
     LogTraffic : bool
-    InternalEvent' : Bus<InternalEvt<'evt>>
+    InternalEvent' : Bus<InternalEvt<'req, 'evt>>
 } with
     member this.FireInternalEvent' = this.InternalEvent'.Trigger
     member this.OnInternalEvent = this.InternalEvent'.Publish
 
-and State<'req, 'evt> = {
-    Args : Args<'req, 'evt>
-    mutable Hub : Hub<'req, 'evt> option
-    mutable Socket : PacketConn.Agent option
-}
-
 and Model<'req, 'evt> = {
-    Args : Args<'req, 'evt>
-    Service : Service.Model
-    State : State<'req, 'evt>
+    Hub : Hub<'req, 'evt> option
+    Socket : PacketConn.Agent option
+    Service : Service.Model option
 }
 
 and Req =
     | DoAttach of CancellationToken * WebSocket * Callback<Task>
 
 and Msg<'req, 'evt> =
-    | InternalEvt of InternalEvt<'evt>
+    | InternalEvt of InternalEvt<'req, 'evt>
     | ServiceReq of Req
 with interface IMsg
 

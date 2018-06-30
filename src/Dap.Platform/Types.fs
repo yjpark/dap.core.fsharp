@@ -96,14 +96,14 @@ and IAgent<'req, 'evt> =
     abstract RunFunc2<'res> : Func<IAgent<'req, 'evt>, 'res> -> Result<'res, exn>
     abstract RunTask2 : OnFailed<IAgent<'req, 'evt>> -> GetTask<IAgent<'req, 'evt>, unit> -> unit
 
-and IAgent<'model, 'req, 'evt> =
+and IAgent<'args, 'model, 'req, 'evt> =
     inherit IAgent<'req, 'evt>
-    abstract Actor : IActor<'model, 'req, 'evt> with get
-    abstract RunFunc3<'res> : Func<IAgent<'model, 'req, 'evt>, 'res> -> Result<'res, exn>
-    abstract RunTask3 : OnFailed<IAgent<'model, 'req, 'evt>> -> GetTask<IAgent<'model, 'req, 'evt>, unit> -> unit
+    abstract Actor : IActor<'args, 'model, 'req, 'evt> with get
+    abstract RunFunc3<'res> : Func<IAgent<'args, 'model, 'req, 'evt>, 'res> -> Result<'res, exn>
+    abstract RunTask3 : OnFailed<IAgent<'args, 'model, 'req, 'evt>> -> GetTask<IAgent<'args, 'model, 'req, 'evt>, unit> -> unit
 
 and AgentSpec<'args, 'model, 'msg, 'req, 'evt> = {
-    Actor : ActorSpec'<IAgent<'req, 'evt>, IAgent<'model, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
+    Actor : ActorSpec'<IAgent<'req, 'evt>, IAgent<'args, 'model, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
     OnAgentEvent : OnAgentEvent<'model> option
     GetSlowCap : GetSlowCap option
 }
@@ -136,7 +136,7 @@ and AgentMsg<'args, 'model, 'msg, 'req, 'evt> =
 with interface IMsg
 
 and AgentWrapping<'args, 'model, 'msg, 'req, 'evt> =
-    IWrapping<IAgent<'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    IWrapping<IAgent<'args, 'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 
 let DoQuit' (forceQuit : bool) callback =
     DoQuit (forceQuit, callback)

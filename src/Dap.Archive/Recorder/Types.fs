@@ -14,7 +14,6 @@ type Args<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame = {
     member this.OnEvent = this.Event'.Publish
 
 and Model<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame = {
-    Args : Args<'extra, 'frame>
     Bundle : Bundle'<'extra, 'frame> option
 }
 
@@ -35,7 +34,7 @@ and Msg<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame =
 with interface IMsg
 
 type Agent<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame =
-    IAgent<Model<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
+    IAgent<Args<'extra, 'frame>, Model<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
 
 let DoBeginRecording' (bundle : Bundle'<'extra, 'frame>)  callback =
     DoBeginRecording (bundle, callback)

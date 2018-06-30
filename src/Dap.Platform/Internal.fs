@@ -48,7 +48,8 @@ type internal Env = {
         member this.HandleAsync getReq = this.HandleAsync getReq
 
 type internal AgentLogic<'args, 'model, 'msg, 'req, 'evt> =
-    Logic<IAgent<'req, 'evt>, IAgent<'model, 'req, 'evt>,
+    Logic<IAgent<'args, 'model, 'req, 'evt>,
+            IAgent<'args, 'model, 'req, 'evt>,
             NoArgs,
             AgentModel<'args, 'model, 'msg, 'req, 'evt>,
             AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
@@ -87,8 +88,13 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
         dispatchAsync' this (AgentReq << getReq)
     member this.Post (subReq : 'req) = dispatch' this (ActorMsg <| this.Spec.Actor.WrapReq subReq)
     member this.PostAsync (getSubReq : Callback<'res> -> 'req) = dispatchAsync' this (ActorMsg  << this.Spec.Actor.WrapReq << getSubReq)
-    interface IRunnable<IAgent<'req, 'evt>,
-                        IAgent<'model, 'req, 'evt>,
+    member this.EnsureActor =
+        if this.Actor.IsNone then
+            this.Actor <- Some <| Actor<'args, 'model, 'msg, 'req, 'evt>.Create this
+        this.Actor
+        |> Option.get
+    interface IRunnable<IAgent<'args, 'model, 'req, 'evt>,
+                        IAgent<'args, 'model, 'req, 'evt>,
                         NoArgs,
                         AgentModel<'args, 'model, 'msg, 'req, 'evt>,
                         AgentMsg<'args, 'model, 'msg, 'req, 'evt>> with
@@ -104,8 +110,8 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
         member this.Process parcel = process' this parcel this.SetState
 
         member this.Deliver msg = deliver' this msg
-        member this.Initer = this :> IAgent<'req, 'evt>
-        member this.Runner = this :> IAgent<'model, 'req, 'evt>
+        member this.Initer = this :> IAgent<'args, 'model, 'req, 'evt>
+        member this.Runner = this :> IAgent<'args, 'model, 'req, 'evt>
     interface IRunner with
         member this.Clock = this.Env.Clock
         member this.Stats = this.Stats
@@ -128,44 +134,34 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
         member this.PostAsync getSubMsg = this.PostAsync getSubMsg
         member this.RunFunc2 func = runFunc' this func
         member this.RunTask2 onFailed getTask = runTask' this onFailed getTask
-        member this.Actor =
-            match this.Actor with
-            | Some actor ->
-                actor :> IActor<'req, 'evt>
-            | None ->
-                let actor = {
-                    Agent = this
-                }
-                this.Actor <- Some actor
-                actor :> IActor<'req, 'evt>
-    interface IAgent<'model, 'req, 'evt> with
+        member this.Actor = this.EnsureActor :> IActor<'req, 'evt>
+    interface IAgent<'args, 'model, 'req, 'evt> with
         member this.RunFunc3 func = runFunc' this func
         //Note: `((onFailed, getTask))` is needed, for the replyAsync type constraint to work
         member this.RunTask3 onFailed getTask = runTask' this onFailed getTask
-        member this.Actor =
-            match this.Actor with
-            | Some actor ->
-                actor :> IActor<'model, 'req, 'evt>
-            | None ->
-                let actor = {
-                    Agent = this
-                }
-                this.Actor <- Some actor
-                actor :> IActor<'model, 'req, 'evt>
+        member this.Actor = this.EnsureActor :> IActor<'args, 'model, 'req, 'evt>
 
 and [<StructuredFormatDisplay("<Actor>{Ident}")>]
     internal Actor<'args, 'model, 'msg, 'req, 'evt>
                                     when 'msg :> IMsg = {
     Agent : Agent<'args, 'model, 'msg, 'req, 'evt>
+    Args : 'args
+    OnEvent : IBus<'evt>
 } with
+    static member Create agent =
+        let args = agent.Spec.Actor.NewArgs (agent :> IOwner)
+        {
+            Agent = agent
+            Args = args
+            OnEvent = agent.Spec.Actor.GetOnEvent args
+        }
     member this.Ident = this.Agent.Ident
-    interface IActor<'model, 'req, 'evt> with
+    interface IActor<'args, 'model, 'req, 'evt> with
         member this.Log m = this.Agent.Logger.Log m
         member this.Handle req = this.Agent.Post req
-        member this.OnEvent =
-            let model = Option.get this.Agent.State
-            this.Agent.Spec.Actor.GetOnEvent model.Actor
+        member this.OnEvent = this.OnEvent
         member this.Ident = this.Agent.Ident
+        member this.Args = this.Args
         member this.State =
             this.Agent.State
             |> Option.map (fun s -> s.Actor)

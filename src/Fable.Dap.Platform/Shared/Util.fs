@@ -28,20 +28,20 @@ let setModel (newModel : 'model) : Operate<'runner, 'model, 'msg> =
         (newModel, cmd)
 
 #if !FABLE_COMPILER
-let inline updateState (update : 'state -> 'state) : Operate<'runner, ^model, 'msg> =
+let inline updateSession (update : 'session -> 'session) : Operate<'runner, ^model, 'msg> =
     fun _runner (model, cmd) ->
-        let state = (^model : (member State : 'state option) model)
-        match state with
+        let session = (^model : (member Session : 'session option) model)
+        match session with
         | None ->
             (model, cmd)
-        | Some state ->
-            let newState = update state
-            let newModel = (^model : (member WithState : 'state -> ^model) (model, newState))
+        | Some session ->
+            let newSession = update session
+            let newModel = (^model : (member WithSession : 'session -> ^model) (model, newSession))
             (newModel, cmd)
 
-let inline setState (newState : 'state) : Operate<'runner, ^model, 'msg> =
+let inline setSession (newSession : 'session) : Operate<'runner, ^model, 'msg> =
     fun _runner (model, cmd) ->
-        let newModel = (^model : (member WithState : 'state -> ^model) (model, newState))
+        let newModel = (^model : (member WithSession : 'session -> ^model) (model, newSession))
         (newModel, cmd)
 #endif
 let noCmd = Cmd.none

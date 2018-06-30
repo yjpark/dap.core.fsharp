@@ -48,7 +48,7 @@ type BundleSpec' = Bundle.Spec'<Extra, Frame>
 type BundleParam' = Bundle.Param'<Extra, Frame>
 type Bundle' = Bundle'<Extra, Frame>
 
-type Agent = IAgent<Model, Req, Evt>
+type Agent = Agent<Extra, Frame>
 type OnEvent = Evt -> unit
 
 let newExtra () =

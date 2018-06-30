@@ -4,8 +4,11 @@ module Dap.Platform.Registry.Types
 
 open Dap.Platform
 
-type Model<'k, 'v when 'k : comparison> = {
+type Args<'k, 'v when 'k : comparison> = {
     Event' : Bus<Evt<'k, 'v>>
+}
+
+and Model<'k, 'v when 'k : comparison> = {
     Entries : Map<'k, 'v>
 }
 

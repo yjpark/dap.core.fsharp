@@ -11,7 +11,7 @@ open Dap.WebSocket.Conn.Types
 [<Literal>]
 let Kind = "WebSocketPacketConn"
 
-type Agent = IAgent<Model<Packet'>, Req<Packet'>, Evt<Packet'>>
+type Agent = Agent<Packet'>
 
 type Event = Evt<Packet'>
 
@@ -25,18 +25,6 @@ let decode : Decode<Packet'> =
     fun (buffer, index, count) ->
         Packet.decode <| Dap.WebSocket.Internal.Text.decode Encoding.UTF8 (buffer, index, count)
 
-let getSpec (logTraffic : bool) (bufferSize : int option) =
-    fun owner ->
-        {
-            LogTraffic = logTraffic
-            SendType = WebSocketMessageType.Text
-            BufferSize = defaultArg bufferSize DefaultBufferSize
-            Encode = encode
-            Decode = decode
-            Event' = new Bus<Evt<Packet'>> (owner)
-        }
-    |> Dap.WebSocket.Conn.Logic.getSpec
-
 let getSpawner env logTraffic bufferSize =
-    getSpec logTraffic bufferSize
+    Dap.WebSocket.Conn.Logic.getSpec encode decode logTraffic bufferSize
     |> Agent.getSpawner env

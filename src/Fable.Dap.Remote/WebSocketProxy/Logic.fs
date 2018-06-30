@@ -11,7 +11,8 @@ open Dap.Remote.WebSocketProxy.Types
 module WebSocket = Dap.WebSocket.Client.Types
 module WebSocketActor = Dap.WebSocket.Client.Actor
 
-type ActorOperate<'req, 'res, 'evt> = ActorOperate<Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt>
+type ActorOperate<'req, 'res, 'evt> =
+    ActorOperate<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt>
 
 let private handleClient (msg : Client.Msg) : ActorOperate<'req, 'res, 'evt> =
     fun _runner (model, cmd) ->
@@ -39,7 +40,7 @@ let private doSend' (runner : IAgent) (args : Args<'res, 'evt>) (socket : WebSoc
 let private doSendQueue : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         model.SendQueue
-        |> List.iter ^<| doSend' runner model.Args model.Socket
+        |> List.iter ^<| doSend' runner runner.Actor.Args model.Socket
         ({model with SendQueue = []}, cmd)
 
 let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'req, 'res, 'evt> =
@@ -69,7 +70,7 @@ let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req,
             noOperation
         <| runner <| (model, Cmd.none)
 
-let private update : ActorUpdate<Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
+let private update : ActorUpdate<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     fun runner model msg ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
@@ -123,18 +124,17 @@ let private init : ActorInit<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res
             LogTraffic = args.LogTraffic
         }
         ({
-            Args = args
             Socket = socket
             Client = Client.create clientArgs
             SendQueue = []
         }, Cmd.none)
 
-let private subscribe : ActorSubscribe<Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
+let private subscribe : ActorSubscribe<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     fun runner model ->
         Cmd.batch [
-            subscribeEvent runner model ProxyEvt model.Args.OnEvent
-            subscribeEvent runner model ProxyRes model.Args.OnResponse
-            subscribeEvent runner model InternalEvt model.Args.OnInternalEvent
+            subscribeEvent runner model ProxyEvt runner.Actor.Args.OnEvent
+            subscribeEvent runner model ProxyRes runner.Actor.Args.OnResponse
+            subscribeEvent runner model InternalEvt runner.Actor.Args.OnInternalEvent
             subscribeEvent runner model SocketEvt model.Socket.Actor.OnEvent
         ]
 
@@ -150,6 +150,6 @@ let getSpec (newArgs : NewArgs<Args<'res, 'evt>>) : ActorSpec<Args<'res, 'evt>, 
         Logic = logic
         NewArgs = newArgs
         WrapReq = ProxyReq
-        GetOnEvent = fun m -> m.Args.OnEvent
+        GetOnEvent = fun args -> args.OnEvent
     }
 

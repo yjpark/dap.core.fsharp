@@ -17,33 +17,53 @@ type SendStats = {
     ProcessTime : Instant
     BytesCount : int
     EncodeDuration : Duration
-    TrasferDuration : Duration
+    TransferDuration : Duration
 }
 
 type ReceiveStats = {
     ProcessTime : Instant
     BytesCount : int
-    TrasferDuration : Duration
+    TransferDuration : Duration
     DecodeDuration : Duration
 }
 
-type Args<'pkt, 'evt> = {
+type Agent<'socket, 'pkt, 'req when 'socket :> WebSocket> = IAgent<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, 'req, Evt<'pkt>>
+
+and ActorOperate<'socket, 'pkt, 'req when 'socket :> WebSocket> =
+    ActorOperate<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>>
+
+and Args<'socket, 'pkt, 'req> when 'socket :> WebSocket = {
     LogTraffic : bool
     SendType : WebSocketMessageType
     BufferSize : int
     Encode : Encode<'pkt>
     Decode : Decode<'pkt>
-    Event' : Bus<'evt>
+    Event' : Bus<Evt<'pkt>>
+    HandleReq : IMsg -> 'req -> ActorOperate<'socket, 'pkt, 'req>
 } with
     member this.FireEvent' = this.Event'.Trigger
     member this.OnEvent = this.Event'.Publish
 
-and IState<'pkt, 'evt, 'socket> when 'socket :> WebSocket = {
-    Args : Args<'pkt, 'evt>
-    FireEvent : 'evt -> unit
+and Evt<'pkt> =
+    | OnConnected
+    | OnDisconnected
+    | OnSent of SendStats * 'pkt
+    | OnReceived of ReceiveStats * 'pkt
+
+and Msg<'pkt, 'req> =
+    | WebSocketReq of 'req
+    | WebSocketEvt of Evt<'pkt>
+with interface IMsg
+
+and Model<'socket, 'pkt> when 'socket :> WebSocket = {
+    Link : Link<'socket> option
+    Connected : bool
+}
+
+and [<StructuredFormatDisplay("<Link>{AsDisplay}")>] Link<'socket> when 'socket :> WebSocket = {
     Ident : string
     Token : CancellationToken
     Socket : 'socket
     Buffer : byte[]
-    mutable Connected : bool
-}
+} with
+    member this.AsDisplay = (this.Ident, this.Socket)

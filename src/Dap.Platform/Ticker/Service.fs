@@ -8,7 +8,7 @@ open Dap.Platform
 [<Literal>]
 let Kind = "Ticker"
 
-type Service = IAgent<Model, Req, Evt>
+type Service = IAgent<Args, Model, Req, Evt>
 
 let getSpec (autoStart : bool) (frameRate : double) =
     fun owner ->
@@ -16,7 +16,7 @@ let getSpec (autoStart : bool) (frameRate : double) =
             AutoStart = autoStart
             FrameRate = frameRate
             Event' = new Bus<Evt>(owner)
-            InternalEvent' = new Bus<InternalEvt>(owner)
+            InternalEvent' = new Bus<InternalEvt> (owner)
         }
     |> Logic.getSpec
 

@@ -2,6 +2,7 @@
 module Dap.Platform.Tasks
 
 open System.Threading.Tasks
+open FSharp.Control.Tasks
 open Dap.Prelude
 
 let private tplRunTaskSucceed = LogEvent.Template3<string, string, Duration>(AckLogLevel, "[{Section}] {Task} {Duration} ~> Succeed")
@@ -38,17 +39,17 @@ let private logRunResult' runner section states getTask startTime (onFailed : ex
     | None -> ()
     | Some e -> onFailed e
 
-let private tryWaitTask (runner : 'runner) (getTask : GetTask<'runner, unit>) : exn option =
-    try
-        let task = getTask runner
-        task.Wait()
-        None
-    with
-    | e ->
-        Some e
-
 let private tryRunTask (runner : 'runner) (getTask : GetTask<'runner, unit>) (onDone : exn option -> unit) : unit =
-    Task.Run(fun () -> tryWaitTask runner getTask |> onDone)
+    let getTask' : unit -> Task<unit> = fun () -> task {
+        do! Task.Yield()
+        try
+            do! (getTask runner)
+            onDone None
+        with
+        | e ->
+            onDone <| Some e
+    }
+    Task.Run (fun () -> (getTask' ()) :> Task)
     |> ignore
 
 let internal runTask' (runner : 'runner when 'runner :> IRunner) (onFailed : OnFailed<'runner>) (getTask : GetTask<'runner, unit>) : unit =

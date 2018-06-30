@@ -40,7 +40,7 @@ let statsOfCap (getSlowCap : GetSlowCap) : Stats = {
     Task = funcStatsOfCap <| getSlowCap TaskDuration
 }
 
-let getRemoteSlowCap replySlowCap = 
+let getRemoteSlowCap replySlowCap =
     function
     | DeliverDuration -> DefaultDeliverSlowCap
     | ProcessDuration -> DefaultProcessSlowCap
@@ -48,7 +48,7 @@ let getRemoteSlowCap replySlowCap =
     | FuncDuration -> DefaultFuncSlowCap
     | TaskDuration -> DefaultTaskSlowCap
 
-let getDefaultSlowCap = 
+let getDefaultSlowCap =
     getRemoteSlowCap DefaultReplySlowCap
 
 let private tplRunFuncSucceed = LogEvent.Template4<string, string, Duration, obj>(AckLogLevel, "[{Section}] {Func} {Duration} ~> Succeed: {Res}")

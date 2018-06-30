@@ -5,7 +5,7 @@ module Dap.Platform.Registry.Logic
 open Dap.Prelude
 open Dap.Platform
 
-type ActorOperate<'k, 'v when 'k : comparison> = ActorOperate<Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
+type ActorOperate<'k, 'v when 'k : comparison> = ActorOperate<Args<'k, 'v>, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
 
 let private doGetEntry msg ((key, callback) : 'k * Callback<'v>) : ActorOperate<'k, 'v> =
     fun runner (model, cmd) ->
@@ -86,20 +86,19 @@ let private handleReq msg req : ActorOperate<'k, 'v> =
         | TryRemoveEntry (a, b) -> tryRemoveEntry msg (a, b)
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
-    fun runner model msg -> 
+let private update : ActorUpdate<Args<'k, 'v>, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
+    fun runner model msg ->
         match msg with
         | RegistryEvt evt ->
-            model.Event'.Trigger evt
+            runner.Actor.Args.Event'.Trigger evt
             (model, noCmd)
         | RegistryReq req ->
             (runner, model, [])
             |=|> handleReq msg req
 
-let private init : ActorInit<NoArgs, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
+let private init : ActorInit<Args<'k, 'v>, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
     fun runner _args ->
         ({
-            Event' = new Bus<Evt<'k, 'v>> (runner)
             Entries = Map.empty
         }, noCmd)
 
@@ -110,14 +109,18 @@ let logic =
         Subscribe = noSubscription
     }
 
-let getSpec<'k, 'v when 'k : comparison> : AgentSpec<NoArgs, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
+let getSpec<'k, 'v when 'k : comparison> : AgentSpec<Args<'k, 'v>, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
+    let newArgs = fun owner ->
+        {
+            Event' = new Bus<Evt<'k, 'v>> (owner)
+        }
     {
         Actor =
             {
-                NewArgs = fun _ -> NoArgs
+                NewArgs = newArgs
                 Logic = logic
                 WrapReq = RegistryReq
-                GetOnEvent = fun model -> model.Event'.Publish
+                GetOnEvent = fun args -> args.Event'.Publish
             }
         OnAgentEvent = None
         GetSlowCap = None

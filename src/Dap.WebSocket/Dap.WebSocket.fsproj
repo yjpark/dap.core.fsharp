@@ -20,7 +20,6 @@
     <Compile Include="Client/Logic.fs" />
     <Compile Include="Client/TextClient.fs" />
     <Compile Include="Conn/Types.fs" />
-    <Compile Include="Conn/Tasks.fs" />
     <Compile Include="Conn/Logic.fs" />
     <Compile Include="Conn/TextConn.fs" />
   </ItemGroup>

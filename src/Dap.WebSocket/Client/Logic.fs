@@ -9,35 +9,34 @@ open Elmish
 open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket
+open Dap.WebSocket.Internal.Tasks
 open Dap.WebSocket.Client.Types
 open Dap.WebSocket.Client.Tasks
 module BaseLogic = Dap.WebSocket.Internal.Logic
+module BaseTypes = Dap.WebSocket.Types
 
-type ActorOperate<'pkt> = ActorOperate<Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+type ActorOperate<'pkt> = ActorOperate<ClientWebSocket, 'pkt, Req<'pkt>>
 
 let private doConnect msg (uri, token, callback) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
-        match model.State with
-        | Some state ->
-            reply runner callback <| nak msg "Can_Not_Connect" state.Socket.State
+        match model.Link with
+        | Some link ->
+            reply runner callback <| nak msg "Link_Exist" link
             noOperation
         | None ->
-            let state : State<'pkt> = {
-                Args = model.Args
-                FireEvent = model.Args.FireEvent'
+            let link : Link<ClientWebSocket> = {
                 Ident = uri
                 Token = token
                 Socket = new ClientWebSocket()
-                Buffer = Array.create<byte> model.Args.BufferSize 0uy
-                Connected = false
+                Buffer = Array.create<byte> runner.Actor.Args.BufferSize 0uy
             }
-            replyAsync3 runner msg callback nakOnFailed <| doConnectAsync state
-            setModel {model with State = Some state}
+            replyAsync3 runner msg callback nakOnFailed <| doConnectAsync
+            setModel {model with Link = Some link}
         <| runner <| (model, cmd)
 
 let private doSend msg ((pkt, callback) : 'pkt * Callback<SendStats>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
-        BaseLogic.doSend runner OnSent model.State msg (pkt, callback)
+        BaseLogic.doSend runner msg (pkt, callback)
         (model, cmd)
 
 let private handleReq msg req : ActorOperate<'pkt> =
@@ -47,52 +46,15 @@ let private handleReq msg req : ActorOperate<'pkt> =
         | DoSend (a, b) -> doSend msg (a, b)
         <| runner <| (model, cmd)
 
-let private handleEvt _msg evt : ActorOperate<'pkt> =
-    fun runner (model, cmd) ->
-        match evt with
-        | OnConnected _stats ->
-            let state = Option.get model.State
-            runner.RunTask3 (doReceiveFailed state) <| doReceiveAsync state
-            noOperation
-        | OnDisconnected ->
-            setModel {model with State = None}
-        | _ -> noOperation
-        <| runner <| (model, cmd)
-
-let private update : ActorUpdate<Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    fun runner model msg ->
-        match msg with
-        | WebSocketReq req -> handleReq msg req
-        | WebSocketEvt evt -> handleEvt msg evt
-        <| runner <| (model, [])
-
-let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    fun _runner args ->
-        ({
-            Args = args
-            State = None
-        }, Cmd.none)
-
-let private subscribe : ActorSubscribe<Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    fun runner model ->
-        subscribeEvent runner model WebSocketEvt model.Args.OnEvent
-
-let logic : ActorLogic<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    {
-        Init = init
-        Update = update
-        Subscribe = subscribe
-    }
-
-let getSpec (newArgs : NewArgs<Args<'pkt>>) : AgentSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    {
-        Actor =
-            {
-                NewArgs = newArgs
-                Logic = logic
-                WrapReq = WebSocketReq
-                GetOnEvent = fun model -> model.Args.OnEvent
-            }
-        OnAgentEvent = None
-        GetSlowCap = Some <| getRemoteSlowCap DefaultWebSocketReplySlowCap
-    }
+let getSpec (encode : Encode<'pkt>) (decode : Decode<'pkt>) (logTraffic : bool) (bufferSize : int option) =
+    fun owner ->
+        {
+            LogTraffic = logTraffic
+            SendType = WebSocketMessageType.Text
+            BufferSize = defaultArg bufferSize DefaultBufferSize
+            Encode = encode
+            Decode = decode
+            Event' = new Bus<Evt<'pkt>> (owner)
+            HandleReq = handleReq
+        }
+    |> BaseLogic.getSpec

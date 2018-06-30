@@ -9,14 +9,16 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Remote.WebSocketService.Types
 open Dap.Remote.WebSocketService.Tasks
-module WebSocket = Dap.WebSocket.Conn.Types
+module WebSocket = Dap.WebSocket.Types
+module WebSocketConn = Dap.WebSocket.Conn.Types
 
-type ActorOperate<'req, 'evt> = ActorOperate<Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
+type ActorOperate<'req, 'evt> = ActorOperate<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
 
 let private handleService (msg : Service.Msg) : ActorOperate<'req, 'evt> =
     fun _runner (model, cmd) ->
-        let service = Service.handle msg model.Service
-        ({model with Service = service}, cmd)
+        let service = model.Service |> Option.get
+        let service = Service.handle msg service
+        ({model with Service = Some service}, cmd)
 
 let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req, 'evt> =
     match evt with
@@ -26,7 +28,7 @@ let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req,
         handleService <| Service.OnSent pkt
     | WebSocket.OnDisconnected ->
         fun _runner (model, msg) ->
-            model.State.Hub
+            model.Hub
             |> Option.map (fun hub ->
                 hub.OnDisconnected ()
             )
@@ -38,8 +40,65 @@ let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req,
 let private handleHubEvt (evt : 'evt) : ActorOperate<'req, 'evt> =
     handleService <| Service.DoSendEvent evt
 
-let private handleInternalEvt (evt : InternalEvt<'evt>) : ActorOperate<'req, 'evt> =
+let private setHub hub : ActorOperate<'req, 'evt> =
+    fun runner (model, cmd) ->
+        match model.Hub with
+        | None ->
+            runner.RunTask3 ignoreOnFailed setSocketAsync
+            hub.OnEvent.AddWatcher runner "HubEvt" (runner.Actor.Args.FireInternalEvent' << HubEvt)
+            ({model with Hub = Some hub}, Cmd.none)
+        | Some hub' ->
+            logError runner "WebSocketService" "Hub_Exist" (hub', hub)
+            (model, cmd)
+
+let private onRequest (runner : Agent<'req, 'evt>) (pkt : Packet') : unit =
+    match runner.Actor.State.Hub with
+    | None ->
+        logError runner "onRequest" "Hub_Is_None" pkt
+    | Some hub ->
+        let callback = fun res ->
+            runner.Actor.Args.FireInternalEvent' <| OnHandled (pkt.Id, res)
+        let req = runner.Actor.Args.HubSpec.DecodeReq pkt.Kind pkt.Payload callback
+        hub.PostReq req
+
+let private doSend (runner : Agent<'req, 'evt>) pkt =
+    match runner.Actor.State.Socket with
+    | None ->
+        logError runner "doSend" "Socket_Is_None" pkt
+        Some <| SendFailed "Socket_Is_None"
+    | Some socket ->
+        socket.Post <| WebSocketConn.DoSend (pkt, None)
+        None
+
+let private setSocket (socket : PacketConn.Agent) : ActorOperate<'req, 'evt> =
+    fun runner (model, cmd) ->
+        match model.Socket with
+        | None ->
+            socket.Actor.OnEvent.AddWatcher runner "SocketEvt" (runner.Actor.Args.FireInternalEvent' << SocketEvt)
+            let link : Service.Link = {
+                Send = doSend runner
+            }
+            let hub' : Service.Hub = {
+                OnRequest = onRequest runner
+            }
+            let serviceArgs : Service.Args = {
+                Link = link
+                Hub = hub'
+                Logger = runner
+                LogTraffic = runner.Actor.Args.LogTraffic
+            }
+            let service = Service.create serviceArgs
+            ({model with Socket = Some socket ; Service = Some service}, Cmd.none)
+        | Some socket' ->
+            logError runner "WebSocketService" "Socket_Exist" (socket', socket)
+            (model, cmd)
+
+let private handleInternalEvt (evt : InternalEvt<'req, 'evt>) : ActorOperate<'req, 'evt> =
     match evt with
+    | SetHub hub ->
+        setHub hub
+    | SetSocket socket ->
+        setSocket socket
     | HubEvt evt ->
         handleHubEvt evt
     | SocketEvt evt ->
@@ -52,71 +111,29 @@ let private handleReq msg (req : Req) : ActorOperate<'req, 'evt> =
         match req with
         | DoAttach (token, socket, callback) ->
             let ident = runner.Ident.Key
-            replyAsync3 runner msg callback nakOnFailed <| doAttachAsync model.State ident token socket
+            replyAsync3 runner msg callback nakOnFailed <| doAttachAsync ident token socket
         (model, cmd)
 
-let private update : ActorUpdate<Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
+let private update : ActorUpdate<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     fun runner model msg ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
         | ServiceReq req -> handleReq msg req
         )<| runner <| (model, Cmd.none)
 
-let private onRequest runner (state : State<'req, 'evt>) (pkt : Packet') : unit =
-    match state.Hub with
-    | None ->
-        logError runner "onRequest" "Hub_Is_None" pkt
-    | Some hub ->
-        let callback = fun res ->
-            state.Args.FireInternalEvent' <| OnHandled (pkt.Id, res)
-        let req = state.Args.HubSpec.DecodeReq pkt.Kind pkt.Payload callback
-        hub.PostReq req
-
-let private setHub (state : State<'req, 'evt>) =
-    fun runner hub ->
-        state.Hub <- Some hub
-        hub.OnEvent.AddWatcher runner "HubEvt" (state.Args.FireInternalEvent' << HubEvt)
-
-let private doSend runner (state : State<'req, 'evt>) pkt =
-    match state.Socket with
-    | None ->
-        logError runner "doSend" "Socket_Is_None" pkt
-        Some <| SendFailed "Socket_Is_None"
-    | Some socket ->
-        socket.Post <| WebSocket.DoSend (pkt, None)
-        None
-
 let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     fun runner args ->
-        let state = {
-            Args = args
+        args.HubSpec.GetHub runner.Ident.Key (args.FireInternalEvent' << SetHub) 
+        ({
             Hub = None
             Socket = None
-        }
-        args.HubSpec.GetHub runner.Ident.Key <| setHub state runner
-        runner.RunTask2 ignoreOnFailed <| setSocketAsync state
-        let link : Service.Link = {
-            Send = doSend runner state
-        }
-        let hub' : Service.Hub = {
-            OnRequest = onRequest runner state
-        }
-        let serviceArgs : Service.Args = {
-            Link = link
-            Hub = hub'
-            Logger = runner
-            LogTraffic = args.LogTraffic
-        }
-        ({
-            Args = args
-            Service = Service.create serviceArgs
-            State = state
+            Service = None
         }, Cmd.none)
 
-let private subscribe : ActorSubscribe<Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
+let private subscribe : ActorSubscribe<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     fun runner model ->
         Cmd.batch [
-            subscribeEvent runner model InternalEvt model.Args.OnInternalEvent
+            subscribeEvent runner model InternalEvt runner.Actor.Args.OnInternalEvent
         ]
 
 let logic =

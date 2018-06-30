@@ -7,20 +7,19 @@ open NodaTime
 open Dap.Prelude
 open Dap.Platform
 
-type private ActorOperate = ActorOperate<Model, Msg, Req, Evt>
+type private ActorOperate = ActorOperate<Args, Model, Msg, Req, Evt>
 
 let private doStartTimer msg (callback : Callback<Instant>) : ActorOperate =
     fun runner (model, cmd) ->
         match model.State with
         | None ->
-            let interval = 1000.0 / model.Args.FrameRate
+            let interval = 1000.0 / runner.Actor.Args.FrameRate
             if (interval > 0.0) then
                 let timer = new System.Timers.Timer(Interval = interval, Enabled = true, AutoReset = true)
                 timer.Elapsed.AddHandler(new System.Timers.ElapsedEventHandler(fun _src _evt ->
-                    model.Args.FireInternalEvent' DoTick
+                    runner.Actor.Args.FireInternalEvent' DoTick
                 ))
                 let state = {
-                    Args = model.Args
                     Timer = timer
                 }
                 let now = runner.Clock.Now
@@ -34,7 +33,7 @@ let private doStartTimer msg (callback : Callback<Instant>) : ActorOperate =
                     State = Some state
                 }, cmd)
             else
-                reply runner callback <| nak msg "Invalid_FrameRame" model.Args.FrameRate
+                reply runner callback <| nak msg "Invalid_FrameRame" runner.Actor.Args.FrameRate
                 (model, cmd)
         | Some state ->
             reply runner callback <| nak msg "Already_Started" model
@@ -67,19 +66,19 @@ let private doTick : ActorOperate =
         let time = runner.Clock.Now
         let time' = runner.Clock.Now'
         let delta = time - model.LastTickTime
-        model.Args.FireEvent' <| OnWillTick time
-        model.Args.FireEvent' <| OnTick (time, delta)
+        runner.Actor.Args.FireEvent' <| OnWillTick time
+        runner.Actor.Args.FireEvent' <| OnTick (time, delta)
         let (time', duration) = runner.Clock.CalcDuration' (time')
         let stats = {
             Time = time
             Delta = delta
             Duration = duration
         }
-        model.Args.FireEvent' <| OnTick' stats
-        model.Args.FireEvent' <| OnLateTick (time, delta)
+        runner.Actor.Args.FireEvent' <| OnTick' stats
+        runner.Actor.Args.FireEvent' <| OnLateTick (time, delta)
         let (time', duration) = runner.Clock.CalcDuration' (time')
         let stats = {stats with Duration = duration}
-        model.Args.FireEvent' <| OnLateTick' stats
+        runner.Actor.Args.FireEvent' <| OnLateTick' stats
         (model, cmd)
 
 let private handleInternalEvt msg evt : ActorOperate =
@@ -101,7 +100,7 @@ let private handleEvt msg evt : ActorOperate =
         | _ -> noOperation
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Model, Msg, Req, Evt> =
+let private update : ActorUpdate<Args, Model, Msg, Req, Evt> =
     fun runner model msg ->
         match msg with
         | InternalEvt evt -> handleInternalEvt msg evt
@@ -117,7 +116,6 @@ let private init : ActorInit<Args, Model, Msg, Req, Evt> =
             else
                 noCmd
         ({
-            Args = args
             BeginTime = None
             FinishTime = None
             FrameIndex = 0
@@ -127,11 +125,11 @@ let private init : ActorInit<Args, Model, Msg, Req, Evt> =
             State = None
         }, cmd)
 
-let private subscribe : ActorSubscribe<Model, Msg, Req, Evt> =
+let private subscribe : ActorSubscribe<Args, Model, Msg, Req, Evt> =
     fun runner model ->
         Cmd.batch [
-            subscribeEvent runner model InternalEvt model.Args.OnInternalEvent
-            subscribeEvent runner model TickerEvt model.Args.OnEvent
+            subscribeEvent runner model InternalEvt runner.Actor.Args.OnInternalEvent
+            subscribeEvent runner model TickerEvt runner.Actor.Args.OnEvent
         ]
 
 let logic : ActorLogic<Args, Model, Msg, Req, Evt> =
@@ -148,7 +146,7 @@ let getSpec (newArgs : NewArgs<Args>) : AgentSpec<Args, Model, Msg, Req, Evt> =
                 NewArgs = newArgs
                 Logic = logic
                 WrapReq = TickerReq
-                GetOnEvent = fun model -> model.Args.OnEvent
+                GetOnEvent = fun args -> args.OnEvent
             }
         OnAgentEvent = None
         GetSlowCap = None
