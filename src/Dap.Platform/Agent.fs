@@ -9,32 +9,32 @@ open Dap.Platform.Internal
 
 let private tplSpawnErr = LogEvent.Template3<obj, Scope, Ident>(LogLevelFatal, "[Spawn] {Err}: {Scope}  ~> {Ident}")
 
-type AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
+type AgentOperate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Operate<IAgent<'args, 'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
-type AgentInit<'args, 'model, 'msg, 'req, 'evt> =
+type AgentInit<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Init<IAgent<'args, 'model, 'req, 'evt>, NoArgs, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
-type AgentUpdate<'args, 'model, 'msg, 'req, 'evt> =
+type AgentUpdate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Update<IAgent<'args, 'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
-type AgentSubscribe<'args, 'model, 'msg, 'req, 'evt> =
+type AgentSubscribe<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Subscribe<IAgent<'args, 'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 
-let private raiseSpawnErr err scope ident = 
+let private raiseSpawnErr err scope ident =
     raiseWith <| tplSpawnErr err scope ident
 
-let private doStop msg (forceStop, callback) : AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
+let private doStop req (forceStop, callback) : AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
     fun runner (model, cmd) ->
-        logOpError runner "Lifecycle" msg "Not_Implemented" (forceStop, callback)
+        logReqError runner "Lifecycle" req "Not_Implemented" (forceStop, callback)
         (model, cmd)
 
-let private handleReq msg req : AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
+let private handleReq req : AgentOperate<'args, 'model, 'msg, 'req, 'evt> =
     match req with
-    | DoStop (a, b) -> doStop msg (a, b)
+    | DoStop (a, b) -> doStop req (a, b)
 
 let private update wrapper
                     : AgentUpdate<'args, 'model, 'msg, 'req, 'evt> =
     fun runner model msg ->
         match msg with
-        | AgentReq req -> handleReq msg req
+        | AgentReq req -> handleReq req
         | AgentEvt _evt -> noOperation
         | ActorMsg actorMsg -> addSubCmd wrapper actorMsg
         | ActorMsg' wrapping -> wrapping.Operate

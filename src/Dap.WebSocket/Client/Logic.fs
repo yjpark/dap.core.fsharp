@@ -17,11 +17,11 @@ module BaseTypes = Dap.WebSocket.Types
 
 type ActorOperate<'pkt> = ActorOperate<ClientWebSocket, 'pkt, Req<'pkt>>
 
-let private doConnect msg (uri, token, callback) : ActorOperate<'pkt> =
+let private doConnect req (uri, token, callback) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match model.Link with
         | Some link ->
-            reply runner callback <| nak msg "Link_Exist" link
+            reply runner callback <| nak req "Link_Exist" link
             noOperation
         | None ->
             let link : Link<ClientWebSocket> = {
@@ -30,20 +30,20 @@ let private doConnect msg (uri, token, callback) : ActorOperate<'pkt> =
                 Socket = new ClientWebSocket()
                 Buffer = Array.create<byte> runner.Actor.Args.BufferSize 0uy
             }
-            replyAsync3 runner msg callback nakOnFailed <| doConnectAsync
+            replyAsync3 runner req callback nakOnFailed <| doConnectAsync
             setModel {model with Link = Some link}
         <| runner <| (model, cmd)
 
-let private doSend msg ((pkt, callback) : 'pkt * Callback<SendStats>) : ActorOperate<'pkt> =
+let private doSend req ((pkt, callback) : 'pkt * Callback<SendStats>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
-        BaseLogic.doSend runner msg (pkt, callback)
+        BaseLogic.doSend runner req (pkt, callback)
         (model, cmd)
 
-let private handleReq msg req : ActorOperate<'pkt> =
+let private handleReq req : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match req with
-        | DoConnect (a, b, c) -> doConnect msg (a, b, c)
-        | DoSend (a, b) -> doSend msg (a, b)
+        | DoConnect (a, b, c) -> doConnect req (a, b, c)
+        | DoSend (a, b) -> doSend req (a, b)
         <| runner <| (model, cmd)
 
 let getSpec (encode : Encode<'pkt>) (decode : Decode<'pkt>) (logTraffic : bool) (bufferSize : int option) =

@@ -8,7 +8,7 @@ module WebSocket = Dap.WebSocket.Client.Types
 [<Literal>]
 let Kind = "WebSocketProxy"
 
-type Agent<'req, 'res, 'evt> when 'req :> IRequest =
+type Agent<'req, 'res, 'evt> when 'req :> IReq and 'evt :> IEvt =
     IAgent<Args<'res, 'evt>, Model<'res, 'evt>, 'req, 'evt>
 
 and InternalEvt =
@@ -16,7 +16,7 @@ and InternalEvt =
     | DoEnqueue of IRequest * Packet'
     | DoReconnect
 
-and Args<'res, 'evt> = {
+and Args<'res, 'evt> when 'evt :> IEvt = {
     Spec : StubSpec<'res, 'evt>
     Uri : string
     LogTraffic : bool
@@ -31,7 +31,7 @@ and Args<'res, 'evt> = {
     member this.FireInternalEvent' = this.InternalEvent'.Trigger
     member this.OnInternalEvent = this.InternalEvent'.Publish
 
-and Msg<'req, 'res, 'evt> =
+and Msg<'req, 'res, 'evt> when 'req :> IReq and 'evt :> IEvt =
     | InternalEvt of InternalEvt
     | SocketEvt of WebSocket.Evt<Packet'>
     | ProxyReq of 'req
@@ -39,7 +39,7 @@ and Msg<'req, 'res, 'evt> =
     | ProxyEvt of 'evt
 with interface IMsg
 
-and Model<'res, 'evt> = {
+and Model<'res, 'evt> when 'evt :> IEvt = {
     Socket : WebSocket.Agent<Packet'>
     Client : Client.Model
     SendQueue : (IRequest * Packet') list

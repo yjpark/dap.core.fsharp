@@ -15,7 +15,8 @@ let private raiseAgentErr err detail =
 //TODO: this is not needed now, since Actor<> been created now
 //Cleanup this when got time
 [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
-type internal Agent<'args, 'model, 'msg, 'req, 'evt when 'model : not struct> = {
+type internal Agent<'args, 'model, 'msg, 'req, 'evt>
+                        when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>
     Ident' : Ident
     mutable Logger' : ILogger
@@ -103,7 +104,6 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt when 'model : not struct> = 
         member _this.Disposed = false
     interface IAgent with
         member this.Ident = this.Ident'
-        member this.Self' = this :> IAgent
     interface IAgent<'req, 'evt> with
         member this.Post req = this.Post req
         member this.Actor = this.EnsureActor :> IActor<'req, 'evt>
@@ -113,7 +113,8 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt when 'model : not struct> = 
         member this.Log m = this.Logger'.Log m
 
 and [<StructuredFormatDisplay("<Actor>{Ident}")>]
-    internal Actor<'args, 'model, 'msg, 'req, 'evt when 'model : not struct> = {
+    internal Actor<'args, 'model, 'msg, 'req, 'evt>
+                        when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Agent : Agent<'args, 'model, 'msg, 'req, 'evt>
     //Can NOT use same name in Actor implementation in Fable 1.x
     //https://github.com/fable-compiler/Fable/issues/1343

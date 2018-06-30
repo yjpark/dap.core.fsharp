@@ -14,12 +14,14 @@ type Decode<'pkt> = obj -> 'pkt
 type Req<'pkt> =
     | DoConnect
     | DoSend of 'pkt * Callback<System.DateTime>
+with interface IReq
 
 type Evt<'pkt> =
     | OnConnected
     | OnDisconnected
     | OnSent of 'pkt
     | OnReceived of 'pkt
+with interface IEvt
 
 type Args<'pkt> = {
     Uri : string

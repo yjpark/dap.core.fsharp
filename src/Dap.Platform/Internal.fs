@@ -47,7 +47,7 @@ type internal Env = {
         member this.Handle req = this.Handle req
         member this.HandleAsync getReq = this.HandleAsync getReq
 
-type internal AgentLogic<'args, 'model, 'msg, 'req, 'evt> =
+type internal AgentLogic<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Logic<IAgent<'args, 'model, 'req, 'evt>,
             IAgent<'args, 'model, 'req, 'evt>,
             NoArgs,
@@ -56,7 +56,7 @@ type internal AgentLogic<'args, 'model, 'msg, 'req, 'evt> =
 
 [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
 type internal Agent<'args, 'model, 'msg, 'req, 'evt>
-                                    when 'msg :> IMsg = {
+                                    when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>
     Env : IEnv
     Ident : Ident
@@ -143,7 +143,7 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
 
 and [<StructuredFormatDisplay("<Actor>{Ident}")>]
     internal Actor<'args, 'model, 'msg, 'req, 'evt>
-                                    when 'msg :> IMsg = {
+                                    when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Agent : Agent<'args, 'model, 'msg, 'req, 'evt>
     Args : 'args
     OnEvent : IBus<'evt>

@@ -4,19 +4,19 @@ module Dap.Platform.Replier
 open Dap.Prelude
 open Dap.Platform
 
-let private tplAckReply = LogEvent.Template2<IMsg, obj>(AckLogLevel, "[Ack] {Req} ~> {Res}")
-let private tplNakReply = LogEvent.Template3<IMsg, string, obj>(LogLevelError, "[Nak] {Req} ~> {Err}: {Detail}")
-let private tplAckCallback = LogEvent.Template3<int, IMsg, obj>(AckLogLevel, "[Ack] {Duration}<ms> {Req} ~> {Res}")
-let private tplSlowAckCallback = LogEvent.Template3<int, IMsg, obj>(LogLevelWarning, "[Ack] {Duration}<ms> {Req} ~> {Res}")
+let private tplAckReply = LogEvent.Template2<IReq, obj>(AckLogLevel, "[Ack] {Req} ~> {Res}")
+let private tplNakReply = LogEvent.Template3<IReq, string, obj>(LogLevelError, "[Nak] {Req} ~> {Err}: {Detail}")
+let private tplAckCallback = LogEvent.Template3<int, IReq, obj>(AckLogLevel, "[Ack] {Duration}<ms> {Req} ~> {Res}")
+let private tplSlowAckCallback = LogEvent.Template3<int, IReq, obj>(LogLevelWarning, "[Ack] {Duration}<ms> {Req} ~> {Res}")
 let private tplNakCallback = LogEvent.Template4<int, obj, string, obj>(LogLevelError, "[Nak] {Duration}<ms> {Req} ~> {Err}: {Detail}")
 
-let ack<'req, 'res> (req : 'req) (res : 'res) : Response<'req, 'res> =
+let ack<'res> (req : IReq) (res : 'res) : Reply<'res> =
     Ack (req, res)
 
-let nak<'req, 'res> (req : 'req) (err : string) (detail : obj) : Response<'req, 'res> =
+let nak<'res> (req : IReq) (err : string) (detail : obj) : Reply<'res> =
     Nak (req, err, detail)
 
-let reply<'res> (logger : ILogger) (callback : Callback<'res>) (reply : Reply<'res>) : unit = 
+let reply<'res> (logger : ILogger) (callback : Callback<'res>) (reply : Reply<'res>) : unit =
     match callback with
     | Some callback ->
         callback reply

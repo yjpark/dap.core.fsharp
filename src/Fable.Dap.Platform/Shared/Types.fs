@@ -79,42 +79,42 @@ type ActorVersion = {
 
 
 type IMsg = interface end
+type IReq = interface end
+type IEvt = interface end
 
-type Response<'req, 'res> =
-    | Ack of 'req * 'res
-    | Nak of 'req * string * obj
-
-type Reply<'res> = Response<IMsg, 'res>
+type Reply<'res> =
+    | Ack of IReq * 'res
+    | Nak of IReq * string * obj
 
 exception ReplyException of string * obj
 
 type Callback<'res> = (Reply<'res> -> unit) option
 
-type IHandler<'req> =
+type IHandler<'req> when 'req :> IReq =
     abstract Handle : 'req -> unit
 
-type IPoster<'msg> =
-    abstract Post : 'msg -> unit
+type IPoster<'req> =
+    abstract Post : 'req -> unit
 
-and IChannel<'evt> =
+and IChannel<'evt> when 'evt :> IEvt =
     abstract OnEvent : IBus<'evt> with get
 
 and IActor =
     inherit ILogger
     abstract Ident : Ident with get
 
-and IActor<'req, 'evt> =
+and IActor<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IActor
     inherit IHandler<'req>
     inherit IChannel<'evt>
 
-and IActor<'args, 'model, 'req, 'evt> =
+and IActor<'args, 'model, 'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IActor<'req, 'evt>
     abstract Args : 'args with get
     abstract State : 'model with get
     abstract Version : ActorVersion with get
 
-and ActorSpec'<'initer, 'runner, 'args, 'model, 'msg, 'req, 'evt> = {
+and ActorSpec'<'initer, 'runner, 'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Logic : Logic<'initer, 'runner, 'args, 'model, 'msg>
     NewArgs : NewArgs<'args>
     WrapReq : Wrapper<'msg, 'req>
@@ -131,5 +131,7 @@ and NoMsg = NoMsg
 with interface IMsg
 
 and NoReq = NoReq
+with interface IReq
 
 and NoEvt = NoEvt
+with interface IEvt

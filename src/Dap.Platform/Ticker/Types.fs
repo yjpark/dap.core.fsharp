@@ -40,6 +40,7 @@ and Model = {
 and Req =
     | DoStartTimer of Callback<Instant>
     | DoStopTimer of Callback<Instant>
+with interface IReq
 
 and Evt =
     | OnWillTick of Instant
@@ -47,6 +48,7 @@ and Evt =
     | OnTick' of TickStats
     | OnLateTick of Instant * Duration    // delta
     | OnLateTick' of TickStats
+with interface IEvt
 
 and InternalEvt =
     | DoTick
@@ -55,8 +57,7 @@ and Msg =
     | InternalEvt of InternalEvt
     | TickerReq of Req
     | TickerEvt of Evt
-with
-    interface IMsg
+with interface IMsg
 
 let noTickStats = {
     Time = Instant.MinValue

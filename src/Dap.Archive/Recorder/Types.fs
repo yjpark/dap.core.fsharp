@@ -21,12 +21,14 @@ and Req<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame =
     | DoBeginRecording of Bundle'<'extra, 'frame> * Callback<Meta<'extra>>
     | DoFinishRecording of Callback<Meta<'extra>>
     | DoAppendFrame of 'frame * Callback<Meta<'extra> * 'frame>
+with interface IReq
 
 and Evt<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame =
     | OnBeginRecording of Meta<'extra>
     | OnFinishRecording of Meta<'extra>
     | OnAppendFrame of Meta<'extra> * 'frame
     | OnAppendFrameFailed of 'frame * exn
+with interface IEvt
 
 and Msg<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame =
     | RecorderReq of Req<'extra, 'frame>

@@ -9,15 +9,35 @@ open Fable.PowerPack
 
 open Dap.Prelude
 
-let private tplOpInfo = LogEvent.Template4<string, IMsg, string, obj>(LogLevelInformation, "[{Section}] {Msg} ~> {Info}: {Detail}")
+let private tplMsgInfo = LogEvent.Template4<string, IMsg, string, obj>(LogLevelInformation, "[{Section}] {Msg} ~> {Info}: {Detail}")
 
-let private tplOpError = LogEvent.Template4<string, IMsg, string, obj>(LogLevelError, "[{Section}] {Msg} ~> {Err}: {Detail}")
+let private tplMsgError = LogEvent.Template4<string, IMsg, string, obj>(LogLevelError, "[{Section}] {Msg} ~> {Err}: {Detail}")
 
-let logOpInfo (logger : ILogger) section (msg : IMsg) info detail : unit =
-    logger.Log <| tplOpInfo section msg info detail
+let private tplReqInfo = LogEvent.Template4<string, IReq, string, obj>(LogLevelInformation, "[{Section}] {Req} ~> {Info}: {Detail}")
 
-let logOpError (logger : ILogger) section (msg : IMsg) err detail : unit =
-    logger.Log <| tplOpError section msg err detail
+let private tplReqError = LogEvent.Template4<string, IReq, string, obj>(LogLevelError, "[{Section}] {Req} ~> {Err}: {Detail}")
+
+let private tplEvtInfo = LogEvent.Template4<string, IEvt, string, obj>(LogLevelInformation, "[{Section}] {Evt} ~> {Info}: {Detail}")
+
+let private tplEvtError = LogEvent.Template4<string, IEvt, string, obj>(LogLevelError, "[{Section}] {Evt} ~> {Err}: {Detail}")
+
+let logMsgInfo (logger : ILogger) section (msg : IMsg) info detail : unit =
+    logger.Log <| tplMsgInfo section msg info detail
+
+let logMsgError (logger : ILogger) section (msg : IMsg) err detail : unit =
+    logger.Log <| tplMsgError section msg err detail
+
+let logReqInfo (logger : ILogger) section (msg : IReq) info detail : unit =
+    logger.Log <| tplReqInfo section msg info detail
+
+let logReqError (logger : ILogger) section (msg : IReq) err detail : unit =
+    logger.Log <| tplReqError section msg err detail
+
+let logEvtInfo (logger : ILogger) section (msg : IEvt) info detail : unit =
+    logger.Log <| tplEvtInfo section msg info detail
+
+let logEvtError (logger : ILogger) section (msg : IEvt) err detail : unit =
+    logger.Log <| tplEvtError section msg err detail
 
 let updateModel (update : 'model -> 'model) : Operate<'runner, 'model, 'msg> =
     fun _runner (model, cmd) ->

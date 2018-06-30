@@ -11,7 +11,7 @@ open Dap.Archive
 type ActorOperate<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame> =
     ActorOperate<Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
 
-let private doBeginRecording msg ((bundle, callback) : Bundle'<'extra, 'frame> * Callback<Meta<'extra>>)
+let private doBeginRecording req ((bundle, callback) : Bundle'<'extra, 'frame> * Callback<Meta<'extra>>)
                             : ActorOperate<'extra, 'frame> =
     fun runner (model, cmd) ->
         match model.Bundle with
@@ -22,14 +22,14 @@ let private doBeginRecording msg ((bundle, callback) : Bundle'<'extra, 'frame> *
         bundle.Open runner runner.Clock.Now
         match bundle.Volume with
         | Some volume ->
-            reply runner callback <| ack msg volume.Meta
+            reply runner callback <| ack req volume.Meta
             runner.Actor.Args.FireEvent' <| OnBeginRecording volume.Meta
             ({model with Bundle = Some bundle}, cmd)
         | None ->
-            reply runner callback <| nak msg "Bundle_Open_Failed" bundle
+            reply runner callback <| nak req "Bundle_Open_Failed" bundle
             ({model with Bundle = None}, cmd)
 
-let private doFinishRecording msg (callback : Callback<Meta<'extra>>)
+let private doFinishRecording req (callback : Callback<Meta<'extra>>)
                             : ActorOperate<'extra, 'frame> =
     fun runner (model, cmd) ->
         match model.Bundle with
@@ -37,16 +37,16 @@ let private doFinishRecording msg (callback : Callback<Meta<'extra>>)
             bundle.Close runner
             match bundle.Volume with
             | Some volume ->
-                reply runner callback <| ack msg volume.Meta
+                reply runner callback <| ack req volume.Meta
                 runner.Actor.Args.FireEvent' <| OnFinishRecording volume.Meta
             | None ->
-                reply runner callback <| nak msg "Bundle_Has_No_Volume" bundle
+                reply runner callback <| nak req "Bundle_Has_No_Volume" bundle
             ({model with Bundle = None}, cmd)
         | None ->
-            reply runner callback <| nak msg "Not_Recording" None
+            reply runner callback <| nak req "Not_Recording" None
             (model, cmd)
 
-let private doAppendFrame msg ((frame, callback) : 'frame * Callback<Meta<'extra> * 'frame>)
+let private doAppendFrame req ((frame, callback) : 'frame * Callback<Meta<'extra> * 'frame>)
                             : ActorOperate<'extra, 'frame> =
     fun runner (model, cmd) ->
         match model.Bundle with
@@ -55,40 +55,40 @@ let private doAppendFrame msg ((frame, callback) : 'frame * Callback<Meta<'extra
                 bundle.WriteFrame runner frame
                 match bundle.Volume with
                 | Some volume ->
-                    reply runner callback <| ack msg (volume.Meta, frame)
+                    reply runner callback <| ack req (volume.Meta, frame)
                     runner.Actor.Args.FireEvent' <| OnAppendFrame (volume.Meta, frame)
                 | None ->
-                    reply runner callback <| nak msg "Bundle_Has_No_Volume" (frame, bundle)
+                    reply runner callback <| nak req "Bundle_Has_No_Volume" (frame, bundle)
                     failwith "Bundle_Has_No_Volume"
             with e ->
-                reply runner callback <| nak msg "AppendFrame_Failed" (frame, bundle, e)
+                reply runner callback <| nak req "AppendFrame_Failed" (frame, bundle, e)
                 runner.Actor.Args.FireEvent' <| OnAppendFrameFailed (frame, e)
         | None ->
-            reply runner callback <| nak msg "Not_Recording" None
+            reply runner callback <| nak req "Not_Recording" None
         (model, cmd)
 
-let private handleReq msg req : ActorOperate<'extra, 'frame> =
+let private handleReq req : ActorOperate<'extra, 'frame> =
     fun runner (model, cmd) ->
         match req with
-        | DoBeginRecording (a, b) -> doBeginRecording msg (a, b)
-        | DoFinishRecording a -> doFinishRecording msg a
-        | DoAppendFrame (a, b) -> doAppendFrame msg (a, b)
+        | DoBeginRecording (a, b) -> doBeginRecording req (a, b)
+        | DoFinishRecording a -> doFinishRecording req a
+        | DoAppendFrame (a, b) -> doAppendFrame req (a, b)
         <| runner <| (model, cmd)
 
-let private handleEvt _msg evt : ActorOperate<'extra, 'frame> =
+let private handleEvt evt : ActorOperate<'extra, 'frame> =
     fun runner (model, cmd) ->
         match evt with
-        | OnAppendFrameFailed (_frame, _e) -> 
+        | OnAppendFrameFailed (_frame, _e) ->
             model.Bundle |> Option.iter (fun bundle -> bundle.Close runner)
             setModel {model with Bundle = None}
         | _ -> noOperation
         <| runner <| (model, cmd)
 
 let private update : ActorUpdate<Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
-    fun runner model msg -> 
+    fun runner model msg ->
         match msg with
-        | RecorderReq req -> handleReq msg req
-        | RecorderEvt evt -> handleEvt msg evt
+        | RecorderReq req -> handleReq req
+        | RecorderEvt evt -> handleEvt evt
         <| runner <| (model, [])
 
 let private init : ActorInit<Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =

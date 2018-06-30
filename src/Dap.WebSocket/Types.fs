@@ -27,19 +27,20 @@ type ReceiveStats = {
     DecodeDuration : Duration
 }
 
-type Agent<'socket, 'pkt, 'req when 'socket :> WebSocket> = IAgent<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, 'req, Evt<'pkt>>
+type Agent<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq =
+    IAgent<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, 'req, Evt<'pkt>>
 
-and ActorOperate<'socket, 'pkt, 'req when 'socket :> WebSocket> =
+and ActorOperate<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq =
     ActorOperate<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>>
 
-and Args<'socket, 'pkt, 'req> when 'socket :> WebSocket = {
+and Args<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq = {
     LogTraffic : bool
     SendType : WebSocketMessageType
     BufferSize : int
     Encode : Encode<'pkt>
     Decode : Decode<'pkt>
     Event' : Bus<Evt<'pkt>>
-    HandleReq : IMsg -> 'req -> ActorOperate<'socket, 'pkt, 'req>
+    HandleReq : 'req -> ActorOperate<'socket, 'pkt, 'req>
 } with
     member this.FireEvent' = this.Event'.Trigger
     member this.OnEvent = this.Event'.Publish
@@ -49,6 +50,7 @@ and Evt<'pkt> =
     | OnDisconnected
     | OnSent of SendStats * 'pkt
     | OnReceived of ReceiveStats * 'pkt
+with interface IEvt
 
 and Msg<'pkt, 'req> =
     | WebSocketReq of 'req

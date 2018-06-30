@@ -34,17 +34,19 @@ let private doConnect : ActorOperate<'pkt> =
             logError runner "Connect" "Socket_Exist" (runner.Actor.Args.Uri, socket)
             (model, cmd)
 
-let private doSend (msg : IMsg) ((pkt, callback) : 'pkt * Callback<System.DateTime>) : ActorOperate<'pkt> =
+let private doSend req ((pkt, callback) : 'pkt * Callback<System.DateTime>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match model.Socket with
         | None ->
-            let res = nak<IMsg, System.DateTime> msg "Socket_Not_Exist" runner.Actor.Args.Uri
+            reply runner callback <| nak req "Socket_Not_Exist" runner.Actor.Args.Uri
+            (*
+            let res = nak<System.DateTime> req "Socket_Not_Exist" runner.Actor.Args.Uri
             callback
             |> Option.iter (fun c -> c res)
-            //reply<System.DateTime> runner callback res
+            *)
         | Some socket ->
             if socket.readyState <> socket.OPEN then
-                reply runner callback <| nak msg "Invalid_State" runner.Actor.Args.Uri
+                reply runner callback <| nak req "Invalid_State" runner.Actor.Args.Uri
             else
                 let mutable encoded = false
                 try
@@ -53,29 +55,29 @@ let private doSend (msg : IMsg) ((pkt, callback) : 'pkt * Callback<System.DateTi
                     socket.send data
                     if runner.Actor.Args.LogTraffic then
                         logInfo runner "Traffic" "Sent" pkt
-                    reply runner callback <| ack msg utcNow
+                    reply runner callback <| ack req utcNow
                     runner.Actor.Args.FireEvent' <| OnSent pkt
                 with e ->
                     let err = if encoded then "Send_Failed" else "Encode_Failed"
                     logException runner "Send" err pkt e
-                    reply runner callback <| nak msg err e
+                    reply runner callback <| nak req err e
         (model, cmd)
 
-let private handleReq msg (req : Req<'pkt>) : ActorOperate<'pkt> =
+let private handleReq (req : Req<'pkt>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match req with
         | DoConnect ->
             doConnect
         | DoSend (pkt, callback) ->
-            doSend msg (pkt, callback)
+            doSend req (pkt, callback)
         <| runner <| (model, cmd)
 
 let private handleEvt (evt : Evt<'pkt>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
-        match evt with 
-        | OnConnected -> 
+        match evt with
+        | OnConnected ->
             updateModel <| fun m -> {m with Connected = true}
-        | OnDisconnected -> 
+        | OnDisconnected ->
             updateModel <| fun m -> {m with Socket = None ; Connected = false}
         | _ ->
             noOperation
@@ -85,7 +87,7 @@ let private update : ActorUpdate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, 
     fun runner model msg ->
         match msg with
         | WebSocketReq req ->
-            handleReq msg req
+            handleReq req
         | WebSocketEvt evt ->
             handleEvt evt
         <| runner <| (model, Cmd.none)

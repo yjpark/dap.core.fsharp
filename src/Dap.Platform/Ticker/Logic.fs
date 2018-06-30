@@ -9,7 +9,7 @@ open Dap.Platform
 
 type private ActorOperate = ActorOperate<Args, Model, Msg, Req, Evt>
 
-let private doStartTimer msg (callback : Callback<Instant>) : ActorOperate =
+let private doStartTimer req (callback : Callback<Instant>) : ActorOperate =
     fun runner (model, cmd) ->
         match model.State with
         | None ->
@@ -23,7 +23,7 @@ let private doStartTimer msg (callback : Callback<Instant>) : ActorOperate =
                     Timer = timer
                 }
                 let now = runner.Clock.Now
-                reply runner callback <| ack msg now
+                reply runner callback <| ack req now
                 ({model with
                     BeginTime = Some now
                     FinishTime = None
@@ -33,32 +33,32 @@ let private doStartTimer msg (callback : Callback<Instant>) : ActorOperate =
                     State = Some state
                 }, cmd)
             else
-                reply runner callback <| nak msg "Invalid_FrameRame" runner.Actor.Args.FrameRate
+                reply runner callback <| nak req "Invalid_FrameRame" runner.Actor.Args.FrameRate
                 (model, cmd)
         | Some state ->
-            reply runner callback <| nak msg "Already_Started" model
+            reply runner callback <| nak req "Already_Started" model
             (model, cmd)
 
-let private doStopTimer msg (callback : Callback<Instant>) : ActorOperate =
+let private doStopTimer req (callback : Callback<Instant>) : ActorOperate =
     fun runner (model, cmd) ->
         match model.State with
         | Some state ->
             state.Timer.Stop ()
             let now = runner.Clock.Now
-            reply runner callback <| ack msg now
+            reply runner callback <| ack req now
             ({model with
                 FinishTime = Some now
                 State = None
             }, cmd)
         | None ->
-            reply runner callback <| nak msg "Not_Started" model
+            reply runner callback <| nak req "Not_Started" model
             (model, cmd)
 
-let private handleReq msg req : ActorOperate =
+let private handleReq req : ActorOperate =
     fun runner (model, cmd) ->
         match req with
-        | DoStartTimer a -> doStartTimer msg a
-        | DoStopTimer a -> doStopTimer msg a
+        | DoStartTimer a -> doStartTimer req a
+        | DoStopTimer a -> doStopTimer req a
         <| runner <| (model, cmd)
 
 let private doTick : ActorOperate =
@@ -81,14 +81,14 @@ let private doTick : ActorOperate =
         runner.Actor.Args.FireEvent' <| OnLateTick' stats
         (model, cmd)
 
-let private handleInternalEvt msg evt : ActorOperate =
+let private handleInternalEvt evt : ActorOperate =
     fun runner (model, cmd) ->
         match evt with
         | DoTick ->
             doTick
         <| runner <| (model, cmd)
 
-let private handleEvt msg evt : ActorOperate =
+let private handleEvt evt : ActorOperate =
     fun runner (model, cmd) ->
         match evt with
         | OnWillTick time ->
@@ -103,9 +103,9 @@ let private handleEvt msg evt : ActorOperate =
 let private update : ActorUpdate<Args, Model, Msg, Req, Evt> =
     fun runner model msg ->
         match msg with
-        | InternalEvt evt -> handleInternalEvt msg evt
-        | TickerEvt evt -> handleEvt msg evt
-        | TickerReq req -> handleReq msg req
+        | InternalEvt evt -> handleInternalEvt evt
+        | TickerEvt evt -> handleEvt evt
+        | TickerReq req -> handleReq req
         <| runner <| (model, [])
 
 let private init : ActorInit<Args, Model, Msg, Req, Evt> =

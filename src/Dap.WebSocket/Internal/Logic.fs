@@ -11,18 +11,18 @@ open Dap.WebSocket.Types
 open Dap.WebSocket.Internal.Tasks
 
 let internal doSend (runner : Agent<'socket, 'pkt, 'req>)
-                    (msg : IMsg) ((pkt, callback) : 'pkt * Callback<SendStats>) : unit =
+                    req ((pkt, callback) : 'pkt * Callback<SendStats>) : unit =
     match runner.Actor.State.Link with
     | Some state ->
         match state.Socket.State with
         | WebSocketState.Open ->
-            replyAsync3 runner msg callback nakOnFailed <| doSendAsync pkt
+            replyAsync3 runner req callback nakOnFailed <| doSendAsync pkt
         | state ->
-            reply runner callback <| nak msg "Invalid_State" state
+            reply runner callback <| nak req "Invalid_State" state
     | None ->
-        reply runner callback <| nak msg "Not_Connected" None
+        reply runner callback <| nak req "Not_Connected" None
 
-let private handleEvt _msg evt : ActorOperate<'socket, 'pkt, 'req> =
+let private handleEvt evt : ActorOperate<'socket, 'pkt, 'req> =
     fun runner (model, cmd) ->
         match evt with
         | OnConnected ->
@@ -36,12 +36,12 @@ let private handleEvt _msg evt : ActorOperate<'socket, 'pkt, 'req> =
 let private update : ActorUpdate<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
     fun runner model msg ->
         match msg with
-        | WebSocketReq req -> runner.Actor.Args.HandleReq (msg :> IMsg) req
-        | WebSocketEvt evt -> handleEvt msg evt
+        | WebSocketReq req -> runner.Actor.Args.HandleReq req
+        | WebSocketEvt evt -> handleEvt evt
         <| runner <| (model, [])
 
 let private init : ActorInit<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
-    fun _runner args ->
+    fun _runner _args ->
         ({
             Link = None
             Connected = false

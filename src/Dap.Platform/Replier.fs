@@ -5,19 +5,19 @@ open System.Threading.Tasks
 open Dap.Prelude
 
 
-let private tplAckReply = LogEvent.Template2<IMsg, obj>(AckLogLevel, "[Ack] {Req} ~> {Res}")
-let private tplNakReply = LogEvent.Template3<IMsg, string, obj>(LogLevelError, "[Nak] {Req} ~> {Err}: {Detail}")
+let private tplAckReply = LogEvent.Template2<IReq, obj>(AckLogLevel, "[Ack] {Req} ~> {Res}")
+let private tplNakReply = LogEvent.Template3<IReq, string, obj>(LogLevelError, "[Nak] {Req} ~> {Err}: {Detail}")
 
-let private tplAckCallback = LogEvent.Template3<float<ms>, IMsg, obj>(AckLogLevel, "[Ack] {Duration}<ms> {Req} ~> {Res}")
-let private tplSlowAckCallback = LogEvent.Template3<float<ms>, IMsg, obj>(LogLevelWarning, "[Ack] {Duration}<ms> {Req} ~> {Res}")
-let private tplNakCallback = LogEvent.Template4<float<ms>, IMsg, string, obj>(LogLevelError, "[Nak] {Duration}<ms> {Req} ~> {Err}: {Detail}")
+let private tplAckCallback = LogEvent.Template3<float<ms>, IReq, obj>(AckLogLevel, "[Ack] {Duration}<ms> {Req} ~> {Res}")
+let private tplSlowAckCallback = LogEvent.Template3<float<ms>, IReq, obj>(LogLevelWarning, "[Ack] {Duration}<ms> {Req} ~> {Res}")
+let private tplNakCallback = LogEvent.Template4<float<ms>, IReq, string, obj>(LogLevelError, "[Nak] {Duration}<ms> {Req} ~> {Err}: {Detail}")
 
-let private tplSlowStats = LogEvent.Template4<string, float<ms>, IMsg, DurationStats<ms>>(LogLevelWarning, "[{Section}] {Duration}<ms> {Msg} ~> {Detail}")
+let private tplSlowStats = LogEvent.Template4<string, float<ms>, IReq, DurationStats<ms>>(LogLevelWarning, "[{Section}] {Duration}<ms> {Msg} ~> {Detail}")
 
-let ack (req : 'req) (res : 'res) =
+let ack (req : IReq) (res : 'res) =
     Ack (req, res)
 
-let nak (req : 'req) (err : string) (detail : obj) =
+let nak (req : IReq) (err : string) (detail : obj) =
     Nak (req, err, detail)
 
 let reply (runner : IRunner) (callback : Callback<'res>) (reply : Reply<'res>) : unit =
@@ -60,33 +60,33 @@ let callbackAsync (runner : IRunner) (onDone : TaskCompletionSource<'res>) : Cal
         (ReplyException >> onDone.SetException)
         onDone.SetResult
 
-let nakOnFailed (msg : IMsg) (callback : Callback<'res>) (runner : 'runner) (e : exn) =
-    reply runner callback <| nak msg "Exception_Raised" e
+let nakOnFailed (req : IReq) (callback : Callback<'res>) (runner : 'runner) (e : exn) =
+    reply runner callback <| nak req "Exception_Raised" e
 
-let replyAsync (runner : IRunner) (msg : IMsg) (callback : Callback<'res>)
+let replyAsync (runner : IRunner) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IRunner, 'res>)
                 (getReplyTask : GetReplyTask<IRunner, 'res>) : unit =
-    let onFailed = getOnFailed msg callback
-    let getTask = getReplyTask msg callback
+    let onFailed = getOnFailed req callback
+    let getTask = getReplyTask req callback
     runner.RunTask onFailed getTask
 
-let replyAsync1 (runner : IAgent) (msg : IMsg) (callback : Callback<'res>)
+let replyAsync1 (runner : IAgent) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IAgent, 'res>)
                 (getReplyTask : GetReplyTask<IAgent, 'res>) : unit =
-    let onFailed = getOnFailed msg callback
-    let getTask = getReplyTask msg callback
+    let onFailed = getOnFailed req callback
+    let getTask = getReplyTask req callback
     runner.RunTask1 onFailed getTask
 
-let replyAsync2 (runner : IAgent<'req, 'evt>) (msg : IMsg) (callback : Callback<'res>)
+let replyAsync2 (runner : IAgent<'req, 'evt>) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IAgent<'req, 'evt>, 'res>)
                 (getReplyTask : GetReplyTask<IAgent<'req, 'evt>, 'res>) : unit =
-    let onFailed = getOnFailed msg callback
-    let getTask = getReplyTask msg callback
+    let onFailed = getOnFailed req callback
+    let getTask = getReplyTask req callback
     runner.RunTask2 onFailed getTask
 
-let replyAsync3 (runner : IAgent<'args, 'model, 'req, 'evt>) (msg : IMsg) (callback : Callback<'res>)
+let replyAsync3 (runner : IAgent<'args, 'model, 'req, 'evt>) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IAgent<'args, 'model, 'req, 'evt>, 'res>)
                 (getReplyTask : GetReplyTask<IAgent<'args, 'model, 'req, 'evt>, 'res>) : unit =
-    let onFailed = getOnFailed msg callback
-    let getTask = getReplyTask msg callback
+    let onFailed = getOnFailed req callback
+    let getTask = getReplyTask req callback
     runner.RunTask3 onFailed getTask

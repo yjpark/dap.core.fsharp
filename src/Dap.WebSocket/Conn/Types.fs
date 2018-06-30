@@ -15,6 +15,7 @@ type Agent<'pkt> =  Dap.WebSocket.Types.Agent<WebSocket, 'pkt, Req<'pkt>>
 and Req<'pkt> =
     | DoConnect of string * CancellationToken * WebSocket * Callback<Task>
     | DoSend of 'pkt * Callback<SendStats>
+with interface IReq
 
 let DoConnect' (ident : string) (token : CancellationToken) (socket : WebSocket) callback =
     DoConnect (ident, token, socket, callback)

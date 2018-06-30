@@ -19,17 +19,18 @@ and Req<'k, 'v> =
     | DoRemoveEntry of 'k * Callback<'v>
     | TryFindEntry of 'k * Callback<'v option>
     | TryRemoveEntry of 'k * Callback<'v option>
+with interface IReq
 
 and Evt<'k, 'v> =
     | OnEntryAdded of 'k * 'v
     | OnEntryRemoved of 'k * 'v
     | OnEntryUpdated of 'k * 'v * 'v
+with interface IEvt
 
 and Msg<'k, 'v> =
     | RegistryReq of Req<'k, 'v>
     | RegistryEvt of Evt<'k, 'v>
-with
-    interface IMsg
+with interface IMsg
 
 let DoGetEntry' key callback =
     DoGetEntry (key, callback)

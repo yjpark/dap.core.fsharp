@@ -12,7 +12,8 @@ open Dap.Remote.WebSocketService.Tasks
 module WebSocket = Dap.WebSocket.Types
 module WebSocketConn = Dap.WebSocket.Conn.Types
 
-type ActorOperate<'req, 'evt> = ActorOperate<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
+type ActorOperate<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
+    ActorOperate<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
 
 let private handleService (msg : Service.Msg) : ActorOperate<'req, 'evt> =
     fun _runner (model, cmd) ->
@@ -106,24 +107,24 @@ let private handleInternalEvt (evt : InternalEvt<'req, 'evt>) : ActorOperate<'re
     | OnHandled (packetId, res) ->
         handleService <| Service.DoSendResponse (packetId, res)
 
-let private handleReq msg (req : Req) : ActorOperate<'req, 'evt> =
+let private handleReq (req : Req) : ActorOperate<'req, 'evt> =
     fun runner (model, cmd) ->
         match req with
         | DoAttach (token, socket, callback) ->
             let ident = runner.Ident.Key
-            replyAsync3 runner msg callback nakOnFailed <| doAttachAsync ident token socket
+            replyAsync3 runner req callback nakOnFailed <| doAttachAsync ident token socket
         (model, cmd)
 
 let private update : ActorUpdate<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     fun runner model msg ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
-        | ServiceReq req -> handleReq msg req
+        | ServiceReq req -> handleReq req
         )<| runner <| (model, Cmd.none)
 
 let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     fun runner args ->
-        args.HubSpec.GetHub runner.Ident.Key (args.FireInternalEvent' << SetHub) 
+        args.HubSpec.GetHub runner.Ident.Key (args.FireInternalEvent' << SetHub)
         ({
             Hub = None
             Socket = None

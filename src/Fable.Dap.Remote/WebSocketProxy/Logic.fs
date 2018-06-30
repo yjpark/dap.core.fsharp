@@ -11,7 +11,7 @@ open Dap.Remote.WebSocketProxy.Types
 module WebSocket = Dap.WebSocket.Client.Types
 module WebSocketActor = Dap.WebSocket.Client.Actor
 
-type ActorOperate<'req, 'res, 'evt> =
+type ActorOperate<'req, 'res, 'evt> when 'req :> IReq and 'evt :> IEvt =
     ActorOperate<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt>
 
 let private handleClient (msg : Client.Msg) : ActorOperate<'req, 'res, 'evt> =

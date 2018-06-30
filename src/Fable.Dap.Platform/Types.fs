@@ -6,20 +6,16 @@ open Dap.Prelude
 type IRunner =
     inherit ILogger
 
-type IRunner<'runner> =
-    inherit IRunner
-    abstract Self' : 'runner with get
-
 type IAgent =
     inherit IOwner
-    inherit IRunner<IAgent>
+    inherit IRunner
     abstract Ident : Ident with get
 
-and IAgent<'req, 'evt> =
+and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IAgent
     inherit IPoster<'req>
     abstract Actor : IActor<'req, 'evt> with get
 
-and IAgent<'args, 'model, 'req, 'evt> =
+and IAgent<'args, 'model, 'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IAgent<'req, 'evt>
     abstract Actor : IActor<'args, 'model, 'req, 'evt> with get
