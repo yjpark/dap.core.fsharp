@@ -14,23 +14,17 @@ type Profile = {
 }
 
 let perMinute = {
-    CalcVolumeKey =
-        let pattern = InstantPattern.CreateWithInvariantCulture ("uuuu-MM-ddTHH:mm")
-        fun time -> pattern.Format (time)
+    CalcVolumeKey = InstantFormat.DateHourMinute.Format
     VolumeDuration = Duration.FromMinutes(1L)
 }
 
 let perHour = {
-    CalcVolumeKey =
-        let pattern = InstantPattern.CreateWithInvariantCulture ("uuuu-MM-ddTHH")
-        fun time -> pattern.Format (time)
+    CalcVolumeKey = InstantFormat.DateHour.Format
     VolumeDuration = Duration.FromHours(1)
 }
 
 let perDay = {
-    CalcVolumeKey =
-        let pattern = InstantPattern.CreateWithInvariantCulture ("uuuu-MM-dd")
-        fun time -> pattern.Format (time)
+    CalcVolumeKey = InstantFormat.Date.Format
     VolumeDuration = Duration.FromDays(1)
 }
 

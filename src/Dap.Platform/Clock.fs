@@ -61,3 +61,20 @@ let instantOfText (text : string) : Result<Instant, exn> =
         Ok result.Value
     else
         Error result.Exception
+
+let instantToString (format : string) =
+    let pattern = InstantPattern.CreateWithInvariantCulture (format)
+    fun (time : Instant) -> pattern.Format (time)
+
+type InstantFormat =
+    | Date
+    | DateHour
+    | DateHourMinute
+    | Custom of string
+with
+    member this.Format =
+        match this with
+        | Date -> instantToString "uuuu-MM-dd"
+        | DateHour -> instantToString "uuuu-MM-ddTHH"
+        | DateHourMinute -> instantToString "uuuu-MM-ddTHH:mm"
+        | Custom format -> instantToString format
