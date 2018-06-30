@@ -21,7 +21,7 @@ type OnEvent = Event -> unit
 let getSpawner env encoding logTraffic bufferSize =
     let encode = Dap.WebSocket.Internal.Text.encode encoding
     let decode = Dap.WebSocket.Internal.Text.decode encoding
-    Logic.getSpec encode decode logTraffic bufferSize
+    Logic.getSpec WebSocketMessageType.Text encode decode logTraffic bufferSize
     |> Agent.getSpawner env
 
 let getUtf8Spawner env =
