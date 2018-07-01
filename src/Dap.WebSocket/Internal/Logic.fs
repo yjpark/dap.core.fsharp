@@ -26,7 +26,6 @@ let private handleEvt evt : ActorOperate<'socket, 'pkt, 'req> =
     fun runner (model, cmd) ->
         match evt with
         | OnConnected ->
-            runner.RunTask3 doReceiveFailed doReceiveAsync
             setModel {model with Connected = true}
         | OnDisconnected ->
             setModel {model with Link = None ; Connected = false}

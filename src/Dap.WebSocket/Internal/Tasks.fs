@@ -49,7 +49,7 @@ let private doReadPktAsync (link : Link<'socket>)
                             logException runner "Received" "Decode_Failed" (link, length) e
         with
         | e ->
-            logInfo runner "Received" "Exception_Raised" (link, e)
+            logException runner "Received" "Exception_Raised" link e
             closed <- true
         return closed
     }
@@ -61,6 +61,8 @@ let internal doReceiveFailed : OnFailed<Agent<'socket, 'pkt, 'req>> =
 
 let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
     fun runner -> task {
+        while Option.isNone runner.Actor.State.Link do
+            do! Task.Delay 20
         let link = runner.Actor.State.Link |> Option.get
         let mutable closed = false
         while not closed do

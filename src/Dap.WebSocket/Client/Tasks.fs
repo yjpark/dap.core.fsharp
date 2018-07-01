@@ -8,9 +8,7 @@ open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket
 open Dap.WebSocket.Client.Types
-
-module BaseTasks = Dap.WebSocket.Internal.Tasks
-module BaseTypes = Dap.WebSocket.Types
+open Dap.WebSocket.Internal.Tasks
 
 let internal doConnectAsync : GetReplyTask<Agent<'pkt>, ConnectStats> =
     fun msg callback runner -> task {
@@ -29,6 +27,7 @@ let internal doConnectAsync : GetReplyTask<Agent<'pkt>, ConnectStats> =
             logInfo runner "Link" "Connected" link
             reply runner callback <| ack msg stats
             runner.Deliver <| WebSocketEvt OnConnected
+            runner.RunTask3 doReceiveFailed doReceiveAsync
         | state' ->
             reply runner callback <| nak msg "Connect_Failed" (link, time, duration, state')
             runner.Deliver <| WebSocketEvt OnDisconnected
