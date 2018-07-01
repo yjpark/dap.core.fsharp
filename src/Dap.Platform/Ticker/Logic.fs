@@ -112,8 +112,7 @@ let private onLateTickDone ((time', time, delta) : Instant * Instant * Duration)
                 LastLateTickStats = stats
                 Ticking = false
             }
-        |-|> addCmd ^<| TickerEvt ^<| OnLateTick' stats
-        |=|> addCmd ^<| TickerEvt ^<| OnLateTick (time, delta)
+        |=|> addCmd ^<| TickerEvt ^<| OnLateTick' stats
 
 let private handleInternalEvt evt : ActorOperate =
     fun runner (model, cmd) ->
