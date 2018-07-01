@@ -12,6 +12,11 @@ module D = Thoth.Json.Net.Decode
 #endif
 
 type Packet' with
+    //TODO: Do NOT use json for packet's serialization
+    //since it need to escape payload which might already
+    //been a json string
+    //Can just use some simpler way here, since this is internal only
+    //Also probably want to tweak the IRequest and Response a bit
     static member Create id kind payload = {
         Id = id
         Kind = kind
@@ -30,9 +35,6 @@ type Packet' with
         ]
     static member FromJsonString json =
         D.decodeString Packet'.Decoder json
-    //Note: Can't declare as JsonRecord, since Packet'
-    //is declared in different file (used by Client and Service)
-    //interface JsonRecord with
     member this.ToJsonObject () =
         Packet'.Encoder this
     member this.ToJsonString (indent : int) =
