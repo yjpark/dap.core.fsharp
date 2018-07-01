@@ -8,7 +8,7 @@ open Dap.Platform
 [<Literal>]
 let Kind = "Registry"
 
-type Service<'k, 'v when 'k : comparison> = IAgent<Args<'k, 'v>, Model<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
+type Service<'k, 'v when 'k : comparison> = IAgent<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
 
 let addAsync'<'k, 'v when 'k : comparison> (kind : Kind) (key : Key) env = task {
     let! service = env |> Env.addServiceAsync kind key Logic.getSpec<'k, 'v>

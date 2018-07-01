@@ -24,7 +24,7 @@ let getLogger (kind : string) (key : string) =
 
 let create (kind : Kind) (key : Key)
             (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
-                : IAgent<'args, 'model, 'req, 'evt> =
+                : IAgent<'args, 'model, 'msg, 'req, 'evt> =
     let agent : Agent<'args, 'model, 'msg, 'req, 'evt> = {
         Spec = spec
         Ident' = Ident.Create noScope kind key
@@ -35,4 +35,4 @@ let create (kind : Kind) (key : Key)
         Version' = noVersion
     }
     start agent
-    agent :> IAgent<'args, 'model, 'req, 'evt>
+    agent :> IAgent<'args, 'model, 'msg, 'req, 'evt>

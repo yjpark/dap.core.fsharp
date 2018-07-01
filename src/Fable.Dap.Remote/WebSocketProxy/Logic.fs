@@ -16,8 +16,9 @@ type ActorOperate<'req, 'res, 'evt> when 'req :> IReq and 'evt :> IEvt =
 
 let private handleClient (msg : Client.Msg) : ActorOperate<'req, 'res, 'evt> =
     fun _runner (model, cmd) ->
-        let client = Client.handle msg model.Client
-        ({model with Client = client}, cmd)
+        let client = model.Client |> Option.get
+        let client = Client.handle msg client
+        ({model with Client = Some client}, cmd)
 
 let private doEnqueue (req, pkt) (model : Model<'res, 'evt>) =
     let sendQueue = model.SendQueue |> List.append [(req, pkt)]
@@ -28,31 +29,81 @@ let private doReconnect : ActorOperate<'req, 'res, 'evt> =
         model.Socket.Actor.Handle WebSocket.DoConnect
         (model, cmd)
 
-let private doSend' (runner : IAgent) (args : Args<'res, 'evt>) (socket : WebSocket.Agent<Packet'>)
+let private doSend' (runner : Agent<'req, 'res, 'evt>)
                    ((req, pkt) : IRequest * Packet') : unit =
     let onAck = fun res ->
-        args.FireInternalEvent' <| OnSent ^<| (req, pkt, Ok res)
+        runner.Deliver <| InternalEvt ^<| OnSent ^<| (req, pkt, Ok res)
     let onNak = fun (err, detail) ->
         logError runner "Send" "Link_Failed" (req, err, detail)
-        args.FireInternalEvent' <| OnSent ^<| (req, pkt, Error <| SendFailed err)
-    socket.Actor.Handle <| WebSocket.DoSend (pkt, callback' runner onAck onNak)
+        runner.Deliver <| InternalEvt ^<| OnSent ^<| (req, pkt, Error <| SendFailed err)
+    runner.Actor.State.Socket.Actor.Handle <| WebSocket.DoSend (pkt, callback' runner onAck onNak)
 
 let private doSendQueue : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         model.SendQueue
-        |> List.iter ^<| doSend' runner runner.Actor.Args model.Socket
+        |> List.iter ^<| doSend' runner
         ({model with SendQueue = []}, cmd)
+
+let private doEnqueue' (runner : Agent<'req, 'res, 'evt>) ((req, pkt) : IRequest * Packet') : unit =
+    runner.Deliver <| InternalEvt ^<| DoEnqueue ^<| (req, pkt)
+
+let private doSend (runner : Agent<'req, 'res, 'evt>)
+                   ((req, pkt) : IRequest * Packet') : LocalReason option =
+    let socket = runner.Actor.State.Socket
+    match socket.Actor.State.Connected with
+    | false ->
+        doEnqueue' runner (req, pkt)
+    | true ->
+        doSend' runner (req, pkt)
+    None
+
+let private onResponse (runner : Agent<'req, 'res, 'evt>) ((req, res) : IRequest * Result<string, Reason'>) : unit =
+    let args = runner.Actor.Args
+    match res with
+    | Ok json ->
+        args.Spec.DecodeRes req json
+    | Error reason ->
+        match reason with
+        | Local' reason ->
+            args.Spec.LocalErr req reason
+        | Remote' reason ->
+            args.Spec.RemoteErr req reason
+    |> (runner.Deliver << ProxyRes)
+
+let private onEvent (runner : Agent<'req, 'res, 'evt>) ((kind, json) : PacketKind * string) : unit =
+    runner.Deliver <| ProxyEvt ^<| runner.Actor.Args.Spec.DecodeEvt kind json
+
+let private doInit : ActorOperate<'req, 'res, 'evt> =
+    fun runner (model, cmd) ->
+        let link : Client.Link = {
+            Send = doSend runner
+        }
+        let stub : Client.Stub = {
+            OnResponse = onResponse runner
+            OnEvent = onEvent runner
+        }
+        let args = runner.Actor.Args
+        let clientArgs : Client.Args = {
+            Link = link
+            Stub = stub
+            Logger = runner :> ILogger
+            LogTraffic = args.LogTraffic
+        }
+        let client = Client.create clientArgs
+        (runner, model, cmd)
+        |=|> updateModel (fun m -> {m with Client = Some client})
 
 let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         match evt with
+        | DoInit -> doInit
         | OnSent (req, pkt, res) ->
             handleClient <| Client.OnSent (req, pkt, res)
         | DoEnqueue (req, pkt) ->
             updateModel <| doEnqueue (req, pkt)
         | DoReconnect ->
             doReconnect
-        <| runner <| (model, Cmd.none)
+        <| runner <| (model, noCmd)
 
 let private handleProxyReq (req : 'req) : ActorOperate<'req, 'res, 'evt> =
     handleClient <| Client.DoSend req
@@ -68,88 +119,41 @@ let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req,
             handleClient <| Client.OnReceived pkt
         | _ ->
             noOperation
-        <| runner <| (model, Cmd.none)
+        <| runner <| (model, noCmd)
 
 let private update : ActorUpdate<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     fun runner model msg ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
         | ProxyReq req -> handleProxyReq req
-        | ProxyRes _res -> noOperation
+        | ProxyRes res ->
+            runner.Actor.Args.ResponseEvent'.Trigger res
+            noOperation
         | ProxyEvt _evt -> noOperation
         | SocketEvt evt -> handlerSocketEvt evt
-        )<| runner <| (model, Cmd.none)
-
-let private doEnqueue' (runner : IAgent) (args : Args<'res, 'evt>) ((req, pkt) : IRequest * Packet') : unit =
-    args.FireInternalEvent' <| DoEnqueue ^<| (req, pkt)
-
-let private doSend (runner : IAgent) (args : Args<'res, 'evt>) (socket : WebSocket.Agent<Packet'>)
-                   ((req, pkt) : IRequest * Packet') : LocalReason option =
-    match socket.Actor.State.Connected with
-    | false ->
-        doEnqueue' runner args (req, pkt)
-    | true ->
-        doSend' runner args socket (req, pkt)
-    None
-
-let private onResponse (args : Args<'res, 'evt>) ((req, res) : IRequest * Result<string, Reason'>) : unit =
-    match res with
-    | Ok json ->
-        args.Spec.DecodeRes req json
-    | Error reason ->
-        match reason with
-        | Local' reason ->
-            args.Spec.LocalErr req reason
-        | Remote' reason ->
-            args.Spec.RemoteErr req reason
-    |> args.FireResponse'
-
-let private onEvent (args : Args<'res, 'evt>) ((kind, json) : PacketKind * string) : unit =
-    args.FireEvent' <| args.Spec.DecodeEvt kind json
+        )<| runner <| (model, noCmd)
 
 let private init : ActorInit<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     fun runner args ->
         let socket = WebSocketActor.create Packet.encode Packet.decode runner.Ident.Key args.Uri false
-        let link : Client.Link = {
-            Send = doSend runner args socket
-        }
-        let stub : Client.Stub = {
-            OnResponse = onResponse args
-            OnEvent = onEvent args
-        }
-        let clientArgs : Client.Args = {
-            Link = link
-            Stub = stub
-            Logger = runner :> ILogger
-            LogTraffic = args.LogTraffic
-        }
         ({
             Socket = socket
-            Client = Client.create clientArgs
+            Client = None
             SendQueue = []
-        }, Cmd.none)
+        }, Cmd.ofMsg (InternalEvt DoInit))
 
-let private subscribe : ActorSubscribe<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
-    fun runner model ->
-        Cmd.batch [
-            subscribeEvent runner model ProxyEvt runner.Actor.Args.OnEvent
-            subscribeEvent runner model ProxyRes runner.Actor.Args.OnResponse
-            subscribeEvent runner model InternalEvt runner.Actor.Args.OnInternalEvent
-            subscribeEvent runner model SocketEvt model.Socket.Actor.OnEvent
-        ]
-
-let logic =
+let logic : ActorLogic<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt>=
     {
         Init = init
         Update = update
-        Subscribe = subscribe
+        Subscribe = noSubscription
     }
 
-let getSpec (newArgs : NewArgs<Args<'res, 'evt>>) : ActorSpec<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
+let getSpec (newArgs : ActorNewArgs<Args<'res, 'evt>>) : ActorSpec<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     {
         Logic = logic
         NewArgs = newArgs
         WrapReq = ProxyReq
-        GetOnEvent = fun args -> args.OnEvent
+        CastEvt = castEvt<'req, 'res, 'evt>
     }
 

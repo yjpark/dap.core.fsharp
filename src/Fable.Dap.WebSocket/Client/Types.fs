@@ -11,36 +11,38 @@ type Encode<'pkt> = 'pkt -> obj
 // buffer, index, count
 type Decode<'pkt> = obj -> 'pkt
 
-type Req<'pkt> =
+type Agent<'pkt> = IAgent<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+
+and Args<'pkt> = {
+    Uri : string
+    LogTraffic : bool
+    Encode : Encode<'pkt>
+    Decode : Decode<'pkt>
+}
+
+and Model<'pkt> = {
+    Socket : Fable.Import.Browser.WebSocket option
+    Connected : bool
+}
+
+and Req<'pkt> =
     | DoConnect
     | DoSend of 'pkt * Callback<System.DateTime>
 with interface IReq
 
-type Evt<'pkt> =
+and Evt<'pkt> =
     | OnConnected
     | OnDisconnected
     | OnSent of 'pkt
     | OnReceived of 'pkt
 with interface IEvt
 
-type Args<'pkt> = {
-    Uri : string
-    LogTraffic : bool
-    Encode : Encode<'pkt>
-    Decode : Decode<'pkt>
-    Event' : Bus<Evt<'pkt>>
-} with
-    member this.FireEvent' = this.Event'.Trigger
-    member this.OnEvent = this.Event'.Publish
-
-type Model<'pkt> = {
-    Socket : Fable.Import.Browser.WebSocket option
-    Connected : bool
-}
-
-type Msg<'pkt> =
+and Msg<'pkt> =
     | WebSocketReq of Req<'pkt>
     | WebSocketEvt of Evt<'pkt>
 with interface IMsg
 
-type Agent<'pkt> = IAgent<Args<'pkt>, Model<'pkt>, Req<'pkt>, Evt<'pkt>>
+let castEvt<'pkt> : CastEvt<Msg<'pkt>, Evt<'pkt>> =
+    function
+    | WebSocketEvt evt -> Some evt
+    | _ -> None

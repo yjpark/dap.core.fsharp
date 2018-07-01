@@ -28,8 +28,8 @@ let internal doConnectAsync : GetReplyTask<Agent<'pkt>, ConnectStats> =
             }
             logInfo runner "Link" "Connected" link
             reply runner callback <| ack msg stats
-            runner.Actor.Args.FireEvent' <| OnConnected
+            runner.Deliver <| WebSocketEvt OnConnected
         | state' ->
             reply runner callback <| nak msg "Connect_Failed" (link, time, duration, state')
-            runner.Actor.Args.FireEvent' <| OnDisconnected
+            runner.Deliver <| WebSocketEvt OnDisconnected
     }

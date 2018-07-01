@@ -47,14 +47,13 @@ let private handleReq req : ActorOperate<'pkt> =
         <| runner <| (model, cmd)
 
 let getSpec sendType (encode : Encode<'pkt>) (decode : Decode<'pkt>) (logTraffic : bool) (bufferSize : int option) =
-    fun owner ->
+    fun _agent ->
         {
             LogTraffic = logTraffic
             SendType = sendType
             BufferSize = defaultArg bufferSize DefaultBufferSize
             Encode = encode
             Decode = decode
-            Event' = new Bus<Evt<'pkt>> (owner)
             HandleReq = handleReq
         }
     |> BaseLogic.getSpec

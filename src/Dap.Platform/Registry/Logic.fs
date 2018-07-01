@@ -5,7 +5,7 @@ module Dap.Platform.Registry.Logic
 open Dap.Prelude
 open Dap.Platform
 
-type ActorOperate<'k, 'v when 'k : comparison> = ActorOperate<Args<'k, 'v>, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
+type ActorOperate<'k, 'v when 'k : comparison> = ActorOperate<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
 
 let private doGetEntry req ((key, callback) : 'k * Callback<'v>) : ActorOperate<'k, 'v> =
     fun runner (model, cmd) ->
@@ -86,18 +86,17 @@ let private handleReq req : ActorOperate<'k, 'v> =
         | TryRemoveEntry (a, b) -> tryRemoveEntry req (a, b)
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Args<'k, 'v>, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
+let private update : ActorUpdate<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
     fun runner model msg ->
         match msg with
-        | RegistryEvt evt ->
-            runner.Actor.Args.Event'.Trigger evt
-            (model, noCmd)
         | RegistryReq req ->
-            (runner, model, [])
-            |=|> handleReq req
+            handleReq req
+        | RegistryEvt _evt ->
+            noOperation
+        <| runner <| (model, [])
 
-let private init : ActorInit<Args<'k, 'v>, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
-    fun runner _args ->
+let private init : ActorInit<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
+    fun _runner _args ->
         ({
             Entries = Map.empty
         }, noCmd)
@@ -109,18 +108,14 @@ let logic =
         Subscribe = noSubscription
     }
 
-let getSpec<'k, 'v when 'k : comparison> : AgentSpec<Args<'k, 'v>, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
-    let newArgs = fun owner ->
-        {
-            Event' = new Bus<Evt<'k, 'v>> (owner)
-        }
+let getSpec<'k, 'v when 'k : comparison> : AgentSpec<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
     {
         Actor =
             {
-                NewArgs = newArgs
                 Logic = logic
+                NewArgs = noArgs
                 WrapReq = RegistryReq
-                GetOnEvent = fun args -> args.Event'.Publish
+                CastEvt = castEvt<'k, 'v>
             }
         OnAgentEvent = None
         GetSlowCap = None

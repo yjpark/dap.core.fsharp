@@ -45,14 +45,14 @@ let internal start' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>
             ]
         with e ->
             runner.Log <| tplRunnableFailed "Subscribe" runnable.Args e
-            Cmd.none
+            noCmd
     with
     | MessageException m ->
         runner.Log m
-        Cmd.none
+        noCmd
     | e ->
         runner.Log <| tplRunnableFailed "Init" runnable.Args e
-        Cmd.none
+        noCmd
 
 let private getSlowProcessMessage (msg : IMsg) (duration, stats) =
     tplSlowStats "Slow_Process" duration msg stats
@@ -82,10 +82,10 @@ let internal process' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'ms
     with
     | MessageException m ->
         runner.Log m
-        Cmd.none
+        noCmd
     | e ->
         runner.Log <| tplRunnableFailed "Update" msg e
-        Cmd.none
+        noCmd
 
 let internal deliver' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>)
                 (cmd : Cmd<'msg>) : unit =

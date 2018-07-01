@@ -9,7 +9,7 @@ open Dap.Platform
 module WebSocket = Dap.WebSocket.Types
 
 type Agent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
-    IAgent<Args<'req, 'evt>, Model<'req, 'evt>, Req, NoEvt>
+    IAgent<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
 
 and InternalEvt<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     | SetHub of Hub<'req, 'evt>

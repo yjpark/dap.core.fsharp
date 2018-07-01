@@ -45,27 +45,23 @@ let private init : ActorInit<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Ms
         ({
             Link = None
             Connected = false
-        }, Cmd.none)
-
-let private subscribe : ActorSubscribe<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
-    fun runner model ->
-        subscribeEvent runner model WebSocketEvt runner.Actor.Args.OnEvent
+        }, noCmd)
 
 let logic : ActorLogic<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
     {
         Init = init
         Update = update
-        Subscribe = subscribe
+        Subscribe = noSubscription
     }
 
-let getSpec (newArgs : NewArgs<Args<'socket, 'pkt, 'req>>) : AgentSpec<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
+let getSpec (newArgs : ActorNewArgs<Args<'socket, 'pkt, 'req>>) : AgentSpec<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
     {
         Actor =
             {
                 NewArgs = newArgs
                 Logic = logic
                 WrapReq = WebSocketReq
-                GetOnEvent = fun args -> args.OnEvent
+                CastEvt = castEvt<'pkt, 'req>
             }
         OnAgentEvent = None
         GetSlowCap = Some <| getRemoteSlowCap DefaultWebSocketReplySlowCap

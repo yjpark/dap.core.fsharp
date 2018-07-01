@@ -7,6 +7,7 @@ open Dap.Prelude
 open Dap.Platform
 
 type TickStats = {
+    Time' : Instant
     Time : Instant
     Delta : Duration
     Duration : Duration
@@ -15,26 +16,18 @@ type TickStats = {
 type Args = {
     AutoStart : bool
     FrameRate : double
-    Event' : Bus<Evt>
-    InternalEvent' : Bus<InternalEvt>
-} with
-    member this.FireEvent' = this.Event'.Trigger
-    member this.OnEvent = this.Event'.Publish
-    member this.FireInternalEvent' = this.InternalEvent'.Trigger
-    member this.OnInternalEvent = this.InternalEvent'.Publish
-
-and State = {
-    Timer : System.Timers.Timer
 }
 
 and Model = {
     BeginTime : Instant option
     FinishTime : Instant option
+    Ticking : bool
     FrameIndex : int
+    DroppedCount : int
     LastTickTime : Instant
     LastTickStats : TickStats
     LastLateTickStats : TickStats
-    State : State option
+    Timer : System.Timers.Timer option
 }
 
 and Req =
@@ -43,7 +36,6 @@ and Req =
 with interface IReq
 
 and Evt =
-    | OnWillTick of Instant
     | OnTick of Instant * Duration        // delta
     | OnTick' of TickStats
     | OnLateTick of Instant * Duration    // delta
@@ -52,6 +44,8 @@ with interface IEvt
 
 and InternalEvt =
     | DoTick
+    | OnTickDone of Instant * Instant * Duration
+    | OnLateTickDone of Instant * Instant * Duration
 
 and Msg =
     | InternalEvt of InternalEvt
@@ -59,7 +53,13 @@ and Msg =
     | TickerEvt of Evt
 with interface IMsg
 
+let castEvt : CastEvt<Msg, Evt> =
+    function
+    | TickerEvt evt -> Some evt
+    | _ -> None
+
 let noTickStats = {
+    Time' = Instant.MinValue
     Time = Instant.MinValue
     Delta = Duration.FromSeconds 0L
     Duration = Duration.FromSeconds 0L

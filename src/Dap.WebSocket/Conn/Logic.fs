@@ -19,7 +19,7 @@ let private doConnect req (ident, token, socket, callback) : ActorOperate<'pkt> 
         match model.Link with
         | Some link ->
             reply runner callback <| nak req "Link_Exist" link
-            noOperation
+            (model, cmd)
         | None ->
             let link : Link<WebSocket> = {
                 Ident = ident
@@ -29,9 +29,9 @@ let private doConnect req (ident, token, socket, callback) : ActorOperate<'pkt> 
             }
             let task = doReceiveAsync runner
             reply runner callback <| ack req (task :> Task)
-            runner.Actor.Args.FireEvent' OnConnected
-            setModel {model with Link = Some link}
-        <| runner <| (model, cmd)
+            (runner, model, cmd)
+            |-|> setModel {model with Link = Some link}
+            |=|> addCmd ^<| WebSocketEvt OnConnected
 
 let private doSend req ((pkt, callback) : 'pkt * Callback<SendStats>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
@@ -46,14 +46,13 @@ let private handleReq req : ActorOperate<'pkt> =
         <| runner <| (model, cmd)
 
 let getSpec (encode : Encode<'pkt>) (decode : Decode<'pkt>) (logTraffic : bool) (bufferSize : int option) =
-    fun owner ->
+    fun _agent ->
         {
             LogTraffic = logTraffic
             SendType = WebSocketMessageType.Text
             BufferSize = defaultArg bufferSize DefaultBufferSize
             Encode = encode
             Decode = decode
-            Event' = new Bus<Evt<'pkt>> (owner)
             HandleReq = handleReq
         }
     |> BaseLogic.getSpec

@@ -28,7 +28,7 @@ type ReceiveStats = {
 }
 
 type Agent<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq =
-    IAgent<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, 'req, Evt<'pkt>>
+    IAgent<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>>
 
 and ActorOperate<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq =
     ActorOperate<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>>
@@ -39,11 +39,8 @@ and Args<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq = {
     BufferSize : int
     Encode : Encode<'pkt>
     Decode : Decode<'pkt>
-    Event' : Bus<Evt<'pkt>>
     HandleReq : 'req -> ActorOperate<'socket, 'pkt, 'req>
-} with
-    member this.FireEvent' = this.Event'.Trigger
-    member this.OnEvent = this.Event'.Publish
+}
 
 and Evt<'pkt> =
     | OnConnected
@@ -62,10 +59,16 @@ and Model<'socket, 'pkt> when 'socket :> WebSocket = {
     Connected : bool
 }
 
-and [<StructuredFormatDisplay("<Link>{AsDisplay}")>] Link<'socket> when 'socket :> WebSocket = {
+and [<StructuredFormatDisplay("<Link>{AsDisplay}")>]
+    Link<'socket> when 'socket :> WebSocket = {
     Ident : string
     Token : CancellationToken
     Socket : 'socket
     Buffer : byte[]
 } with
     member this.AsDisplay = (this.Ident, this.Socket)
+
+let castEvt<'pkt, 'req> : CastEvt<Msg<'pkt, 'req>, Evt<'pkt>> =
+    function
+    | WebSocketEvt evt -> Some evt
+    | _ -> None

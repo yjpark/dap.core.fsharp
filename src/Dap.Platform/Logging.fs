@@ -6,7 +6,7 @@ open Dap.Prelude
 [<Literal>]
 let ActorVersion = "Ver"
 
-let private forAgent (agent : IAgent<'args, 'model, 'req, 'evt>) (logger : Serilog.ILogger) : Serilog.ILogger =
+let private forAgent (agent : IAgent<'args, 'model, 'msg, 'req, 'evt>) (logger : Serilog.ILogger) : Serilog.ILogger =
     { new Serilog.Core.ILogEventEnricher with
         member x.Enrich (logEvent, propertyFactory) =
             propertyFactory.CreateProperty (ActorVersion, agent.Actor.Version.ToString ())
@@ -14,7 +14,7 @@ let private forAgent (agent : IAgent<'args, 'model, 'req, 'evt>) (logger : Seril
     }
     |> logger.ForContext
 
-let enrichLoggerForAgent (agent : IAgent<'args, 'model, 'req, 'evt>) (logger : ILogger) =
+let enrichLoggerForAgent (agent : IAgent<'args, 'model, 'msg, 'req, 'evt>) (logger : ILogger) =
     match logger with
     | :? SerilogLogger as logger ->
         new SerilogLogger

@@ -26,7 +26,9 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
     mutable Version' : ActorVersion
 } with
     member this.AsDisplay = (this.Ident', this.Version')
-    member this.EnsureActor =
+    member this.AsAgent =
+        this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
+    member this.Actor =
         if this.Actor'.IsNone then
             this.Actor' <- Some <| Actor<'args, 'model, 'msg, 'req, 'evt>.Create this
         this.Actor'
@@ -51,12 +53,12 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
                 match this.State' with
                 | None ->
                     this.Logger' <- enrichLoggerForAgent this this.Logger'
-                    let args = this.EnsureActor.Args'
+                    let args = this.Actor.Args'
                     this.Spec.Logic.Init runner args
                 | Some state ->
                     raiseAgentErr "Already_Started" state
             this.SetState model
-            let runner = this :> IAgent<'args, 'model, 'req, 'evt>
+            let runner = this.AsAgent
             try
                 Cmd.batch [
                     cmd
@@ -65,16 +67,16 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
             with
             | e ->
                 runner.Log <| tplAgentFailed "Subscribe" () e
-                Cmd.none
+                noCmd
         with
         | MessageException msg ->
             runner.Log msg
-            Cmd.none
+            noCmd
         | e ->
             runner.Log <| tplAgentFailed "Init" () e
-            Cmd.none
+            noCmd
     member this.Process msg =
-        let runner = this :> IAgent<'args, 'model, 'req, 'evt>
+        let runner = this.AsAgent
         try
             let (model, cmd) =
                 match this.State' with
@@ -83,14 +85,19 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
                 | Some state ->
                     this.Spec.Logic.Update runner state msg
             this.SetState model
+            match this.Spec.CastEvt msg with
+            | Some evt ->
+                this.Actor.FireEvent' evt
+            | None ->
+                ()
             cmd
         with
         | MessageException msg ->
             runner.Log msg
-            Cmd.none
+            noCmd
         | e ->
             runner.Log <| tplAgentFailed "Update" msg e
-            Cmd.none
+            noCmd
     member this.Deliver (cmd : Cmd<'msg>) : unit =
         let dispatch = Option.get this.Dispatch
         cmd |> List.iter (fun m -> m <| dispatch)
@@ -106,9 +113,11 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
         member this.Ident = this.Ident'
     interface IAgent<'req, 'evt> with
         member this.Post req = this.Post req
-        member this.Actor = this.EnsureActor :> IActor<'req, 'evt>
-    interface IAgent<'args, 'model, 'req, 'evt> with
-        member this.Actor = this.EnsureActor :> IActor<'args, 'model, 'req, 'evt>
+        member this.Actor = this.Actor :> IActor<'req, 'evt>
+    interface IAgent<'args, 'model, 'msg, 'req, 'evt> with
+        member this.Actor = this.Actor :> IActor<'args, 'model, 'req, 'evt>
+        member this.Deliver' (cmd : Cmd<'msg>) = this.Deliver cmd
+        member this.Deliver (msg : 'msg) = this.Deliver <| Cmd.ofMsg msg
     interface ILogger with
         member this.Log m = this.Logger'.Log m
 
@@ -120,13 +129,16 @@ and [<StructuredFormatDisplay("<Actor>{Ident}")>]
     //https://github.com/fable-compiler/Fable/issues/1343
     Args' : 'args
     OnEvent' : IBus<'evt>
+    FireEvent' : 'evt -> unit
 } with
     static member Create agent =
-        let args = agent.Spec.NewArgs (agent :> IOwner)
+        let args = agent.Spec.NewArgs (agent :> IAgent)
+        let event = new Bus<'evt> (agent :> IOwner)
         {
             Agent = agent
             Args' = args
-            OnEvent' = agent.Spec.GetOnEvent args
+            OnEvent' = event.Publish
+            FireEvent' = event.Trigger
         }
     member this.Ident = this.Agent.Ident'
     interface IActor<'args, 'model, 'req, 'evt> with

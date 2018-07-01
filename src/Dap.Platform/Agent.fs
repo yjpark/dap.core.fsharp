@@ -10,13 +10,17 @@ open Dap.Platform.Internal
 let private tplSpawnErr = LogEvent.Template3<obj, Scope, Ident>(LogLevelFatal, "[Spawn] {Err}: {Scope}  ~> {Ident}")
 
 type AgentOperate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    Operate<IAgent<'args, 'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    Operate<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 type AgentInit<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    Init<IAgent<'args, 'model, 'req, 'evt>, NoArgs, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    Init<IAgent<'args, 'model, 'msg, 'req, 'evt>, NoArgs, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 type AgentUpdate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    Update<IAgent<'args, 'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    Update<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 type AgentSubscribe<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    Subscribe<IAgent<'args, 'model, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    Subscribe<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+type AgentReact<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
+    React<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
+type AgentWrapperSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
+    WrapperSpec<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
 
 let private raiseSpawnErr err scope ident =
     raiseWith <| tplSpawnErr err scope ident
@@ -34,10 +38,14 @@ let private update wrapper
                     : AgentUpdate<'args, 'model, 'msg, 'req, 'evt> =
     fun runner model msg ->
         match msg with
-        | AgentReq req -> handleReq req
-        | AgentEvt _evt -> noOperation
-        | ActorMsg actorMsg -> addSubCmd wrapper actorMsg
-        | ActorMsg' wrapping -> wrapping.Operate
+        | AgentReq req ->
+            handleReq req
+        | AgentEvt _evt ->
+            noOperation
+        | ActorMsg actorMsg ->
+            addSubCmd wrapper actorMsg
+        | ActorMsg' wrapping ->
+            wrapping.Operate
         <| runner <| (model, [])
 
 let private init wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
@@ -56,14 +64,25 @@ let private subscribe wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>
     fun runner (model : AgentModel<'args, 'model, 'msg, 'req, 'evt>) ->
         Cmd.map wrapper <| spec.Actor.Logic.Subscribe runner model.Actor
 
+let private react : AgentReact<'args, 'model, 'msg, 'req, 'evt> =
+    fun runner subMsg _subModel model ->
+        match runner.Spec.Actor.CastEvt subMsg with
+        | Some evt ->
+            runner.FireEvent'' evt
+        | None ->
+            ()
+        (model, noCmd)
+
 let spawn (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
-            (param : AgentParam) : IAgent<'args, 'model, 'req, 'evt> =
-    let wrapper = wrap ActorMsg' {
-        GetSub = fun m -> m.Actor
-        SetSub = fun s m -> {m with Actor = s}
-        UpdateSub = spec.Actor.Logic.Update
-        ReactSub = noReaction
-    }
+            (param : AgentParam) : IAgent<'args, 'model, 'msg, 'req, 'evt> =
+    let wrapperSpec : AgentWrapperSpec<'args, 'model, 'msg, 'req, 'evt> =
+        {
+            GetSub = fun m -> m.Actor
+            SetSub = fun s m -> {m with Actor = s}
+            UpdateSub = spec.Actor.Logic.Update
+            ReactSub = react
+        }
+    let wrapper = wrap ActorMsg' wrapperSpec
     let logic : AgentLogic<'args, 'model, 'msg, 'req, 'evt> = {
         Init = init wrapper spec
         Update = update wrapper
@@ -79,13 +98,13 @@ let spawn (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
         Logic = logic
         Stats = statsOfCap <| defaultArg spec.GetSlowCap getDefaultSlowCap
         State = None
-        Actor = None
+        Actor' = None
         Version = noVersion
         Dispatch = None
         Disposed = false
     }
     param.Env.Platform.Start agent
-    agent :> IAgent<'args, 'model, 'req, 'evt>
+    agent.AsAgent
 
 let param env kind key =
     {

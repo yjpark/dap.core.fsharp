@@ -7,11 +7,10 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Archive
 
-type Args<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame = {
-    Event' : Bus<Evt<'extra, 'frame>> 
-} with
-    member this.FireEvent' = this.Event'.Trigger
-    member this.OnEvent = this.Event'.Publish
+type Agent<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame =
+    IAgent<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
+
+and Args = NoArgs
 
 and Model<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame = {
     Bundle : Bundle'<'extra, 'frame> option
@@ -35,8 +34,10 @@ and Msg<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame =
     | RecorderEvt of Evt<'extra, 'frame>
 with interface IMsg
 
-type Agent<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame =
-    IAgent<Args<'extra, 'frame>, Model<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
+let castEvt<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame> : CastEvt<Msg<'extra, 'frame>, Evt<'extra, 'frame>> =
+    function
+    | RecorderEvt evt -> Some evt
+    | _ -> None
 
 let DoBeginRecording' (bundle : Bundle'<'extra, 'frame>)  callback =
     DoBeginRecording (bundle, callback)

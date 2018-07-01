@@ -44,7 +44,7 @@ let private doReadPktAsync (link : Link<'socket>)
                             }
                             if runner.Actor.Args.LogTraffic then
                                 logInfo runner "Traffic" "Received" (link, stats, pkt)
-                            runner.Actor.Args.FireEvent' <| OnReceived (stats, pkt)
+                            runner.Deliver <| WebSocketEvt ^<| OnReceived (stats, pkt)
                         | Error e ->
                             logException runner "Received" "Decode_Failed" (link, length) e
         with
@@ -57,7 +57,7 @@ let private doReadPktAsync (link : Link<'socket>)
 let internal doReceiveFailed : OnFailed<Agent<'socket, 'pkt, 'req>> =
     fun runner e ->
         logInfo runner "Link" "Disconnected" (runner.Actor.State.Link, e)
-        runner.Actor.Args.FireEvent' OnDisconnected
+        runner.Deliver <| WebSocketEvt OnDisconnected
 
 let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
     fun runner -> task {
@@ -71,7 +71,7 @@ let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
             logInfo runner "Link" "Closing" link.Ident
             do! socket.CloseAsync (WebSocketCloseStatus.Empty, "", link.Token)
         logInfo runner "Link" "Disconnected" link.Ident
-        runner.Actor.Args.FireEvent' OnDisconnected
+        runner.Deliver <| WebSocketEvt OnDisconnected
     }
 
 let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'socket, 'pkt, 'req>, SendStats> =
@@ -92,6 +92,6 @@ let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'socket, 'pkt, 'req>,
         if runner.Actor.Args.LogTraffic then
             logInfo runner "Traffic" "Sent" (stats, pkt)
         reply runner callback <| ack msg stats
-        runner.Actor.Args.FireEvent' <| OnSent (stats, pkt)
+        runner.Deliver <| WebSocketEvt ^<| OnSent (stats, pkt)
     }
 

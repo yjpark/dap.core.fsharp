@@ -84,7 +84,7 @@ let addSubCmd (wrapper : Wrapper<'msg, 'subMsg>) (subMsg : 'subMsg) : Operate<'r
 
 let noSubscription : Subscribe<'runner, 'model, 'msg> =
     fun _runner _model ->
-        Cmd.none
+        noCmd
 
 let noOperation : Operate<'runner, 'model, 'msg> =
     fun _runner ->
@@ -92,14 +92,16 @@ let noOperation : Operate<'runner, 'model, 'msg> =
 
 let noLogic : Logic<'initer, 'runner, NoArgs, NoModel, NoMsg> =
     {
-        Init = fun _initer _args -> (NoModel, Cmd.none)
-        Update = fun _runner model _msg -> (model, Cmd.none)
+        Init = fun _initer _args -> (NoModel, noCmd)
+        Update = fun _runner model _msg -> (model, noCmd)
         Subscribe = noSubscription
     }
 
 let noReaction : React<'runner, 'model, 'msg, 'subModel, 'subMsg> =
     fun _runner _subMsg _subModel model ->
         (model, [])
+
+let noArgs<'owner> = fun (_ : 'owner) -> NoArgs
 
 let noEvent =
     let noOwner =
@@ -112,12 +114,12 @@ let noEvent =
     let bus = new Bus<NoEvt>(noOwner)
     bus.Publish
 
-let noActor<'initer, 'runner> : ActorSpec'<'initer, 'runner, NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
+let noActor<'owner, 'initer, 'runner> : ActorSpec'<'owner, 'initer, 'runner, NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
     {
-        NewArgs = fun _owner -> NoArgs
+        NewArgs = noArgs<'owner>
         Logic = noLogic
         WrapReq = fun _ -> NoMsg
-        GetOnEvent = fun _model -> noEvent
+        CastEvt = fun _ -> None
     }
 
 let noVersion =
@@ -127,14 +129,22 @@ let noVersion =
     }
 
 // Note: Use this form to force the caller to provide proper type
-// of 'model and 'msg, otherwise will get error of 
+// of 'model and 'msg, otherwise will get error of
 // FS0030: Value restriction
-let subscribeEvent (owner : IOwner) (_model : 'model)
+let subscribeBus (owner : IOwner) (_model : 'model)
                     (wrapper : 'evt -> 'msg)
                     (onEvent : IBus<'evt>) : Cmd<'msg> =
     let sub = fun dispatch ->
         let ident = sprintf "%A" wrapper
         onEvent.AddWatcher owner ident (dispatch << wrapper)
+    Elmish.Cmd.ofSub sub
+
+let subscribeEvent (owner : IOwner) (_model : 'model)
+                    (wrapper : 'evt -> 'msg)
+                    (onEvent : IEvent<'evt>) : Cmd<'msg> =
+    let sub = fun dispatch ->
+        let ident = sprintf "%A" wrapper
+        onEvent.Add (dispatch << wrapper)
     Elmish.Cmd.ofSub sub
 
 #if FABLE_COMPILER

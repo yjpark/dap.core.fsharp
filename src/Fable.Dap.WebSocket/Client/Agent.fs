@@ -7,13 +7,12 @@ open Dap.WebSocket.Client.Types
 
 let create (encode : Encode<'pkt>) (decode : Decode<'pkt>)
             (key : Key) (uri : string) (logTraffic : bool) : Agent<'pkt> =
-    fun owner ->
+    fun _agent ->
         {
             Uri = uri
             LogTraffic = logTraffic
             Encode = encode
             Decode = decode
-            Event' = new Bus<Evt<'pkt>> (owner)
         }
     |> Logic.getSpec
     |> Agent.create Kind key

@@ -34,7 +34,6 @@ type Extra = {
 
 type Meta = Meta<Extra>
 type Frame = PacketFrame
-type Args = Args<Extra, Frame>
 type Model = Model<Extra, Frame>
 type Req = Req<Extra, Frame>
 type Evt = Evt<Extra, Frame>
@@ -67,16 +66,9 @@ let updateExtra (extra : Extra) (frame : Frame) : Extra * Frame =
         extra.Events
         |> Map.add frame.Packet.Kind count
     ({extra with Events = events}, {frame with Packet = packet})
-    
-let getSpec () =
-    fun owner ->
-        {
-            Event' = new Bus<Evt> (owner)
-        }
-    |> Logic.getSpec
 
 let getSpawner env =
-    getSpec ()
+    Logic.spec
     |> Agent.getSpawner env
 
 let appendEvent' (agent : Agent) (kind : string) (payload : string) : unit =
@@ -94,7 +86,7 @@ let appendEvent' (agent : Agent) (kind : string) (payload : string) : unit =
 let appendEvent (agent : Agent) (evt : IEvent) : unit =
     appendEvent' agent evt.Kind evt.Payload
 
-let watchEvents (agent : Agent) 
+let watchEvents (agent : Agent)
                 (onEvent : IEvent<'evt> when 'evt :> IEvent)
                 (kinds : string list) : unit =
     let kinds = Set.ofList kinds

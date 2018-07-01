@@ -16,6 +16,8 @@ and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IPoster<'req>
     abstract Actor : IActor<'req, 'evt> with get
 
-and IAgent<'args, 'model, 'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
+and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     inherit IAgent<'req, 'evt>
     abstract Actor : IActor<'args, 'model, 'req, 'evt> with get
+    abstract Deliver' : Cmd<'msg> -> unit
+    abstract Deliver : 'msg -> unit

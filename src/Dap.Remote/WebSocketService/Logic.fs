@@ -47,7 +47,7 @@ let private setHub hub : ActorOperate<'req, 'evt> =
         | None ->
             runner.RunTask3 ignoreOnFailed setSocketAsync
             hub.OnEvent.AddWatcher runner "HubEvt" (runner.Actor.Args.FireInternalEvent' << HubEvt)
-            ({model with Hub = Some hub}, Cmd.none)
+            ({model with Hub = Some hub}, noCmd)
         | Some hub' ->
             logError runner "WebSocketService" "Hub_Exist" (hub', hub)
             (model, cmd)
@@ -89,7 +89,7 @@ let private setSocket (socket : PacketConn.Agent) : ActorOperate<'req, 'evt> =
                 LogTraffic = runner.Actor.Args.LogTraffic
             }
             let service = Service.create serviceArgs
-            ({model with Socket = Some socket ; Service = Some service}, Cmd.none)
+            ({model with Socket = Some socket ; Service = Some service}, noCmd)
         | Some socket' ->
             logError runner "WebSocketService" "Socket_Exist" (socket', socket)
             (model, cmd)
@@ -120,7 +120,7 @@ let private update : ActorUpdate<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
         | ServiceReq req -> handleReq req
-        )<| runner <| (model, Cmd.none)
+        )<| runner <| (model, noCmd)
 
 let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     fun runner args ->
@@ -129,29 +129,23 @@ let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt
             Hub = None
             Socket = None
             Service = None
-        }, Cmd.none)
-
-let private subscribe : ActorSubscribe<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
-    fun runner model ->
-        Cmd.batch [
-            subscribeEvent runner model InternalEvt runner.Actor.Args.OnInternalEvent
-        ]
+        }, noCmd)
 
 let logic =
     {
         Init = init
         Update = update
-        Subscribe = subscribe
+        Subscribe = noSubscription
     }
 
-let getSpec (newArgs : NewArgs<Args<'req, 'evt>>) : AgentSpec<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
+let getSpec (newArgs : ActorNewArgs<Args<'req, 'evt>>) : AgentSpec<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     {
         Actor =
             {
                 NewArgs = newArgs
                 Logic = logic
                 WrapReq = ServiceReq
-                GetOnEvent = fun _model -> noEvent
+                CastEvt = fun _msg -> None
             }
         OnAgentEvent = None
         GetSlowCap = None

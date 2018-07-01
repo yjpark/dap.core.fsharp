@@ -144,7 +144,7 @@ let private init : Init<IEnv, NoArgs, EnvModel, EnvMsg> =
             Spawners = Map.empty
             Agents = Map.empty
         }
-        (model, Cmd.none)
+        (model, noCmd)
 
 let create (param : EnvParam) : IEnv =
     let logic : EnvLogic = {

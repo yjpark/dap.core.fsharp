@@ -9,7 +9,7 @@ open Dap.Remote
 open Dap.Archive
 
 type ActorOperate<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame> =
-    ActorOperate<Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
+    ActorOperate<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
 
 let private doBeginRecording req ((bundle, callback) : Bundle'<'extra, 'frame> * Callback<Meta<'extra>>)
                             : ActorOperate<'extra, 'frame> =
@@ -18,12 +18,14 @@ let private doBeginRecording req ((bundle, callback) : Bundle'<'extra, 'frame> *
         | None -> ()
         | Some bundle ->
             bundle.Close runner
-            bundle.Volume |> Option.iter (fun v -> runner.Actor.Args.FireEvent' <| OnFinishRecording v.Meta)
+            bundle.Volume |> Option.iter (fun v ->
+                runner.Deliver <| RecorderEvt ^<| OnFinishRecording v.Meta
+            )
         bundle.Open runner runner.Clock.Now
         match bundle.Volume with
         | Some volume ->
             reply runner callback <| ack req volume.Meta
-            runner.Actor.Args.FireEvent' <| OnBeginRecording volume.Meta
+            runner.Deliver <| RecorderEvt ^<| OnBeginRecording volume.Meta
             ({model with Bundle = Some bundle}, cmd)
         | None ->
             reply runner callback <| nak req "Bundle_Open_Failed" bundle
@@ -38,7 +40,7 @@ let private doFinishRecording req (callback : Callback<Meta<'extra>>)
             match bundle.Volume with
             | Some volume ->
                 reply runner callback <| ack req volume.Meta
-                runner.Actor.Args.FireEvent' <| OnFinishRecording volume.Meta
+                runner.Deliver <| RecorderEvt ^<| OnFinishRecording volume.Meta
             | None ->
                 reply runner callback <| nak req "Bundle_Has_No_Volume" bundle
             ({model with Bundle = None}, cmd)
@@ -56,13 +58,13 @@ let private doAppendFrame req ((frame, callback) : 'frame * Callback<Meta<'extra
                 match bundle.Volume with
                 | Some volume ->
                     reply runner callback <| ack req (volume.Meta, frame)
-                    runner.Actor.Args.FireEvent' <| OnAppendFrame (volume.Meta, frame)
+                    runner.Deliver <| RecorderEvt ^<| OnAppendFrame (volume.Meta, frame)
                 | None ->
                     reply runner callback <| nak req "Bundle_Has_No_Volume" (frame, bundle)
                     failwith "Bundle_Has_No_Volume"
             with e ->
                 reply runner callback <| nak req "AppendFrame_Failed" (frame, bundle, e)
-                runner.Actor.Args.FireEvent' <| OnAppendFrameFailed (frame, e)
+                runner.Deliver <| RecorderEvt ^<| OnAppendFrameFailed (frame, e)
         | None ->
             reply runner callback <| nak req "Not_Recording" None
         (model, cmd)
@@ -84,38 +86,34 @@ let private handleEvt evt : ActorOperate<'extra, 'frame> =
         | _ -> noOperation
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
+let private update : ActorUpdate<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
     fun runner model msg ->
         match msg with
         | RecorderReq req -> handleReq req
         | RecorderEvt evt -> handleEvt evt
         <| runner <| (model, [])
 
-let private init : ActorInit<Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
+let private init : ActorInit<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
     fun _runner args ->
         ({
             Bundle = None
         }, noCmd)
 
-let private subscribe : ActorSubscribe<Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
-    fun runner model ->
-        subscribeEvent runner model RecorderEvt runner.Actor.Args.OnEvent
-
 let logic =
     {
         Init = init
         Update = update
-        Subscribe = subscribe
+        Subscribe = noSubscription
     }
 
-let getSpec (newArgs : NewArgs<Args<'extra, 'frame>>) : AgentSpec<Args<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
+let spec : AgentSpec<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
     {
         Actor =
             {
-                NewArgs = newArgs
+                NewArgs = noArgs
                 Logic = logic
                 WrapReq = RecorderReq
-                GetOnEvent = fun args -> args.OnEvent
+                CastEvt = castEvt<'extra, 'frame>
             }
         OnAgentEvent = None
         GetSlowCap = None

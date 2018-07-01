@@ -1,8 +1,8 @@
 namespace Dap.Platform.Internal
 
+open Elmish
 open Dap.Prelude
 open Dap.Platform
-
 
 type internal EnvLogic =
     Logic<IEnv, IEnv, NoArgs, EnvModel, EnvMsg>
@@ -48,14 +48,14 @@ type internal Env = {
         member this.HandleAsync getReq = this.HandleAsync getReq
 
 type internal AgentLogic<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    Logic<IAgent<'args, 'model, 'req, 'evt>,
-            IAgent<'args, 'model, 'req, 'evt>,
+    Logic<IAgent<'args, 'model, 'msg, 'req, 'evt>,
+            IAgent<'args, 'model, 'msg, 'req, 'evt>,
             NoArgs,
             AgentModel<'args, 'model, 'msg, 'req, 'evt>,
             AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 
-[<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
-type internal Agent<'args, 'model, 'msg, 'req, 'evt>
+and [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
+    internal Agent<'args, 'model, 'msg, 'req, 'evt>
                                     when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>
     Env : IEnv
@@ -66,10 +66,16 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
     mutable Disposed : bool
     mutable Dispatch : DispatchMsg<AgentMsg<'args, 'model, 'msg, 'req, 'evt>> option
     mutable State : AgentModel<'args, 'model, 'msg, 'req, 'evt> option
-    mutable Actor : Actor<'args, 'model, 'msg, 'req, 'evt> option
+    mutable Actor' : Actor<'args, 'model, 'msg, 'req, 'evt> option
     mutable Version : ActorVersion
 } with
     member this.AsDisplay = (this.Ident, this.Version)
+    member this.AsAgent = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
+    member this.Actor =
+        if this.Actor'.IsNone then
+            this.Actor' <- Some <| Actor<'args, 'model, 'msg, 'req, 'evt>.Create this
+        this.Actor'
+        |> Option.get
     member this.SetState (state : AgentModel<'args, 'model, 'msg, 'req, 'evt>) =
         if this.State.IsSome && (state =? Option.get this.State) then
             this.Version <-
@@ -83,18 +89,14 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
                     MsgCount = this.Version.MsgCount + 1
                 }
             this.State <- Some state
-    member this.Handle (req : AgentReq) = dispatch' this (AgentReq req)
+    member this.Handle (req : AgentReq) =
+        dispatch' this (AgentReq req)
     member this.HandleAsync (getReq : Callback<'res> -> AgentReq) =
         dispatchAsync' this (AgentReq << getReq)
     member this.Post (subReq : 'req) = dispatch' this (ActorMsg <| this.Spec.Actor.WrapReq subReq)
     member this.PostAsync (getSubReq : Callback<'res> -> 'req) = dispatchAsync' this (ActorMsg  << this.Spec.Actor.WrapReq << getSubReq)
-    member this.EnsureActor =
-        if this.Actor.IsNone then
-            this.Actor <- Some <| Actor<'args, 'model, 'msg, 'req, 'evt>.Create this
-        this.Actor
-        |> Option.get
-    interface IRunnable<IAgent<'args, 'model, 'req, 'evt>,
-                        IAgent<'args, 'model, 'req, 'evt>,
+    interface IRunnable<IAgent<'args, 'model, 'msg, 'req, 'evt>,
+                        IAgent<'args, 'model, 'msg, 'req, 'evt>,
                         NoArgs,
                         AgentModel<'args, 'model, 'msg, 'req, 'evt>,
                         AgentMsg<'args, 'model, 'msg, 'req, 'evt>> with
@@ -109,9 +111,9 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
             start' this this.SetState
         member this.Process parcel = process' this parcel this.SetState
 
-        member this.Deliver msg = deliver' this msg
-        member this.Initer = this :> IAgent<'args, 'model, 'req, 'evt>
-        member this.Runner = this :> IAgent<'args, 'model, 'req, 'evt>
+        member this.Deliver cmd = deliver' this cmd
+        member this.Initer = this.AsAgent
+        member this.Runner = this.AsAgent
     interface IRunner with
         member this.Clock = this.Env.Clock
         member this.Stats = this.Stats
@@ -130,16 +132,21 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
         member this.RunFunc1 func = runFunc' this func
         member this.RunTask1 onFailed getTask = runTask' this onFailed getTask
     interface IAgent<'req, 'evt> with
+        member this.Actor = this.Actor :> IActor<'req, 'evt>
         member this.Post req = this.Post req
         member this.PostAsync getSubMsg = this.PostAsync getSubMsg
         member this.RunFunc2 func = runFunc' this func
         member this.RunTask2 onFailed getTask = runTask' this onFailed getTask
-        member this.Actor = this.EnsureActor :> IActor<'req, 'evt>
-    interface IAgent<'args, 'model, 'req, 'evt> with
+    interface IAgent<'args, 'model, 'msg, 'req, 'evt> with
+        member this.Spec = this.Spec
+        member this.Actor = this.Actor :> IActor<'args, 'model, 'req, 'evt>
+        member this.Deliver' (cmd : Cmd<'msg>) = deliver' this <| Cmd.map ActorMsg cmd
+        member this.Deliver (msg : 'msg) = deliver' this <| Cmd.ofMsg (ActorMsg msg)
+
         member this.RunFunc3 func = runFunc' this func
         //Note: `((onFailed, getTask))` is needed, for the replyAsync type constraint to work
         member this.RunTask3 onFailed getTask = runTask' this onFailed getTask
-        member this.Actor = this.EnsureActor :> IActor<'args, 'model, 'req, 'evt>
+        member this.FireEvent'' (evt : 'evt) = this.Actor.FireEvent' evt
 
 and [<StructuredFormatDisplay("<Actor>{Ident}")>]
     internal Actor<'args, 'model, 'msg, 'req, 'evt>
@@ -147,13 +154,16 @@ and [<StructuredFormatDisplay("<Actor>{Ident}")>]
     Agent : Agent<'args, 'model, 'msg, 'req, 'evt>
     Args : 'args
     OnEvent : IBus<'evt>
+    FireEvent' : 'evt -> unit
 } with
     static member Create agent =
-        let args = agent.Spec.Actor.NewArgs (agent :> IOwner)
+        let args = agent.Spec.Actor.NewArgs (agent :> IAgent)
+        let event = new Bus<'evt> (agent :> IOwner)
         {
             Agent = agent
             Args = args
-            OnEvent = agent.Spec.Actor.GetOnEvent args
+            OnEvent = event.Publish
+            FireEvent' = event.Trigger
         }
     member this.Ident = this.Agent.Ident
     interface IActor<'args, 'model, 'req, 'evt> with

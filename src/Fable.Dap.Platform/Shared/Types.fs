@@ -114,14 +114,16 @@ and IActor<'args, 'model, 'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     abstract State : 'model with get
     abstract Version : ActorVersion with get
 
-and ActorSpec'<'initer, 'runner, 'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
+and ActorSpec'<'owner, 'initer, 'runner, 'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Logic : Logic<'initer, 'runner, 'args, 'model, 'msg>
-    NewArgs : NewArgs<'args>
+    NewArgs : NewArgs<'owner, 'args>
     WrapReq : Wrapper<'msg, 'req>
-    GetOnEvent : 'args -> IBus<'evt>
+    CastEvt : CastEvt<'msg, 'evt>
 }
 
-and NewArgs<'args> = IOwner -> 'args
+and NewArgs<'owner, 'args> = 'owner -> 'args
+
+and CastEvt<'msg, 'evt> = 'msg -> 'evt option
 
 type NoArgs = NoArgs
 

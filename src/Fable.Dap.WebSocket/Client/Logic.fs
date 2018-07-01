@@ -11,15 +11,15 @@ type ActorOperate<'pkt> = ActorOperate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'
 let private createSocket (runner : Agent<'pkt>)  =
     let socket = Fable.Import.Browser.WebSocket.Create runner.Actor.Args.Uri
     socket.onopen <- fun _ ->
-        runner.Actor.Args.FireEvent' <| OnConnected
+        runner.Deliver <| WebSocketEvt OnConnected
     socket.onclose <- fun _ ->
-        runner.Actor.Args.FireEvent' <| OnDisconnected
+        runner.Deliver <| WebSocketEvt OnDisconnected
     socket.onmessage <- fun m ->
         try
             let pkt = runner.Actor.Args.Decode m.data
             if runner.Actor.Args.LogTraffic then
                 logInfo runner "Traffic" "Received" pkt
-            runner.Actor.Args.FireEvent' <| OnReceived pkt
+            runner.Deliver <| WebSocketEvt ^<| OnReceived pkt
         with e ->
             logException runner "Receive" "Decode_Failed" m e
     socket
@@ -56,7 +56,7 @@ let private doSend req ((pkt, callback) : 'pkt * Callback<System.DateTime>) : Ac
                     if runner.Actor.Args.LogTraffic then
                         logInfo runner "Traffic" "Sent" pkt
                     reply runner callback <| ack req utcNow
-                    runner.Actor.Args.FireEvent' <| OnSent pkt
+                    runner.Deliver <| WebSocketEvt ^<| OnSent pkt
                 with e ->
                     let err = if encoded then "Send_Failed" else "Encode_Failed"
                     logException runner "Send" err pkt e
@@ -90,7 +90,7 @@ let private update : ActorUpdate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, 
             handleReq req
         | WebSocketEvt evt ->
             handleEvt evt
-        <| runner <| (model, Cmd.none)
+        <| runner <| (model, noCmd)
 
 let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
     fun _runner args ->
@@ -99,21 +99,17 @@ let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<
             Connected = false
         }, Cmd.ofMsg <| WebSocketReq DoConnect)
 
-let private subscribe : ActorSubscribe<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    fun runner model ->
-        subscribeEvent runner model WebSocketEvt runner.Actor.Args.OnEvent
-
 let logic =
     {
         Init = init
         Update = update
-        Subscribe = subscribe
+        Subscribe = noSubscription
     }
 
-let getSpec (newArgs : NewArgs<Args<'pkt>>) : ActorSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
+let getSpec (newArgs : ActorNewArgs<Args<'pkt>>) : ActorSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
     {
         Logic = logic
         NewArgs = newArgs
         WrapReq = WebSocketReq
-        GetOnEvent = fun args -> args.OnEvent
+        CastEvt = castEvt<'pkt>
     }
