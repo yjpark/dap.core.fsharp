@@ -12,6 +12,7 @@ type Agent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     IAgent<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
 
 and InternalEvt<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
+    | DoInit
     | SetHub of Hub<'req, 'evt>
     | SetSocket of PacketConn.Agent
     | HubEvt of 'evt
@@ -21,10 +22,7 @@ and InternalEvt<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
 and Args<'req, 'evt> when 'req :> IReq and 'evt :> IEvt = {
     HubSpec : HubSpec<'req, 'evt>
     LogTraffic : bool
-    InternalEvent' : Bus<InternalEvt<'req, 'evt>>
-} with
-    member this.FireInternalEvent' = this.InternalEvent'.Trigger
-    member this.OnInternalEvent = this.InternalEvent'.Publish
+}
 
 and Model<'req, 'evt> when 'req :> IReq and 'evt :> IEvt = {
     Hub : Hub<'req, 'evt> option

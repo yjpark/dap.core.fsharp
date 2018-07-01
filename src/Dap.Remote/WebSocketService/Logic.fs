@@ -41,12 +41,17 @@ let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req,
 let private handleHubEvt (evt : 'evt) : ActorOperate<'req, 'evt> =
     handleService <| Service.DoSendEvent evt
 
+let private doInit : ActorOperate<'req, 'evt> =
+    fun runner (model, cmd) ->
+        runner.Actor.Args.HubSpec.GetHub runner.Ident.Key (runner.Deliver << InternalEvt << SetHub)
+        (model, cmd)
+
 let private setHub hub : ActorOperate<'req, 'evt> =
     fun runner (model, cmd) ->
         match model.Hub with
         | None ->
             runner.RunTask3 ignoreOnFailed setSocketAsync
-            hub.OnEvent.AddWatcher runner "HubEvt" (runner.Actor.Args.FireInternalEvent' << HubEvt)
+            hub.OnEvent.AddWatcher runner "HubEvt" (runner.Deliver << InternalEvt << HubEvt)
             ({model with Hub = Some hub}, noCmd)
         | Some hub' ->
             logError runner "WebSocketService" "Hub_Exist" (hub', hub)
@@ -58,7 +63,7 @@ let private onRequest (runner : Agent<'req, 'evt>) (pkt : Packet') : unit =
         logError runner "onRequest" "Hub_Is_None" pkt
     | Some hub ->
         let callback = fun res ->
-            runner.Actor.Args.FireInternalEvent' <| OnHandled (pkt.Id, res)
+            runner.Deliver <| InternalEvt ^<| OnHandled (pkt.Id, res)
         let req = runner.Actor.Args.HubSpec.DecodeReq pkt.Kind pkt.Payload callback
         hub.PostReq req
 
@@ -75,7 +80,7 @@ let private setSocket (socket : PacketConn.Agent) : ActorOperate<'req, 'evt> =
     fun runner (model, cmd) ->
         match model.Socket with
         | None ->
-            socket.Actor.OnEvent.AddWatcher runner "SocketEvt" (runner.Actor.Args.FireInternalEvent' << SocketEvt)
+            socket.Actor.OnEvent.AddWatcher runner "SocketEvt" (runner.Deliver << InternalEvt << SocketEvt)
             let link : Service.Link = {
                 Send = doSend runner
             }
@@ -96,6 +101,8 @@ let private setSocket (socket : PacketConn.Agent) : ActorOperate<'req, 'evt> =
 
 let private handleInternalEvt (evt : InternalEvt<'req, 'evt>) : ActorOperate<'req, 'evt> =
     match evt with
+    | DoInit ->
+        doInit
     | SetHub hub ->
         setHub hub
     | SetSocket socket ->
@@ -123,13 +130,12 @@ let private update : ActorUpdate<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 
         )<| runner <| (model, noCmd)
 
 let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
-    fun runner args ->
-        args.HubSpec.GetHub runner.Ident.Key (args.FireInternalEvent' << SetHub)
+    fun _runner _args ->
         ({
             Hub = None
             Socket = None
             Service = None
-        }, noCmd)
+        }, Cmd.ofMsg (InternalEvt DoInit))
 
 let logic =
     {

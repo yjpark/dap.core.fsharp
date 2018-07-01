@@ -14,7 +14,7 @@ let internal setSocketAsync : GetTask<Agent<'req, 'evt>, unit> =
         let socketKey = sprintf "%s_%s" runner.Ident.Kind runner.Ident.Key
         let! (socket, _) = runner.Env.HandleAsync <| DoGetAgent' PacketConn.Kind socketKey
         let socket = socket :?> PacketConn.Agent
-        runner.Actor.Args.FireInternalEvent' <| SetSocket socket
+        runner.Deliver <| InternalEvt ^<| SetSocket socket
     }
 
 let internal doAttachAsync (ident : string) (token : CancellationToken)
