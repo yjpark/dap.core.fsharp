@@ -125,12 +125,12 @@ let private update : ActorUpdate<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 
     fun runner model msg ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
+        | SocketEvt evt -> handlerSocketEvt evt
         | ProxyReq req -> handleProxyReq req
         | ProxyRes res ->
             runner.Actor.Args.ResponseEvent'.Trigger res
             noOperation
         | ProxyEvt _evt -> noOperation
-        | SocketEvt evt -> handlerSocketEvt evt
         )<| runner <| (model, noCmd)
 
 let private init : ActorInit<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
@@ -142,11 +142,15 @@ let private init : ActorInit<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res
             SendQueue = []
         }, Cmd.ofMsg (InternalEvt DoInit))
 
+let private subscribe : ActorSubscribe<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
+    fun runner model ->
+        subscribeBus runner model SocketEvt model.Socket.Actor.OnEvent
+
 let logic : ActorLogic<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt>=
     {
         Init = init
         Update = update
-        Subscribe = noSubscription
+        Subscribe = subscribe
     }
 
 let getSpec (newArgs : ActorNewArgs<Args<'res, 'evt>>) : ActorSpec<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =

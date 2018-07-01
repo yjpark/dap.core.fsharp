@@ -60,7 +60,7 @@ let private doSend (req : IRequest) (model : Model) : Model =
         }
         encoded <- Some pkt
         match model.Args.Link.Send (req, pkt) with
-        | Some err -> 
+        | Some err ->
             logError model.Args.Logger "Send" "Link_Failed" (req, err)
             model.Args.Stub.OnResponse (req, Error <| Local' err)
         | None ->
