@@ -7,7 +7,7 @@ open Dap.Remote.WebSocketService
 open Dap.Remote.WebSocketService.Types
 
 let getSpec (hubSpec : HubSpec<'req, 'evt>) (logTraffic : bool) =
-    fun owner ->
+    fun _agent ->
         {
             HubSpec = hubSpec
             LogTraffic = logTraffic

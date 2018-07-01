@@ -68,7 +68,7 @@ let updateExtra (extra : Extra) (frame : Frame) : Extra * Frame =
     ({extra with Events = events}, {frame with Packet = packet})
 
 let getSpawner env =
-    Logic.spec
+    Logic.spec<Extra, Frame>
     |> Agent.getSpawner env
 
 let appendEvent' (agent : Agent) (kind : string) (payload : string) : unit =

@@ -106,7 +106,8 @@ let logic =
         Subscribe = noSubscription
     }
 
-let spec : AgentSpec<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
+let spec<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame>
+            : AgentSpec<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
     {
         Actor =
             {
