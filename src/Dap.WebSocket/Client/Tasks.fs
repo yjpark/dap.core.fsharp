@@ -13,6 +13,8 @@ open Dap.WebSocket.Internal.Tasks
 let internal doConnectAsync : GetReplyTask<Agent<'pkt>, ConnectStats> =
     fun req callback runner -> task {
         let time = runner.Clock.Now
+        while Option.isNone runner.Actor.State.Link do
+            do! Task.Delay 20
         let link = runner.Actor.State.Link |> Option.get
         logInfo runner "Link" "Connecting" link
         //link.Socket.Options.Proxy <- (new WebProxy("http://127.0.0.1:1104/")) :> IWebProxy
