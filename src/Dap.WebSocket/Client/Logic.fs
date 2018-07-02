@@ -31,7 +31,7 @@ let private doConnect req (uri, token, callback) : ActorOperate<'pkt> =
                 Buffer = Array.create<byte> runner.Actor.Args.BufferSize 0uy
             }
             replyAsync3 runner req callback nakOnFailed <| doConnectAsync
-            setModel {model with Link = Some link}
+            updateModel (fun m -> {m with Link = Some link})
         <| runner <| (model, cmd)
 
 let private doDisconnect req (callback : Callback<unit>) : ActorOperate<'pkt> =
@@ -45,7 +45,7 @@ let private doDisconnect req (callback : Callback<unit>) : ActorOperate<'pkt> =
             | false ->
                 reply runner callback <| ack req ()
                 (runner, model, cmd)
-                |=|> setModel {model with Closing = true}
+                |=|> updateModel (fun m -> {m with Closing = true})
         | None ->
             reply runner callback <| nak req "Link_Not_Exist" ()
             (model, cmd)

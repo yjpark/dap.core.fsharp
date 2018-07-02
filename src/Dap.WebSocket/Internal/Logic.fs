@@ -26,9 +26,9 @@ let private handleEvt evt : ActorOperate<'socket, 'pkt, 'req> =
     fun runner (model, cmd) ->
         match evt with
         | OnConnected ->
-            setModel {model with Connected = true ; Closing = false}
+            updateModel (fun m -> {m with Connected = true ; Closing = false})
         | OnDisconnected ->
-            setModel {model with Link = None ; Connected = false ; Closing = false}
+            updateModel (fun m -> {m with Link = None ; Connected = false ; Closing = false})
         | _ -> noOperation
         <| runner <| (model, cmd)
 

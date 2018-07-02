@@ -67,18 +67,18 @@ let private doTick : ActorOperate =
         | true ->
             logError runner "Ticker" "Frame_Dropped" model
             (runner, model, cmd)
-            |=|> setModel {model with DroppedCount = model.DroppedCount + 1}
+            |=|> updateModel (fun m -> {m with DroppedCount = model.DroppedCount + 1})
         | false ->
             let time' = runner.Clock.Now'
             let time = runner.Clock.Now
             let delta = time - model.LastTickTime
             (runner, model, cmd)
-            |-|> setModel
-                {model with
+            |-|> updateModel (fun m ->
+                {m with
                     Ticking = true
                     FrameIndex = model.FrameIndex + 1
                     LastTickTime = time
-                }
+                })
             |-|> addCmd ^<| TickerEvt ^<| OnTick (time, delta)
             |=|> addCmd ^<| InternalEvt ^<| OnTickDone (time', time, delta)
 
@@ -92,7 +92,7 @@ let private onTickDone ((time', time, delta) : Instant * Instant * Duration) : A
             Duration = duration
         }
         (runner, model, cmd)
-        |-|> setModel {model with LastTickStats = stats}
+        |-|> updateModel (fun m -> {m with LastTickStats = stats})
         |-|> addCmd ^<| TickerEvt ^<| OnTick' stats
         |-|> addCmd ^<| TickerEvt ^<| OnLateTick (time, delta)
         |=|> addCmd ^<| InternalEvt ^<| OnLateTickDone (doneTime', time, delta)
@@ -107,11 +107,11 @@ let private onLateTickDone ((time', time, delta) : Instant * Instant * Duration)
             Duration = duration
         }
         (runner, model, cmd)
-        |-|> setModel
-            {model with
+        |-|> updateModel (fun m ->
+            {m with
                 LastLateTickStats = stats
                 Ticking = false
-            }
+            })
         |=|> addCmd ^<| TickerEvt ^<| OnLateTick' stats
 
 let private handleInternalEvt evt : ActorOperate =

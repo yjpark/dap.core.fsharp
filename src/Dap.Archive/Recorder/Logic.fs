@@ -82,7 +82,7 @@ let private handleEvt evt : ActorOperate<'extra, 'frame> =
         match evt with
         | OnAppendFrameFailed (_frame, _e) ->
             model.Bundle |> Option.iter (fun bundle -> bundle.Close runner)
-            setModel {model with Bundle = None}
+            updateModel (fun m -> {m with Bundle = None})
         | _ -> noOperation
         <| runner <| (model, cmd)
 

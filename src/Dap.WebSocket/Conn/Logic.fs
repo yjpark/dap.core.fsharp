@@ -31,7 +31,7 @@ let private doAttach req (ident, token, socket, callback) : ActorOperate<'pkt> =
             let task = doReceiveAsync runner
             reply runner callback <| ack req (task :> Task)
             (runner, model, cmd)
-            |-|> setModel {model with Link = Some link}
+            |-|> updateModel (fun m -> {m with Link = Some link})
             |=|> addCmd ^<| WebSocketEvt OnConnected
 
 let private doSend req ((pkt, callback) : 'pkt * Callback<SendStats>) : ActorOperate<'pkt> =

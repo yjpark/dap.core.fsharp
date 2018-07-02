@@ -43,10 +43,6 @@ let updateModel (update : 'model -> 'model) : Operate<'runner, 'model, 'msg> =
     fun _runner (model, cmd) ->
         (update model, cmd)
 
-let setModel (newModel : 'model) : Operate<'runner, 'model, 'msg> =
-    fun _runner (_model, cmd) ->
-        (newModel, cmd)
-
 #if !FABLE_COMPILER
 let inline updateSession (update : 'session -> 'session) : Operate<'runner, ^model, 'msg> =
     fun _runner (model, cmd) ->

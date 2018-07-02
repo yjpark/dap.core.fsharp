@@ -27,7 +27,7 @@ let private doSetEntry req ((key, v, callback) : 'k * 'v * Callback<bool>) : Act
         let entries = model.Entries |> Map.add key v
         reply runner callback <| ack req isNew
         (runner, model, cmd)
-        |-|> setModel {model with Entries = entries}
+        |-|> updateModel (fun m -> {m with Entries = entries})
         |=|> addCmd ^<| RegistryEvt evt
 
 let private doAddEntry req ((key, v, callback) : 'k * 'v * Callback<unit>) : ActorOperate<'k, 'v> =
@@ -40,7 +40,7 @@ let private doAddEntry req ((key, v, callback) : 'k * 'v * Callback<unit>) : Act
             reply runner callback <| ack req ()
             let entries = model.Entries |> Map.add key v
             (runner, model, cmd)
-            |-|> setModel {model with Entries = entries}
+            |-|> updateModel (fun m -> {m with Entries = entries})
             |=|> addCmd ^<| RegistryEvt ^<| OnEntryAdded (key, v)
 
 let private doRemoveEntry req ((key, callback) : 'k * Callback<'v>) : ActorOperate<'k, 'v> =
@@ -50,7 +50,7 @@ let private doRemoveEntry req ((key, callback) : 'k * Callback<'v>) : ActorOpera
             reply runner callback <| ack req v
             let entries = model.Entries |> Map.remove key
             (runner, model, cmd)
-            |-|> setModel {model with Entries = entries}
+            |-|> updateModel (fun m -> {m with Entries = entries})
             |=|> addCmd ^<| RegistryEvt ^<| OnEntryRemoved (key, v)
         | None ->
             reply runner callback <| nak req "Not_Exist" ()
@@ -69,7 +69,7 @@ let private tryRemoveEntry req ((key, callback) : 'k * Callback<'v option>) : Ac
             reply runner callback <| ack req ^<| Some v
             let entries = model.Entries |> Map.remove key
             (runner, model, cmd)
-            |-|> setModel {model with Entries = entries}
+            |-|> updateModel (fun m -> {m with Entries = entries})
             |=|> addCmd ^<| RegistryEvt ^<| OnEntryRemoved (key, v)
         | None ->
             reply runner callback <| ack req None
