@@ -34,7 +34,7 @@ let private doConnect req (uri, token, callback) : ActorOperate<'pkt> =
             setModel {model with Link = Some link}
         <| runner <| (model, cmd)
 
-let private DoDisconnect req (callback : Callback<unit>) : ActorOperate<'pkt> =
+let private doDisconnect req (callback : Callback<unit>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match model.Link with
         | Some link ->
@@ -59,7 +59,7 @@ let private handleReq req : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match req with
         | DoConnect (a, b, c) -> doConnect req (a, b, c)
-        | DoDisconnect (a, b, c) -> doConnect req a
+        | DoDisconnect a -> doDisconnect req a
         | DoSend (a, b) -> doSend req (a, b)
         <| runner <| (model, cmd)
 
