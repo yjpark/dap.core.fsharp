@@ -12,11 +12,9 @@ open Dap.WebSocket.Client.Types
 [<Literal>]
 let Kind = "WebSocketTextClient"
 
-type Agent = Agent<string>
+type Agent =  IAgent<Req<string>, Evt<string>>
 
-type Event = Evt<string>
-
-type OnEvent = Event -> unit
+type Evt = Evt<string>
 
 let getSpawner env encoding logTraffic bufferSize =
     let encode = Dap.WebSocket.Internal.Text.encode encoding

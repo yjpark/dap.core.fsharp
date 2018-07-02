@@ -1,14 +1,14 @@
 [<RequireQualifiedAccess>]
-module Dap.Remote.WebSocketProxy.Actor
+module Dap.Remote.WebSocketProxy.Agent
 
 open Dap.Platform
 open Dap.Remote
 open Dap.Remote.WebSocketProxy.Types
 
-module WebSocket = Dap.WebSocket.Client.Types
-module WebSocketActor = Dap.WebSocket.Client.Actor
+type Agent<'req, 'evt> when 'req :> IRequest and 'evt :> IEvent =
+    IAgent<'req, 'evt>
 
-let create (spec : StubSpec<'res, 'evt>) (key : string) (uri : string) (logTraffic : bool) =
+let create'<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> (spec : StubSpec<'res, 'evt>) (key : string) (uri : string) (logTraffic : bool) : Dap.Remote.WebSocketProxy.Types.Agent<'req, 'res, 'evt> =
     fun agent ->
         {
             Spec = spec
@@ -19,5 +19,6 @@ let create (spec : StubSpec<'res, 'evt>) (key : string) (uri : string) (logTraff
     |> Logic.getSpec
     |> Agent.create Kind key
 
-let getOnResponse (agent : Agent<'req, 'res, 'evt>) : IBus<'res> =
-    agent.Actor.Args.OnResponse
+let create<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> (spec : StubSpec<'res, 'evt>) (key : string) (uri : string) (logTraffic : bool) =
+    create'<'req, 'res, 'evt> spec key uri logTraffic
+    :> Agent<'req, 'evt>

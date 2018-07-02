@@ -8,7 +8,7 @@ open Dap.Platform
 [<Literal>]
 let Kind = "Ticker"
 
-type Service = IAgent<Args, Model, Msg, Req, Evt>
+type Service = IAgent<Req, Evt>
 
 let getSpec (autoStart : bool) (frameRate : double) =
     fun _runner ->

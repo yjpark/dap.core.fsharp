@@ -4,7 +4,9 @@ module Dap.Platform.Registry.Types
 
 open Dap.Platform
 
-type Args = NoArgs
+type Agent<'k, 'v when 'k : comparison> = IAgent<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
+
+and Args = NoArgs
 
 and Model<'k, 'v when 'k : comparison> = {
     Entries : Map<'k, 'v>

@@ -8,7 +8,7 @@ open Dap.Remote
 open Dap.Platform
 module WebSocket = Dap.WebSocket.Types
 
-type Agent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
+type Agent<'req, 'evt> when 'req :> IReq and 'evt :> IEvent =
     IAgent<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
 
 and InternalEvt<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =

@@ -5,8 +5,10 @@ open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket.Client.Types
 
-let create (encode : Encode<'pkt>) (decode : Decode<'pkt>)
-            (key : Key) (uri : string) (logTraffic : bool) : Agent<'pkt> =
+type Agent<'pkt> = IAgent<Req<'pkt>, Evt<'pkt>>
+
+let create' (encode : Encode<'pkt>) (decode : Decode<'pkt>)
+            (key : Key) (uri : string) (logTraffic : bool) : Dap.WebSocket.Client.Types.Agent<'pkt> =
     fun _agent ->
         {
             Uri = uri
@@ -16,6 +18,11 @@ let create (encode : Encode<'pkt>) (decode : Decode<'pkt>)
         }
     |> Logic.getSpec
     |> Agent.create Kind key
+
+let create (encode : Encode<'pkt>) (decode : Decode<'pkt>)
+            (key : Key) (uri : string) (logTraffic : bool) : Agent<'pkt> =
+    create' encode decode key uri logTraffic
+    :> Agent<'pkt>
 
 let encodeText : Encode<string> =
     box

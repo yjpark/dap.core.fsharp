@@ -11,7 +11,7 @@ open Dap.Remote.WebSocketProxy.Types
 module WebSocket = Dap.WebSocket.Client.Types
 module WebSocketActor = Dap.WebSocket.Client.Actor
 
-type ActorOperate<'req, 'res, 'evt> when 'req :> IReq and 'evt :> IEvt =
+type ActorOperate<'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEvent =
     ActorOperate<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt>
 
 let private handleClient (msg : Client.Msg) : ActorOperate<'req, 'res, 'evt> =
@@ -135,7 +135,7 @@ let private update : ActorUpdate<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 
 
 let private init : ActorInit<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     fun runner args ->
-        let socket = WebSocketActor.create Packet.encode Packet.decode runner.Ident.Key args.Uri false
+        let socket = WebSocketActor.create' Packet.encode Packet.decode runner.Ident.Key args.Uri false
         ({
             Socket = socket
             Client = None

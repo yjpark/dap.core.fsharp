@@ -13,7 +13,9 @@ type TickStats = {
     Duration : Duration
 }
 
-type Args = {
+type Agent = IAgent<Args, Model, Msg, Req, Evt>
+
+and Args = {
     AutoStart : bool
     FrameRate : double
 }

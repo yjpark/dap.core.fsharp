@@ -11,11 +11,9 @@ open Dap.WebSocket.Conn.Types
 [<Literal>]
 let Kind = "WebSocketPacketConn"
 
-type Agent = Agent<Packet'>
+type Agent = IAgent<Req<Packet'>, Evt<Packet'>>
 
-type Event = Evt<Packet'>
-
-type OnEvent = Event -> unit
+type Evt = Evt<Packet'>
 
 let encode : Encode<Packet'> =
     fun pkt ->

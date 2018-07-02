@@ -28,6 +28,7 @@ type PacketId = string
 type PacketKind = string
 
 type IRequest =
+    inherit IReq
     abstract Kind : PacketKind with get
     abstract Payload : string with get
 
@@ -38,6 +39,7 @@ type IError =
     abstract Payload : string with get
 
 type IEvent =
+    inherit IEvt
     abstract Kind : PacketKind with get
     abstract Payload : string with get
 
@@ -103,12 +105,18 @@ type RemoteStubErr<'res> = IRequest -> RemoteReason' -> 'res
 type DecodeStubRes<'res> = IRequest -> string -> 'res
 type DecodeStubEvt<'evt> = PacketKind -> string -> 'evt
 
-type StubSpec<'res, 'evt> = {
+type StubSpec<'res, 'evt> when 'evt :> IEvent = {
     LocalErr : LocalStubErr<'res>
     RemoteErr : RemoteStubErr<'res>
     DecodeRes : DecodeStubRes<'res>
     DecodeEvt : DecodeStubEvt<'evt>
 }
+
+type IProxy<'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEvent =
+    abstract Post : 'req -> unit
+    abstract OnEvent : IBus<'evt>
+    abstract OnResponse : IBus<'res>
+    abstract Connected : bool
 
 type HubReason =
     | HubBad of string

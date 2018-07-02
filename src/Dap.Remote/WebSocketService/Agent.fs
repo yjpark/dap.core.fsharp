@@ -6,6 +6,8 @@ open Dap.Remote
 open Dap.Remote.WebSocketService
 open Dap.Remote.WebSocketService.Types
 
+type Agent = IAgent<Req, NoEvt>
+
 let getSpec (hubSpec : HubSpec<'req, 'evt>) (logTraffic : bool) =
     fun _agent ->
         {
