@@ -57,6 +57,7 @@ with interface IMsg
 and Model<'socket, 'pkt> when 'socket :> WebSocket = {
     Link : Link<'socket> option
     Connected : bool
+    Closing : bool
 }
 
 and [<StructuredFormatDisplay("<Link>{AsDisplay}")>]

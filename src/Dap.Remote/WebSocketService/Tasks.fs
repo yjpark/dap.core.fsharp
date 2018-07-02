@@ -19,10 +19,10 @@ let internal setSocketAsync : GetTask<Agent<'req, 'evt>, unit> =
 
 let internal doAttachAsync (ident : string) (token : CancellationToken)
                             (socket : WebSocket) : GetReplyTask<Agent<'req, 'evt>, Task> =
-    fun msg callback runner -> task {
+    fun req callback runner -> task {
         while Option.isNone runner.Actor.State.Socket do
             do! Task.Delay 20
         let socket' = Option.get runner.Actor.State.Socket
-        let! task = socket'.PostAsync <| WebSocket.DoConnect' ident token socket
-        reply runner callback <| ack msg task
+        let! task = socket'.PostAsync <| WebSocket.DoAttach' ident token socket
+        reply runner callback <| ack req task
     }

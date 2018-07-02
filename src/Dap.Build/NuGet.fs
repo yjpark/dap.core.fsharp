@@ -70,7 +70,7 @@ let checkVersion proj (releaseNotes : ReleaseNotes.ReleaseNotes) =
                 failwith <| sprintf "Mismatched version: project file => %s, RELEASE_NOTES.md => %s " version releaseNotes.NugetVersion
     releaseNotes
 
-let loadReleaseNotes proj = 
+let loadReleaseNotes proj =
     let dir = Path.GetDirectoryName(proj)
     dir </> "RELEASE_NOTES.md"
     |> ReleaseNotes.load
@@ -88,7 +88,7 @@ let private getApiKeyParam (apiKey : ApiKey) =
         sprintf " -k %s" key
     | NoAuth -> ""
 
-let pack (options : Options) proj = 
+let pack (options : Options) proj =
     Trace.traceFAKE "Pack NuGet Project: %s" proj
     let setOptions = fun (options' : DotNet.PackOptions) ->
         let releaseNotes = loadReleaseNotes proj
@@ -101,7 +101,7 @@ let pack (options : Options) proj =
                     CustomParams = Some pkgReleaseNotes
                     DotNetCliPath = "dotnet"
                 }
-        } 
+        }
     DotNet.pack setOptions proj
 
 let homePath =
@@ -152,7 +152,7 @@ let doInject (package : string) (version : string) (pkg : string) =
     Shell.copyFile nupkgPath pkg
     let hash = extractNupkg path nupkgPath
     File.writeNew injectPath [
-        sprintf "Injected At: %A" System.DateTime.Now 
+        sprintf "Injected At: %A" System.DateTime.Now
         sprintf "SHA512 Hash: %s" hash
         pkg
     ]
@@ -194,7 +194,7 @@ let doFetch (feed : Feed) (package : string) (version : string) =
     let hash = extractNupkg path nupkgPath
     let fetchPath = Path.Combine [| path ; "dap.build_fetch.txt" |]
     File.writeNew fetchPath [
-        sprintf "Download At: %A" System.DateTime.Now 
+        sprintf "Download At: %A" System.DateTime.Now
         sprintf "SHA512 Hash: %s" hash
         url
     ]

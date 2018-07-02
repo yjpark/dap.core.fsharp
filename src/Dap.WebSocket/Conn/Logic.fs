@@ -14,7 +14,8 @@ open Dap.WebSocket.Conn.Types
 module BaseLogic = Dap.WebSocket.Internal.Logic
 
 type ActorOperate<'pkt> = ActorOperate<WebSocket, 'pkt, Req<'pkt>>
-let private doConnect req (ident, token, socket, callback) : ActorOperate<'pkt> =
+
+let private doAttach req (ident, token, socket, callback) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match model.Link with
         | Some link ->
@@ -41,7 +42,7 @@ let private doSend req ((pkt, callback) : 'pkt * Callback<SendStats>) : ActorOpe
 let private handleReq req : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match req with
-        | DoConnect (a, b, c, d) -> doConnect req (a, b, c, d)
+        | DoAttach (a, b, c, d) -> doAttach req (a, b, c, d)
         | DoSend (a, b) -> doSend req (a, b)
         <| runner <| (model, cmd)
 

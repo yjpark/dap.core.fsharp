@@ -74,7 +74,7 @@ let clean (_options : Options) proj =
         Path.Combine [| dir ; "obj" |]
     ]
 
-let restore (_options : Options) (noDependencies : bool) proj = 
+let restore (_options : Options) (noDependencies : bool) proj =
     Trace.traceFAKE "Restore Project: %s" proj
     let setOptions = fun (options' : DotNet.RestoreOptions) ->
         if noDependencies then
@@ -83,12 +83,12 @@ let restore (_options : Options) (noDependencies : bool) proj =
                     { options'.Common with
                         CustomParams = Some "--no-dependencies"
                     }
-            } 
+            }
         else
             options'
     DotNet.restore setOptions proj
 
-let build (options : Options) (noDependencies : bool) proj = 
+let build (options : Options) (noDependencies : bool) proj =
     Trace.traceFAKE "Build Project: %s" proj
     let setOptions = fun (options' : DotNet.BuildOptions) ->
         let mutable param = "--no-restore"
@@ -100,22 +100,22 @@ let build (options : Options) (noDependencies : bool) proj =
                 { options'.Common with
                     CustomParams = Some param
                 }
-        } 
+        }
     DotNet.build setOptions proj
 
-let private run' (cmd : string) (options : Options) proj = 
+let private run' (cmd : string) (options : Options) proj =
     Trace.traceFAKE "Run Project: %s" proj
     let setOptions = fun (options' : DotNet.Options) ->
         { options' with
             WorkingDirectory = Path.GetDirectoryName(proj)
-        } 
+        }
     let package = getPackage proj
     let key = "RunArgs_" + package.Replace(".", "_")
     match Environment.environVarOrNone key with
     | Some v ->
         v
     | None ->
-        Trace.traceFAKE "    Pass Args by Set Environment: %s" key 
+        Trace.traceFAKE "    Pass Args by Set Environment: %s" key
         ""
     |> sprintf "--no-build --configuration %s -- %s" (getConfigFolder options.Configuration)
     |> DotNet.exec setOptions cmd
@@ -123,18 +123,18 @@ let private run' (cmd : string) (options : Options) proj =
         if not result.OK then
             failwith <| sprintf "Run Project Failed: %s -> [%i] %A %A" package result.ExitCode result.Messages result.Errors
 
-let run (options : Options) proj = 
+let run (options : Options) proj =
     run' "run" options proj
 
-let watchRun (options : Options) proj = 
+let watchRun (options : Options) proj =
     run' "watch run" options proj
 
-let publish (options : Options) proj = 
+let publish (options : Options) proj =
     Trace.traceFAKE "Publish Project: %s" proj
     let setOptions = fun (options' : DotNet.Options) ->
         { options' with
             WorkingDirectory = Path.GetDirectoryName(proj)
-        } 
+        }
     let package = getPackage proj
     sprintf "--no-build --configuration %s" (getConfigFolder options.Configuration)
     |> DotNet.exec setOptions "publish"
@@ -168,7 +168,7 @@ let createTargets' (options : Options) (noPrefix : bool) (projects : seq<string>
     Target.setLastDescription <| sprintf "Build %s" label
     Target.create (prefix + Build) (fun _ ->
         projects
-        |> Seq.iteri (fun i proj -> 
+        |> Seq.iteri (fun i proj ->
             build options (i > 0) proj
         )
     )

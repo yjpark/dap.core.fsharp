@@ -14,12 +14,12 @@ type ConnectStats = {
     ConnectDuration : Duration
 }
 
-
 type Agent<'pkt> =  Dap.WebSocket.Types.Agent<ClientWebSocket, 'pkt, Req<'pkt>>
 
 and Req<'pkt> =
     | DoConnect of string * CancellationToken * Callback<ConnectStats>
     | DoSend of 'pkt * Callback<SendStats>
+    | DoDisconnect of Callback<unit>
 with interface IReq
 
 let DoConnect' (uri : string) (token : CancellationToken) callback =

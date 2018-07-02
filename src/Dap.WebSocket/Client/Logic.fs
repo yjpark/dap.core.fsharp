@@ -34,6 +34,22 @@ let private doConnect req (uri, token, callback) : ActorOperate<'pkt> =
             setModel {model with Link = Some link}
         <| runner <| (model, cmd)
 
+let private DoDisconnect req (callback : Callback<unit>) : ActorOperate<'pkt> =
+    fun runner (model, cmd) ->
+        match model.Link with
+        | Some link ->
+            match model.Closing with
+            | true ->
+                reply runner callback <| nak req "Alreading_Closing" link
+                (model, cmd)
+            | false ->
+                reply runner callback <| ack req ()
+                (runner, model, cmd)
+                |=|> setModel {model with Closing = true}
+        | None ->
+            reply runner callback <| nak req "Link_Not_Exist" ()
+            (model, cmd)
+
 let private doSend req ((pkt, callback) : 'pkt * Callback<SendStats>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         BaseLogic.doSend runner req (pkt, callback)
@@ -43,6 +59,7 @@ let private handleReq req : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match req with
         | DoConnect (a, b, c) -> doConnect req (a, b, c)
+        | DoDisconnect (a, b, c) -> doConnect req a
         | DoSend (a, b) -> doSend req (a, b)
         <| runner <| (model, cmd)
 

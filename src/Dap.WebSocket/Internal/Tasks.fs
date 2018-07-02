@@ -19,34 +19,38 @@ let private doReadPktAsync (link : Link<'socket>)
             let mutable finished = false
             let socket = link.Socket :> WebSocket
             while not finished do
-                //logInfo runner "Dev" "ReceiveAsync" "Begin"
-                let! result = socket.ReceiveAsync(ArraySegment<byte>(link.Buffer, offset, capacity), link.Token)
-                //logInfo runner "Dev" "ReceiveAsync" "End"
-                if result.CloseStatus.HasValue then
-                    logInfo runner "Link" "Closed" link
+                if runner.Actor.State.Closing then
                     finished <- true
                     closed <- true
                 else
-                    offset <- offset + result.Count
-                    capacity <- capacity - result.Count
-                    if result.EndOfMessage then
-                        let length = offset
+                    //logInfo runner "Dev" "ReceiveAsync" "Begin"
+                    let! result = socket.ReceiveAsync(ArraySegment<byte>(link.Buffer, offset, capacity), link.Token)
+                    //logInfo runner "Dev" "ReceiveAsync" "End"
+                    if result.CloseStatus.HasValue then
+                        logInfo runner "Link" "Closed" link
                         finished <- true
-                        let (time, transferDuration) = runner.Clock.CalcDuration(time)
-                        match runner.RunFunc<'pkt> (fun _ -> runner.Actor.Args.Decode (link.Buffer, 0, length)) with
-                        | Ok pkt ->
-                            let (_time, decodeDuration) = runner.Clock.CalcDuration(time)
-                            let stats : ReceiveStats = {
-                                ProcessTime = time
-                                BytesCount = length
-                                TransferDuration = transferDuration
-                                DecodeDuration = decodeDuration
-                            }
-                            if runner.Actor.Args.LogTraffic then
-                                logInfo runner "Traffic" "Received" (link, stats, pkt)
-                            runner.Deliver <| WebSocketEvt ^<| OnReceived (stats, pkt)
-                        | Error e ->
-                            logException runner "Received" "Decode_Failed" (link, length) e
+                        closed <- true
+                    else
+                        offset <- offset + result.Count
+                        capacity <- capacity - result.Count
+                        if result.EndOfMessage then
+                            let length = offset
+                            finished <- true
+                            let (time, transferDuration) = runner.Clock.CalcDuration(time)
+                            match runner.RunFunc<'pkt> (fun _ -> runner.Actor.Args.Decode (link.Buffer, 0, length)) with
+                            | Ok pkt ->
+                                let (_time, decodeDuration) = runner.Clock.CalcDuration(time)
+                                let stats : ReceiveStats = {
+                                    ProcessTime = time
+                                    BytesCount = length
+                                    TransferDuration = transferDuration
+                                    DecodeDuration = decodeDuration
+                                }
+                                if runner.Actor.Args.LogTraffic then
+                                    logInfo runner "Traffic" "Received" (link, stats, pkt)
+                                runner.Deliver <| WebSocketEvt ^<| OnReceived (stats, pkt)
+                            | Error e ->
+                                logException runner "Received" "Decode_Failed" (link, length) e
         with
         | e ->
             logException runner "Received" "Exception_Raised" link e
@@ -77,7 +81,7 @@ let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
     }
 
 let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'socket, 'pkt, 'req>, SendStats> =
-    fun msg callback runner -> task {
+    fun req callback runner -> task {
         let time = runner.Clock.Now
         let buffer = runner.Actor.Args.Encode pkt
         let (time, encodeDuration) = runner.Clock.CalcDuration(time)
@@ -93,7 +97,7 @@ let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'socket, 'pkt, 'req>,
         }
         if runner.Actor.Args.LogTraffic then
             logInfo runner "Traffic" "Sent" (stats, pkt)
-        reply runner callback <| ack msg stats
+        reply runner callback <| ack req stats
         runner.Deliver <| WebSocketEvt ^<| OnSent (stats, pkt)
     }
 
