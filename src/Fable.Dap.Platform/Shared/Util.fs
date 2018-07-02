@@ -54,11 +54,6 @@ let inline updateSession (update : 'session -> 'session) : Operate<'runner, ^mod
             let newSession = update session
             let newModel = (^model : (member WithSession : 'session -> ^model) (model, newSession))
             (newModel, cmd)
-
-let inline setSession (newSession : 'session) : Operate<'runner, ^model, 'msg> =
-    fun _runner (model, cmd) ->
-        let newModel = (^model : (member WithSession : 'session -> ^model) (model, newSession))
-        (newModel, cmd)
 #endif
 let noCmd = Cmd.none
 
