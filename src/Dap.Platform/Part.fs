@@ -48,23 +48,27 @@ type IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg an
     inherit IPart<'args, 'model, 'msg, 'req, 'evt>
     abstract Wrapper : Wrapper<'actorMsg, 'msg> with get
 
+[<StructuredFormatDisplay("<Part>{AsDisplay}")>]
 type internal Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Spec : PartSpec<'args, 'model, 'msg, 'req, 'evt>
     Agent : IAgent
+    ModMsg : Wrapper<'actorMsg, 'msg>
     mutable Wrapper : Wrapper<'actorMsg, 'msg> option
     mutable Dispatch : DispatchMsg<'msg> option
     mutable State : 'model option
     mutable Actor' : ActorPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> option
 } with
-    static member Create spec agent =
+    static member Create spec agent modMsg =
         {
             Spec = spec
             Agent = agent
+            ModMsg = modMsg
             Wrapper = None
             Dispatch = None
             State = None
             Actor' = None
         }
+    member this.AsDisplay = (this.Agent.Ident, this.ModMsg)
     member this.Actor =
         if this.Actor'.IsNone then
             this.Actor' <- Some <| ActorPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>.Create this
@@ -109,7 +113,8 @@ type internal Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :>
         member this.RunFunc4 func = runFunc' this func
         member this.AddTask4 onFailed getTask = addTask' this onFailed getTask
 
-and internal ActorPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
+and [<StructuredFormatDisplay("<ActorPart>{AsDisplay}")>]
+    internal ActorPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Part : Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
     Args : 'args
     OnEvent : IBus<'evt>
@@ -139,7 +144,7 @@ let init (modMsg : Wrapper<'actorMsg, 'msg>)
         (agent : IAgent<'actorMsg>)
         (modSpec : PartSpec<'args, 'model, 'msg, 'req, 'evt>)
         : IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> =
-    let part = Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>.Create modSpec agent
+    let part = Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>.Create modSpec agent modMsg
     let part' = part :> IPart<'args, 'model, 'msg, 'req, 'evt>
 
     let updatePart : Update<IAgent<'actorMsg>, 'model, 'msg> =
