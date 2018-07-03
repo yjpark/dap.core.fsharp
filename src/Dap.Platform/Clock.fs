@@ -78,3 +78,5 @@ with
         | DateHour -> instantToString "uuuu-MM-ddTHH"
         | DateHourMinute -> instantToString "uuuu-MM-ddTHH:mm"
         | Custom format -> instantToString format
+
+let noDuration = Duration.Zero

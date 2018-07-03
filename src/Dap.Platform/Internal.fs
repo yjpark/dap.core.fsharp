@@ -16,6 +16,7 @@ type internal Env = {
     Logger : ILogger
     Logic : EnvLogic
     Stats : Stats
+    TaskManager : TaskManager
     mutable Dispatch : DispatchMsg<EnvMsg> option
     mutable State : EnvModel option
 } with
@@ -38,7 +39,13 @@ type internal Env = {
         member this.Clock = this.Clock
         member this.Stats = this.Stats
         member this.RunFunc func = runFunc' this func
-        member this.RunTask onFailed getTask = runTask' this onFailed getTask
+        member this.AddTask onFailed getTask = addTask' this onFailed getTask
+        member this.ScheduleTask task = this.TaskManager.ScheduleTask task
+        member this.RunTasks () = this.TaskManager.RunTasks ()
+        member this.ClearPendingTasks () = this.TaskManager.ClearPendingTasks ()
+        member this.CancelRunningTasks () = this.TaskManager.CancelRunningTasks ()
+        member this.PendingTasksCount = this.TaskManager.PendingTasksCount
+        member this.RunningTasksCount = this.TaskManager.RunningTasksCount
     interface IEnv with
         member this.Platform = this.Platform
         member this.Logging = this.Logging
@@ -63,6 +70,7 @@ and [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
     mutable Logger : ILogger
     Logic : AgentLogic<'args, 'model, 'msg, 'req, 'evt>
     Stats : Stats
+    TaskManager : TaskManager
     mutable Disposed : bool
     mutable Dispatch : DispatchMsg<AgentMsg<'args, 'model, 'msg, 'req, 'evt>> option
     mutable State : AgentModel<'args, 'model, 'msg, 'req, 'evt> option
@@ -118,7 +126,13 @@ and [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
         member this.Clock = this.Env.Clock
         member this.Stats = this.Stats
         member this.RunFunc func = runFunc' this func
-        member this.RunTask onFailed getTask = runTask' this onFailed getTask
+        member this.AddTask onFailed getTask = addTask' this onFailed getTask
+        member this.ScheduleTask task = this.TaskManager.ScheduleTask task
+        member this.RunTasks () = this.TaskManager.RunTasks ()
+        member this.ClearPendingTasks () = this.TaskManager.ClearPendingTasks ()
+        member this.CancelRunningTasks () = this.TaskManager.CancelRunningTasks ()
+        member this.PendingTasksCount = this.TaskManager.PendingTasksCount
+        member this.RunningTasksCount = this.TaskManager.RunningTasksCount
     interface ILogger with
         member this.Log m = this.Logger.Log m
     interface IOwner with
@@ -130,13 +144,13 @@ and [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
         member this.Handle req = this.Handle req
         member this.HandleAsync getReq = this.HandleAsync getReq
         member this.RunFunc1 func = runFunc' this func
-        member this.RunTask1 onFailed getTask = runTask' this onFailed getTask
+        member this.AddTask1 onFailed getTask = addTask' this onFailed getTask
     interface IAgent<'req, 'evt> with
         member this.Actor = this.Actor :> IActor<'req, 'evt>
         member this.Post req = this.Post req
         member this.PostAsync getSubMsg = this.PostAsync getSubMsg
         member this.RunFunc2 func = runFunc' this func
-        member this.RunTask2 onFailed getTask = runTask' this onFailed getTask
+        member this.AddTask2 onFailed getTask = addTask' this onFailed getTask
     interface IAgent<'args, 'model, 'msg, 'req, 'evt> with
         member this.Spec = this.Spec
         member this.Actor = this.Actor :> IActor<'args, 'model, 'req, 'evt>
@@ -145,7 +159,7 @@ and [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
 
         member this.RunFunc3 func = runFunc' this func
         //Note: `((onFailed, getTask))` is needed, for the replyAsync type constraint to work
-        member this.RunTask3 onFailed getTask = runTask' this onFailed getTask
+        member this.AddTask3 onFailed getTask = addTask' this onFailed getTask
         member this.FireEvent'' (evt : 'evt) = this.Actor.FireEvent' evt
 
 and [<StructuredFormatDisplay("<Actor>{Ident}")>]

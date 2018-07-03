@@ -4,7 +4,7 @@ module Dap.WebSocket.Conn.Logic
 open System
 open System.Threading.Tasks
 open System.Net.WebSockets
-open FSharp.Control.Tasks
+open FSharp.Control.Tasks.V2
 open Elmish
 open Dap.Prelude
 open Dap.Platform
@@ -30,9 +30,10 @@ let private doAttach req (ident, token, socket, callback) : ActorOperate<'pkt> =
             }
             let task = doReceiveAsync runner
             reply runner callback <| ack req (task :> Task)
+            let stats = ConnectedStats.Create runner.Clock.Now noDuration
             (runner, model, cmd)
             |-|> updateModel (fun m -> {m with Link = Some link})
-            |=|> addCmd ^<| WebSocketEvt OnConnected
+            |=|> addCmd ^<| WebSocketEvt ^<| OnConnected stats
 
 let private doSend req ((pkt, callback) : 'pkt * Callback<SendStats>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->

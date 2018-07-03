@@ -23,8 +23,8 @@
     <Compile Include="Dispatcher.fs" />
     <Compile Include="Runnable.fs" />
     <Compile Include="Types.fs" />
-    <Compile Include="Replier.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Actor.fs" />
+    <Compile Include="Replier.fs" />
     <Compile Include="Tasks.fs" />
     <Compile Include="Logging.fs" />
     <Compile Include="Internal.fs" />

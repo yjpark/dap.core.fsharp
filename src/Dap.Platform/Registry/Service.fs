@@ -2,7 +2,7 @@
 [<RequireQualifiedAccess>]
 module Dap.Platform.Registry.Service
 
-open FSharp.Control.Tasks
+open FSharp.Control.Tasks.V2
 open Dap.Platform
 
 [<Literal>]

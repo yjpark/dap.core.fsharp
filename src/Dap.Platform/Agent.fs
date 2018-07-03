@@ -97,6 +97,7 @@ let spawn (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
         Logger = logger
         Logic = logic
         Stats = statsOfCap <| defaultArg spec.GetSlowCap getDefaultSlowCap
+        TaskManager = new TaskManager ()
         State = None
         Actor' = None
         Version = noVersion

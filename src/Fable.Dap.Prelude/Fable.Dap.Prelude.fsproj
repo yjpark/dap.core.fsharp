@@ -17,6 +17,7 @@
     <Compile Include="Shared/Option.fs" />
     <Compile Include="Shared/Result.fs" />
     <Compile Include="Shared/Union.fs" />
+    <Compile Include="Shared/List.fs" />
     <Compile Include="Logging.fs" />
   </ItemGroup>
   <ItemGroup>

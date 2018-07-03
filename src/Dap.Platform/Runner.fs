@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Dap.Platform.Runner
 
+open System.Threading
 open System.Threading.Tasks
 open Dap.Prelude
 
@@ -25,12 +26,21 @@ and Stats = {
     Task : FuncStats<ms>
 }
 
+type IPendingTask =
+    abstract Run : CancellationToken -> Task option
+
 and IRunner =
     inherit ILogger
     abstract Clock : IClock with get
     abstract Stats : Stats with get
     abstract RunFunc<'res> : Func<IRunner, 'res> -> Result<'res, exn>
-    abstract RunTask : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
+    abstract AddTask : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
+    abstract ScheduleTask : IPendingTask -> unit
+    abstract RunTasks : unit -> int
+    abstract ClearPendingTasks : unit -> int
+    abstract CancelRunningTasks : unit -> int
+    abstract PendingTasksCount : int with get
+    abstract RunningTasksCount : int with get
 
 let statsOfCap (getSlowCap : GetSlowCap) : Stats = {
     Deliver = durationStatsOfCap <| getSlowCap DeliverDuration
@@ -84,6 +94,9 @@ let private logRunResult (runner : IRunner) (section : string)
         stats.IncFailedCount ()
         runner.Log <| tplRunFuncFailed section func duration e
     result
+
+let ignoreOnFailed : OnFailed<'runner> =
+    fun _runner _e -> ()
 
 let internal runFunc' (runner : 'runner when 'runner :> IRunner) (func : Func<'runner, 'res>) : Result<'res, exn> =
     let time = runner.Clock.Now'

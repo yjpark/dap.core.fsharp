@@ -3,7 +3,7 @@ module Dap.WebSocket.Internal.Tasks
 open System
 open System.Threading.Tasks
 open System.Net.WebSockets
-open FSharp.Control.Tasks
+open FSharp.Control.Tasks.V2
 open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket.Types
@@ -60,8 +60,7 @@ let private doReadPktAsync (link : Link<'socket>)
 
 let internal doReceiveFailed : OnFailed<Agent<'socket, 'pkt, 'req>> =
     fun runner e ->
-        logInfo runner "Link" "Disconnected" (runner.Actor.State.Link, e)
-        runner.Deliver <| WebSocketEvt OnDisconnected
+        fireOnDisconnected runner (Some e)
 
 let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
     fun runner -> task {
@@ -76,8 +75,7 @@ let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
         if socket.State = WebSocketState.Open then
             logInfo runner "Link" "Closing" link.Ident
             do! socket.CloseAsync (WebSocketCloseStatus.Empty, "", link.Token)
-        logInfo runner "Link" "Disconnected" link.Ident
-        runner.Deliver <| WebSocketEvt OnDisconnected
+        fireOnDisconnected runner None
     }
 
 let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'socket, 'pkt, 'req>, SendStats> =

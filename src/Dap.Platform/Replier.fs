@@ -2,6 +2,7 @@
 module Dap.Platform.Replier
 
 open System.Threading.Tasks
+open FSharp.Control.Tasks.V2
 open Dap.Prelude
 
 
@@ -31,6 +32,11 @@ let reply (runner : IRunner) (callback : Callback<'res>) (reply : Reply<'res>) :
             runner.Log <| tplAckReply req res
         | Nak (req, err, detail) ->
             runner.Log <| tplNakReply req err detail
+
+let replyAfter (runner : IRunner) (callback : Callback<'res>) (reply' : Reply<'res>) : unit =
+    runner.AddTask ignoreOnFailed <| fun _runner -> task {
+        reply runner callback reply'
+    }
 
 let private getSlowReplyMessage req (duration, stats) =
     tplSlowStats "Slow_Reply" duration req stats
@@ -63,30 +69,42 @@ let callbackAsync (runner : IRunner) (onDone : TaskCompletionSource<'res>) : Cal
 let nakOnFailed (req : IReq) (callback : Callback<'res>) (runner : 'runner) (e : exn) =
     reply runner callback <| nak req "Exception_Raised" e
 
+
+//Note: the AddTask here is mainly for timing, to make sure
+//the tasks are executed after the process, so the updateModel actions
+//always took effect
+
 let replyAsync (runner : IRunner) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IRunner, 'res>)
                 (getReplyTask : GetReplyTask<IRunner, 'res>) : unit =
     let onFailed = getOnFailed req callback
     let getTask = getReplyTask req callback
-    runner.RunTask onFailed getTask
+    runner.AddTask onFailed getTask
 
 let replyAsync1 (runner : IAgent) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IAgent, 'res>)
                 (getReplyTask : GetReplyTask<IAgent, 'res>) : unit =
     let onFailed = getOnFailed req callback
     let getTask = getReplyTask req callback
-    runner.RunTask1 onFailed getTask
+    runner.AddTask1 onFailed getTask
 
 let replyAsync2 (runner : IAgent<'req, 'evt>) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IAgent<'req, 'evt>, 'res>)
                 (getReplyTask : GetReplyTask<IAgent<'req, 'evt>, 'res>) : unit =
     let onFailed = getOnFailed req callback
     let getTask = getReplyTask req callback
-    runner.RunTask2 onFailed getTask
+    runner.AddTask2 onFailed getTask
 
 let replyAsync3 (runner : IAgent<'args, 'model, 'msg, 'req, 'evt>) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'res>)
                 (getReplyTask : GetReplyTask<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'res>) : unit =
     let onFailed = getOnFailed req callback
     let getTask = getReplyTask req callback
-    runner.RunTask3 onFailed getTask
+    runner.AddTask3 onFailed getTask
+
+let replyAsync4 (runner : IModRunner<'args, 'model, 'msg>) (req : IReq) (callback : Callback<'res>)
+                (getOnFailed: OnReplyFailed<IModRunner<'args, 'model, 'msg>, 'res>)
+                (getReplyTask : GetReplyTask<IModRunner<'args, 'model, 'msg>, 'res>) : unit =
+    let onFailed = getOnFailed req callback
+    let getTask = getReplyTask req callback
+    runner.AddTask4 onFailed getTask

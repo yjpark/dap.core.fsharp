@@ -2,10 +2,6 @@
 module Dap.Platform.Util
 
 open Elmish
-#if FABLE_COMPILER
-open Fable.Core
-open Fable.PowerPack
-#endif
 
 open Dap.Prelude
 
@@ -137,23 +133,3 @@ let subscribeEvent (owner : IOwner) (_model : 'model)
         let ident = sprintf "%A" wrapper
         onEvent.Add (dispatch << wrapper)
     Elmish.Cmd.ofSub sub
-
-#if FABLE_COMPILER
-type Second = float
-
-let private sleepForSeconds (delay : Second) = promise {
-    do! Promise.sleep <| int (delay * 1000.0)
-    return delay
-}
-
-let addFutureCmd (delay : Second) (msg : 'msg) : Operate<'runner, 'model, 'msg> =
-    Cmd.ofPromise
-        sleepForSeconds delay
-        (fun _ -> msg)
-        (fun e ->
-            Fable.Import.Browser.console.error ("addFutureCmd Failed:", [|box delay ; box msg |])
-            Fable.Import.Browser.console.error ("Exception:", [|box e.Message ; box "\nStackTrace:" ; box e.StackTrace|])
-            msg
-        )
-    |> addCmd'
-#endif

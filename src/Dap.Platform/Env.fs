@@ -3,7 +3,7 @@
 module Dap.Platform.Env
 
 open Elmish
-open FSharp.Control.Tasks
+open FSharp.Control.Tasks.V2
 
 open Dap.Prelude
 open Dap.Platform.Internal
@@ -161,6 +161,7 @@ let create (param : EnvParam) : IEnv =
         Logger = logger
         Logic = logic
         Stats = statsOfCap <| defaultArg param.GetSlowCap getDefaultSlowCap
+        TaskManager = new TaskManager ()
         State = None
         Dispatch = None
     }

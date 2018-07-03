@@ -25,11 +25,22 @@ let internal doSend (runner : Agent<'socket, 'pkt, 'req>)
 let private handleEvt evt : ActorOperate<'socket, 'pkt, 'req> =
     fun runner (model, cmd) ->
         match evt with
-        | OnConnected ->
-            updateModel (fun m -> {m with Connected = true ; Closing = false})
-        | OnDisconnected ->
-            updateModel (fun m -> {m with Link = None ; Connected = false ; Closing = false})
-        | _ -> noOperation
+        | OnReceived (_stats, _pkt) ->
+            model.Stats
+            |> Option.iter (fun stats ->
+                stats.ReceivedCount <- stats.ReceivedCount + 1
+            )
+            noOperation
+        | OnSent (_stats, _pkt) ->
+            model.Stats
+            |> Option.iter (fun stats ->
+                stats.SentCount <- stats.SentCount + 1
+            )
+            noOperation
+        | OnConnected stats ->
+            updateModel (fun m -> {m with Stats = Some (ConnectionStats.Create stats) ; Closing = false})
+        | OnDisconnected _stats ->
+            updateModel (fun m -> {m with Link = None ; Stats = None ; Closing = false})
         <| runner <| (model, cmd)
 
 let private update : ActorUpdate<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
@@ -43,7 +54,7 @@ let private init : ActorInit<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Ms
     fun _runner _args ->
         ({
             Link = None
-            Connected = false
+            Stats = None
             Closing = false
         }, noCmd)
 

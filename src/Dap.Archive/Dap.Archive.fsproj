@@ -19,6 +19,9 @@
     <Compile Include="Recorder/Logic.fs" />
     <Compile Include="Recorder/EventRecorder.fs" />
     <Compile Include="WebSocket/TextRecorder.fs" />
+    <Compile Include="WebSocket/Accessor/Types.fs" />
+    <Compile Include="WebSocket/Accessor/Tasks.fs" />
+    <Compile Include="WebSocket/Accessor/Logic.fs" />
     <Compile Include="Helper.fs" />
   </ItemGroup>
   <ItemGroup>

@@ -37,6 +37,7 @@ let internal start' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>
             | Some state ->
                 raiseRunnableFatal "Already_Started" state
         setState model
+        runner.RunTasks () |> ignore
         let runner = runnable.Runner
         try
             Cmd.batch [
@@ -77,6 +78,7 @@ let internal process' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'ms
             | Some state ->
                 runnable.Logic.Update runner state msg
         setState model
+        runner.RunTasks () |> ignore
         trackDurationStatsInMs runner time runnable.Stats.Process (getSlowProcessMessage msg) |> ignore
         cmd
     with

@@ -88,7 +88,7 @@ and IAgent =
     abstract Env : IEnv with get
     abstract Ident : Ident with get
     abstract RunFunc1<'res> : Func<IAgent, 'res> -> Result<'res, exn>
-    abstract RunTask1 : OnFailed<IAgent> -> GetTask<IAgent, unit> -> unit
+    abstract AddTask1 : OnFailed<IAgent> -> GetTask<IAgent, unit> -> unit
 
 and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IAgent
@@ -96,7 +96,7 @@ and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IAsyncPoster<'req>
     abstract Actor : IActor<'req, 'evt> with get
     abstract RunFunc2<'res> : Func<IAgent<'req, 'evt>, 'res> -> Result<'res, exn>
-    abstract RunTask2 : OnFailed<IAgent<'req, 'evt>> -> GetTask<IAgent<'req, 'evt>, unit> -> unit
+    abstract AddTask2 : OnFailed<IAgent<'req, 'evt>> -> GetTask<IAgent<'req, 'evt>, unit> -> unit
 
 and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     inherit IAgent<'req, 'evt>
@@ -105,7 +105,7 @@ and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq a
     abstract Deliver' : Cmd<'msg> -> unit
     abstract Deliver : 'msg -> unit
     abstract RunFunc3<'res> : Func<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'res> -> Result<'res, exn>
-    abstract RunTask3 : OnFailed<IAgent<'args, 'model, 'msg, 'req, 'evt>> -> GetTask<IAgent<'args, 'model, 'msg, 'req, 'evt>, unit> -> unit
+    abstract AddTask3 : OnFailed<IAgent<'args, 'model, 'msg, 'req, 'evt>> -> GetTask<IAgent<'args, 'model, 'msg, 'req, 'evt>, unit> -> unit
     abstract FireEvent'' : 'evt -> unit //Should NOT be used by actor
 
 and AgentSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {

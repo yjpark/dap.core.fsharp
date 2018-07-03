@@ -59,5 +59,5 @@ type Spec<'initer, 'runner, 'model, 'msg, 'subArgs, 'subModel, 'subMsg> = {
 type SubUpdate<'runner, 'model, 'msg, 'subMsg> =
     'runner -> 'model -> 'subMsg -> 'model * Cmd<'msg>
 
-type Api<'runner, 'req, 'res> = 
+type Api<'runner, 'req, 'res> =
     'runner -> ('res -> unit) -> 'req -> unit

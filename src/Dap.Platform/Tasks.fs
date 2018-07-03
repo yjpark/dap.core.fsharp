@@ -1,8 +1,9 @@
 [<AutoOpen>]
 module Dap.Platform.Tasks
 
+open System.Threading
 open System.Threading.Tasks
-open FSharp.Control.Tasks
+open FSharp.Control.Tasks.V2
 open Dap.Prelude
 
 let private tplRunTaskSucceed = LogEvent.Template3<string, string, Duration>(AckLogLevel, "[{Section}] {Task} {Duration} ~> Succeed")
@@ -39,6 +40,7 @@ let private logRunResult' runner section states getTask startTime (onFailed : ex
     | None -> ()
     | Some e -> onFailed e
 
+(*
 let private tryRunTask (runner : 'runner) (getTask : GetTask<'runner, unit>) (onDone : exn option -> unit) : unit =
     let getTask' : unit -> Task<unit> = fun () -> task {
         do! Task.Yield()
@@ -51,12 +53,81 @@ let private tryRunTask (runner : 'runner) (getTask : GetTask<'runner, unit>) (on
     }
     Task.Run (fun () -> (getTask' ()) :> Task)
     |> ignore
+*)
 
-let internal runTask' (runner : 'runner when 'runner :> IRunner) (onFailed : OnFailed<'runner>) (getTask : GetTask<'runner, unit>) : unit =
-    let time = runner.Clock.Now'
-    runner.Stats.Task.StartedCount <- runner.Stats.Task.StartedCount + 1
-    (logRunResult' runner "RunTask'" runner.Stats.Task (getTask.ToString()) time (onFailed runner))
-    |> tryRunTask runner getTask
+type internal PendingTask<'runner> when 'runner :> IRunner = {
+    Runner : 'runner
+    OnFailed : OnFailed<'runner>
+    GetTask : GetTask<'runner, unit>
+} with
+    interface IPendingTask with
+        member this.Run (cancellationToken : CancellationToken) =
+            let runner = this.Runner
+            let time = runner.Clock.Now'
+            runner.Stats.Task.StartedCount <- this.Runner.Stats.Task.StartedCount + 1
+            let onDone = logRunResult' runner "RunTask" runner.Stats.Task (this.GetTask.ToString()) time (this.OnFailed runner)
+            let runTask = fun () ->
+                try
+                    let task = this.GetTask runner
+                    task.Wait()
+                    onDone None
+                with
+                | e ->
+                    onDone <| Some e
+            try
+                Task.Run (runTask, cancellationToken)
+                |> Some
+            with e ->
+                onDone <| Some e
+                None
 
-let ignoreOnFailed : OnFailed<'runner> =
-    fun _runner _e -> ()
+let internal addTask' (runner : 'runner when 'runner :> IRunner) (onFailed : OnFailed<'runner>) (getTask : GetTask<'runner, unit>) : unit =
+    let pendingTask : PendingTask<'runner> =
+        {
+            Runner = runner
+            OnFailed = onFailed
+            GetTask = getTask
+        }
+    runner.ScheduleTask pendingTask
+
+type internal TaskManager () =
+    let mutable runningTasks : (CancellationTokenSource * Task) list = []
+    let mutable pendingTasks : IPendingTask list = []
+
+    let runTask (pendingTask : IPendingTask) (count : int) : int =
+        let cts = new CancellationTokenSource()
+        match pendingTask.Run cts.Token with
+        | None ->
+            count
+        | Some task ->
+            runningTasks <- (cts, task) :: runningTasks
+            count + 1
+
+    let cancelTask ((cts, task) : CancellationTokenSource * Task) (count : int) : int =
+        cts.Cancel ()
+        count + 1
+
+    let removeCompletedTasks () =
+        runningTasks <- runningTasks |> List.filter (fun (cts, task) -> not task.IsCompleted)
+
+    member _this.ScheduleTask (task : IPendingTask) =
+        pendingTasks <- task :: pendingTasks
+    member _this.RunTasks () =
+        let tasks = pendingTasks
+        pendingTasks <- []
+        removeCompletedTasks ()
+        List.foldBack runTask tasks 0
+    member _this.ClearPendingTasks () =
+        let tasks = pendingTasks
+        pendingTasks <- []
+        tasks.Length
+    member _this.CancelRunningTasks () =
+        removeCompletedTasks ()
+        let tasks = runningTasks
+        runningTasks <- []
+        List.foldBack cancelTask tasks 0
+    member this.PendingTasksCount =
+        pendingTasks.Length
+    member this.RunningTasksCount =
+        removeCompletedTasks ()
+        runningTasks.Length

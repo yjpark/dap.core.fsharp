@@ -27,7 +27,7 @@ let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req,
         handleService <| Service.OnReceived pkt
     | WebSocket.OnSent (_stats, pkt) ->
         handleService <| Service.OnSent pkt
-    | WebSocket.OnDisconnected ->
+    | WebSocket.OnDisconnected _stats ->
         fun _runner (model, msg) ->
             model.Hub
             |> Option.map (fun hub ->
@@ -50,7 +50,7 @@ let private setHub hub : ActorOperate<'req, 'evt> =
     fun runner (model, cmd) ->
         match model.Hub with
         | None ->
-            runner.RunTask3 ignoreOnFailed setSocketAsync
+            runner.AddTask3 ignoreOnFailed setSocketAsync
             hub.OnEvent.AddWatcher runner "HubEvt" (runner.Deliver << InternalEvt << HubEvt)
             ({model with Hub = Some hub}, noCmd)
         | Some hub' ->

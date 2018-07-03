@@ -218,6 +218,9 @@ let log (evt : LogEvent) (logger : ILogger) =
 let raiseWith (evt : LogEvent) =
     raise <| MessageException evt
 
+let raiseWithError section err detail =
+    raise <| MessageException ^<| tplError section err detail
+
 let logInfo (logger : ILogger) section info detail : unit =
     logger.Log <| tplInfo section info detail
 
