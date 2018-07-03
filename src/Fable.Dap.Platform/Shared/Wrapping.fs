@@ -2,6 +2,7 @@
 module Dap.Platform.Wrapping
 
 open Elmish
+open Dap.Prelude
 
 // This warpper logic is mostly following elm-component-updater
 // https://github.com/mpdairy/elm-component-updater/blob/master/src/Updater.elm
@@ -21,8 +22,15 @@ type Wrapping<'runner, 'model, 'msg, 'subModel, 'subMsg> (wrapMsg', spec', subMs
             let subCmd = Cmd.map mapSubCmd subCmd
             let cmd = Cmd.batch [cmd; subCmd; reactCmd]
             (reactModel, cmd)
+    member this.Operate'<'runner1> (runner : 'runner1) (model, cmd) =
+        match runner :> obj with
+        | :? 'runner as runner ->
+            this.Operate runner (model, cmd)
+        | _->
+            raiseWithError "Wrapping" "Invalid_Runner" (wrapMsg, subMsg, runner)
     interface IWrapping<'runner, 'model, 'msg> with
         member this.Operate = this.Operate
+        member this.Operate' runner (model, cmd) = this.Operate' runner (model, cmd)
 
 let wrap (wrapMsg : WrapMsg<'runner, 'model, 'msg>) (spec : WrapperSpec<'runner, 'model, 'msg, 'subModel, 'subMsg>)
                                 : Wrapper<'msg, 'subMsg> =

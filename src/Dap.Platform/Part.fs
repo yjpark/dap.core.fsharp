@@ -130,10 +130,10 @@ and internal ActorPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> when 'agentMs
             |> Option.get
 
 let init (modMsg : Wrapper<'agentMsg, 'msg>)
-        (wrapMsg : WrapMsg<IAgent<'agentArgs, 'AgentModel, 'agentMsg, 'agentReq, 'agentEvt>, 'AgentModel, 'agentMsg>)
+        (wrapMsg : WrapMsg<IAgent<'agentMsg, 'agentReq, 'agentEvt>, 'AgentModel, 'agentMsg>)
         (getPart : 'AgentModel -> 'model)
         (setPart : 'model -> 'AgentModel -> 'AgentModel)
-        (agent : IAgent<'agentArgs, 'AgentModel, 'agentMsg, 'agentReq, 'agentEvt>)
+        (agent : IAgent<'agentMsg, 'agentReq, 'agentEvt>)
         (modSpec : PartSpec<'args, 'model, 'msg, 'req, 'evt>)
         : IPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> =
     let part = Part<'agentMsg, 'args, 'model, 'msg, 'req, 'evt>.Create modSpec agent
@@ -145,7 +145,7 @@ let init (modMsg : Wrapper<'agentMsg, 'msg>)
             part.State <- Some model
             (model, cmd)
 
-    let reactPart : React<IAgent<'agentArgs, 'AgentModel, 'agentMsg, 'agentReq, 'agentEvt>, 'AgentModel, 'agentMsg, 'model, 'msg> =
+    let reactPart : React<IAgent<'agentMsg, 'agentReq, 'agentEvt>, 'AgentModel, 'agentMsg, 'model, 'msg> =
         fun _runner msg _model agentModel ->
             match modSpec.CastEvt msg with
             | Some evt ->
