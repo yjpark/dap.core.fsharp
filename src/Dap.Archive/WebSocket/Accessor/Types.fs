@@ -10,11 +10,14 @@ module EventRecorder = Dap.Archive.Recorder.EventRecorder
 
 type Client<'pkt> = Dap.WebSocket.Client.Types.Agent<'pkt>
 
-type Part'<'agentMsg, 'pkt> = IPart<'actorMsg, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+type Part'<'actorMsg, 'pkt> when 'actorMsg :> IMsg =
+    IPart<'actorMsg, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
 
-and Part<'pkt> = IPart<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+and Part<'pkt> =
+    IPart<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
 
-and PartOperate<'pkt> = PartOperate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+and PartOperate<'pkt> =
+    PartOperate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
 
 and Args<'pkt> = {
     ClientKind : Kind
