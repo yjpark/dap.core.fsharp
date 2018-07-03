@@ -8,7 +8,7 @@ module BaseLogic = Dap.Archive.WebSocket.Accessor.Logic
 
 type Client = BaseTypes.Client<string>
 
-type Part = BaseTypes.Part<string>
+type Part<'actorMsg> = BaseTypes.Part'<'actorMsg, string>
 
 type Args = BaseTypes.Args<string>
 type Model = BaseTypes.Model<string>

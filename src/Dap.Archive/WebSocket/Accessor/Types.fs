@@ -10,7 +10,9 @@ module EventRecorder = Dap.Archive.Recorder.EventRecorder
 
 type Client<'pkt> = Dap.WebSocket.Client.Types.Agent<'pkt>
 
-type Part<'pkt> = IPart<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+type Part'<'agentMsg, 'pkt> = IPart<'actorMsg, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+
+and Part<'pkt> = IPart<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
 
 and PartOperate<'pkt> = PartOperate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
 
@@ -68,3 +70,9 @@ let castEvt<'pkt> : CastEvt<Msg<'pkt>, Evt<'pkt>> =
     function
     | AccessorEvt evt -> Some evt
     | _ -> None
+
+let DoSetup' uri callback =
+    DoSetup (uri, callback)
+
+let DoSend' pkt callback =
+    DoSend (pkt, callback)

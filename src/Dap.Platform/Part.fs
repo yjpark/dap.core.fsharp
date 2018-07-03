@@ -44,17 +44,17 @@ type PartWrapMsg<'model, 'msg> when 'msg :> IMsg =
 type PartWrapping<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     IWrapping<IPart<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
 
-type IPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> when 'agentMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
+type IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     inherit IPart<'args, 'model, 'msg, 'req, 'evt>
-    abstract Wrapper : Wrapper<'agentMsg, 'msg> with get
+    abstract Wrapper : Wrapper<'actorMsg, 'msg> with get
 
-type internal Part<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> when 'agentMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
+type internal Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Spec : PartSpec<'args, 'model, 'msg, 'req, 'evt>
     Agent : IAgent
-    mutable Wrapper : Wrapper<'agentMsg, 'msg> option
+    mutable Wrapper : Wrapper<'actorMsg, 'msg> option
     mutable Dispatch : DispatchMsg<'msg> option
     mutable State : 'model option
-    mutable Actor' : ActorPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> option
+    mutable Actor' : ActorPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> option
 } with
     static member Create spec agent =
         {
@@ -67,7 +67,7 @@ type internal Part<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> when 'agentMsg :>
         }
     member this.Actor =
         if this.Actor'.IsNone then
-            this.Actor' <- Some <| ActorPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt>.Create this
+            this.Actor' <- Some <| ActorPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>.Create this
         this.Actor'
         |> Option.get
     member this.Post (req : 'req) = dispatch' this (this.Spec.WrapReq req)
@@ -100,7 +100,7 @@ type internal Part<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> when 'agentMsg :>
         member this.Dispatch = this.Dispatch
         member this.SetDispatch dispatch = this.Dispatch <- Some dispatch
 
-    interface IPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> with
+    interface IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> with
         member this.Wrapper = this.Wrapper |> Option.get
         member this.Post req = this.Post req
         member this.PostAsync req = this.PostAsync req
@@ -109,8 +109,8 @@ type internal Part<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> when 'agentMsg :>
         member this.RunFunc4 func = runFunc' this func
         member this.AddTask4 onFailed getTask = addTask' this onFailed getTask
 
-and internal ActorPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> when 'agentMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
-    Part : Part<'agentMsg, 'args, 'model, 'msg, 'req, 'evt>
+and internal ActorPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
+    Part : Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
     Args : 'args
     OnEvent : IBus<'evt>
     FireEvent' : 'evt -> unit
@@ -132,23 +132,23 @@ and internal ActorPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> when 'agentMs
             this.Part.State
             |> Option.get
 
-let init (modMsg : Wrapper<'agentMsg, 'msg>)
-        (wrapMsg : WrapMsg<IAgent<'agentMsg>, 'AgentModel, 'agentMsg>)
-        (getPart : 'AgentModel -> 'model)
-        (setPart : 'model -> 'AgentModel -> 'AgentModel)
-        (agent : IAgent<'agentMsg>)
+let init (modMsg : Wrapper<'actorMsg, 'msg>)
+        (wrapMsg : WrapMsg<IAgent<'actorMsg>, 'actorModel, 'actorMsg>)
+        (getPart : 'actorModel -> 'model)
+        (setPart : 'model -> 'actorModel -> 'actorModel)
+        (agent : IAgent<'actorMsg>)
         (modSpec : PartSpec<'args, 'model, 'msg, 'req, 'evt>)
-        : IPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> =
-    let part = Part<'agentMsg, 'args, 'model, 'msg, 'req, 'evt>.Create modSpec agent
+        : IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> =
+    let part = Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>.Create modSpec agent
     let part' = part :> IPart<'args, 'model, 'msg, 'req, 'evt>
 
-    let updatePart : Update<'agent, 'model, 'msg> =
+    let updatePart : Update<IAgent<'actorMsg>, 'model, 'msg> =
         fun _runner model msg ->
             let (model, cmd) = modSpec.Update part' model msg
             part.State <- Some model
             (model, cmd)
 
-    let reactPart : React<IAgent<'agentMsg>, 'AgentModel, 'agentMsg, 'model, 'msg> =
+    let reactPart : React<IAgent<'actorMsg>, 'actorModel, 'actorMsg, 'model, 'msg> =
         fun _runner msg _model agentModel ->
             match modSpec.CastEvt msg with
             | Some evt ->
@@ -157,7 +157,7 @@ let init (modMsg : Wrapper<'agentMsg, 'msg>)
                 ()
             (agentModel, noCmd)
 
-    let wrapperSpec : WrapperSpec<'agent, 'AgentModel, 'agentMsg, 'model, 'msg> =
+    let wrapperSpec : WrapperSpec<IAgent<'actorMsg>, 'actorModel, 'actorMsg, 'model, 'msg> =
         {
             GetSub = getPart
             SetSub = setPart
@@ -171,7 +171,7 @@ let init (modMsg : Wrapper<'agentMsg, 'msg>)
     let (model, cmd) = modSpec.Init (part' :> IAgent) part'.Actor.Args
     part.State <- Some model
     cmd |> List.iter (fun m -> m <| dispatch' part)
-    part :> IPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt>
+    part :> IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
 
 let replyAsync4 (runner : IPart<'args, 'model, 'msg, 'req, 'evt>) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IPart<'args, 'model, 'msg, 'req, 'evt>, 'res>)
