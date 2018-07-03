@@ -111,11 +111,12 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
         member _this.Disposed = false
     interface IAgent with
         member this.Ident = this.Ident'
-    interface IAgent<'msg, 'req, 'evt> with
+    interface IAgent<'req, 'evt> with
         member this.Post req = this.Post req
+        member this.Actor = this.Actor :> IActor<'req, 'evt>
+    interface IAgent<'msg, 'req, 'evt> with
         member this.Deliver' (cmd : Cmd<'msg>) = this.Deliver cmd
         member this.Deliver (msg : 'msg) = this.Deliver <| Cmd.ofMsg msg
-        member this.Actor = this.Actor :> IActor<'req, 'evt>
     interface IAgent<'args, 'model, 'msg, 'req, 'evt> with
         member this.Actor = this.Actor :> IActor<'args, 'model, 'req, 'evt>
     interface ILogger with
@@ -142,7 +143,6 @@ and [<StructuredFormatDisplay("<Actor>{Ident}")>]
         }
     member this.Ident = this.Agent.Ident'
     interface IActor<'args, 'model, 'req, 'evt> with
-        member this.Log m = this.Agent.Logger'.Log m
         member this.Handle req = this.Agent.Post req
         member this.OnEvent = this.OnEvent'
         member this.Ident = this.Agent.Ident'
