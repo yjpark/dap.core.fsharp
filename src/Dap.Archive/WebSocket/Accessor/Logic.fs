@@ -143,7 +143,7 @@ let private handleInternalEvt evt : PartOperate<'pkt> =
             (runner, model, cmd)
             |=|> doReconnect
 
-let private update : PartUpdate<Args, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
+let private update : PartUpdate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
     fun runner model msg ->
         match msg with
         | AccessorReq req -> handleReq req
@@ -151,7 +151,7 @@ let private update : PartUpdate<Args, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pk
         | InternalEvt evt -> handleInternalEvt evt
         <| runner <| (model, [])
 
-let private init : PartInit<Args, Model<'pkt>, Msg<'pkt>> =
+let private init : PartInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
     fun _runner _args ->
         ({
             Uri = None
@@ -161,7 +161,7 @@ let private init : PartInit<Args, Model<'pkt>, Msg<'pkt>> =
             Running = false
         }, noCmd)
 
-let getSpec<'pkt> (newArgs : PartNewArgs<Args>) : PartSpec<Args, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
+let getSpec<'pkt> (newArgs : PartNewArgs<Args<'pkt>>) : PartSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
     {
         Init = init
         Update = update

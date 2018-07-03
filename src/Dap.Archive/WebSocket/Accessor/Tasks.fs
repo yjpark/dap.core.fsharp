@@ -18,7 +18,7 @@ let private createRecorderAsync (client : Client<'pkt>) : GetTask<Part<'pkt>, Ev
         match runner.Actor.Args.CreateRecorderAsync with
         | None -> return None
         | Some createRecorderAsync ->
-            let! recorder = createRecorderAsync runner
+            let! recorder = createRecorderAsync client
             return (Some recorder)
     }
 

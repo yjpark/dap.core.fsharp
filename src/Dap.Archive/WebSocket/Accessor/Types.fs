@@ -10,14 +10,14 @@ module EventRecorder = Dap.Archive.Recorder.EventRecorder
 
 type Client<'pkt> = Dap.WebSocket.Client.Types.Agent<'pkt>
 
-type Part<'pkt> = IPart<Args, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+type Part<'pkt> = IPart<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
 
-and PartOperate<'pkt> = PartOperate<Args, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+and PartOperate<'pkt> = PartOperate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
 
-and Args = {
+and Args<'pkt> = {
     ClientKind : Kind
     RetryDelay : float<second> option
-    CreateRecorderAsync : GetTask<IAgent, EventRecorder.Agent> option
+    CreateRecorderAsync : GetTask<Client<'pkt>, EventRecorder.Agent> option
 } with
     static member Create clientKind retryDelay createRecorderAsync =
         {

@@ -10,7 +10,7 @@ type Client = BaseTypes.Client<string>
 
 type Part = BaseTypes.Part<string>
 
-type Args = BaseTypes.Args
+type Args = BaseTypes.Args<string>
 type Model = BaseTypes.Model<string>
 type Msg = BaseTypes.Msg<string>
 type Req = BaseTypes.Req<string>
