@@ -120,6 +120,7 @@ and [<StructuredFormatDisplay("<ActorPart>{AsDisplay}")>]
     OnEvent : IBus<'evt>
     FireEvent' : 'evt -> unit
 } with
+    member this.AsDisplay = this.Part.AsDisplay
     static member Create m =
         let args = m.Spec.NewArgs (m.Agent)
         let event = new Bus<'evt> (m.Agent :> IOwner)
