@@ -100,7 +100,6 @@ and IChannel<'evt> when 'evt :> IEvt =
     abstract OnEvent : IBus<'evt> with get
 
 and IActor =
-    inherit ILogger
     abstract Ident : Ident with get
 
 and IActor<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =

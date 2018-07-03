@@ -8,11 +8,11 @@ module WebSocketTypes = Dap.WebSocket.Types
 module WebSocketClientTypes = Dap.WebSocket.Client.Types
 module EventRecorder = Dap.Archive.Recorder.EventRecorder
 
-type TextClient<'pkt> = Dap.WebSocket.Client.Types.Agent<'pkt>
+type Client<'pkt> = Dap.WebSocket.Client.Types.Agent<'pkt>
 
-type Runner<'pkt> = IModRunner<Args, Model<'pkt>, Msg<'pkt>>
+type Part<'pkt> = IPart<Args, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
 
-and ModOperate<'pkt> = ModOperate<Args, Model<'pkt>, Msg<'pkt>>
+and PartOperate<'pkt> = PartOperate<Args, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
 
 and Args = {
     ClientKind : Kind
@@ -29,7 +29,7 @@ and Args = {
 and Model<'pkt> = {
     Uri : string option
     Cts : CancellationTokenSource
-    Client : TextClient<'pkt> option
+    Client : Client<'pkt> option
     Recorder : EventRecorder.Agent option
     Running : bool
 } with
@@ -53,7 +53,7 @@ and Evt<'pkt> =
 with interface IEvt
 
 and InternalEvt<'pkt> =
-    | OnSetup of  IReq * Callback<unit> * TextClient<'pkt> * (EventRecorder.Agent option)
+    | OnSetup of  IReq * Callback<unit> * Client<'pkt> * (EventRecorder.Agent option)
     | OnConnected of WebSocketTypes.ConnectedStats
     | OnDisconnected of WebSocketTypes.ConnectionStats option
     | DoReconnect
@@ -63,3 +63,8 @@ and Msg<'pkt> =
     | AccessorEvt of Evt<'pkt>
     | InternalEvt of InternalEvt<'pkt>
 with interface IMsg
+
+let castEvt<'pkt> : CastEvt<Msg<'pkt>, Evt<'pkt>> =
+    function
+    | AccessorEvt evt -> Some evt
+    | _ -> None

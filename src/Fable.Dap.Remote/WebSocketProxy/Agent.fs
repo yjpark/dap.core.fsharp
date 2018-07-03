@@ -5,8 +5,8 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Remote.WebSocketProxy.Types
 
-type Agent<'req, 'evt> when 'req :> IRequest and 'evt :> IEvent =
-    IAgent<'req, 'evt>
+type Agent<'msg, 'req, 'evt> when 'req :> IRequest and 'evt :> IEvent =
+    IAgent<'msg, 'req, 'evt>
 
 let create'<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> (spec : StubSpec<'res, 'evt>) (key : string) (uri : string) (logTraffic : bool) : Dap.Remote.WebSocketProxy.Types.Agent<'req, 'res, 'evt> =
     fun agent ->

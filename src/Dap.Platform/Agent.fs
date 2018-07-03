@@ -52,7 +52,7 @@ let private init wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
                             : AgentInit<'args, 'model, 'msg, 'req, 'evt> =
     fun runner (_args : NoArgs) ->
         let args = runner.Actor.Args
-        let (actorModel, actorCmd) = spec.Actor.Logic.Init (runner :> IAgent<'req, 'evt>) args
+        let (actorModel, actorCmd) = spec.Actor.Logic.Init (runner :> IAgent<'msg, 'req, 'evt>) args
         let model = {
             Spec = spec
             Actor = actorModel

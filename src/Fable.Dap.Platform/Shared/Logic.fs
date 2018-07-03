@@ -34,7 +34,7 @@ type Operate<'runner, 'model, 'msg> =
 type IWrapping<'runner, 'model, 'msg> =
     abstract Operate : Operate<'runner, 'model, 'msg> with get
 
-type Wrap<'runner, 'model, 'msg> =
+type WrapMsg<'runner, 'model, 'msg> =
     IWrapping<'runner, 'model, 'msg> -> 'msg
 
 type React<'runner, 'model, 'msg, 'subModel, 'subMsg> =

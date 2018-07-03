@@ -151,14 +151,14 @@ and [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
         member this.PostAsync getSubMsg = this.PostAsync getSubMsg
         member this.RunFunc2 func = runFunc' this func
         member this.AddTask2 onFailed getTask = addTask' this onFailed getTask
+    interface IAgent<'msg, 'req, 'evt> with
+        member this.Deliver' (cmd : Cmd<'msg>) = deliver' this <| Cmd.map ActorMsg cmd
+        member this.Deliver (msg : 'msg) = deliver' this <| Cmd.ofMsg (ActorMsg msg)
     interface IAgent<'args, 'model, 'msg, 'req, 'evt> with
         member this.Spec = this.Spec
         member this.Actor = this.Actor :> IActor<'args, 'model, 'req, 'evt>
-        member this.Deliver' (cmd : Cmd<'msg>) = deliver' this <| Cmd.map ActorMsg cmd
-        member this.Deliver (msg : 'msg) = deliver' this <| Cmd.ofMsg (ActorMsg msg)
 
         member this.RunFunc3 func = runFunc' this func
-        //Note: `((onFailed, getTask))` is needed, for the replyAsync type constraint to work
         member this.AddTask3 onFailed getTask = addTask' this onFailed getTask
         member this.FireEvent'' (evt : 'evt) = this.Actor.FireEvent' evt
 
@@ -181,7 +181,6 @@ and [<StructuredFormatDisplay("<Actor>{Ident}")>]
         }
     member this.Ident = this.Agent.Ident
     interface IActor<'args, 'model, 'req, 'evt> with
-        member this.Log m = this.Agent.Logger.Log m
         member this.Handle req = this.Agent.Post req
         member this.OnEvent = this.OnEvent
         member this.Ident = this.Agent.Ident

@@ -101,10 +101,3 @@ let replyAsync3 (runner : IAgent<'args, 'model, 'msg, 'req, 'evt>) (req : IReq) 
     let onFailed = getOnFailed req callback
     let getTask = getReplyTask req callback
     runner.AddTask3 onFailed getTask
-
-let replyAsync4 (runner : IModRunner<'args, 'model, 'msg>) (req : IReq) (callback : Callback<'res>)
-                (getOnFailed: OnReplyFailed<IModRunner<'args, 'model, 'msg>, 'res>)
-                (getReplyTask : GetReplyTask<IModRunner<'args, 'model, 'msg>, 'res>) : unit =
-    let onFailed = getOnFailed req callback
-    let getTask = getReplyTask req callback
-    runner.AddTask4 onFailed getTask

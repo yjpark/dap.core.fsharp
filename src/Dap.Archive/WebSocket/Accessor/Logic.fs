@@ -10,7 +10,7 @@ open Dap.Archive.WebSocket.Accessor.Tasks
 module WebSocketTypes = Dap.WebSocket.Types
 module WebSocketClientTypes = Dap.WebSocket.Client.Types
 
-let private doSetup req ((uri, callback) : string * Callback<unit>) : ModOperate<'pkt> =
+let private doSetup req ((uri, callback) : string * Callback<unit>) : PartOperate<'pkt> =
     fun runner (model, cmd) ->
         match model.Uri with
         | Some uri' ->
@@ -21,7 +21,7 @@ let private doSetup req ((uri, callback) : string * Callback<unit>) : ModOperate
             (runner, model, cmd)
             |=|> updateModel (fun m -> {m with Uri = Some uri})
 
-let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats option>) : ModOperate<'pkt> =
+let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats option>) : PartOperate<'pkt> =
     fun runner (model, cmd) ->
         match model.Uri with
         | Some uri ->
@@ -45,7 +45,7 @@ let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats optio
             reply runner callback <| nak req "Not_Setup" ()
             (model, cmd)
 
-let private doStop req (callback : Callback<unit>) : ModOperate<'pkt> =
+let private doStop req (callback : Callback<unit>) : PartOperate<'pkt> =
     fun runner (model, cmd) ->
         match model.Uri with
         | Some _uri ->
@@ -69,7 +69,7 @@ let private doStop req (callback : Callback<unit>) : ModOperate<'pkt> =
             reply runner callback <| nak req "Not_Setup" ()
             (model, cmd)
 
-let private doSend req ((pkt, callback) : 'pkt * Callback<WebSocketTypes.SendStats>) : ModOperate<'pkt> =
+let private doSend req ((pkt, callback) : 'pkt * Callback<WebSocketTypes.SendStats>) : PartOperate<'pkt> =
     fun runner (model, cmd) ->
         match model.Client with
         | None ->
@@ -83,7 +83,7 @@ let private doSend req ((pkt, callback) : 'pkt * Callback<WebSocketTypes.SendSta
                 replyAsync4 runner req callback nakOnFailed <| doSendAsync pkt
         (model, cmd)
 
-let private handleReq req : ModOperate<'pkt> =
+let private handleReq req : PartOperate<'pkt> =
     fun runner (model, cmd) ->
         match req with
         | DoSetup (a, b) -> doSetup req (a, b)
@@ -92,7 +92,7 @@ let private handleReq req : ModOperate<'pkt> =
         | DoSend (a, b) -> doSend req (a, b)
         <| runner <| (model, cmd)
 
-let private onClientEvent (runner : Runner<'pkt>)
+let private onClientEvent (runner : Part<'pkt>)
                             : WebSocketTypes.Evt<'pkt> -> unit =
     fun evt ->
         match evt with
@@ -105,25 +105,25 @@ let private onClientEvent (runner : Runner<'pkt>)
         | WebSocketTypes.OnDisconnected stats ->
             runner.Deliver <| InternalEvt ^<| OnDisconnected stats
 
-let private tryReconnect : ModOperate<'pkt> =
+let private tryReconnect : PartOperate<'pkt> =
     fun runner (model, cmd) ->
-        match runner.Mod.Args.RetryDelay with
+        match runner.Actor.Args.RetryDelay with
         | None ->
             (model, cmd)
         | Some delay ->
             (runner, model, cmd)
             |=|> addFutureCmd delay ^<| InternalEvt DoReconnect
 
-let private doReconnect : ModOperate<'pkt> =
+let private doReconnect : PartOperate<'pkt> =
     fun runner (model, cmd) ->
-        if runner.Mod.State.Running then
-            let client = runner.Mod.State.Client |> Option.get
-            let uri = runner.Mod.State.Uri |> Option.get
-            let cts = runner.Mod.State.Cts
+        if runner.Actor.State.Running then
+            let client = runner.Actor.State.Client |> Option.get
+            let uri = runner.Actor.State.Uri |> Option.get
+            let cts = runner.Actor.State.Cts
             client.Post <| WebSocketClientTypes.DoConnect' uri cts.Token None
         (model, cmd)
 
-let private handleInternalEvt evt : ModOperate<'pkt> =
+let private handleInternalEvt evt : PartOperate<'pkt> =
     fun runner (model, cmd) ->
         match evt with
         | OnSetup (req, callback, client, recorder) ->
@@ -143,7 +143,7 @@ let private handleInternalEvt evt : ModOperate<'pkt> =
             (runner, model, cmd)
             |=|> doReconnect
 
-let private update : ModUpdate<Args, Model<'pkt>, Msg<'pkt>> =
+let private update : PartUpdate<Args, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
     fun runner model msg ->
         match msg with
         | AccessorReq req -> handleReq req
@@ -151,7 +151,7 @@ let private update : ModUpdate<Args, Model<'pkt>, Msg<'pkt>> =
         | InternalEvt evt -> handleInternalEvt evt
         <| runner <| (model, [])
 
-let private init : ModInit<Args, Model<'pkt>, Msg<'pkt>> =
+let private init : PartInit<Args, Model<'pkt>, Msg<'pkt>> =
     fun _runner _args ->
         ({
             Uri = None
@@ -161,8 +161,11 @@ let private init : ModInit<Args, Model<'pkt>, Msg<'pkt>> =
             Running = false
         }, noCmd)
 
-let spec<'pkt> : ModSpec<Args, Model<'pkt>, Msg<'pkt>> =
+let getSpec<'pkt> (newArgs : PartNewArgs<Args>) : PartSpec<Args, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
     {
         Init = init
         Update = update
+        NewArgs = newArgs
+        WrapReq = AccessorReq
+        CastEvt = castEvt<'pkt>
     }

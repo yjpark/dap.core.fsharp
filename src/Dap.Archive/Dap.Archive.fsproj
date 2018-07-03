@@ -22,6 +22,7 @@
     <Compile Include="WebSocket/Accessor/Types.fs" />
     <Compile Include="WebSocket/Accessor/Tasks.fs" />
     <Compile Include="WebSocket/Accessor/Logic.fs" />
+    <Compile Include="WebSocket/Accessor/TextAccessor.fs" />
     <Compile Include="Helper.fs" />
   </ItemGroup>
   <ItemGroup>
