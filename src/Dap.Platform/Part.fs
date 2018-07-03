@@ -38,11 +38,11 @@ type PartSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IRe
 type PartOperate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Operate<IPart<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
 
-type PartWrapMsg<'model, 'msg> when 'msg :> IMsg =
-    WrapMsg<IAgent<'msg>, 'model, 'msg>
+type PartWrapMsg<'actorModel, 'actorMsg> when 'actorMsg :> IMsg =
+    WrapMsg<IAgent<'actorMsg>, 'actorModel, 'actorMsg>
 
-type PartWrapping<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    IWrapping<IPart<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
+type PartWrapping<'actorModel, 'actorMsg> when 'actorMsg :> IMsg =
+    IWrapping<IAgent<'actorMsg>, 'actorModel, 'actorMsg>
 
 type IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     inherit IPart<'args, 'model, 'msg, 'req, 'evt>
@@ -120,7 +120,6 @@ and [<StructuredFormatDisplay("<ActorPart>{AsDisplay}")>]
     OnEvent : IBus<'evt>
     FireEvent' : 'evt -> unit
 } with
-    member this.AsDisplay = this.Part.AsDisplay
     static member Create m =
         let args = m.Spec.NewArgs (m.Agent)
         let event = new Bus<'evt> (m.Agent :> IOwner)
@@ -130,6 +129,7 @@ and [<StructuredFormatDisplay("<ActorPart>{AsDisplay}")>]
             OnEvent = event.Publish
             FireEvent' = event.Trigger
         }
+    member this.AsDisplay = this.Part.AsDisplay
     interface IActorPart<'args, 'model, 'req, 'evt> with
         member this.Handle req = this.Part.Post req
         member this.OnEvent = this.OnEvent
@@ -139,7 +139,7 @@ and [<StructuredFormatDisplay("<ActorPart>{AsDisplay}")>]
             |> Option.get
 
 let init (modMsg : Wrapper<'actorMsg, 'msg>)
-        (wrapMsg : WrapMsg<IAgent<'actorMsg>, 'actorModel, 'actorMsg>)
+        (wrapMsg : PartWrapMsg<'actorModel, 'actorMsg>)
         (getPart : 'actorModel -> 'model)
         (setPart : 'model -> 'actorModel -> 'actorModel)
         (agent : IAgent<'actorMsg>)
