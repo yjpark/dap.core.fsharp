@@ -138,12 +138,12 @@ and [<StructuredFormatDisplay("<ActorPart>{AsDisplay}")>]
             this.Part.State
             |> Option.get
 
-let init (modMsg : Wrapper<'actorMsg, 'msg>)
+let init (modSpec : PartSpec<'args, 'model, 'msg, 'req, 'evt>)
+        (modMsg : Wrapper<'actorMsg, 'msg>)
         (wrapMsg : PartWrapMsg<'actorModel, 'actorMsg>)
         (getPart : 'actorModel -> 'model)
         (setPart : 'model -> 'actorModel -> 'actorModel)
         (agent : IAgent<'actorMsg>)
-        (modSpec : PartSpec<'args, 'model, 'msg, 'req, 'evt>)
         : IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> =
     let part = Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>.Create modSpec agent modMsg
     let part' = part :> IPart<'args, 'model, 'msg, 'req, 'evt>
