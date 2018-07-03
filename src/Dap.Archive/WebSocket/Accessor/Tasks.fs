@@ -19,7 +19,7 @@ let private createRecorderAsync (client : Client<'pkt>) : GetTask<Part<'pkt>, Ev
         | None -> return None
         | Some createRecorderAsync ->
             let! recorder = createRecorderAsync client
-            return (Some recorder)
+            return recorder
     }
 
 let internal doSetupAsync : GetReplyTask<Part<'pkt>, unit> =

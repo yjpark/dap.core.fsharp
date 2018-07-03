@@ -17,7 +17,7 @@ and PartOperate<'pkt> = PartOperate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt
 and Args<'pkt> = {
     ClientKind : Kind
     RetryDelay : float<second> option
-    CreateRecorderAsync : GetTask<Client<'pkt>, EventRecorder.Agent> option
+    CreateRecorderAsync : GetTask<Client<'pkt>, EventRecorder.Agent option> option
 } with
     static member Create clientKind retryDelay createRecorderAsync =
         {
