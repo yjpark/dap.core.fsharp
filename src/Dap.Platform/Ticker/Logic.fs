@@ -130,7 +130,7 @@ let private update : ActorUpdate<Args, Model, Msg, Req, Evt> =
         | TickerEvt _evt -> noOperation
         <| runner <| (model, [])
 
-let private init : ActorInit<Args, Model, Msg, Req, Evt> =
+let private init : ActorInit<Args, Model, Msg> =
     fun runner args ->
         let cmd =
             if args.AutoStart then

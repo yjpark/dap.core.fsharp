@@ -50,7 +50,7 @@ let private update : ActorUpdate<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>
         | WebSocketEvt evt -> handleEvt evt
         <| runner <| (model, [])
 
-let private init : ActorInit<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
+let private init : ActorInit<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>> =
     fun _runner _args ->
         ({
             Link = None

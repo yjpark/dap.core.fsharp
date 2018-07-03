@@ -151,7 +151,7 @@ and [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
         member this.PostAsync getSubMsg = this.PostAsync getSubMsg
         member this.RunFunc2 func = runFunc' this func
         member this.AddTask2 onFailed getTask = addTask' this onFailed getTask
-    interface IAgent<'msg, 'req, 'evt> with
+    interface IAgent<'msg> with
         member this.Deliver' (cmd : Cmd<'msg>) = deliver' this <| Cmd.map ActorMsg cmd
         member this.Deliver (msg : 'msg) = deliver' this <| Cmd.ofMsg (ActorMsg msg)
     interface IAgent<'args, 'model, 'msg, 'req, 'evt> with

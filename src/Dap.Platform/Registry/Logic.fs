@@ -95,7 +95,7 @@ let private update : ActorUpdate<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, 
             noOperation
         <| runner <| (model, [])
 
-let private init : ActorInit<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
+let private init : ActorInit<Args, Model<'k, 'v>, Msg<'k, 'v>> =
     fun _runner _args ->
         ({
             Entries = Map.empty

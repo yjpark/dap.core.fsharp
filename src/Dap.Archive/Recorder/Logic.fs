@@ -93,7 +93,7 @@ let private update : ActorUpdate<Args, Model<'extra, 'frame>, Msg<'extra, 'frame
         | RecorderEvt evt -> handleEvt evt
         <| runner <| (model, [])
 
-let private init : ActorInit<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
+let private init : ActorInit<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
     fun _runner args ->
         ({
             Bundle = None

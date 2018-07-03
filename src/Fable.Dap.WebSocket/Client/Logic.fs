@@ -92,7 +92,7 @@ let private update : ActorUpdate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, 
             handleEvt evt
         <| runner <| (model, noCmd)
 
-let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
+let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
     fun _runner _args ->
         ({
             Socket = None

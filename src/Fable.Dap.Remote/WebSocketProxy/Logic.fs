@@ -133,7 +133,7 @@ let private update : ActorUpdate<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 
         | ProxyEvt _evt -> noOperation
         )<| runner <| (model, noCmd)
 
-let private init : ActorInit<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
+let private init : ActorInit<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> =
     fun runner args ->
         let socket = WebSocketActor.create' Packet.encode Packet.decode runner.Ident.Key args.Uri false
         ({

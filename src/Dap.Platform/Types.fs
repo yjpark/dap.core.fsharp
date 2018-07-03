@@ -98,13 +98,14 @@ and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     abstract RunFunc2<'res> : Func<IAgent<'req, 'evt>, 'res> -> Result<'res, exn>
     abstract AddTask2 : OnFailed<IAgent<'req, 'evt>> -> GetTask<IAgent<'req, 'evt>, unit> -> unit
 
-and IAgent<'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    inherit IAgent<'req, 'evt>
+and IAgent<'msg> when 'msg :> IMsg =
+    inherit IAgent
     abstract Deliver' : Cmd<'msg> -> unit
     abstract Deliver : 'msg -> unit
 
 and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    inherit IAgent<'msg, 'req, 'evt>
+    inherit IAgent<'msg>
+    inherit IAgent<'req, 'evt>
     abstract Spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt> with get
     abstract Actor : IActor<'args, 'model, 'req, 'evt> with get
     abstract RunFunc3<'res> : Func<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'res> -> Result<'res, exn>
@@ -112,7 +113,7 @@ and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq a
     abstract FireEvent'' : 'evt -> unit //Should NOT be used by actor
 
 and AgentSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
-    Actor : ActorSpec'<IAgent, IAgent<'msg, 'req, 'evt>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
+    Actor : ActorSpec'<IAgent, IAgent<'msg>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
     OnAgentEvent : OnAgentEvent<'model> option
     GetSlowCap : GetSlowCap option
 }

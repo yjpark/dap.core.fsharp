@@ -47,7 +47,7 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
                 }
             this.State' <- Some state
     member this.Start () =
-        let runner = this :> IAgent<'msg, 'req, 'evt>
+        let runner = this :> IAgent<'msg>
         try
             let (model, cmd) =
                 match this.State' with
@@ -114,7 +114,7 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt>
     interface IAgent<'req, 'evt> with
         member this.Post req = this.Post req
         member this.Actor = this.Actor :> IActor<'req, 'evt>
-    interface IAgent<'msg, 'req, 'evt> with
+    interface IAgent<'msg> with
         member this.Deliver' (cmd : Cmd<'msg>) = this.Deliver cmd
         member this.Deliver (msg : 'msg) = this.Deliver <| Cmd.ofMsg msg
     interface IAgent<'args, 'model, 'msg, 'req, 'evt> with

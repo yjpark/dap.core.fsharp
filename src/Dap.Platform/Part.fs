@@ -38,6 +38,9 @@ type PartSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IRe
 type PartOperate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Operate<IPart<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
 
+type PartWrapMsg<'model, 'msg> when 'msg :> IMsg =
+    WrapMsg<IAgent<'msg>, 'model, 'msg>
+
 type PartWrapping<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     IWrapping<IPart<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
 
@@ -130,10 +133,10 @@ and internal ActorPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> when 'agentMs
             |> Option.get
 
 let init (modMsg : Wrapper<'agentMsg, 'msg>)
-        (wrapMsg : WrapMsg<IAgent<'agentMsg, 'agentReq, 'agentEvt>, 'AgentModel, 'agentMsg>)
+        (wrapMsg : WrapMsg<IAgent<'agentMsg>, 'AgentModel, 'agentMsg>)
         (getPart : 'AgentModel -> 'model)
         (setPart : 'model -> 'AgentModel -> 'AgentModel)
-        (agent : IAgent<'agentMsg, 'agentReq, 'agentEvt>)
+        (agent : IAgent<'agentMsg>)
         (modSpec : PartSpec<'args, 'model, 'msg, 'req, 'evt>)
         : IPart<'agentMsg, 'args, 'model, 'msg, 'req, 'evt> =
     let part = Part<'agentMsg, 'args, 'model, 'msg, 'req, 'evt>.Create modSpec agent
@@ -145,7 +148,7 @@ let init (modMsg : Wrapper<'agentMsg, 'msg>)
             part.State <- Some model
             (model, cmd)
 
-    let reactPart : React<IAgent<'agentMsg, 'agentReq, 'agentEvt>, 'AgentModel, 'agentMsg, 'model, 'msg> =
+    let reactPart : React<IAgent<'agentMsg>, 'AgentModel, 'agentMsg, 'model, 'msg> =
         fun _runner msg _model agentModel ->
             match modSpec.CastEvt msg with
             | Some evt ->
@@ -162,7 +165,7 @@ let init (modMsg : Wrapper<'agentMsg, 'msg>)
             ReactSub = reactPart
         }
     part.Wrapper <- Some <| wrap wrapMsg wrapperSpec
-    (part :> IDispatcher<'msg>).SetDispatch (fun (time, msg) ->
+    (part :> IDispatcher<'msg>).SetDispatch (fun (_time, msg) ->
         agent.Deliver <| modMsg msg
     )
     let (model, cmd) = modSpec.Init (part' :> IAgent) part'.Actor.Args

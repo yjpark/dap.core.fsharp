@@ -129,7 +129,7 @@ let private update : ActorUpdate<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 
         | ServiceReq req -> handleReq req
         )<| runner <| (model, noCmd)
 
-let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
+let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>> =
     fun _runner _args ->
         ({
             Hub = None

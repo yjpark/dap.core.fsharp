@@ -16,11 +16,12 @@ and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IPoster<'req>
     abstract Actor : IActor<'req, 'evt> with get
 
-and IAgent<'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    inherit IAgent<'req, 'evt>
+and IAgent<'msg> when 'msg :> IMsg =
+    inherit IAgent
     abstract Deliver' : Cmd<'msg> -> unit
     abstract Deliver : 'msg -> unit
 
 and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    inherit IAgent<'msg, 'req, 'evt>
+    inherit IAgent<'req, 'evt>
+    inherit IAgent<'msg>
     abstract Actor : IActor<'args, 'model, 'req, 'evt> with get
