@@ -7,6 +7,7 @@ open Dap.Prelude
 open Dap.Platform
 open Dap.Remote
 open Dap.Archive
+open Dap.Archive.Recorder.Types
 
 type ActorOperate<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame> =
     ActorOperate<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>

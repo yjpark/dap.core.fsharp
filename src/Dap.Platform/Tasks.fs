@@ -60,6 +60,12 @@ type internal PendingTask<'runner> when 'runner :> IRunner = {
     OnFailed : OnFailed<'runner>
     GetTask : GetTask<'runner, unit>
 } with
+    static member Create runner onFailed getTask =
+        {
+            Runner = runner
+            OnFailed = onFailed
+            GetTask = getTask
+        }
     interface IPendingTask with
         member this.Run (cancellationToken : CancellationToken) =
             let runner = this.Runner
@@ -82,19 +88,18 @@ type internal PendingTask<'runner> when 'runner :> IRunner = {
                 None
 
 let internal addTask' (runner : 'runner when 'runner :> IRunner) (onFailed : OnFailed<'runner>) (getTask : GetTask<'runner, unit>) : unit =
-    let pendingTask : PendingTask<'runner> =
-        {
-            Runner = runner
-            OnFailed = onFailed
-            GetTask = getTask
-        }
-    runner.ScheduleTask pendingTask
+    PendingTask<'runner>.Create runner onFailed getTask
+    |> (runner :> ITaskManager).ScheduleTask
+
+let internal runTask' (runner : 'runner when 'runner :> IRunner) (onFailed : OnFailed<'runner>) (getTask : GetTask<'runner, unit>) : unit =
+    PendingTask<'runner>.Create runner onFailed getTask
+    |> (runner :> ITaskManager).StartTask
 
 type internal TaskManager () =
     let mutable runningTasks : (CancellationTokenSource * Task) list = []
     let mutable pendingTasks : IPendingTask list = []
 
-    let runTask (pendingTask : IPendingTask) (count : int) : int =
+    let startTask (pendingTask : IPendingTask) (count : int) : int =
         let cts = new CancellationTokenSource()
         match pendingTask.Run cts.Token with
         | None ->
@@ -110,24 +115,27 @@ type internal TaskManager () =
     let removeCompletedTasks () =
         runningTasks <- runningTasks |> List.filter (fun (cts, task) -> not task.IsCompleted)
 
-    member _this.ScheduleTask (task : IPendingTask) =
-        pendingTasks <- task :: pendingTasks
-    member _this.RunTasks () =
-        let tasks = pendingTasks
-        pendingTasks <- []
-        removeCompletedTasks ()
-        List.foldBack runTask tasks 0
-    member _this.ClearPendingTasks () =
-        let tasks = pendingTasks
-        pendingTasks <- []
-        tasks.Length
-    member _this.CancelRunningTasks () =
-        removeCompletedTasks ()
-        let tasks = runningTasks
-        runningTasks <- []
-        List.foldBack cancelTask tasks 0
-    member this.PendingTasksCount =
-        pendingTasks.Length
-    member this.RunningTasksCount =
-        removeCompletedTasks ()
-        runningTasks.Length
+    interface ITaskManager with
+        member _this.StartTask (task : IPendingTask) =
+            startTask task 0 |> ignore
+        member _this.ScheduleTask (task : IPendingTask) =
+            pendingTasks <- task :: pendingTasks
+        member this.PendingTasksCount =
+            pendingTasks.Length
+        member _this.StartPendingTasks () =
+            let tasks = pendingTasks
+            pendingTasks <- []
+            removeCompletedTasks ()
+            List.foldBack startTask tasks 0
+        member _this.ClearPendingTasks () =
+            let tasks = pendingTasks
+            pendingTasks <- []
+            tasks.Length
+        member this.RunningTasksCount =
+            removeCompletedTasks ()
+            runningTasks.Length
+        member _this.CancelRunningTasks () =
+            removeCompletedTasks ()
+            let tasks = runningTasks
+            runningTasks <- []
+            List.foldBack cancelTask tasks 0

@@ -152,19 +152,7 @@ let create (param : EnvParam) : IEnv =
         Update = update
         Subscribe = noSubscription
     }
-    let logger = param.Logging.GetLogger param.Scope
-    let env = {
-        Platform = param.Platform
-        Logging = param.Logging
-        Scope = param.Scope
-        Clock = param.Clock
-        Logger = logger
-        Logic = logic
-        Stats = statsOfCap <| defaultArg param.GetSlowCap getDefaultSlowCap
-        TaskManager = new TaskManager ()
-        State = None
-        Dispatch = None
-    }
+    let env = new Env (param, logic)
     param.Platform.Start env
     env :> IEnv
 

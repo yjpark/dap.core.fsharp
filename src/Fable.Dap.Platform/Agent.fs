@@ -25,14 +25,8 @@ let getLogger (kind : string) (key : string) =
 let create (kind : Kind) (key : Key)
             (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
                 : IAgent<'args, 'model, 'msg, 'req, 'evt> =
-    let agent : Agent<'args, 'model, 'msg, 'req, 'evt> = {
-        Spec = spec
-        Ident' = Ident.Create noScope kind key
-        Logger' = getLogger kind key
-        Dispatch = None
-        State' = None
-        Actor' = None
-        Version' = noVersion
-    }
+    let ident = Ident.Create noScope kind key
+    let logger = getLogger kind key
+    let agent = new Agent<'args, 'model, 'msg, 'req, 'evt> (spec, ident, logger)
     start agent
     agent :> IAgent<'args, 'model, 'msg, 'req, 'evt>

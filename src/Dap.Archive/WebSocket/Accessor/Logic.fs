@@ -38,7 +38,7 @@ let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats optio
                     if client.Actor.State.Connected then
                         reply runner callback <| ack req None
                     else
-                        replyAsync4 runner req callback nakOnFailed doStartAsync
+                        replyAsync4 runner req callback doStartFailed doStartAsync
                     (runner, model, cmd)
                     |=|> updateModel (fun m -> {m with Running = true})
         | None ->
@@ -132,6 +132,10 @@ let private handleInternalEvt evt : PartOperate<'pkt> =
             (runner, model, cmd)
             |=|> updateModel (fun m -> {m with Client = Some client ; Recorder = recorder})
         | OnConnected stats ->
+            match runner.Actor.Args.OnConnectedAsync with
+            | None -> ()
+            | Some handler ->
+                runner.AddTask4 ignoreOnFailed <| callOnConnectedAsync handler
             (runner, model, cmd)
             |=|> addCmd ^<| AccessorEvt ^<| OnStarted stats
         | OnDisconnected stats ->

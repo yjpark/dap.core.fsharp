@@ -109,12 +109,6 @@ let noActor<'owner, 'initer, 'runner> : ActorSpec'<'owner, 'initer, 'runner, NoA
         CastEvt = fun _ -> None
     }
 
-let noVersion =
-    {
-        StateVer = 0
-        MsgCount = -1
-    }
-
 // Note: Use this form to force the caller to provide proper type
 // of 'model and 'msg, otherwise will get error of
 // FS0030: Value restriction

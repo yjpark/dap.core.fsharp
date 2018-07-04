@@ -16,12 +16,6 @@ type StopStats = {
     StopDuration : Duration
 }
 
-type IAsyncHandler<'req> when 'req :> IReq =
-    abstract HandleAsync<'res> : (Callback<'res> -> 'req) -> Task<'res>
-
-type IAsyncPoster<'req> when 'req :> IReq =
-    abstract PostAsync<'res> : (Callback<'res> -> 'req) -> Task<'res>
-
 and GetReplyTask<'runner, 'res when 'runner :> IRunner> =
     IReq -> Callback<'res> -> GetTask<'runner, unit>
 and OnReplyFailed<'runner, 'res when 'runner :> IRunner> =
@@ -89,6 +83,7 @@ and IAgent =
     abstract Ident : Ident with get
     abstract RunFunc1<'res> : Func<IAgent, 'res> -> Result<'res, exn>
     abstract AddTask1 : OnFailed<IAgent> -> GetTask<IAgent, unit> -> unit
+    abstract RunTask1 : OnFailed<IAgent> -> GetTask<IAgent, unit> -> unit
 
 and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IAgent
@@ -97,11 +92,12 @@ and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     abstract Actor : IActor<'req, 'evt> with get
     abstract RunFunc2<'res> : Func<IAgent<'req, 'evt>, 'res> -> Result<'res, exn>
     abstract AddTask2 : OnFailed<IAgent<'req, 'evt>> -> GetTask<IAgent<'req, 'evt>, unit> -> unit
+    abstract RunTask2 : OnFailed<IAgent<'req, 'evt>> -> GetTask<IAgent<'req, 'evt>, unit> -> unit
 
 and IAgent<'msg> when 'msg :> IMsg =
     inherit IAgent
-    abstract Deliver' : Cmd<'msg> -> unit
     abstract Deliver : 'msg -> unit
+    abstract DeliverAsync<'res> : (Callback<'res> -> 'msg) -> Task<'res>
 
 and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     inherit IAgent<'msg>
@@ -110,7 +106,7 @@ and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq a
     abstract Actor : IActor<'args, 'model, 'req, 'evt> with get
     abstract RunFunc3<'res> : Func<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'res> -> Result<'res, exn>
     abstract AddTask3 : OnFailed<IAgent<'args, 'model, 'msg, 'req, 'evt>> -> GetTask<IAgent<'args, 'model, 'msg, 'req, 'evt>, unit> -> unit
-    abstract FireEvent'' : 'evt -> unit //Should NOT be used by actor
+    abstract RunTask3 : OnFailed<IAgent<'args, 'model, 'msg, 'req, 'evt>> -> GetTask<IAgent<'args, 'model, 'msg, 'req, 'evt>, unit> -> unit
 
 and AgentSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Actor : ActorSpec'<IAgent, IAgent<'msg>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
@@ -128,7 +124,6 @@ and AgentParam = {
 
 and AgentModel<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>
-    Actor : 'model
 }
 
 and AgentReq =

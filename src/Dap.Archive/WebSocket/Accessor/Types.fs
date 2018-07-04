@@ -23,13 +23,18 @@ and Args<'pkt> = {
     ClientKind : Kind
     RetryDelay : float<second> option
     CreateRecorderAsync : GetTask<Client<'pkt>, EventRecorder.Agent option> option
+    OnConnectedAsync : GetTask<Client<'pkt>, unit> option
 } with
-    static member Create clientKind retryDelay createRecorderAsync =
+    static member Create clientKind =
         {
             ClientKind = clientKind
-            RetryDelay = retryDelay
-            CreateRecorderAsync = createRecorderAsync
+            RetryDelay = None
+            CreateRecorderAsync = None
+            OnConnectedAsync = None
         }
+    member this.WithRetryDelay v = {this with RetryDelay = Some v}
+    member this.WithCreateRecorderAsync v = {this with CreateRecorderAsync = Some v}
+    member this.WithOnConnectedAsync v = {this with OnConnectedAsync = Some v}
 
 and Model<'pkt> = {
     Uri : string option

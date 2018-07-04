@@ -1,4 +1,3 @@
-[<AutoOpen>]
 module Dap.Archive.Recorder.Types
 
 open System.IO

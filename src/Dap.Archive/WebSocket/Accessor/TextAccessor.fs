@@ -16,7 +16,7 @@ type Msg = BaseTypes.Msg<string>
 type Req = BaseTypes.Req<string>
 type Evt = BaseTypes.Evt<string>
 
-let init (newArgs : PartNewArgs<Args>) modMsg wrapMsg getMod setMod agent =
+let init (newArgs : PartNewArgs<Args>) partMsg wrapMsg agent =
     let spec = BaseLogic.getSpec newArgs
     agent
-    |> Part.init spec modMsg wrapMsg getMod setMod
+    |> Part.init spec partMsg wrapMsg

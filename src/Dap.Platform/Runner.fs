@@ -29,18 +29,23 @@ and Stats = {
 type IPendingTask =
     abstract Run : CancellationToken -> Task option
 
+and ITaskManager =
+    abstract StartTask : IPendingTask -> unit
+    abstract ScheduleTask : IPendingTask -> unit
+    abstract PendingTasksCount : int with get
+    abstract StartPendingTasks : unit -> int
+    abstract ClearPendingTasks : unit -> int
+    abstract RunningTasksCount : int with get
+    abstract CancelRunningTasks : unit -> int
+
 and IRunner =
     inherit ILogger
+    inherit ITaskManager
     abstract Clock : IClock with get
     abstract Stats : Stats with get
     abstract RunFunc<'res> : Func<IRunner, 'res> -> Result<'res, exn>
     abstract AddTask : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
-    abstract ScheduleTask : IPendingTask -> unit
-    abstract RunTasks : unit -> int
-    abstract ClearPendingTasks : unit -> int
-    abstract CancelRunningTasks : unit -> int
-    abstract PendingTasksCount : int with get
-    abstract RunningTasksCount : int with get
+    abstract RunTask : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
 
 let statsOfCap (getSlowCap : GetSlowCap) : Stats = {
     Deliver = durationStatsOfCap <| getSlowCap DeliverDuration

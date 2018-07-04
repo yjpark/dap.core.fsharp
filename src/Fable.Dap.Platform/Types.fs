@@ -18,7 +18,6 @@ and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
 
 and IAgent<'msg> when 'msg :> IMsg =
     inherit IAgent
-    abstract Deliver' : Cmd<'msg> -> unit
     abstract Deliver : 'msg -> unit
 
 and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =

@@ -4,20 +4,15 @@ module Dap.Platform.Part
 
 open Dap.Prelude
 
-type IActorPart<'args, 'model, 'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
-    inherit IHandler<'req>
-    inherit IChannel<'evt>
-    abstract Args : 'args with get
-    abstract State : 'model with get
-
 type IPart<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    inherit IAgent
+    inherit IAgent<'msg>
     inherit IPoster<'req>
     inherit IAsyncPoster<'req>
-    abstract Actor : IActorPart<'args, 'model, 'req, 'evt> with get
-    abstract Deliver : 'msg -> unit
+    abstract Agent : IAgent with get
+    abstract Actor : IActor<'args, 'model, 'req, 'evt> with get
     abstract RunFunc4<'res> : Func<IPart<'args, 'model, 'msg, 'req, 'evt>, 'res> -> Result<'res, exn>
     abstract AddTask4 : OnFailed<IPart<'args, 'model, 'msg, 'req, 'evt>> -> GetTask<IPart<'args, 'model, 'msg, 'req, 'evt>, unit> -> unit
+    abstract RunTask4 : OnFailed<IPart<'args, 'model, 'msg, 'req, 'evt>> -> GetTask<IPart<'args, 'model, 'msg, 'req, 'evt>, unit> -> unit
 
 type PartInit<'args, 'model, 'msg> =
     Init<IAgent, 'args, 'model, 'msg>
@@ -33,150 +28,112 @@ type PartSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IRe
     NewArgs : PartNewArgs<'args>
     WrapReq : Wrapper<'msg, 'req>
     CastEvt : CastEvt<'msg, 'evt>
-}
+} with
+    interface IActorSpec<'msg, 'req, 'evt> with
+        member this.WrapReq = this.WrapReq
+        member this.CastEvt = this.CastEvt
 
 type PartOperate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Operate<IPart<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
 
 type PartWrapMsg<'actorModel, 'actorMsg> when 'actorMsg :> IMsg =
-    WrapMsg<IAgent<'actorMsg>, 'actorModel, 'actorMsg>
+    WrapMsg<IAgent, 'actorModel, 'actorMsg>
 
 type PartWrapping<'actorModel, 'actorMsg> when 'actorMsg :> IMsg =
-    IWrapping<IAgent<'actorMsg>, 'actorModel, 'actorMsg>
+    IWrapping<IAgent, 'actorModel, 'actorMsg>
 
 type IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     inherit IPart<'args, 'model, 'msg, 'req, 'evt>
     abstract Wrapper : Wrapper<'actorMsg, 'msg> with get
 
 [<StructuredFormatDisplay("<Part>{AsDisplay}")>]
-type internal Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
-    Spec : PartSpec<'args, 'model, 'msg, 'req, 'evt>
-    Agent : IAgent
-    ModMsg : Wrapper<'actorMsg, 'msg>
-    mutable Wrapper : Wrapper<'actorMsg, 'msg> option
-    mutable Dispatch : DispatchMsg<'msg> option
-    mutable State : 'model option
-    mutable Actor' : ActorPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> option
-} with
-    static member Create spec agent modMsg =
-        {
-            Spec = spec
-            Agent = agent
-            ModMsg = modMsg
-            Wrapper = None
-            Dispatch = None
-            State = None
-            Actor' = None
-        }
-    member this.AsDisplay = (this.Agent.Ident, this.ModMsg)
-    member this.Actor =
-        if this.Actor'.IsNone then
-            this.Actor' <- Some <| ActorPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>.Create this
-        this.Actor'
-        |> Option.get
-    member this.Post (req : 'req) = dispatch' this (this.Spec.WrapReq req)
-    member this.PostAsync (getReq : Callback<'res> -> 'req) = dispatchAsync' this (this.Spec.WrapReq << getReq)
+type internal Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt when 'actorMsg :> IMsg and 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt> (spec', partMsg', agent') =
+    let spec : PartSpec<'args, 'model, 'msg, 'req, 'evt> = spec'
+    let partMsg : Wrapper<'actorMsg, 'msg> = partMsg'
+    let agent : IAgent<'actorMsg> = agent'
+    let mutable actor : Actor<'args, 'model, 'msg, 'req, 'evt> option = None
+    let mutable wrapper : Wrapper<'actorMsg, 'msg> option = None
+    let mutable dispatch : DispatchMsg<'msg> option = None
+    member _this.AsDisplay = (agent.Ident, partMsg)
+    member this.AsPart = this :> IPart<'args, 'model, 'msg, 'req, 'evt>
+    member this.Setup (wrapMsg : PartWrapMsg<'actorModel, 'actorMsg>) =
+        if actor.IsSome then
+            raiseWithError "Agent" "Already_Setup" (actor)
+        let args : 'args = spec.NewArgs (agent :> IAgent)
+        let (model, cmd) = spec.Init (this :> IAgent) args
+        let actor' = new Actor<'args, 'model, 'msg, 'req, 'evt> (this, spec, args, model)
+        actor <- Some actor'
+        let runner = this.AsPart
+        let updateActor : Update<IAgent, NoModel, 'msg> =
+            fun _runner model' msg ->
+                let (model, cmd) = spec.Update runner actor'.State msg
+                actor'.SetState msg model
+                (model', cmd)
+        let wrapperSpec : WrapperSpec<IAgent, 'actorModel, 'actorMsg, NoModel, 'msg> =
+            {
+                GetSub = fun m -> NoModel
+                SetSub = fun s -> id
+                UpdateSub = updateActor
+                ReactSub = noReaction
+            }
+        wrapper <- Some <| wrap wrapMsg wrapperSpec
+        (this :> IDispatcher<'msg>).SetDispatch (fun (_time, msg) ->
+            agent.Deliver <| partMsg msg
+        )
+        cmd |> List.iter (fun m -> m <| dispatch' this)
+    member _this.Actor = actor |> Option.get
+    member this.Post (req : 'req) = this.Actor.Handle req
+    member this.PostAsync (getReq : Callback<'res> -> 'req) = this.Actor.HandleAsync getReq
     interface ILogger with
-        member this.Log m = this.Agent.Log m
+        member _this.Log m = agent.Log m
     interface IRunner with
-        member this.Clock = this.Agent.Env.Clock
-        member this.Stats = this.Agent.Stats
-        member this.RunFunc func = this.Agent.RunFunc func
-        member this.AddTask onFailed getTask = this.Agent.AddTask onFailed getTask
-        member this.ScheduleTask task = this.Agent.ScheduleTask task
-        member this.RunTasks () = this.Agent.RunTasks ()
-        member this.ClearPendingTasks () = this.Agent.ClearPendingTasks ()
-        member this.CancelRunningTasks () = this.Agent.CancelRunningTasks ()
-        member this.PendingTasksCount = this.Agent.PendingTasksCount
-        member this.RunningTasksCount = this.Agent.RunningTasksCount
+        member _this.Clock = agent.Env.Clock
+        member _this.Stats = agent.Stats
+        member _this.RunFunc func = agent.RunFunc func
+        member _this.AddTask onFailed getTask = agent.AddTask onFailed getTask
+        member _this.RunTask onFailed getTask = agent.RunTask onFailed getTask
+    interface ITaskManager with
+        member this.StartTask task = agent.StartTask task
+        member this.ScheduleTask task = agent.ScheduleTask task
+        member this.PendingTasksCount = agent.PendingTasksCount
+        member this.StartPendingTasks () = agent.StartPendingTasks ()
+        member this.ClearPendingTasks () = agent.ClearPendingTasks ()
+        member this.RunningTasksCount = agent.RunningTasksCount
+        member this.CancelRunningTasks () = agent.CancelRunningTasks ()
+
     interface IOwner with
-        member this.Ident = (this.Agent :> IOwner).Ident
-        member this.Disposed = (this.Agent :> IOwner).Disposed
+        member _this.Ident = (agent :> IOwner).Ident
+        member _this.Disposed = (agent :> IOwner).Disposed
     interface IAgent with
-        member this.Env = this.Agent.Env
-        member this.Ident = this.Agent.Ident
-        member this.Handle req = this.Agent.Handle req
-        member this.HandleAsync getReq = this.Agent.HandleAsync getReq
-        member this.RunFunc1<'res> func = this.Agent.RunFunc1<'res> func
-        member this.AddTask1 onFailed getTask = this.Agent.AddTask1 onFailed getTask
-
+        member _this.Env = agent.Env
+        member _this.Ident = agent.Ident
+        member _this.Handle req = agent.Handle req
+        member _this.HandleAsync getReq = agent.HandleAsync getReq
+        member _this.RunFunc1<'res> func = agent.RunFunc1<'res> func
+        member _this.AddTask1 onFailed getTask = agent.AddTask1 onFailed getTask
+        member _this.RunTask1 onFailed getTask = agent.RunTask1 onFailed getTask
     interface IDispatcher<'msg> with
-        member this.Dispatch = this.Dispatch
-        member this.SetDispatch dispatch = this.Dispatch <- Some dispatch
-
+        member _this.Dispatch = dispatch
+        member _this.SetDispatch dispatch' = dispatch <- Some dispatch'
     interface IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> with
-        member this.Wrapper = this.Wrapper |> Option.get
+        member _this.Wrapper = wrapper |> Option.get
         member this.Post req = this.Post req
-        member this.PostAsync req = this.PostAsync req
-        member this.Actor = this.Actor :> IActorPart<'args, 'model, 'req, 'evt>
+        member this.PostAsync getReq = this.PostAsync getReq
+        member this.Agent = agent :> IAgent
+        member this.Actor = this.Actor :> IActor<'args, 'model, 'req, 'evt>
         member this.Deliver msg = dispatch' this msg
+        member this.DeliverAsync getMsg = dispatchAsync' this getMsg
         member this.RunFunc4 func = runFunc' this func
         member this.AddTask4 onFailed getTask = addTask' this onFailed getTask
+        member this.RunTask4 onFailed getTask = runTask' this onFailed getTask
 
-and [<StructuredFormatDisplay("<ActorPart>{AsDisplay}")>]
-    internal ActorPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
-    Part : Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
-    Args : 'args
-    OnEvent : IBus<'evt>
-    FireEvent' : 'evt -> unit
-} with
-    static member Create m =
-        let args = m.Spec.NewArgs (m.Agent)
-        let event = new Bus<'evt> (m.Agent :> IOwner)
-        {
-            Part = m
-            Args = args
-            OnEvent = event.Publish
-            FireEvent' = event.Trigger
-        }
-    member this.AsDisplay = this.Part.AsDisplay
-    interface IActorPart<'args, 'model, 'req, 'evt> with
-        member this.Handle req = this.Part.Post req
-        member this.OnEvent = this.OnEvent
-        member this.Args = this.Args
-        member this.State =
-            this.Part.State
-            |> Option.get
-
-let init (modSpec : PartSpec<'args, 'model, 'msg, 'req, 'evt>)
-        (modMsg : Wrapper<'actorMsg, 'msg>)
+let init (spec : PartSpec<'args, 'model, 'msg, 'req, 'evt>)
+        (partMsg : Wrapper<'actorMsg, 'msg>)
         (wrapMsg : PartWrapMsg<'actorModel, 'actorMsg>)
-        (getPart : 'actorModel -> 'model)
-        (setPart : 'model -> 'actorModel -> 'actorModel)
         (agent : IAgent<'actorMsg>)
         : IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> =
-    let part = Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>.Create modSpec agent modMsg
-    let part' = part :> IPart<'args, 'model, 'msg, 'req, 'evt>
-
-    let updatePart : Update<IAgent<'actorMsg>, 'model, 'msg> =
-        fun _runner model msg ->
-            let (model, cmd) = modSpec.Update part' model msg
-            part.State <- Some model
-            (model, cmd)
-
-    let reactPart : React<IAgent<'actorMsg>, 'actorModel, 'actorMsg, 'model, 'msg> =
-        fun _runner msg _model agentModel ->
-            match modSpec.CastEvt msg with
-            | Some evt ->
-                part.Actor.FireEvent' evt
-            | None ->
-                ()
-            (agentModel, noCmd)
-
-    let wrapperSpec : WrapperSpec<IAgent<'actorMsg>, 'actorModel, 'actorMsg, 'model, 'msg> =
-        {
-            GetSub = getPart
-            SetSub = setPart
-            UpdateSub = updatePart
-            ReactSub = reactPart
-        }
-    part.Wrapper <- Some <| wrap wrapMsg wrapperSpec
-    (part :> IDispatcher<'msg>).SetDispatch (fun (_time, msg) ->
-        agent.Deliver <| modMsg msg
-    )
-    let (model, cmd) = modSpec.Init (part' :> IAgent) part'.Actor.Args
-    part.State <- Some model
-    cmd |> List.iter (fun m -> m <| dispatch' part)
+    let part = new Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> (spec, partMsg, agent)
+    part.Setup wrapMsg
     part :> IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
 
 let replyAsync4 (runner : IPart<'args, 'model, 'msg, 'req, 'evt>) (req : IReq) (callback : Callback<'res>)

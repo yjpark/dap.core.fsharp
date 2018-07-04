@@ -6,6 +6,8 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Archive
 
+open Dap.Archive.Recorder.Types
+
 module E = Thoth.Json.Net.Encode
 module D = Thoth.Json.Net.Decode
 

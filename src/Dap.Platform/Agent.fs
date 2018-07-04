@@ -17,10 +17,6 @@ type AgentUpdate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> 
     Update<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 type AgentSubscribe<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Subscribe<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
-type AgentReact<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    React<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
-type AgentWrapperSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    WrapperSpec<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
 
 let private raiseSpawnErr err scope ident =
     raiseWith <| tplSpawnErr err scope ident
@@ -45,25 +41,23 @@ let private update wrapper
         | ActorMsg actorMsg ->
             addSubCmd wrapper actorMsg
         | ActorMsg' wrapping ->
-            wrapping.Operate
+            wrapping.Operate'
         <| runner <| (model, [])
 
-let private init wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
+let private init wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>) actorCmd
                             : AgentInit<'args, 'model, 'msg, 'req, 'evt> =
     fun runner (_args : NoArgs) ->
-        let args = runner.Actor.Args
-        let (actorModel, actorCmd) = spec.Actor.Logic.Init (runner :> IAgent<'msg>) args
         let model = {
             Spec = spec
-            Actor = actorModel
         }
         (model, Cmd.map wrapper actorCmd)
 
-let private subscribe wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
+let private subscribe wrapper (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>) (actorModel : 'model)
                             : AgentSubscribe<'args, 'model, 'msg, 'req, 'evt> =
     fun runner (model : AgentModel<'args, 'model, 'msg, 'req, 'evt>) ->
-        Cmd.map wrapper <| spec.Actor.Logic.Subscribe runner model.Actor
+        Cmd.map wrapper <| spec.Actor.Logic.Subscribe runner actorModel
 
+(*
 let private react : AgentReact<'args, 'model, 'msg, 'req, 'evt> =
     fun runner subMsg _subModel model ->
         match runner.Spec.Actor.CastEvt subMsg with
@@ -72,38 +66,20 @@ let private react : AgentReact<'args, 'model, 'msg, 'req, 'evt> =
         | None ->
             ()
         (model, noCmd)
+*)
 
 let spawn (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
             (param : AgentParam) : IAgent<'args, 'model, 'msg, 'req, 'evt> =
-    let wrapperSpec : AgentWrapperSpec<'args, 'model, 'msg, 'req, 'evt> =
-        {
-            GetSub = fun m -> m.Actor
-            SetSub = fun s m -> {m with Actor = s}
-            UpdateSub = spec.Actor.Logic.Update
-            ReactSub = react
-        }
-    let wrapper = wrap ActorMsg' wrapperSpec
-    let logic : AgentLogic<'args, 'model, 'msg, 'req, 'evt> = {
-        Init = init wrapper spec
-        Update = update wrapper
-        Subscribe = subscribe wrapper spec
-    }
     let ident = Ident.Create param.Env.Scope param.Kind param.Key
     let logger = param.Env.Logging.GetLogger ident.Ident
-    let agent = {
-        Spec = spec
-        Env = param.Env
-        Ident = ident
-        Logger = logger
-        Logic = logic
-        Stats = statsOfCap <| defaultArg spec.GetSlowCap getDefaultSlowCap
-        TaskManager = new TaskManager ()
-        State = None
-        Actor' = None
-        Version = noVersion
-        Dispatch = None
-        Disposed = false
+    let agent = new Agent<'args, 'model, 'msg, 'req, 'evt> (spec, param.Env, ident, logger)
+    let (wrapper, actorModel, actorCmd) = agent.SetupActor ()
+    let logic : AgentLogic<'args, 'model, 'msg, 'req, 'evt> = {
+        Init = init wrapper spec actorCmd
+        Update = update wrapper
+        Subscribe = subscribe wrapper spec actorModel
     }
+    agent.SetLogic logic
     param.Env.Platform.Start agent
     agent.AsAgent
 
