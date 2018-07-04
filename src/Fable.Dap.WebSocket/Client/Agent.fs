@@ -7,7 +7,7 @@ open Dap.WebSocket.Client.Types
 
 type Agent<'pkt> = IAgent<Req<'pkt>, Evt<'pkt>>
 
-let create' (encode : Encode<'pkt>) (decode : Decode<'pkt>)
+let create'<'pkt> (encode : Encode<'pkt>) (decode : Decode<'pkt>)
             (key : Key) (uri : string) (logTraffic : bool) : Dap.WebSocket.Client.Types.Agent<'pkt> =
     fun _agent ->
         {
@@ -19,7 +19,7 @@ let create' (encode : Encode<'pkt>) (decode : Decode<'pkt>)
     |> Logic.getSpec
     |> Agent.create Kind key
 
-let create (encode : Encode<'pkt>) (decode : Decode<'pkt>)
+let create<'pkt> (encode : Encode<'pkt>) (decode : Decode<'pkt>)
             (key : Key) (uri : string) (logTraffic : bool) : Agent<'pkt> =
     create' encode decode key uri logTraffic
     :> Agent<'pkt>
@@ -31,4 +31,4 @@ let decodeText : Decode<string> =
     string
 
 let createText =
-    create encodeText decodeText
+    create<string> encodeText decodeText

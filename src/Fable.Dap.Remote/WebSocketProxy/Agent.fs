@@ -16,7 +16,7 @@ let create'<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> (spec : S
             LogTraffic = logTraffic
             ResponseEvent' = new Bus<'res> (agent)
         }
-    |> Logic.getSpec
+    |> Logic.getSpec<'req, 'res, 'evt>
     |> Agent.create Kind key
 
 let create<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> (spec : StubSpec<'res, 'evt>) (key : string) (uri : string) (logTraffic : bool) =

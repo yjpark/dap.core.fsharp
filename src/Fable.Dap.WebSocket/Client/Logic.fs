@@ -106,7 +106,7 @@ let logic =
         Subscribe = noSubscription
     }
 
-let getSpec (newArgs : ActorNewArgs<Args<'pkt>>) : ActorSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
+let getSpec<'pkt> (newArgs : ActorNewArgs<Args<'pkt>>) : ActorSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
     {
         Logic = logic
         NewArgs = newArgs

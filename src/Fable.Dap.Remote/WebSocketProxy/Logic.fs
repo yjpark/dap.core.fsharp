@@ -146,16 +146,16 @@ let private subscribe : ActorSubscribe<Args<'res, 'evt>, Model<'res, 'evt>, Msg<
     fun runner model ->
         subscribeBus runner model SocketEvt model.Socket.Actor.OnEvent
 
-let logic : ActorLogic<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt>=
+let logic<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> : ActorLogic<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt>=
     {
         Init = init
         Update = update
         Subscribe = subscribe
     }
 
-let getSpec (newArgs : ActorNewArgs<Args<'res, 'evt>>) : ActorSpec<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
+let getSpec<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> (newArgs : ActorNewArgs<Args<'res, 'evt>>) : ActorSpec<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     {
-        Logic = logic
+        Logic = logic<'req, 'res, 'evt>
         NewArgs = newArgs
         WrapReq = ProxyReq
         CastEvt = castEvt<'req, 'res, 'evt>
