@@ -34,17 +34,24 @@ let internal doSetupAsync : GetReplyTask<Part<'pkt>, unit> =
         runner.Deliver <| InternalEvt ^<| OnSetup (req, callback, client, recorder)
     }
 
-let internal doStartFailed : OnReplyFailed<Part<'pkt>, WebSocketTypes.ConnectedStats option> =
-    fun req callback runner e ->
-        reply runner callback <| nak req "Start_Failed" e
-        runner.Deliver <| InternalEvt ^<| OnDisconnected None
-
-let internal doStartAsync : GetReplyTask<Part<'pkt>, WebSocketTypes.ConnectedStats option> =
-    fun req callback runner -> task {
+let internal doConnectAsync : GetTask<Part<'pkt>, WebSocketTypes.ConnectedStats> =
+    fun runner -> task {
         let uri = runner.Actor.State.Uri |> Option.get
         let cts = runner.Actor.State.Cts
         let client = runner.Actor.State.Client |> Option.get
         let! stats = client.PostAsync <| WebSocketClientTypes.DoConnect' uri cts.Token
+        return stats
+    }
+
+let internal doReconnectAsync : GetTask<Part<'pkt>, unit> =
+    fun runner -> task {
+        let! stats = doConnectAsync runner
+        return ()
+    }
+
+let internal doStartAsync : GetReplyTask<Part<'pkt>, WebSocketTypes.ConnectedStats option> =
+    fun req callback runner -> task {
+        let! stats = doConnectAsync runner
         reply runner callback <| ack req ^<| Some stats
     }
 

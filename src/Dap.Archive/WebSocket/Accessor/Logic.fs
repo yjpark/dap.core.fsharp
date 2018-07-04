@@ -38,7 +38,7 @@ let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats optio
                     if client.Actor.State.Connected then
                         reply runner callback <| ack req None
                     else
-                        replyAsync4 runner req callback doStartFailed doStartAsync
+                        replyAsync4 runner req callback nakOnFailed doStartAsync
                     (runner, model, cmd)
                     |=|> updateModel (fun m -> {m with Running = true})
         | None ->
@@ -117,10 +117,7 @@ let private tryReconnect : PartOperate<'pkt> =
 let private doReconnect : PartOperate<'pkt> =
     fun runner (model, cmd) ->
         if runner.Actor.State.Running then
-            let client = runner.Actor.State.Client |> Option.get
-            let uri = runner.Actor.State.Uri |> Option.get
-            let cts = runner.Actor.State.Cts
-            client.Post <| WebSocketClientTypes.DoConnect' uri cts.Token None
+            runner.RunTask4 ignoreOnFailed doReconnectAsync
         (model, cmd)
 
 let private handleInternalEvt evt : PartOperate<'pkt> =

@@ -11,6 +11,11 @@ open Dap.WebSocket
 open Dap.WebSocket.Client.Types
 open Dap.WebSocket.Internal.Tasks
 
+let internal doConnectFailed : OnReplyFailed<Agent<'pkt>, ConnectedStats> =
+    fun req callback runner e ->
+        reply runner callback <| nak req "Connect_Failed" e
+        fireOnDisconnected runner None
+
 let internal doConnectAsync : GetReplyTask<Agent<'pkt>, ConnectedStats> =
     fun req callback runner -> task {
         let time = runner.Clock.Now

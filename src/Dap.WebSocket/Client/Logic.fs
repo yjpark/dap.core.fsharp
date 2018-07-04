@@ -30,7 +30,7 @@ let private doConnect req (uri, token, callback) : ActorOperate<'pkt> =
                 Socket = new ClientWebSocket()
                 Buffer = Array.create<byte> runner.Actor.Args.BufferSize 0uy
             }
-            replyAsync3 runner req callback nakOnFailed <| doConnectAsync
+            replyAsync3 runner req callback doConnectFailed <| doConnectAsync
             updateModel (fun m -> {m with Link = Some link})
         <| runner <| (model, cmd)
 

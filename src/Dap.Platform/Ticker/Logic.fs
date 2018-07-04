@@ -65,7 +65,7 @@ let private doTick : ActorOperate =
     fun runner (model, cmd) ->
         match model.Ticking with
         | true ->
-            logError runner "Ticker" "Frame_Dropped" model
+            logWarn runner "Ticker" "Frame_Dropped" model
             (runner, model, cmd)
             |=|> updateModel (fun m -> {m with DroppedCount = model.DroppedCount + 1})
         | false ->
