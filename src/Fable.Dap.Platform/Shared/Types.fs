@@ -4,7 +4,7 @@ module Dap.Platform.Types
 #if !FABLE_COMPILER
 open System.Threading.Tasks
 #endif
-
+open Elmish
 open Dap.Prelude
 
 [<Measure>]
@@ -141,23 +141,13 @@ and IActor<'args, 'model, 'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     abstract State : 'model with get
     abstract Version : Version with get
 
+and CastEvt<'msg, 'evt> = 'msg -> 'evt option
+
 and IActorSpec<'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     abstract WrapReq : Wrapper<'msg, 'req> with get
     abstract CastEvt : CastEvt<'msg, 'evt> with get
 
-and ActorSpec'<'owner, 'initer, 'runner, 'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
-    Logic : Logic<'initer, 'runner, 'args, 'model, 'msg>
-    NewArgs : NewArgs<'owner, 'args>
-    WrapReq : Wrapper<'msg, 'req>
-    CastEvt : CastEvt<'msg, 'evt>
-} with
-    interface IActorSpec<'msg, 'req, 'evt> with
-        member this.WrapReq = this.WrapReq
-        member this.CastEvt = this.CastEvt
-
-and NewArgs<'owner, 'args> = 'owner -> 'args
-
-and CastEvt<'msg, 'evt> = 'msg -> 'evt option
+and NewArgs<'args> = IOwner -> 'args
 
 type NoArgs = NoArgs
 
@@ -171,3 +161,25 @@ with interface IReq
 
 and NoEvt = NoEvt
 with interface IEvt
+
+and ActorSpec'<'initer, 'runner, 'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt (newArgs', wrapReq', castEvt', init', update', subscribe') =
+    let newArgs : NewArgs<'args> = newArgs'
+    let wrapReq : Wrapper<'msg, 'req> = wrapReq'
+    let castEvt : CastEvt<'msg, 'evt> = castEvt'
+    let logic : Logic<'initer, 'runner, 'args, 'model, 'msg> =
+        {
+            Init = init'
+            Update = update'
+            Subscribe = subscribe'
+        }
+    new(newArgs', wrapReq', castEvt', init', update') =
+        let noSubscription : Subscribe<'runner, 'model, 'msg> =
+            fun _runner _model -> Cmd.none
+        ActorSpec'(newArgs', wrapReq', castEvt', init', update', noSubscription)
+    member _this.NewArgs = newArgs
+    member _this.WrapReq = wrapReq
+    member _this.CastEvt = castEvt
+    member _this.Logic = logic
+    interface IActorSpec<'msg, 'req, 'evt> with
+        member _this.WrapReq = wrapReq
+        member _this.CastEvt = castEvt

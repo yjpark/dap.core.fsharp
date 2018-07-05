@@ -109,7 +109,7 @@ and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq a
     abstract RunTask3 : OnFailed<IAgent<'args, 'model, 'msg, 'req, 'evt>> -> GetTask<IAgent<'args, 'model, 'msg, 'req, 'evt>, unit> -> unit
 
 and AgentSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
-    Actor : ActorSpec'<IAgent, IAgent<'msg>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
+    Actor : ActorSpec'<IAgent<'msg>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
     OnAgentEvent : OnAgentEvent<'model> option
     GetSlowCap : GetSlowCap option
 }

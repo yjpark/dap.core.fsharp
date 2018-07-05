@@ -101,22 +101,9 @@ let private init : ActorInit<Args, Model<'k, 'v>, Msg<'k, 'v>> =
             Entries = Map.empty
         }, noCmd)
 
-let logic =
-    {
-        Init = init
-        Update = update
-        Subscribe = noSubscription
-    }
-
 let getSpec<'k, 'v when 'k : comparison> : AgentSpec<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
     {
-        Actor =
-            {
-                Logic = logic
-                NewArgs = noArgs
-                WrapReq = RegistryReq
-                CastEvt = castEvt<'k, 'v>
-            }
+        Actor = new ActorSpec<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> (noArgs, RegistryReq, castEvt<'k, 'v>, init, update)
         OnAgentEvent = None
         GetSlowCap = None
     }

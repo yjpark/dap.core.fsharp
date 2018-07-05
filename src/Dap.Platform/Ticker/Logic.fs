@@ -149,22 +149,9 @@ let private init : ActorInit<Args, Model, Msg> =
             Timer = None
         }, cmd)
 
-let logic : ActorLogic<Args, Model, Msg, Req, Evt> =
+let getSpec (newArgs : NewArgs<Args>) : AgentSpec<Args, Model, Msg, Req, Evt> =
     {
-        Init = init
-        Update = update
-        Subscribe = noSubscription
-    }
-
-let getSpec (newArgs : ActorNewArgs<Args>) : AgentSpec<Args, Model, Msg, Req, Evt> =
-    {
-        Actor =
-            {
-                NewArgs = newArgs
-                Logic = logic
-                WrapReq = TickerReq
-                CastEvt = castEvt
-            }
+        Actor = new ActorSpec<Args, Model, Msg, Req, Evt> (newArgs, TickerReq, castEvt, init, update)
         OnAgentEvent = None
         GetSlowCap = None
     }

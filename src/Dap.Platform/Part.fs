@@ -20,18 +20,8 @@ type PartInit<'args, 'model, 'msg> =
 type PartUpdate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Update<IPart<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
 
-type PartNewArgs<'args> = NewArgs<IAgent, 'args>
-
-type PartSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
-    Init : PartInit<'args, 'model, 'msg>
-    Update : PartUpdate<'args, 'model, 'msg, 'req, 'evt>
-    NewArgs : PartNewArgs<'args>
-    WrapReq : Wrapper<'msg, 'req>
-    CastEvt : CastEvt<'msg, 'evt>
-} with
-    interface IActorSpec<'msg, 'req, 'evt> with
-        member this.WrapReq = this.WrapReq
-        member this.CastEvt = this.CastEvt
+type PartSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt (newArgs', wrapReq', castEvt', init', update') =
+    inherit ActorSpec'<IAgent, IPart<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>(newArgs', wrapReq', castEvt', init', update', noSubscription)
 
 type PartOperate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Operate<IPart<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
@@ -59,14 +49,14 @@ type internal Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt when 'actorMsg :> 
     member this.Setup (wrapMsg : PartWrapMsg<'actorModel, 'actorMsg>) =
         if actor.IsSome then
             raiseWithError "Agent" "Already_Setup" (actor)
-        let args : 'args = spec.NewArgs (agent :> IAgent)
-        let (model, cmd) = spec.Init (this :> IAgent) args
+        let args : 'args = spec.NewArgs (agent :> IOwner)
+        let (model, cmd) = spec.Logic.Init (this :> IAgent) args
         let actor' = new Actor<'args, 'model, 'msg, 'req, 'evt> (this, spec, args, model)
         actor <- Some actor'
         let runner = this.AsPart
         let updateActor : Update<IAgent, NoModel, 'msg> =
             fun _runner model' msg ->
-                let (model, cmd) = spec.Update runner actor'.State msg
+                let (model, cmd) = spec.Logic.Update runner actor'.State msg
                 actor'.SetState msg model
                 (model', cmd)
         let wrapperSpec : WrapperSpec<IAgent, 'actorModel, 'actorMsg, NoModel, 'msg> =

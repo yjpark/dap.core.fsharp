@@ -100,23 +100,10 @@ let private init : ActorInit<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
             Bundle = None
         }, noCmd)
 
-let logic =
-    {
-        Init = init
-        Update = update
-        Subscribe = noSubscription
-    }
-
 let spec<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame>
             : AgentSpec<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
     {
-        Actor =
-            {
-                NewArgs = noArgs
-                Logic = logic
-                WrapReq = RecorderReq
-                CastEvt = castEvt<'extra, 'frame>
-            }
+        Actor = new ActorSpec<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> (noArgs, RecorderReq, castEvt<'extra, 'frame>, init, update)
         OnAgentEvent = None
         GetSlowCap = None
     }

@@ -4,6 +4,12 @@ module Dap.Platform.Helper
 open System.IO
 open Dap.Prelude
 
+let noActor : ActorSpec<NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
+    let wrapReq = fun _ -> NoMsg
+    let init = fun _initer _args -> (NoModel, noCmd)
+    let update = fun _runner model _msg -> (model, noCmd)
+    new ActorSpec<NoArgs, NoModel, NoMsg, NoReq, NoEvt> (noArgs, wrapReq, noCastEvt, init, update, noSubscription)
+
 let noAgent : AgentSpec<NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
     {
         Actor = noActor

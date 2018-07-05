@@ -162,11 +162,5 @@ let private init : PartInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
             Running = false
         }, noCmd)
 
-let getSpec<'pkt> (newArgs : PartNewArgs<Args<'pkt>>) : PartSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    {
-        Init = init
-        Update = update
-        NewArgs = newArgs
-        WrapReq = AccessorReq
-        CastEvt = castEvt<'pkt>
-    }
+let getSpec<'pkt> (newArgs : NewArgs<Args<'pkt>>) : PartSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
+    new PartSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> (newArgs, AccessorReq, castEvt<'pkt>, init, update)

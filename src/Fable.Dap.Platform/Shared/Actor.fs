@@ -7,8 +7,6 @@ open System.Threading.Tasks
 
 open Dap.Prelude
 
-type ActorNewArgs<'args> = NewArgs<IAgent, 'args>
-
 //Note: during Init, the model is not created yet
 type ActorInit<'args, 'model, 'msg> when 'msg :> IMsg =
     Init<IAgent<'msg>, 'args, 'model, 'msg>
@@ -21,15 +19,11 @@ type ActorUpdate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> 
 type ActorSubscribe<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Subscribe<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
 
-type ActorLogic<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    Logic<IAgent<'msg>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg>
-
 type ActorSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    ActorSpec'<IAgent, IAgent<'msg>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
+    ActorSpec'<IAgent<'msg>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
 
 type ActorOperate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Operate<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
-
 
 [<StructuredFormatDisplay("<Actor>{AsDisplay}")>]
 type internal Actor<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt> (agent', spec', args', model') =
@@ -71,3 +65,4 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and
         member _this.Args = args
         member _this.State = state
         member _this.Version = version
+

@@ -48,7 +48,7 @@ let private handleReq req : ActorOperate<'pkt> =
         <| runner <| (model, cmd)
 
 let getSpec (encode : Encode<'pkt>) (decode : Decode<'pkt>) (logTraffic : bool) (bufferSize : int option) =
-    fun _agent ->
+    fun _owner ->
         {
             LogTraffic = logTraffic
             SendType = WebSocketMessageType.Text

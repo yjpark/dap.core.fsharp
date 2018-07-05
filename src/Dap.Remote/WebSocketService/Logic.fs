@@ -144,15 +144,9 @@ let logic =
         Subscribe = noSubscription
     }
 
-let getSpec (newArgs : ActorNewArgs<Args<'req, 'evt>>) : AgentSpec<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
+let getSpec (newArgs : NewArgs<Args<'req, 'evt>>) : AgentSpec<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     {
-        Actor =
-            {
-                NewArgs = newArgs
-                Logic = logic
-                WrapReq = ServiceReq
-                CastEvt = fun _msg -> None
-            }
+        Actor = new ActorSpec<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> (newArgs, ServiceReq, noCastEvt, init, update)
         OnAgentEvent = None
         GetSlowCap = None
     }

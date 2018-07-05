@@ -99,17 +99,5 @@ let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
             Connected = false
         }, Cmd.ofMsg <| WebSocketReq DoConnect)
 
-let logic =
-    {
-        Init = init
-        Update = update
-        Subscribe = noSubscription
-    }
-
-let getSpec<'pkt> (newArgs : ActorNewArgs<Args<'pkt>>) : ActorSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    {
-        Logic = logic
-        NewArgs = newArgs
-        WrapReq = WebSocketReq
-        CastEvt = castEvt<'pkt>
-    }
+let getSpec<'pkt> (newArgs : NewArgs<Args<'pkt>>) =
+    new ActorSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> (newArgs, WebSocketReq, castEvt<'pkt>, init, update)

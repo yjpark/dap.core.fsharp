@@ -77,18 +77,11 @@ let noOperation : Operate<'runner, 'model, 'msg> =
     fun _runner ->
         id
 
-let noLogic : Logic<'initer, 'runner, NoArgs, NoModel, NoMsg> =
-    {
-        Init = fun _initer _args -> (NoModel, noCmd)
-        Update = fun _runner model _msg -> (model, noCmd)
-        Subscribe = noSubscription
-    }
-
 let noReaction : React<'runner, 'model, 'msg, 'subModel, 'subMsg> =
     fun _runner _subMsg _subModel model ->
         (model, [])
 
-let noArgs<'owner> = fun (_ : 'owner) -> NoArgs
+let noArgs = fun (_ : IOwner) -> NoArgs
 
 let noEvent =
     let noOwner =
@@ -101,13 +94,7 @@ let noEvent =
     let bus = new Bus<NoEvt>(noOwner)
     bus.Publish
 
-let noActor<'owner, 'initer, 'runner> : ActorSpec'<'owner, 'initer, 'runner, NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
-    {
-        NewArgs = noArgs<'owner>
-        Logic = noLogic
-        WrapReq = fun _ -> NoMsg
-        CastEvt = fun _ -> None
-    }
+let noCastEvt = fun _ -> None
 
 // Note: Use this form to force the caller to provide proper type
 // of 'model and 'msg, otherwise will get error of

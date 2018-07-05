@@ -34,7 +34,7 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and
                     raiseAgentErr "Already_Started" actor
                 | None ->
                     logger <- enrichLoggerForAgent this logger
-                    let args : 'args = spec.NewArgs (this :> IAgent)
+                    let args : 'args = spec.NewArgs (this :> IOwner)
                     let (model, cmd) = spec.Logic.Init runner args
                     actor <- Some <| new Actor<'args, 'model, 'msg, 'req, 'evt> (this, spec, args, model)
                     (model, cmd)

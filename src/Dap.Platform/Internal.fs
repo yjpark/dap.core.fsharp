@@ -86,7 +86,7 @@ and [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
     member this.SetupActor () =
         if actor.IsSome then
             raiseWithError "Agent" "Actor_Already_Setup" (actor)
-        let args : 'args = spec.Actor.NewArgs (this :> IAgent)
+        let args : 'args = spec.Actor.NewArgs (this :> IOwner)
         let (model, cmd) = spec.Actor.Logic.Init (this :> IAgent<'msg>) args
         let actor' = new Actor<'args, 'model, 'msg, 'req, 'evt> (this, spec.Actor, args, model)
         actor <- Some actor'
