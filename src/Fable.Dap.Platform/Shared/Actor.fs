@@ -5,6 +5,7 @@ module Dap.Platform.Actor
 open System.Threading.Tasks
 #endif
 
+open Elmish
 open Dap.Prelude
 
 //Note: during Init, the model is not created yet
@@ -19,11 +20,54 @@ type ActorUpdate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> 
 type ActorSubscribe<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Subscribe<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
 
-type ActorSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    ActorSpec'<IAgent<'msg>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
-
 type ActorOperate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Operate<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
+
+type ActorParam<'msg> when 'msg :> IMsg = {
+    WrapEvt : Wrapper<'msg, AgentEvt> option
+#if !FABLE_COMPILER
+    GetSlowCap : GetSlowCap option
+#endif
+} with
+    member this.WithWrapEvt v = {this with WrapEvt = Some v}
+
+#if !FABLE_COMPILER
+    member this.WithGetSlowCap v = {this with GetSlowCap = Some v}
+#endif
+
+let noActorParam<'msg when 'msg :> IMsg> : ActorParam<'msg> =
+    {
+        WrapEvt = None
+#if !FABLE_COMPILER
+        GetSlowCap = None
+#endif
+    }
+
+type ActorSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt (newArgs', wrapReq', castEvt', init', update', subscribe', param') =
+    let newArgs : NewArgs<'args> = newArgs'
+    let wrapReq : Wrapper<'msg, 'req> = wrapReq'
+    let castEvt : CastEvt<'msg, 'evt> = castEvt'
+    let logic : Logic<IAgent<'msg>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg> =
+        {
+            Init = init'
+            Update = update'
+            Subscribe = subscribe'
+        }
+    let param : ActorParam<'msg> = param'
+    new(newArgs', wrapReq', castEvt', init', update', subscribe') =
+        ActorSpec(newArgs', wrapReq', castEvt', init', update', subscribe', noActorParam<'msg>)
+    new(newArgs', wrapReq', castEvt', init', update') =
+        let noSubscription : Subscribe<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg> =
+            fun _runner _model -> Cmd.none
+        ActorSpec(newArgs', wrapReq', castEvt', init', update', noSubscription, noActorParam<'msg>)
+    member _this.NewArgs = newArgs
+    member _this.WrapReq = wrapReq
+    member _this.CastEvt = castEvt
+    member _this.Logic = logic
+    member _this.Param = param
+    interface IActorSpec<'msg, 'req, 'evt> with
+        member _this.WrapReq = wrapReq
+        member _this.CastEvt = castEvt
 
 [<StructuredFormatDisplay("<Actor>{AsDisplay}")>]
 type internal Actor<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt> (agent', spec', args', model') =

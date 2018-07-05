@@ -24,3 +24,5 @@ and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq a
     inherit IAgent<'req, 'evt>
     inherit IAgent<'msg>
     abstract Actor : IActor<'args, 'model, 'req, 'evt> with get
+
+type AgentEvt = NoEvt

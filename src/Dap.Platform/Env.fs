@@ -6,11 +6,12 @@ open Elmish
 open FSharp.Control.Tasks.V2
 
 open Dap.Prelude
-open Dap.Platform.Internal
+open Dap.Platform.Internal.Env
+open Dap.Platform.Internal.Agent
 
 let private tplSpawnErr = LogEvent.Template3<obj, Ident, Ident>(LogLevelFatal, "[Spawn] {Err}: {ExpectIdent} ~> {ActualIdent}")
 
-let private raiseSpawnErr err expectIdent actualIdent = 
+let private raiseSpawnErr err expectIdent actualIdent =
     raiseWith <| tplSpawnErr err expectIdent actualIdent
 
 let private doQuit req (forceQuit, callback) : EnvOperate =
@@ -174,7 +175,7 @@ let play platform logging scope =
     |> create
 
 let register (kind : Kind)
-                (spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>)
+                (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
                 (env : IEnv) =
     let spawner = Agent.getSpawner env spec
     env.Handle <| DoRegister (kind, spawner, None)
@@ -191,11 +192,9 @@ let addServiceAsync kind key spec (env : IEnv) = task {
 }
 
 let getService (kind : Kind) (key : Key) (env : IEnv) =
-    let state = Option.get env.State
-    let kindServices = Map.find kind state.Services
+    let kindServices = Map.find kind env.State.Services
     Map.find key kindServices
 
 let tryFindService (kind : Kind) (key : Key) (env : IEnv) =
-    let state = Option.get env.State
-    Map.tryFind kind state.Services
+    Map.tryFind kind env.State.Services
     |> Option.bind (Map.tryFind key)

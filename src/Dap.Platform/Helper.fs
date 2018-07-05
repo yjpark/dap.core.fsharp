@@ -10,13 +10,6 @@ let noActor : ActorSpec<NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
     let update = fun _runner model _msg -> (model, noCmd)
     new ActorSpec<NoArgs, NoModel, NoMsg, NoReq, NoEvt> (noArgs, wrapReq, noCastEvt, init, update, noSubscription)
 
-let noAgent : AgentSpec<NoArgs, NoModel, NoMsg, NoReq, NoEvt> =
-    {
-        Actor = noActor
-        OnAgentEvent = None
-        GetSlowCap = None
-    }
-
 let inline addFutureCmd (delay : float<second>) (msg : 'msg) (runner : ^runner) ((model, cmd) : 'model * Cmd<'msg>) : 'model * Cmd<'msg> =
     let interval = 1000.0 * (float delay)
     let timer = new System.Timers.Timer(Interval = interval, Enabled = true, AutoReset = false)

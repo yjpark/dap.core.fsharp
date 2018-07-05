@@ -24,6 +24,14 @@ and OnReplyFailed<'runner, 'res when 'runner :> IRunner> =
 type IPlatform =
     abstract Start : IRunnable<'initer, 'runner, 'args, 'model, 'msg> -> unit
 
+and EnvParam = {
+    Platform : IPlatform
+    Logging : ILogging
+    Scope : Scope
+    Clock : IClock
+    GetSlowCap : GetSlowCap option
+}
+
 and IEnv =
     inherit IRunner
     inherit IHandler<EnvReq>
@@ -31,7 +39,7 @@ and IEnv =
     abstract Platform : IPlatform with get
     abstract Logging : ILogging with get
     abstract Scope : Scope with get
-    abstract State : EnvModel option with get
+    abstract State : EnvModel with get
 
 and Spawner =
     Ident -> IAgent
@@ -56,21 +64,10 @@ and EnvEvt =
     | OnNewAgent of Kind * Key * IAgent
 with interface IEvt
 
-and EnvMsg =
-    | EnvReq of EnvReq
-    | EnvEvt of EnvEvt
-with
-    interface IMsg
-
-and EnvOperate =
-        Operate<IEnv, EnvModel, EnvMsg>
-
-and EnvParam = {
-    Platform : IPlatform
-    Logging : ILogging
-    Scope : Scope
-    Clock : IClock
-    GetSlowCap : GetSlowCap option
+and AgentParam = {
+    Env : IEnv
+    Kind : Kind
+    Key : Key
 }
 
 and IAgent =
@@ -102,29 +99,10 @@ and IAgent<'msg> when 'msg :> IMsg =
 and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     inherit IAgent<'msg>
     inherit IAgent<'req, 'evt>
-    abstract Spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt> with get
     abstract Actor : IActor<'args, 'model, 'req, 'evt> with get
     abstract RunFunc3<'res> : Func<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'res> -> Result<'res, exn>
     abstract AddTask3 : OnFailed<IAgent<'args, 'model, 'msg, 'req, 'evt>> -> GetTask<IAgent<'args, 'model, 'msg, 'req, 'evt>, unit> -> unit
     abstract RunTask3 : OnFailed<IAgent<'args, 'model, 'msg, 'req, 'evt>> -> GetTask<IAgent<'args, 'model, 'msg, 'req, 'evt>, unit> -> unit
-
-and AgentSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
-    Actor : ActorSpec'<IAgent<'msg>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg, 'req, 'evt>
-    OnAgentEvent : OnAgentEvent<'model> option
-    GetSlowCap : GetSlowCap option
-}
-
-and OnAgentEvent<'model> = IAgent -> 'model -> AgentEvt -> unit
-
-and AgentParam = {
-    Env : IEnv
-    Kind : Kind
-    Key : Key
-}
-
-and AgentModel<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
-    Spec : AgentSpec<'args, 'model, 'msg, 'req, 'evt>
-}
 
 and AgentReq =
     | DoStop of bool * Callback<StopStats>           // forceStop
@@ -134,16 +112,6 @@ and AgentEvt =
     | OnWillStop of Callback<unit>
     | OnDidStop of StopStats
 with interface IEvt
-
-and AgentMsg<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    | AgentReq of AgentReq
-    | AgentEvt of AgentEvt
-    | ActorMsg of 'msg
-    | ActorMsg' of AgentWrapping<'args, 'model, 'msg, 'req, 'evt>
-with interface IMsg
-
-and AgentWrapping<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    IWrapping<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 
 let DoQuit' (forceQuit : bool) callback =
     DoQuit (forceQuit, callback)

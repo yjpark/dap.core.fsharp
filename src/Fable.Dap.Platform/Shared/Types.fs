@@ -161,25 +161,3 @@ with interface IReq
 
 and NoEvt = NoEvt
 with interface IEvt
-
-and ActorSpec'<'initer, 'runner, 'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt (newArgs', wrapReq', castEvt', init', update', subscribe') =
-    let newArgs : NewArgs<'args> = newArgs'
-    let wrapReq : Wrapper<'msg, 'req> = wrapReq'
-    let castEvt : CastEvt<'msg, 'evt> = castEvt'
-    let logic : Logic<'initer, 'runner, 'args, 'model, 'msg> =
-        {
-            Init = init'
-            Update = update'
-            Subscribe = subscribe'
-        }
-    new(newArgs', wrapReq', castEvt', init', update') =
-        let noSubscription : Subscribe<'runner, 'model, 'msg> =
-            fun _runner _model -> Cmd.none
-        ActorSpec'(newArgs', wrapReq', castEvt', init', update', noSubscription)
-    member _this.NewArgs = newArgs
-    member _this.WrapReq = wrapReq
-    member _this.CastEvt = castEvt
-    member _this.Logic = logic
-    interface IActorSpec<'msg, 'req, 'evt> with
-        member _this.WrapReq = wrapReq
-        member _this.CastEvt = castEvt

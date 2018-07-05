@@ -28,7 +28,8 @@
     <Compile Include="Tasks.fs" />
     <Compile Include="Part.fs" />
     <Compile Include="Logging.fs" />
-    <Compile Include="Internal.fs" />
+    <Compile Include="Internal/Agent.fs" />
+    <Compile Include="Internal/Env.fs" />
     <Compile Include="Agent.fs" />
     <Compile Include="Play/Types.fs" />
     <Compile Include="Replay/Types.fs" />
