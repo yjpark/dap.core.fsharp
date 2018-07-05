@@ -4,12 +4,6 @@ module Dap.Platform.Part
 
 open Dap.Prelude
 
-type PartWrapMsg<'actorModel, 'actorMsg> when 'actorMsg :> IMsg =
-    WrapMsg<IAgent, 'actorModel, 'actorMsg>
-
-type PartWrapping<'actorModel, 'actorMsg> when 'actorMsg :> IMsg =
-    IWrapping<IAgent, 'actorModel, 'actorMsg>
-
 type IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     inherit IAgent<'args, 'model, 'msg, 'req, 'evt>
     abstract Agent : IAgent<'actorMsg> with get
@@ -29,27 +23,12 @@ type internal Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt when 'actorMsg :> 
     member _this.AsDisplay = (agent.Ident, partMsg)
     member this.AsPart = this :> IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
     member this.AsAgent = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
-    member this.Setup (wrapMsg : PartWrapMsg<'actorModel, 'actorMsg>) =
+    member this.Setup (wrapMsg : ActorWrapMsg<'actorModel, 'actorMsg>) =
         if actor.IsSome then
-            raiseWithError "Agent" "Already_Setup" (actor)
-        let args : 'args = spec.NewArgs (agent :> IOwner)
-        let (model, cmd) = spec.Logic.Init (this :> IAgent<'msg>) args
-        let actor' = new Actor<'args, 'model, 'msg, 'req, 'evt> (this, spec, args, model)
+            raiseWithError "Part" "Already_Setup" (actor)
+        let (actor', cmd, wrapper') = this.AsAgent |> create' spec wrapMsg true
         actor <- Some actor'
-        let runner = this.AsAgent
-        let updateActor : Update<IAgent, NoModel, 'msg> =
-            fun _runner model' msg ->
-                let (model, cmd) = spec.Logic.Update runner actor'.State msg
-                actor'.SetState msg model
-                (model', cmd)
-        let wrapperSpec : WrapperSpec<IAgent, 'actorModel, 'actorMsg, NoModel, 'msg> =
-            {
-                GetSub = fun m -> NoModel
-                SetSub = fun s -> id
-                UpdateSub = updateActor
-                ReactSub = noReaction
-            }
-        wrapper <- Some <| wrap wrapMsg wrapperSpec
+        wrapper <- Some <| wrapper'
         (this :> IDispatcher<'msg>).SetDispatch (fun (_time, msg) ->
             agent.Deliver <| partMsg msg
         )
@@ -111,7 +90,7 @@ type internal Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt when 'actorMsg :> 
 
 let create (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
         (partMsg : Wrapper<'actorMsg, 'msg>)
-        (wrapMsg : PartWrapMsg<'actorModel, 'actorMsg>)
+        (wrapMsg : ActorWrapMsg<'actorModel, 'actorMsg>)
         (agent : IAgent<'actorMsg>)
         : IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> =
     let part = new Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> (spec, partMsg, agent)

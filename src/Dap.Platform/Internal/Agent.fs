@@ -3,24 +3,23 @@ module Dap.Platform.Internal.Agent
 open Dap.Prelude
 open Dap.Platform
 
-type internal AgentModel<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
+type internal AgentModel<'args, 'model, 'msg, 'req, 'evt> when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt = {
     Spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>
+    Actor : Actor<'args, 'model, 'msg, 'req, 'evt>
+    Wrapper : Wrapper<AgentMsg<'args, 'model, 'msg, 'req, 'evt>, 'msg>
 }
 
-type internal AgentMsg<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
+and internal AgentMsg<'args, 'model, 'msg, 'req, 'evt> when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     | AgentReq of AgentReq
     | AgentEvt of AgentEvt
     | ActorMsg of 'msg
     | ActorMsg' of AgentWrapping<'args, 'model, 'msg, 'req, 'evt>
 with interface IMsg
 
-and internal AgentWrapping<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    IWrapping<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+and internal AgentWrapping<'args, 'model, 'msg, 'req, 'evt> when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
+    ActorWrapping<AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 
-and internal AgentWrapperSpec<'args, 'model, 'msg, 'req, 'evt> when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    WrapperSpec<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>, NoModel, 'msg>
-
-type internal AgentLogic<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
+type internal AgentLogic<'args, 'model, 'msg, 'req, 'evt> when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Logic<IAgent<'args, 'model, 'msg, 'req, 'evt>,
             IAgent<'args, 'model, 'msg, 'req, 'evt>,
             NoArgs,
@@ -28,7 +27,7 @@ type internal AgentLogic<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 
             AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 
 [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
-type internal Agent<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt> (spec', env', ident', logger') =
+type internal Agent<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt> (spec', env', ident', logger', logic') =
     let spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt> = spec'
     let env : IEnv = env'
     let ident : Ident = ident'
@@ -38,40 +37,14 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and
         |> Option.defaultValue getDefaultSlowCap
         |> statsOfCap
     let taskManager : ITaskManager = new TaskManager () :> ITaskManager
-    let mutable actor : Actor<'args, 'model, 'msg, 'req, 'evt> option = None
-    let mutable logic : AgentLogic<'args, 'model, 'msg, 'req, 'evt> option = None
+    let mutable logic : AgentLogic<'args, 'model, 'msg, 'req, 'evt> = logic'
     let mutable disposed : bool = false
     let mutable dispatch : DispatchMsg<AgentMsg<'args, 'model, 'msg, 'req, 'evt>> option = None
     let mutable state : AgentModel<'args, 'model, 'msg, 'req, 'evt> option = None
     let mutable version : Version = Version.Init
-    member _this.AsDisplay = (ident, version, actor)
+    member this.AsDisplay = (ident, version, this.Actor)
     member this.AsAgent = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
-    member this.SetupActor () =
-        if actor.IsSome then
-            raiseWithError "Agent" "Actor_Already_Setup" (actor)
-        let args : 'args = spec.NewArgs (this :> IOwner)
-        let (model, cmd) = spec.Logic.Init (this :> IAgent<'msg>) args
-        let actor' = new Actor<'args, 'model, 'msg, 'req, 'evt> (this, spec, args, model)
-        actor <- Some actor'
-        let updateActor : Update<IAgent<'args, 'model, 'msg, 'req, 'evt>, NoModel, 'msg> =
-            fun runner model' msg ->
-                let (model, cmd) = spec.Logic.Update runner actor'.State msg
-                actor'.SetState msg model
-                (model', cmd)
-        let wrapperSpec : AgentWrapperSpec<'args, 'model, 'msg, 'req, 'evt> =
-            {
-                GetSub = fun m -> NoModel
-                SetSub = fun s -> id
-                UpdateSub = updateActor
-                ReactSub = noReaction
-            }
-        let wrapper = wrap ActorMsg' wrapperSpec
-        (wrapper, model, cmd)
-    member _this.SetLogic logic' =
-        if logic.IsSome then
-            raiseWithError "Agent" "Logic_Already_Set" (logic, logic')
-        logic <- Some logic'
-    member _this.Actor = actor |> Option.get
+    member _this.Actor = state |> Option.get |> fun m -> m.Actor
     member _this.SetState (newState : AgentModel<'args, 'model, 'msg, 'req, 'evt>) =
         let stateChanged = state.IsNone || not (newState =? Option.get state)
         state <- Some newState
@@ -90,7 +63,7 @@ type internal Agent<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and
                         AgentModel<'args, 'model, 'msg, 'req, 'evt>,
                         AgentMsg<'args, 'model, 'msg, 'req, 'evt>> with
         member _this.Args = NoArgs
-        member _this.Logic = logic |> Option.get
+        member _this.Logic = logic
         member _this.Dispatch = dispatch
         member _this.State = state
         member _this.SetDispatch dispatch' = dispatch <- Some dispatch'
