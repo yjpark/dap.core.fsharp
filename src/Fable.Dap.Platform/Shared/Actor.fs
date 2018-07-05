@@ -8,12 +8,6 @@ open System.Threading.Tasks
 open Elmish
 open Dap.Prelude
 
-type ActorWrapMsg<'actorModel, 'actorMsg> when 'actorMsg :> IMsg =
-    WrapMsg<IAgent, 'actorModel, 'actorMsg>
-
-type ActorWrapping<'actorModel, 'actorMsg> when 'actorMsg :> IMsg =
-    IWrapping<IAgent, 'actorModel, 'actorMsg>
-
 //Note: during Init, the model is not created yet
 type ActorInit<'args, 'model, 'msg> when 'msg :> IMsg =
     Init<IAgent<'msg>, 'args, 'model, 'msg>
@@ -118,19 +112,19 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and
 
 let internal create'
         (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
-        (wrapMsg : ActorWrapMsg<'agentModel, 'agentMsg>)
+        (wrapMsg : WrapMsg<'agentRunner, 'agentModel, 'agentMsg>)
         (subscribeNow : bool)
         (runner : IAgent<'args, 'model, 'msg, 'req, 'evt>) =
     let args : 'args = spec.NewArgs (runner :> IOwner)
     let agent = runner :> IAgent<'msg>
     let (model, cmd) = spec.Logic.Init agent args
     let actor = new Actor<'args, 'model, 'msg, 'req, 'evt> (agent, spec, args, model)
-    let updateActor : Update<IAgent, NoModel, 'msg> =
+    let updateActor : Update<'agentRunner, NoModel, 'msg> =
         fun _runner model' msg ->
             let (model, cmd) = spec.Logic.Update runner actor.State msg
             actor.SetState msg model
             (model', cmd)
-    let wrapperSpec : WrapperSpec<IAgent, 'agentModel, 'agentMsg, NoModel, 'msg> =
+    let wrapperSpec : WrapperSpec<'agentRunner, 'agentModel, 'agentMsg, NoModel, 'msg> =
         {
             GetSub = fun m -> NoModel
             SetSub = fun s -> id

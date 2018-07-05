@@ -4,7 +4,12 @@ module Dap.Platform.Part
 
 open Dap.Prelude
 
+type IPart =
+    inherit IOwner
+    abstract Agent : IAgent with get
+
 type IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> when 'actorMsg :> IMsg and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
+    inherit IPart
     inherit IAgent<'args, 'model, 'msg, 'req, 'evt>
     abstract Agent : IAgent<'actorMsg> with get
     abstract Wrapper : Wrapper<'actorMsg, 'msg> with get
@@ -20,10 +25,10 @@ type internal Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt when 'actorMsg :> 
     let mutable actor : Actor<'args, 'model, 'msg, 'req, 'evt> option = None
     let mutable wrapper : Wrapper<'actorMsg, 'msg> option = None
     let mutable dispatch : DispatchMsg<'msg> option = None
-    member _this.AsDisplay = (agent.Ident, partMsg)
+    member _this.AsDisplay = (agent.Ident, partMsg, actor)
     member this.AsPart = this :> IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
     member this.AsAgent = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
-    member this.Setup (wrapMsg : ActorWrapMsg<'actorModel, 'actorMsg>) =
+    member this.Setup (wrapMsg : WrapMsg<'actorRunner, 'actorModel, 'actorMsg>) =
         if actor.IsSome then
             raiseWithError "Part" "Already_Setup" (actor)
         let (actor', cmd, wrapper') = this.AsAgent |> create' spec wrapMsg true
@@ -81,6 +86,8 @@ type internal Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt when 'actorMsg :> 
         member this.RunFunc3 func = runFunc' this func
         member this.AddTask3 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask3 onFailed getTask = runTask' this onFailed getTask
+    interface IPart with
+        member _this.Agent = agent :> IAgent
     interface IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> with
         member _this.Agent = agent
         member _this.Wrapper = wrapper |> Option.get
@@ -90,12 +97,12 @@ type internal Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt when 'actorMsg :> 
 
 let create (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
         (partMsg : Wrapper<'actorMsg, 'msg>)
-        (wrapMsg : ActorWrapMsg<'actorModel, 'actorMsg>)
+        (wrapMsg : WrapMsg<'actorRunner, 'actorModel, 'actorMsg>)
         (agent : IAgent<'actorMsg>)
         : IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> =
     let part = new Part<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> (spec, partMsg, agent)
     part.Setup wrapMsg
-    part :> IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
+    part.AsPart
 
 let replyAsync4 (runner : IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>, 'res>)

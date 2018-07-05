@@ -17,7 +17,7 @@ and internal AgentMsg<'args, 'model, 'msg, 'req, 'evt> when 'model : not struct 
 with interface IMsg
 
 and internal AgentWrapping<'args, 'model, 'msg, 'req, 'evt> when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    ActorWrapping<AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
+    IWrapping<IAgent<'args, 'model, 'msg, 'req, 'evt>, AgentModel<'args, 'model, 'msg, 'req, 'evt>, AgentMsg<'args, 'model, 'msg, 'req, 'evt>>
 
 type internal AgentLogic<'args, 'model, 'msg, 'req, 'evt> when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
     Logic<IAgent<'args, 'model, 'msg, 'req, 'evt>,

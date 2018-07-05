@@ -32,7 +32,6 @@ type Operate<'runner, 'model, 'msg> =
     'runner -> 'model * Cmd<'msg> -> 'model * Cmd<'msg>
 
 type IWrapping<'runner, 'model, 'msg> =
-    abstract Operate'<'runner1> : 'runner1 -> 'model * Cmd<'msg> -> 'model * Cmd<'msg>
     abstract Operate : Operate<'runner, 'model, 'msg> with get
 
 type WrapMsg<'runner, 'model, 'msg> =

@@ -41,7 +41,7 @@ let private update : AgentUpdate<'args, 'model, 'msg, 'req, 'evt> =
         | ActorMsg actorMsg ->
             addSubCmd model.Wrapper actorMsg
         | ActorMsg' wrapping ->
-            wrapping.Operate'
+            wrapping.Operate
         <| runner <| (model, [])
 
 let private init (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
@@ -88,3 +88,34 @@ let getSpawner (env : IEnv)
             :> IAgent
         else
             raiseSpawnErr "Not_In_Same_Scope" env.Scope ident
+
+let cast<'agent when 'agent :> IAgent> (owner : IOwner) =
+    match owner with
+    | :? IPart as part ->
+        part.Agent
+    | :? IAgent as agent ->
+        agent
+    | _ ->
+        raiseWithError "Agent" "Invalid_Owner" (owner.GetType().FullName, typeof<'agent>.FullName)
+    |> fun (agent : IAgent) ->
+        match agent with
+        | :? 'agent as agent ->
+            agent
+        | _ ->
+            raiseWithError "Agent" "Cast_Failed" (agent.GetType().FullName, typeof<'agent>.FullName)
+
+let tryCast<'agent when 'agent :> IAgent> (owner : IOwner) =
+    match owner with
+    | :? IPart as part ->
+        Ok (true, part.Agent)
+    | :? IAgent as agent ->
+        Ok (false, agent)
+    | _ ->
+        Error (false, owner.GetType())
+    |> Result.bind (fun ((isPart, agent) : bool * IAgent) ->
+        match agent with
+        | :? 'agent as agent ->
+            Ok agent
+        | _ ->
+            Error (isPart, agent.GetType())
+    )
