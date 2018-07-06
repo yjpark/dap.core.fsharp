@@ -80,3 +80,9 @@ with
         | Custom format -> instantToString format
 
 let noDuration = Duration.Zero
+
+let dateTimeUtcNow = System.DateTime.UtcNow
+
+let toDateTimeUtc (time : Instant) =
+    time.ToDateTimeUtc ()
+
