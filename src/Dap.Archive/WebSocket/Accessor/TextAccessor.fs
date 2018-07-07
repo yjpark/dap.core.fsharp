@@ -18,5 +18,4 @@ type Evt = BaseTypes.Evt<string>
 
 let create<'actorMsg when 'actorMsg :> IMsg> (args : Args) partMsg wrapMsg agent =
     let spec = BaseLogic.spec<'actorMsg, string> args
-    agent
-    |> Part.create spec partMsg wrapMsg
+    agent |> Part.create spec partMsg wrapMsg
