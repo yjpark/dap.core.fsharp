@@ -40,6 +40,10 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     abstract member Runner : 'runner with get
     interface IRunner<'runner> with
         member this.Runner = this.Runner
+    //IRunner
+    member _this.Clock = env.Clock
+    interface IRunner with
+        member this.Clock = this.Clock
     member this.Start' () =
         let runner = this :> IAgent<'msg>
         try

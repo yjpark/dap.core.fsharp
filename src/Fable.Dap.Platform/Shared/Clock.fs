@@ -1,18 +1,18 @@
 [<AutoOpen>]
 module Dap.Platform.Clock
 
-// Follow the ideas from this blog
-// https://hanson.io/taming-the-datetime-beast-with-noda-time/
-//
-// Use NodaTime to express time related data clearly
-// Encapsulate now time into Env, so can support time travel kind
-// operation, or provide time scale properly.
+#if FABLE_COMPILER
+open System
 
+type Instant = System.DateTime
+type Duration = System.TimeSpan
+#else
 open NodaTime
 open NodaTime.Text
 
 type Instant = NodaTime.Instant
 type Duration = NodaTime.Duration
+#endif
 
 type IClock =
     abstract Now : Instant with get
@@ -20,38 +20,39 @@ type IClock =
     abstract Now' : Instant with get
     abstract CalcDuration' : Instant -> Instant * Duration
 
-let inline getNow' () =
-    SystemClock.Instance.GetCurrentInstant ()
+let dateTimeUtcNow = System.DateTime.UtcNow
+
+#if FABLE_COMPILER
+let inline getNow' () = dateTimeUtcNow
+#else
+let inline getNow' () = SystemClock.Instance.GetCurrentInstant ()
+let toDateTimeUtc (time : Instant) =
+    time.ToDateTimeUtc ()
+#endif
+
+let private calcDuration (fromTime : Instant) =
+    let now = getNow' ()
+    (now, now - fromTime)
 
 type RealClock () =
     interface IClock with
-        member this.Now =
-            getNow' ()
-        member this.CalcDuration fromTime =
-            let now = getNow' ()
-            (now, now - fromTime)
-        member this.Now' =
-            getNow' ()
-        member this.CalcDuration' fromTime =
-            let now = getNow' ()
-            (now, now - fromTime)
+        member _this.Now = getNow' ()
+        member _this.CalcDuration fromTime = calcDuration fromTime
+        member _this.Now' = getNow' ()
+        member _this.CalcDuration' fromTime = calcDuration fromTime
 
 type FakeClock () =
     let mutable now = getNow' ()
-    member this.Set (now' : Instant) =
-        now <- now'
-    member this.Add (duration : Duration) =
-        now <- now + duration
+    member this.Set (now' : Instant) = now <- now'
+    member this.Add (duration : Duration) = now <- now + duration
     interface IClock with
         member this.Now = now
-        member this.CalcDuration fromTime =
-            (now, now - fromTime)
-        member this.Now' =
-            getNow' ()
-        member this.CalcDuration' fromTime =
-            let now = getNow' ()
-            (now, now - fromTime)
+        member this.CalcDuration fromTime = (now, now - fromTime)
+        member this.Now' = getNow' ()
+        member _this.CalcDuration' fromTime = calcDuration fromTime
 
+#if FABLE_COMPILER
+#else
 let instantToText (instant : Instant) =
     InstantPattern.General.Format (instant)
 
@@ -80,9 +81,4 @@ with
         | Custom format -> instantToString format
 
 let noDuration = Duration.Zero
-
-let dateTimeUtcNow = System.DateTime.UtcNow
-
-let toDateTimeUtc (time : Instant) =
-    time.ToDateTimeUtc ()
-
+#endif

@@ -4,13 +4,18 @@ module Dap.Platform.Env
 
 open Dap.Prelude
 
-type Env (scope', logging') =
-    let scope : Scope = scope'
+type internal Env (logging', scope', clock') =
     let logging : ILogging = logging'
+    let scope : Scope = scope'
+    let clock : IClock = clock'
     //ILogger
     member _this.Log m = logging.Log m
     interface ILogger with
         member this.Log m = this.Log m
+    //IRunner
+    member _this.Clock = clock
+    interface IRunner with
+        member this.Clock = this.Clock
     //IEnv
     member this.Logging = logging
     member this.Scope = scope
@@ -25,4 +30,7 @@ type Env (scope', logging') =
 let spawn spec kind key (env : IEnv) : IAgent =
     (Agent.spawn spec <| AgentParam.Create env kind key)
     :> IAgent
+
+let live logging scope =
+    new Env (logging, scope, RealClock()) :> IEnv
 
