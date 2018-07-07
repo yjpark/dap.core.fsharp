@@ -6,9 +6,6 @@ open Dap.Remote
 
 module WebSocketTypes = Dap.WebSocket.Client.Types
 
-[<Literal>]
-let Kind = "WebSocketProxy"
-
 type InternalEvt =
     | DoInit
     | OnSent of IRequest * Packet' * Result<System.DateTime, LocalReason>
