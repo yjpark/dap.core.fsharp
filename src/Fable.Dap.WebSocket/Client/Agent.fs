@@ -24,7 +24,7 @@ let decodeText : Decode<string> =
     string
 
 let spawnText' kind key uri logTraffic =
-    let args = Args<'pkt>.Create encodeText decodeText uri logTraffic
+    let args = Args<string>.Create encodeText decodeText uri logTraffic
     spawn'<string> kind key args
 
 let spawnText key = spawnText' Kind key
