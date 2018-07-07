@@ -142,7 +142,7 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.RunTask1 onFailed getTask = runTask' this onFailed getTask
 
 let create<'actorRunner, 'actorModel, 'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
-            when 'actorMsg :> IMsg
+            when 'actorRunner :> IAgent<'actorMsg> and 'actorMsg :> IMsg
                 and 'runner :> IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
                 and 'model : not struct and 'msg :> IMsg
                 and 'req :> IReq and 'evt :> IEvt>
@@ -152,7 +152,6 @@ let create<'actorRunner, 'actorModel, 'actorMsg, 'runner, 'args, 'model, 'msg, '
         (agent : IAgent<'actorMsg>)
         : 'runner =
     let part = spec.Spawner <| AgentParam.Create agent.Env agent.Ident.Kind agent.Ident.Key
-    //let part' = part BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt>
     let (actor, wrapper, cmd) = part |> create' spec wrapMsg true
     part.Setup' agent partMsg actor wrapper cmd
     part
