@@ -109,7 +109,7 @@ let private logRunResult (runner : IRunner) (section : string)
 let ignoreOnFailed : OnFailed<'runner> =
     fun _runner _e -> ()
 
-let internal runFunc' (runner : 'runner when 'runner :> IRunner) (func : Func<'runner, 'res>) : Result<'res, exn> =
+let runFunc' (runner : 'runner when 'runner :> IRunner) (func : Func<'runner, 'res>) : Result<'res, exn> =
     let time = runner.Clock.Now'
     runner.Stats.Func.IncStartedCount ()
     try

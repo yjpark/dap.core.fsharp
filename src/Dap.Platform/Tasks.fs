@@ -87,11 +87,11 @@ type internal PendingTask<'runner> when 'runner :> IRunner = {
                 onDone <| Some e
                 None
 
-let internal addTask' (runner : 'runner when 'runner :> IRunner) (onFailed : OnFailed<'runner>) (getTask : GetTask<'runner, unit>) : unit =
+let addTask' (runner : 'runner when 'runner :> IRunner) (onFailed : OnFailed<'runner>) (getTask : GetTask<'runner, unit>) : unit =
     PendingTask<'runner>.Create runner onFailed getTask
     |> (runner :> ITaskManager).ScheduleTask
 
-let internal runTask' (runner : 'runner when 'runner :> IRunner) (onFailed : OnFailed<'runner>) (getTask : GetTask<'runner, unit>) : unit =
+let runTask' (runner : 'runner when 'runner :> IRunner) (onFailed : OnFailed<'runner>) (getTask : GetTask<'runner, unit>) : unit =
     PendingTask<'runner>.Create runner onFailed getTask
     |> (runner :> ITaskManager).StartTask
 
