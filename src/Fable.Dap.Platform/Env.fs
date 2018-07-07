@@ -15,7 +15,7 @@ type internal Env (logging', scope', clock') =
     //IRunner
     member _this.Clock = clock
     interface IRunner with
-        member this.Clock = this.Clock
+        member this.Clock = clock
     //IEnv
     member this.Logging = logging
     member this.Scope = scope

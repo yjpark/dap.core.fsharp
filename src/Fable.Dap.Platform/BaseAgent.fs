@@ -43,7 +43,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     //IRunner
     member _this.Clock = env.Clock
     interface IRunner with
-        member this.Clock = this.Clock
+        member this.Clock = env.Clock
     member this.Start' () =
         let runner = this :> IAgent<'msg>
         try
