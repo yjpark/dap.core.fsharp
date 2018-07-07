@@ -113,10 +113,9 @@ type StubSpec<'res, 'evt> when 'evt :> IEvent = {
 }
 
 type IProxy<'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEvent =
-    abstract Post : 'req -> unit
-    abstract OnEvent : IBus<'evt>
+    inherit IAgent<'req, 'evt>
+    abstract Connected : bool with get
     abstract OnResponse : IBus<'res>
-    abstract Connected : bool
 
 type HubReason =
     | HubBad of string

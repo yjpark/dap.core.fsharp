@@ -81,8 +81,6 @@ let noReaction : React<'runner, 'model, 'msg, 'subModel, 'subMsg> =
     fun _runner _subMsg _subModel model ->
         (model, [])
 
-let noArgs = fun (_ : IOwner) -> NoArgs
-
 let noEvent =
     let noOwner =
         let logger = getLogger "<noOwner>"

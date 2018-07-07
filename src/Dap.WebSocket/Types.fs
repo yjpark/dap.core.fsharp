@@ -51,11 +51,13 @@ type ConnectionStats = {
             ReceivedCount = 0
         }
 
-type Agent<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq =
-    IAgent<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>>
+type Agent<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq (param) =
+    inherit BaseAgent<Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> (param)
+    override this.Runner = this
+    static member Spawn (param) = new Agent<'socket, 'pkt, 'req> (param)
 
 and ActorOperate<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq =
-    ActorOperate<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>>
+    ActorOperate<Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>>
 
 and Args<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq = {
     LogTraffic : bool

@@ -19,7 +19,6 @@
     <Compile Include="Shared/Util.fs" />
     <Compile Include="WebSocketProxy/Types.fs" />
     <Compile Include="WebSocketProxy/Logic.fs" />
-    <Compile Include="WebSocketProxy/Agent.fs" />
     <Compile Include="WebSocketProxy/Proxy.fs" />
   </ItemGroup>
   <ItemGroup>

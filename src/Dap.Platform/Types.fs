@@ -41,8 +41,7 @@ and IEnv =
     abstract Scope : Scope with get
     abstract State : EnvModel with get
 
-and Spawner =
-    Ident -> IAgent
+and Spawner = AgentParam -> IAgent
 
 and EnvModel = {
     Services : Map<Kind, Map<Key, IAgent>>
@@ -68,7 +67,13 @@ and AgentParam = {
     Env : IEnv
     Kind : Kind
     Key : Key
-}
+} with
+    static member Create env kind key =
+        {
+            Env = env
+            Kind = kind
+            Key = key
+        }
 
 and IAgent =
     inherit IOwner

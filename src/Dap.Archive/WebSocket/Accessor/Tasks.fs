@@ -13,7 +13,7 @@ open Dap.Archive.WebSocket.Accessor.Types
 module WebSocketTypes = Dap.WebSocket.Types
 module WebSocketClientTypes = Dap.WebSocket.Client.Types
 
-let private createRecorderAsync (client : Client<'pkt>) : GetTask<Agent<'pkt>, EventRecorder.Agent option> =
+let private createRecorderAsync (client : Client<'pkt>) : GetTask<Part<'actorMsg, 'pkt>, EventRecorder.Agent option> =
     fun runner -> task {
         match runner.Actor.Args.CreateRecorderAsync with
         | None -> return None
@@ -22,7 +22,7 @@ let private createRecorderAsync (client : Client<'pkt>) : GetTask<Agent<'pkt>, E
             return recorder
     }
 
-let internal doSetupAsync : GetReplyTask<Agent<'pkt>, unit> =
+let internal doSetupAsync : GetReplyTask<Part<'actorMsg, 'pkt>, unit> =
     fun req callback runner -> task {
         let uri = runner.Actor.State.Uri |> Option.get
         let clientKey = sprintf "%s_%s" runner.Ident.Kind runner.Ident.Key
@@ -34,7 +34,7 @@ let internal doSetupAsync : GetReplyTask<Agent<'pkt>, unit> =
         runner.Deliver <| InternalEvt ^<| OnSetup (req, callback, client, recorder)
     }
 
-let internal doConnectAsync : GetTask<Agent<'pkt>, WebSocketTypes.ConnectedStats> =
+let internal doConnectAsync : GetTask<Part<'actorMsg, 'pkt>, WebSocketTypes.ConnectedStats> =
     fun runner -> task {
         let uri = runner.Actor.State.Uri |> Option.get
         let cts = runner.Actor.State.Cts
@@ -43,33 +43,33 @@ let internal doConnectAsync : GetTask<Agent<'pkt>, WebSocketTypes.ConnectedStats
         return stats
     }
 
-let internal doReconnectAsync : GetTask<Agent<'pkt>, unit> =
+let internal doReconnectAsync : GetTask<Part<'actorMsg, 'pkt>, unit> =
     fun runner -> task {
         let! stats = doConnectAsync runner
         return ()
     }
 
-let internal doStartAsync : GetReplyTask<Agent<'pkt>, WebSocketTypes.ConnectedStats option> =
+let internal doStartAsync : GetReplyTask<Part<'actorMsg, 'pkt>, WebSocketTypes.ConnectedStats option> =
     fun req callback runner -> task {
         let! stats = doConnectAsync runner
         reply runner callback <| ack req ^<| Some stats
     }
 
-let internal doStopAsync : GetReplyTask<Agent<'pkt>, unit> =
+let internal doStopAsync : GetReplyTask<Part<'actorMsg, 'pkt>, unit> =
     fun req callback runner -> task {
         let client = runner.Actor.State.Client |> Option.get
         do! client.PostAsync <| WebSocketClientTypes.DoDisconnect
         reply runner callback <| ack req ()
     }
 
-let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'pkt>, WebSocketTypes.SendStats> =
+let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Part<'actorMsg, 'pkt>, WebSocketTypes.SendStats> =
     fun req callback runner -> task {
         let client = runner.Actor.State.Client |> Option.get
         let! stats = client.PostAsync <| WebSocketClientTypes.DoSend' pkt
         reply runner callback <| ack req stats
     }
 
-let internal callOnConnectedAsync (onConnectedAsync : GetTask<Client<'pkt>, unit>) : GetTask<Agent<'pkt>, unit> =
+let internal callOnConnectedAsync (onConnectedAsync : GetTask<Client<'pkt>, unit>) : GetTask<Part<'actorMsg, 'pkt>, unit> =
     fun runner -> task {
         let client = runner.Actor.State.Client |> Option.get
         do! onConnectedAsync client

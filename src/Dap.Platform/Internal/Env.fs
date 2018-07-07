@@ -47,9 +47,9 @@ type internal Env (param' : EnvParam, logic') =
         member this.Log m = logger.Log m
         member this.Clock = param.Clock
         member this.Stats = stats
-        member this.RunFunc func = runFunc' this func
-        member this.AddTask onFailed getTask = addTask' this onFailed getTask
-        member this.RunTask onFailed getTask = runTask' this onFailed getTask
+        member this.RunFunc0 func = runFunc' this func
+        member this.AddTask0 onFailed getTask = addTask' this onFailed getTask
+        member this.RunTask0 onFailed getTask = runTask' this onFailed getTask
     interface ITaskManager with
         member this.StartTask task = taskManager.StartTask task
         member this.ScheduleTask task = taskManager.ScheduleTask task

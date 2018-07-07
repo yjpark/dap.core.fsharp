@@ -23,6 +23,11 @@ let decode : Decode<Packet'> =
     fun (buffer, index, count) ->
         Packet.decode <| Dap.WebSocket.Internal.Text.decode Encoding.UTF8 (buffer, index, count)
 
-let getSpawner env logTraffic bufferSize =
-    Dap.WebSocket.Conn.Logic.getSpec encode decode logTraffic bufferSize
-    |> Agent.getSpawner env
+let spec logTraffic bufferSize =
+    Dap.WebSocket.Conn.Logic.spec WebSocketMessageType.Text encode decode logTraffic bufferSize
+
+let registerAsync' kind logTraffic bufferSize env =
+    let spec = spec logTraffic bufferSize
+    env |> Env.registerAsync spec kind
+
+let registerAsync a b = registerAsync' Kind a b

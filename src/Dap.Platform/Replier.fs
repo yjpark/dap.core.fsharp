@@ -34,7 +34,7 @@ let reply (runner : IRunner) (callback : Callback<'res>) (reply : Reply<'res>) :
             runner.Log <| tplNakReply req err detail
 
 let replyAfter (runner : IRunner) (callback : Callback<'res>) (reply' : Reply<'res>) : unit =
-    runner.AddTask ignoreOnFailed <| fun _runner -> task {
+    runner.AddTask0 ignoreOnFailed <| fun _runner -> task {
         reply runner callback reply'
     }
 
@@ -74,12 +74,19 @@ let nakOnFailed (req : IReq) (callback : Callback<'res>) (runner : 'runner) (e :
 //the tasks are executed after the process, so the updateModel actions
 //always took effect
 
-let replyAsync (runner : IRunner) (req : IReq) (callback : Callback<'res>)
+let replyAsync (runner : 'runner when 'runner :> IRunner<'runner>) (req : IReq) (callback : Callback<'res>)
+                (getOnFailed: OnReplyFailed<'runner, 'res>)
+                (getReplyTask : GetReplyTask<'runner, 'res>) : unit =
+    let onFailed = fun _ -> getOnFailed req callback runner.Runner
+    let getTask = fun _ -> getReplyTask req callback runner.Runner
+    runner.AddTask onFailed getTask
+
+let replyAsync0 (runner : IRunner) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IRunner, 'res>)
                 (getReplyTask : GetReplyTask<IRunner, 'res>) : unit =
     let onFailed = getOnFailed req callback
     let getTask = getReplyTask req callback
-    runner.AddTask onFailed getTask
+    runner.AddTask0 onFailed getTask
 
 let replyAsync1 (runner : IAgent) (req : IReq) (callback : Callback<'res>)
                 (getOnFailed: OnReplyFailed<IAgent, 'res>)

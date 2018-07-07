@@ -2,35 +2,19 @@
 [<RequireQualifiedAccess>]
 module Dap.Platform.Ticker.Service
 
-open FSharp.Control.Tasks.V2
 open Dap.Platform
 
 [<Literal>]
 let Kind = "Ticker"
 
 type Service = IAgent<Req, Evt>
+type Args = Dap.Platform.Ticker.Types.Args
 
-let getSpec (autoStart : bool) (frameRate : double) =
-    fun _runner ->
-        {
-            AutoStart = autoStart
-            FrameRate = frameRate
-        }
-    |> Logic.getSpec
+let addAsync' kind key args =
+    Env.addServiceAsync (Logic.spec args) kind key
 
-let addAsync' (kind : Kind) (key : Key) autoStart frameRate env = task {
-    let spec = getSpec autoStart frameRate
-    let! service = env |> Env.addServiceAsync kind key spec
-    return service
-}
+let get' kind key env =
+    env |> Env.getService kind key :?> Service
 
-let addAsync key frameRate =
-    addAsync' Kind key true frameRate
-
-let get' kind key (env : IEnv) =
-    env
-    |> Env.getService kind key
-    :?> Service
-
-let get key env =
-    get' Kind key env
+let addAsync key = addAsync' Kind key
+let get key = get' Kind key

@@ -4,9 +4,7 @@ module Dap.Platform.Registry.Types
 
 open Dap.Platform
 
-type Agent<'k, 'v when 'k : comparison> = IAgent<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
-
-and Args = NoArgs
+type Args = NoArgs
 
 and Model<'k, 'v when 'k : comparison> = {
     Entries : Map<'k, 'v>
@@ -32,6 +30,7 @@ and Msg<'k, 'v> =
     | RegistryEvt of Evt<'k, 'v>
 with interface IMsg
 
+
 let castEvt<'k, 'v> : CastEvt<Msg<'k, 'v>, Evt<'k, 'v>> =
     function
     | RegistryEvt evt -> Some evt
@@ -54,3 +53,8 @@ let TryFindEntry' key callback =
 
 let TryRemoveEntry' key callback =
     TryRemoveEntry (key, callback)
+
+type Agent<'k, 'v when 'k : comparison> (param) =
+    inherit BaseAgent<Agent<'k, 'v>, Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> (param)
+    override this.Runner = this
+    static member Spawn (param) = new Agent<'k, 'v> (param)

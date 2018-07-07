@@ -47,14 +47,12 @@ let private handleReq req : ActorOperate<'pkt> =
         | DoSend (a, b) -> doSend req (a, b)
         <| runner <| (model, cmd)
 
-let getSpec (encode : Encode<'pkt>) (decode : Decode<'pkt>) (logTraffic : bool) (bufferSize : int option) =
-    fun _owner ->
-        {
-            LogTraffic = logTraffic
-            SendType = WebSocketMessageType.Text
-            BufferSize = defaultArg bufferSize DefaultBufferSize
-            Encode = encode
-            Decode = decode
-            HandleReq = handleReq
-        }
-    |> BaseLogic.getSpec
+let spec sendType (encode : Encode<'pkt>) (decode : Decode<'pkt>) (logTraffic : bool) (bufferSize : int option) =
+    {
+        LogTraffic = logTraffic
+        SendType = sendType
+        BufferSize = defaultArg bufferSize DefaultBufferSize
+        Encode = encode
+        Decode = decode
+        HandleReq = handleReq
+    }|> BaseLogic.spec

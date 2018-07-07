@@ -68,9 +68,11 @@ let updateExtra (extra : Extra) (frame : Frame) : Extra * Frame =
         |> Map.add frame.Packet.Kind count
     ({extra with Events = events}, {frame with Packet = packet})
 
-let getSpawner env =
-    Logic.spec<Extra, Frame>
-    |> Agent.getSpawner env
+let registerAsync' kind env =
+    let spec = Logic.spec<Extra, Frame>
+    env |> Env.registerAsync spec kind
+
+let registerAsync a = registerAsync' Kind a
 
 let appendEvent' (agent : Agent) (kind : string) (payload : string) : unit =
     let frame = {

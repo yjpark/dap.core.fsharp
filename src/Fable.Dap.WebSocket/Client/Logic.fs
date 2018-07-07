@@ -6,7 +6,7 @@ open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket.Client.Types
 
-type ActorOperate<'pkt> = ActorOperate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+type ActorOperate<'pkt> = ActorOperate<Agent<'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
 
 let private createSocket (runner : Agent<'pkt>)  =
     let socket = Fable.Import.Browser.WebSocket.Create runner.Actor.Args.Uri
@@ -83,7 +83,7 @@ let private handleEvt (evt : Evt<'pkt>) : ActorOperate<'pkt> =
             noOperation
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
+let private update : ActorUpdate<Agent<'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
     fun runner model msg ->
         match msg with
         | WebSocketReq req ->
@@ -99,5 +99,6 @@ let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
             Connected = false
         }, Cmd.ofMsg <| WebSocketReq DoConnect)
 
-let getSpec<'pkt> (newArgs : NewArgs<Args<'pkt>>) =
-    new ActorSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> (newArgs, WebSocketReq, castEvt<'pkt>, init, update)
+let spec<'pkt> (args : Args<'pkt>) =
+    new ActorSpec<Agent<'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+        (Agent<'pkt>.Spawn, args, WebSocketReq, castEvt<'pkt>, init, update)

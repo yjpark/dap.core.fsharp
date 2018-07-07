@@ -57,7 +57,7 @@ type Bundle'<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame (spe
         match volume with
         | Some volume' ->
             volume'.Close runner
-            runner.RunTask ignoreOnFailed <| param.Storage.WriteMetaAsync volume'.Meta
+            runner.RunTask0 ignoreOnFailed <| param.Storage.WriteMetaAsync volume'.Meta
             volume <- None
         | None ->
             ()

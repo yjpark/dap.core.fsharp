@@ -16,11 +16,15 @@ type Agent =  IAgent<Req<string>, Evt<string>>
 
 type Evt = Evt<string>
 
-let getSpawner env encoding logTraffic bufferSize =
+let spec encoding logTraffic bufferSize =
     let encode = Dap.WebSocket.Internal.Text.encode encoding
     let decode = Dap.WebSocket.Internal.Text.decode encoding
-    Logic.getSpec WebSocketMessageType.Text encode decode logTraffic bufferSize
-    |> Agent.getSpawner env
+    Logic.spec WebSocketMessageType.Text encode decode logTraffic bufferSize
 
-let getUtf8Spawner env =
-    getSpawner env Encoding.UTF8
+let registerAsync' kind encoding logTraffic bufferSize env =
+    let spec = spec encoding logTraffic bufferSize
+    env |> Env.registerAsync spec kind
+
+let registerAsync a b c = registerAsync' Kind a b c
+
+let registerUtf8Async a b c = registerAsync Encoding.UTF8 a b c

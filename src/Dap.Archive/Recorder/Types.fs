@@ -6,10 +6,7 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Archive
 
-type Agent<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame =
-    IAgent<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
-
-and Args = NoArgs
+type Args = NoArgs
 
 and Model<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame = {
     Bundle : Bundle'<'extra, 'frame> option
@@ -43,3 +40,9 @@ let DoBeginRecording' (bundle : Bundle'<'extra, 'frame>)  callback =
 
 let DoAppendFrame' (frame : 'frame) callback =
     DoAppendFrame (frame, callback)
+
+type Agent<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame (param) =
+    inherit BaseAgent<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> (param)
+    override this.Runner = this
+    static member Spawn (param) = new Agent<'extra, 'frame> (param)
+

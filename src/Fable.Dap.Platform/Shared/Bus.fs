@@ -106,7 +106,7 @@ type Bus<'evt> (owner') =
         this.ToString ()
     member _this.Trigger (evt : 'evt) =
         if owner.Disposed then
-            owner.Log <| tplDisposedInfo "Bus:Self_Disposed" owner evt
+            owner.Log <| tplDisposedInfo "Bus:Owner_Disposed" owner evt
         else
             let folder = fun garbage watcher ->
                 match tryGetTarget watcher with

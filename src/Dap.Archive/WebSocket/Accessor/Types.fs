@@ -10,16 +10,7 @@ module EventRecorder = Dap.Archive.Recorder.EventRecorder
 
 type Client<'pkt> = Dap.WebSocket.Client.Types.Agent<'pkt>
 
-type Part<'actorMsg, 'pkt> when 'actorMsg :> IMsg =
-    IPart<'actorMsg, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
-
-and Agent<'pkt> =
-    IAgent<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
-
-and ActorOperate<'pkt> =
-    ActorOperate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
-
-and Args<'pkt> = {
+type Args<'pkt> = {
     ClientKind : Kind
     RetryDelay : float<second> option
     CreateRecorderAsync : GetTask<Client<'pkt>, EventRecorder.Agent option> option
@@ -84,3 +75,11 @@ let DoSetup' uri callback =
 
 let DoSend' pkt callback =
     DoSend (pkt, callback)
+
+type Part<'actorMsg, 'pkt when 'actorMsg :> IMsg> (param) =
+    inherit BasePart<'actorMsg, Part<'actorMsg, 'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> (param)
+    override this.Runner = this
+    static member Spawn (param) = new Part<'actorMsg, 'pkt> (param)
+
+type PartOperate<'actorMsg, 'pkt when 'actorMsg :> IMsg> =
+    ActorOperate<Part<'actorMsg, 'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>

@@ -8,10 +8,7 @@ open Dap.Remote
 open Dap.Platform
 module WebSocket = Dap.WebSocket.Types
 
-type Agent<'req, 'evt> when 'req :> IReq and 'evt :> IEvent =
-    IAgent<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
-
-and InternalEvt<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
+type InternalEvt<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     | DoInit
     | SetHub of Hub<'req, 'evt>
     | SetSocket of PacketConn.Agent
@@ -41,3 +38,9 @@ with interface IMsg
 
 let DoAttach' (token : CancellationToken) (socket : WebSocket) callback =
     DoAttach (token, socket, callback)
+
+type Agent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt (param) =
+    inherit BaseAgent<Agent<'req, 'evt>, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> (param)
+    override this.Runner = this
+    static member Spawn (param) = new Agent<'req, 'evt> (param)
+

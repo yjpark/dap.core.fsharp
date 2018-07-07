@@ -18,12 +18,14 @@
     <Compile Include="Shared/Operator.fs" />
     <Compile Include="Shared/Util.fs" />
     <Compile Include="Const.fs" />
+    <Compile Include="Runner.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Shared/Actor.fs" />
     <Compile Include="Replier.fs" />
     <Compile Include="Logging.fs" />
-    <Compile Include="Internal.fs" />
+    <Compile Include="BaseAgent.fs" />
     <Compile Include="Agent.fs" />
+    <Compile Include="Env.fs" />
     <Compile Include="Helper.fs" />
   </ItemGroup>
   <ItemGroup>

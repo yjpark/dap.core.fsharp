@@ -7,7 +7,7 @@ open NodaTime
 open Dap.Prelude
 open Dap.Platform
 
-type private ActorOperate = ActorOperate<Args, Model, Msg, Req, Evt>
+type private ActorOperate = ActorOperate<Agent, Args, Model, Msg, Req, Evt>
 
 let private doStartTimer req (callback : Callback<Instant>) : ActorOperate =
     fun runner (model, cmd) ->
@@ -122,7 +122,7 @@ let private handleInternalEvt evt : ActorOperate =
         | OnLateTickDone (a, b, c) -> onLateTickDone (a, b, c)
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Args, Model, Msg, Req, Evt> =
+let private update : ActorUpdate<Agent, Args, Model, Msg, Req, Evt> =
     fun runner model msg ->
         match msg with
         | InternalEvt evt -> handleInternalEvt evt
@@ -149,5 +149,6 @@ let private init : ActorInit<Args, Model, Msg> =
             Timer = None
         }, cmd)
 
-let getSpec (newArgs : NewArgs<Args>) =
-    new ActorSpec<Args, Model, Msg, Req, Evt> (newArgs, TickerReq, castEvt, init, update)
+let spec (args : Args) =
+    new ActorSpec<Agent, Args, Model, Msg, Req, Evt>
+        (Agent.Spawn, args, TickerReq, castEvt, init, update)

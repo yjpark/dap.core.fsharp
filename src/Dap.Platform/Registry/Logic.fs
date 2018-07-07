@@ -5,7 +5,7 @@ module Dap.Platform.Registry.Logic
 open Dap.Prelude
 open Dap.Platform
 
-type ActorOperate<'k, 'v when 'k : comparison> = ActorOperate<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
+type ActorOperate<'k, 'v when 'k : comparison> = ActorOperate<Agent<'k, 'v>, Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
 
 let private doGetEntry req ((key, callback) : 'k * Callback<'v>) : ActorOperate<'k, 'v> =
     fun runner (model, cmd) ->
@@ -86,7 +86,7 @@ let private handleReq req : ActorOperate<'k, 'v> =
         | TryRemoveEntry (a, b) -> tryRemoveEntry req (a, b)
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
+let private update : ActorUpdate<Agent<'k, 'v>, Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
     fun runner model msg ->
         match msg with
         | RegistryReq req ->
@@ -101,7 +101,8 @@ let private init : ActorInit<Args, Model<'k, 'v>, Msg<'k, 'v>> =
             Entries = Map.empty
         }, noCmd)
 
-let getSpec<'k, 'v when 'k : comparison> =
-    new ActorSpec<Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> (noArgs, RegistryReq, castEvt<'k, 'v>, init, update)
+let spec<'k, 'v when 'k : comparison> =
+    new ActorSpec<Agent<'k, 'v>, Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
+        (Agent<'k, 'v>.Spawn, NoArgs, RegistryReq, castEvt<'k, 'v>, init, update)
 
 

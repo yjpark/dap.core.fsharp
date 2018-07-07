@@ -16,7 +16,7 @@ let internal doSend (runner : Agent<'socket, 'pkt, 'req>)
     | Some state ->
         match state.Socket.State with
         | WebSocketState.Open ->
-            replyAsync3 runner req callback nakOnFailed <| doSendAsync pkt
+            replyAsync runner req callback nakOnFailed <| doSendAsync pkt
         | state ->
             reply runner callback <| nak req "Invalid_State" state
     | None ->
@@ -43,7 +43,7 @@ let private handleEvt evt : ActorOperate<'socket, 'pkt, 'req> =
             updateModel (fun m -> {m with Link = None ; Stats = None ; Closing = false})
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
+let private update : ActorUpdate<Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
     fun runner model msg ->
         match msg with
         | WebSocketReq req -> runner.Actor.Args.HandleReq req
@@ -58,5 +58,6 @@ let private init : ActorInit<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Ms
             Closing = false
         }, noCmd)
 
-let getSpec (newArgs : NewArgs<Args<'socket, 'pkt, 'req>>) =
-    new ActorSpec<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> (newArgs, WebSocketReq, castEvt<'pkt, 'req>, init, update)
+let spec (args : Args<'socket, 'pkt, 'req>) =
+    new ActorSpec<Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>>
+        (Agent<'socket, 'pkt, 'req>.Spawn, args, WebSocketReq, castEvt<'pkt, 'req>, init, update)

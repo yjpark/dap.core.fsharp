@@ -2,17 +2,17 @@
 [<RequireQualifiedAccess>]
 module Dap.Platform.Env
 
-open Elmish
+open System.Threading.Tasks
 open FSharp.Control.Tasks.V2
+open Elmish
 
 open Dap.Prelude
 open Dap.Platform.Internal.Env
 open Dap.Platform.Internal.Agent
+let private tplSpawnErr = LogEvent.Template4<string, string, AgentParam, obj>(LogLevelFatal, "[{Section}] {Err}: {Param} ~> {Actual}")
 
-let private tplSpawnErr = LogEvent.Template3<obj, Ident, Ident>(LogLevelFatal, "[Spawn] {Err}: {ExpectIdent} ~> {ActualIdent}")
-
-let private raiseSpawnErr err expectIdent actualIdent =
-    raiseWith <| tplSpawnErr err expectIdent actualIdent
+let private raiseSpawnErr err param actual =
+    raiseWith <| tplSpawnErr "Spawn" err param actual
 
 let private doQuit req (forceQuit, callback) : EnvOperate =
     fun runner (model, cmd) ->
@@ -89,10 +89,14 @@ let private doNewAgent req ((kind, key, callback) : Kind * Key * Callback<IAgent
         match Map.tryFind kind model.Spawners with
         | Some spawner ->
             try
-                let ident = Ident.Create runner.Scope kind key
-                let agent = spawner ident
-                if agent.Ident <> ident
-                    then raiseSpawnErr "Invalid_Agent" ident agent.Ident
+                let param = AgentParam.Create runner kind key
+                let agent = spawner param
+                if agent.Env <> runner
+                    then raiseSpawnErr "Invalid_Env" param agent.Env
+                if (agent.Ident.Scope <> runner.Scope
+                    || agent.Ident.Kind <> kind
+                    || agent.Ident.Key <> key)
+                    then raiseSpawnErr "Invalid_Ident" param agent.Ident
                 logReqInfo runner "Spawn" req "Agent_Created" agent
                 reply runner callback <| ack req (agent, true)
                 let agents = Map.add kind (Map.add key agent kindAgents) model.Agents
@@ -174,27 +178,28 @@ let play platform logging scope =
     param platform logging scope (FakeClock()) None
     |> create
 
-let register (kind : Kind)
-                (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
-                (env : IEnv) =
-    let spawner = Agent.getSpawner env spec
-    env.Handle <| DoRegister (kind, spawner, None)
-    env
+let registerAsync (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)
+                    (kind : Kind)
+                    (env : IEnv) : Task<unit> = task {
+    let spawner = Agent.getSpawner spec
+    let _ = env.HandleAsync <| DoRegister' kind spawner
+    return ()
+}
 
-let newService kind key spec (env : IEnv) =
-    let param = Agent.param env kind key
-    Agent.spawn spec param
+let private spawn spec kind key (env : IEnv) : IAgent =
+    (Agent.spawn spec <| AgentParam.Create env kind key)
+    :> IAgent
 
-let addServiceAsync kind key spec (env : IEnv) = task {
-    let service = newService kind key spec env
+let addServiceAsync spec kind key (env : IEnv) : Task<IAgent> = task {
+    let service = env |> spawn spec kind key
     let _ = env.HandleAsync <| DoAddService' service
     return service
 }
 
-let getService (kind : Kind) (key : Key) (env : IEnv) =
+let getService (kind : Kind) (key : Key) (env : IEnv) : IAgent =
     let kindServices = Map.find kind env.State.Services
     Map.find key kindServices
 
-let tryFindService (kind : Kind) (key : Key) (env : IEnv) =
+let tryFindService (kind : Kind) (key : Key) (env : IEnv) : IAgent option =
     Map.tryFind kind env.State.Services
     |> Option.bind (Map.tryFind key)

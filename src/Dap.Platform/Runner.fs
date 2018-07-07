@@ -43,9 +43,15 @@ and IRunner =
     inherit ITaskManager
     abstract Clock : IClock with get
     abstract Stats : Stats with get
-    abstract RunFunc<'res> : Func<IRunner, 'res> -> Result<'res, exn>
-    abstract AddTask : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
-    abstract RunTask : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
+    abstract RunFunc0<'res> : Func<IRunner, 'res> -> Result<'res, exn>
+    abstract AddTask0 : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
+    abstract RunTask0 : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
+
+and IRunner<'runner when 'runner :> IRunner> =
+    abstract Runner : 'runner with get
+    abstract RunFunc<'res> : Func<'runner, 'res> -> Result<'res, exn>
+    abstract AddTask : OnFailed<'runner> -> GetTask<'runner, unit> -> unit
+    abstract RunTask : OnFailed<'runner> -> GetTask<'runner, unit> -> unit
 
 let statsOfCap (getSlowCap : GetSlowCap) : Stats = {
     Deliver = durationStatsOfCap <| getSlowCap DeliverDuration

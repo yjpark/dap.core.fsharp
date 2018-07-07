@@ -13,7 +13,7 @@ module WebSocket = Dap.WebSocket.Types
 module WebSocketConn = Dap.WebSocket.Conn.Types
 
 type ActorOperate<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
-    ActorOperate<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
+    ActorOperate<Agent<'req, 'evt>, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
 
 let private handleService (msg : Service.Msg) : ActorOperate<'req, 'evt> =
     fun _runner (model, cmd) ->
@@ -50,7 +50,7 @@ let private setHub hub : ActorOperate<'req, 'evt> =
     fun runner (model, cmd) ->
         match model.Hub with
         | None ->
-            runner.AddTask3 ignoreOnFailed setSocketAsync
+            runner.AddTask ignoreOnFailed setSocketAsync
             hub.OnEvent.AddWatcher runner "HubEvt" (runner.Deliver << InternalEvt << HubEvt)
             ({model with Hub = Some hub}, noCmd)
         | Some hub' ->
@@ -119,10 +119,10 @@ let private handleReq (req : Req) : ActorOperate<'req, 'evt> =
         match req with
         | DoAttach (token, socket, callback) ->
             let ident = runner.Ident.Key
-            replyAsync3 runner req callback nakOnFailed <| doAttachAsync ident token socket
+            replyAsync runner req callback nakOnFailed <| doAttachAsync ident token socket
         (model, cmd)
 
-let private update : ActorUpdate<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
+let private update : ActorUpdate<Agent<'req, 'evt>, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
     fun runner model msg ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
@@ -144,5 +144,6 @@ let logic =
         Subscribe = noSubscription
     }
 
-let getSpec (newArgs : NewArgs<Args<'req, 'evt>>) =
-    new ActorSpec<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> (newArgs, ServiceReq, noCastEvt, init, update)
+let spec (args : Args<'req, 'evt>) =
+    new ActorSpec<Agent<'req, 'evt>, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
+        (Agent<'req, 'evt>.Spawn, args, ServiceReq, noCastEvt, init, update)

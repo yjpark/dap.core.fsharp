@@ -30,7 +30,7 @@ let private doConnect req (uri, token, callback) : ActorOperate<'pkt> =
                 Socket = new ClientWebSocket()
                 Buffer = Array.create<byte> runner.Actor.Args.BufferSize 0uy
             }
-            replyAsync3 runner req callback doConnectFailed <| doConnectAsync
+            replyAsync runner req callback doConnectFailed <| doConnectAsync
             updateModel (fun m -> {m with Link = Some link})
         <| runner <| (model, cmd)
 
@@ -63,14 +63,12 @@ let private handleReq req : ActorOperate<'pkt> =
         | DoSend (a, b) -> doSend req (a, b)
         <| runner <| (model, cmd)
 
-let getSpec sendType (encode : Encode<'pkt>) (decode : Decode<'pkt>) (logTraffic : bool) (bufferSize : int option) =
-    fun _owner ->
-        {
-            LogTraffic = logTraffic
-            SendType = sendType
-            BufferSize = defaultArg bufferSize DefaultBufferSize
-            Encode = encode
-            Decode = decode
-            HandleReq = handleReq
-        }
-    |> BaseLogic.getSpec
+let spec<'pkt> sendType (encode : Encode<'pkt>) (decode : Decode<'pkt>) (logTraffic : bool) (bufferSize : int option) =
+    {
+        LogTraffic = logTraffic
+        SendType = sendType
+        BufferSize = defaultArg bufferSize DefaultBufferSize
+        Encode = encode
+        Decode = decode
+        HandleReq = handleReq
+    }|> BaseLogic.spec

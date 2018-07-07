@@ -13,12 +13,16 @@ type TickStats = {
     Duration : Duration
 }
 
-type Agent = IAgent<Args, Model, Msg, Req, Evt>
-
 and Args = {
-    AutoStart : bool
     FrameRate : double
-}
+    AutoStart : bool
+} with
+    static member New (frameRate, autoStart) =
+        {
+            FrameRate = frameRate
+            AutoStart = autoStart
+        }
+    static member New (frameRate) = Args.New (frameRate, true)
 
 and Model = {
     BeginTime : Instant option
@@ -66,3 +70,8 @@ let noTickStats = {
     Delta = Duration.FromSeconds 0L
     Duration = Duration.FromSeconds 0L
 }
+
+type Agent (param) =
+    inherit BaseAgent<Agent, Args, Model, Msg, Req, Evt> (param)
+    override this.Runner = this
+    static member Spawn (param) = new Agent (param)

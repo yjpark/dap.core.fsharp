@@ -16,7 +16,7 @@ type Msg = BaseTypes.Msg<string>
 type Req = BaseTypes.Req<string>
 type Evt = BaseTypes.Evt<string>
 
-let create (newArgs : NewArgs<Args>) partMsg wrapMsg agent =
-    let spec = BaseLogic.getSpec newArgs
+let create<'actorMsg when 'actorMsg :> IMsg> (args : Args) partMsg wrapMsg agent =
+    let spec = BaseLogic.spec<'actorMsg, string> args
     agent
     |> Part.create spec partMsg wrapMsg

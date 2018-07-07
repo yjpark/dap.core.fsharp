@@ -3,12 +3,27 @@ module Dap.Platform.Types'
 
 open Dap.Prelude
 
-type IRunner =
-    inherit ILogger
+type IEnv =
+    inherit IRunner
+    abstract Logging : ILogging with get
+    abstract Scope : Scope with get
+
+type AgentParam = {
+    Env : IEnv
+    Kind : Kind
+    Key : Key
+} with
+    static member Create env kind key =
+        {
+            Env = env
+            Kind = kind
+            Key = key
+        }
 
 type IAgent =
     inherit IOwner
     inherit IRunner
+    abstract Env : IEnv with get
     abstract Ident : Ident with get
 
 and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =

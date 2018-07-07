@@ -1,28 +1,21 @@
 [<RequireQualifiedAccess>]
-module Dap.WebSocket.Client.Actor
+module Dap.WebSocket.Client.Agent
 
 open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket.Client.Types
 
+[<Literal>]
+let Kind = "WebSocketClient"
+
 type Agent<'pkt> = IAgent<Req<'pkt>, Evt<'pkt>>
+type Args<'pkt> = Dap.WebSocket.Client.Types.Args<'pkt>
 
-let create'<'pkt> (encode : Encode<'pkt>) (decode : Decode<'pkt>)
-            (key : Key) (uri : string) (logTraffic : bool) : Dap.WebSocket.Client.Types.Agent<'pkt> =
-    fun _agent ->
-        {
-            Uri = uri
-            LogTraffic = logTraffic
-            Encode = encode
-            Decode = decode
-        }
-    |> Logic.getSpec
-    |> Agent.create Kind key
+let spawn'<'pkt> kind key args env =
+    let spec = Logic.spec<'pkt> args
+    env |> Env.spawn spec kind key :?> Agent<'pkt>
 
-let create<'pkt> (encode : Encode<'pkt>) (decode : Decode<'pkt>)
-            (key : Key) (uri : string) (logTraffic : bool) : Agent<'pkt> =
-    create' encode decode key uri logTraffic
-    :> Agent<'pkt>
+let spawn<'pkt> key = spawn'<'pkt> Kind key
 
 let encodeText : Encode<string> =
     box
@@ -30,5 +23,8 @@ let encodeText : Encode<string> =
 let decodeText : Decode<string> =
     string
 
-let createText =
-    create<string> encodeText decodeText
+let spawnText' kind key uri logTraffic =
+    let args = Args<'pkt>.Create encodeText decodeText uri logTraffic
+    spawn'<string> kind key args
+
+let spawnText key = spawnText' Kind key

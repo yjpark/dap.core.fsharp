@@ -143,11 +143,10 @@ and IActor<'args, 'model, 'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
 
 and CastEvt<'msg, 'evt> = 'msg -> 'evt option
 
-and IActorSpec<'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
+and IActorSpec<'args, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
+    abstract Args : 'args with get
     abstract WrapReq : Wrapper<'msg, 'req> with get
     abstract CastEvt : CastEvt<'msg, 'evt> with get
-
-and NewArgs<'args> = IOwner -> 'args
 
 type NoArgs = NoArgs
 

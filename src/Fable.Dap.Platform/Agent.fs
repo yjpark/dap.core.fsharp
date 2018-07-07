@@ -1,32 +1,33 @@
+[<AutoOpen>]
 [<RequireQualifiedAccess>]
 module Dap.Platform.Agent
 
 open Dap.Prelude
-open Dap.Platform.Internal
 
-let private loop (agent : Agent<'args, 'model, 'msg, 'req, 'evt>)
+let private loop (agent : BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt>)
                     (mailbox : MailboxProcessor<'msg>) : Async<unit> =
     let rec handle() =
         async {
             let! msg = mailbox.Receive()
-            agent.Process msg |> agent.Deliver
+            agent.Process' msg |> agent.Deliver'
             return! handle()
         }
     handle()
 
-let private start (agent : Agent<'args, 'model, 'msg, 'req, 'evt>) : unit =
+let private start (agent : BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt>) : unit =
     let mailbox = MailboxProcessor.Start(loop agent)
-    agent.SetDispatch mailbox.Post
-    agent.Start() |> agent.Deliver
+    agent.SetDispatch' mailbox.Post
+    agent.Start' () |> agent.Deliver'
 
-let getLogger (kind : string) (key : string) =
-    Logging.getLogger <| sprintf "%s.%s" kind key
+let internal spawn<'runner, 'args, 'model, 'msg, 'req, 'evt
+        when 'runner :> BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt>
+            and 'model : not struct and 'msg :> IMsg
+            and 'req :> IReq and 'evt :> IEvt>
+        (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)
+        (param : AgentParam)
+            : 'runner =
+    let agent = spec.Spawner param
+    agent.Setup' spec
+    agent |> start
+    agent
 
-let create (kind : Kind) (key : Key)
-            (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
-                : IAgent<'args, 'model, 'msg, 'req, 'evt> =
-    let ident = Ident.Create noScope kind key
-    let logger = getLogger kind key
-    let agent = new Agent<'args, 'model, 'msg, 'req, 'evt> (spec, ident, logger)
-    start agent
-    agent :> IAgent<'args, 'model, 'msg, 'req, 'evt>

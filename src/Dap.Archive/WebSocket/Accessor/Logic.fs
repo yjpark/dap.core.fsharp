@@ -10,18 +10,18 @@ open Dap.Archive.WebSocket.Accessor.Tasks
 module WebSocketTypes = Dap.WebSocket.Types
 module WebSocketClientTypes = Dap.WebSocket.Client.Types
 
-let private doSetup req ((uri, callback) : string * Callback<unit>) : ActorOperate<'pkt> =
+let private doSetup req ((uri, callback) : string * Callback<unit>) : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match model.Uri with
         | Some uri' ->
             reply runner callback <| nak req "Already_Setup" (uri', uri)
             (model, cmd)
         | None ->
-            replyAsync3 runner req callback nakOnFailed <| doSetupAsync
+            replyAsync runner req callback nakOnFailed <| doSetupAsync
             (runner, model, cmd)
             |=|> updateModel (fun m -> {m with Uri = Some uri})
 
-let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats option>) : ActorOperate<'pkt> =
+let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats option>) : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match model.Uri with
         | Some uri ->
@@ -38,14 +38,14 @@ let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats optio
                     if client.Actor.State.Connected then
                         reply runner callback <| ack req None
                     else
-                        replyAsync3 runner req callback nakOnFailed doStartAsync
+                        replyAsync runner req callback nakOnFailed doStartAsync
                     (runner, model, cmd)
                     |=|> updateModel (fun m -> {m with Running = true})
         | None ->
             reply runner callback <| nak req "Not_Setup" ()
             (model, cmd)
 
-let private doStop req (callback : Callback<unit>) : ActorOperate<'pkt> =
+let private doStop req (callback : Callback<unit>) : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match model.Uri with
         | Some _uri ->
@@ -62,14 +62,14 @@ let private doStop req (callback : Callback<unit>) : ActorOperate<'pkt> =
                     if not client.Actor.State.Connected || client.Actor.State.Closing then
                         reply runner callback <| ack req ()
                     else
-                        replyAsync3 runner req callback nakOnFailed doStopAsync
+                        replyAsync runner req callback nakOnFailed doStopAsync
                     (runner, model, cmd)
                     |=|> updateModel (fun m -> {m with Running = false})
         | None ->
             reply runner callback <| nak req "Not_Setup" ()
             (model, cmd)
 
-let private doSend req ((pkt, callback) : 'pkt * Callback<WebSocketTypes.SendStats>) : ActorOperate<'pkt> =
+let private doSend req ((pkt, callback) : 'pkt * Callback<WebSocketTypes.SendStats>) : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match model.Client with
         | None ->
@@ -80,10 +80,10 @@ let private doSend req ((pkt, callback) : 'pkt * Callback<WebSocketTypes.SendSta
             elif client.Actor.State.Closing then
                 reply runner callback <| nak req "Client_Closing" model.Uri
             else
-                replyAsync3 runner req callback nakOnFailed <| doSendAsync pkt
+                replyAsync runner req callback nakOnFailed <| doSendAsync pkt
         (model, cmd)
 
-let private handleReq req : ActorOperate<'pkt> =
+let private handleReq req : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match req with
         | DoSetup (a, b) -> doSetup req (a, b)
@@ -92,7 +92,7 @@ let private handleReq req : ActorOperate<'pkt> =
         | DoSend (a, b) -> doSend req (a, b)
         <| runner <| (model, cmd)
 
-let private onClientEvent (runner : Agent<'pkt>)
+let private onClientEvent (runner : Part<'actorMsg, 'pkt>)
                             : WebSocketTypes.Evt<'pkt> -> unit =
     fun evt ->
         match evt with
@@ -105,7 +105,7 @@ let private onClientEvent (runner : Agent<'pkt>)
         | WebSocketTypes.OnDisconnected stats ->
             runner.Deliver <| InternalEvt ^<| OnDisconnected stats
 
-let private tryReconnect : ActorOperate<'pkt> =
+let private tryReconnect : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match runner.Actor.Args.RetryDelay with
         | None ->
@@ -114,13 +114,13 @@ let private tryReconnect : ActorOperate<'pkt> =
             (runner, model, cmd)
             |=|> addFutureCmd delay ^<| InternalEvt DoReconnect
 
-let private doReconnect : ActorOperate<'pkt> =
+let private doReconnect : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         if runner.Actor.State.Running then
-            runner.RunTask3 ignoreOnFailed doReconnectAsync
+            runner.RunTask ignoreOnFailed doReconnectAsync
         (model, cmd)
 
-let private handleInternalEvt evt : ActorOperate<'pkt> =
+let private handleInternalEvt evt : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match evt with
         | OnSetup (req, callback, client, recorder) ->
@@ -132,7 +132,7 @@ let private handleInternalEvt evt : ActorOperate<'pkt> =
             match runner.Actor.Args.OnConnectedAsync with
             | None -> ()
             | Some handler ->
-                runner.AddTask3 ignoreOnFailed <| callOnConnectedAsync handler
+                runner.AddTask ignoreOnFailed <| callOnConnectedAsync handler
             (runner, model, cmd)
             |=|> addCmd ^<| AccessorEvt ^<| OnStarted stats
         | OnDisconnected stats ->
@@ -144,7 +144,7 @@ let private handleInternalEvt evt : ActorOperate<'pkt> =
             (runner, model, cmd)
             |=|> doReconnect
 
-let private update : ActorUpdate<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
+let private update : ActorUpdate<Part<'actorMsg, 'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
     fun runner model msg ->
         match msg with
         | AccessorReq req -> handleReq req
@@ -162,5 +162,6 @@ let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
             Running = false
         }, noCmd)
 
-let getSpec<'pkt> (newArgs : NewArgs<Args<'pkt>>) : ActorSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    new ActorSpec<Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> (newArgs, AccessorReq, castEvt<'pkt>, init, update)
+let spec<'actorMsg, 'pkt when 'actorMsg :> IMsg> (args : Args<'pkt>) =
+    new ActorSpec<Part<'actorMsg, 'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+        (Part<'actorMsg, 'pkt>.Spawn, args, AccessorReq, castEvt<'pkt>, init, update)

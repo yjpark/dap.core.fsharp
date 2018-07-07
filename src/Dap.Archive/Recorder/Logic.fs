@@ -10,7 +10,7 @@ open Dap.Archive
 open Dap.Archive.Recorder.Types
 
 type ActorOperate<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame> =
-    ActorOperate<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
+    ActorOperate<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
 
 let private doBeginRecording req ((bundle, callback) : Bundle'<'extra, 'frame> * Callback<Meta<'extra>>)
                             : ActorOperate<'extra, 'frame> =
@@ -87,7 +87,7 @@ let private handleEvt evt : ActorOperate<'extra, 'frame> =
         | _ -> noOperation
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
+let private update : ActorUpdate<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
     fun runner model msg ->
         match msg with
         | RecorderReq req -> handleReq req
@@ -101,4 +101,5 @@ let private init : ActorInit<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
         }, noCmd)
 
 let spec<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame> =
-    new ActorSpec<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> (noArgs, RecorderReq, castEvt<'extra, 'frame>, init, update)
+    new ActorSpec<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
+        (Agent<'extra, 'frame>.Spawn, NoArgs, RecorderReq, castEvt<'extra, 'frame>, init, update)

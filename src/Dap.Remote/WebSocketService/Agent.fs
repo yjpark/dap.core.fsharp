@@ -8,14 +8,13 @@ open Dap.Remote.WebSocketService.Types
 
 type Agent = IAgent<Req, NoEvt>
 
-let getSpec (hubSpec : HubSpec<'req, 'evt>) (logTraffic : bool) =
-    fun _agent ->
-        {
-            HubSpec = hubSpec
-            LogTraffic = logTraffic
-        }
-    |> Logic.getSpec
+let spec (hubSpec : HubSpec<'req, 'evt>) (logTraffic : bool) =
+    {
+        HubSpec = hubSpec
+        LogTraffic = logTraffic
+    }
+    |> Logic.spec
 
-let getSpawner env hubSpec logTraffic =
-    getSpec hubSpec logTraffic
-    |> Agent.getSpawner env
+let registerAsync kind hubSpec logTraffic env =
+    let spec = spec hubSpec logTraffic
+    env |> Env.registerAsync spec kind

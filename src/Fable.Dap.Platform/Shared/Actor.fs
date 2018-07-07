@@ -9,19 +9,28 @@ open Elmish
 open Dap.Prelude
 
 //Note: during Init, the model is not created yet
-type ActorInit<'args, 'model, 'msg> when 'msg :> IMsg =
+type ActorInit<'args, 'model, 'msg>
+            when 'model : not struct and 'msg :> IMsg =
     Init<IAgent<'msg>, 'args, 'model, 'msg>
 
 /// Change model according to msg, also may generate cmds.
-type ActorUpdate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    Update<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
+type ActorUpdate<'runner, 'args, 'model, 'msg, 'req, 'evt>
+            when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
+                    and 'model : not struct and 'msg :> IMsg
+                    and 'req :> IReq and 'evt :> IEvt =
+    Update<'runner, 'model, 'msg>
 
 /// Generate msg from outside. e.g. an timer, or keyboard.
-type ActorSubscribe<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    Subscribe<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
+type ActorSubscribe<'runner, 'args, 'model, 'msg, 'req, 'evt>
+            when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
+                    and 'model : not struct and 'msg :> IMsg
+                    and 'req :> IReq and 'evt :> IEvt =
+    Subscribe<'runner, 'model, 'msg>
 
-type ActorOperate<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    Operate<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg>
+type ActorOperate<'runner, 'args, 'model, 'msg, 'req, 'evt>
+            when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
+                    and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
+    Operate<'runner, 'model, 'msg>
 
 type ActorParam<'msg> when 'msg :> IMsg = {
     WrapEvt : Wrapper<'msg, AgentEvt> option
@@ -43,37 +52,66 @@ let noActorParam<'msg when 'msg :> IMsg> : ActorParam<'msg> =
 #endif
     }
 
-type ActorSpec<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt (newArgs', wrapReq', castEvt', init', update', subscribe', param') =
-    let newArgs : NewArgs<'args> = newArgs'
+type Spawner<'runner> =
+    AgentParam -> 'runner
+
+type ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt
+            when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
+                and 'model : not struct and 'msg :> IMsg
+                and 'req :> IReq and 'evt :> IEvt>
+        (spawner', args', wrapReq', castEvt', init', update') =
+    let spawner : Spawner<'runner> = spawner'
+    let args : 'args = args'
     let wrapReq : Wrapper<'msg, 'req> = wrapReq'
     let castEvt : CastEvt<'msg, 'evt> = castEvt'
-    let logic : Logic<IAgent<'msg>, IAgent<'args, 'model, 'msg, 'req, 'evt>, 'args, 'model, 'msg> =
+    let mutable inUse : bool = false
+    let mutable logic : Logic<IAgent<'msg>, 'runner, 'args, 'model, 'msg> =
+        let noSubscription : Subscribe<'runner, 'model, 'msg> =
+            fun _runner _model -> Cmd.none
         {
             Init = init'
             Update = update'
-            Subscribe = subscribe'
+            Subscribe = noSubscription
         }
-    let param : ActorParam<'msg> = param'
-    new(newArgs', wrapReq', castEvt', init', update', subscribe') =
-        ActorSpec(newArgs', wrapReq', castEvt', init', update', subscribe', noActorParam<'msg>)
-    new(newArgs', wrapReq', castEvt', init', update') =
-        let noSubscription : Subscribe<IAgent<'args, 'model, 'msg, 'req, 'evt>, 'model, 'msg> =
-            fun _runner _model -> Cmd.none
-        ActorSpec(newArgs', wrapReq', castEvt', init', update', noSubscription, noActorParam<'msg>)
-    member _this.NewArgs = newArgs
+    let mutable param : ActorParam<'msg> = noActorParam
+    member _this.Spawner = spawner
+    member _this.Args = args
     member _this.WrapReq = wrapReq
     member _this.CastEvt = castEvt
-    member _this.Logic = logic
-    member _this.Param = param
-    interface IActorSpec<'msg, 'req, 'evt> with
+    member _this.Logic = inUse <- true ; logic
+    member _this.Param = inUse <- true ; param
+    member this.WithSubscribe subscribe =
+        if inUse then
+            raiseWithError "ActorSpec" "Already_In_Use" subscribe
+        logic <-
+            {
+                Init = logic.Init
+                Update = logic.Update
+                Subscribe = subscribe
+            }
+        this
+    member this.WithParam (param' : ActorParam<'msg>) =
+        if inUse then
+            raiseWithError "ActorSpec" "Already_In_Use" (param, param')
+        param <- param'
+        this
+    member this.WithParam (update : ActorParam<'msg> -> ActorParam<'msg>) =
+        if inUse then
+            raiseWithError "ActorSpec" "Already_In_Use" (param, update)
+        param <- update param
+        this
+    interface IActorSpec<'args, 'msg, 'req, 'evt> with
+        member _this.Args = args
         member _this.WrapReq = wrapReq
         member _this.CastEvt = castEvt
 
 [<StructuredFormatDisplay("<Actor>{AsDisplay}")>]
-type internal Actor<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt> (agent', spec', args', model') =
+type internal Actor<'args, 'model, 'msg, 'req, 'evt
+            when 'model : not struct and 'msg :> IMsg
+                and 'req :> IReq and 'evt :> IEvt>
+        (agent', spec', model') =
     let agent : IAgent<'msg> = agent'
-    let spec : IActorSpec<'msg, 'req, 'evt> = spec'
-    let args : 'args = args'
+    let spec : IActorSpec<'args, 'msg, 'req, 'evt> = spec'
     let bus = new Bus<'evt> (agent :> IOwner)
     let mutable state : 'model = model'
     let mutable version : Version = Version.Init
@@ -99,6 +137,7 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and
         agent.DeliverAsync (spec.WrapReq << getReq)
 #endif
     member _this.Version = version
+    member this.AsActor = this :> IActor<'args, 'model, 'req, 'evt>
     interface IActor<'args, 'model, 'req, 'evt> with
         member this.Handle req = this.Handle req
 #if !FABLE_COMPILER
@@ -106,34 +145,34 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt when 'model : not struct and
 #endif
         member _this.OnEvent = bus.Publish
         member _this.Ident = agent.Ident
-        member _this.Args = args
+        member _this.Args = spec.Args
         member _this.State = state
         member _this.Version = version
 
 let internal create'
-        (spec : ActorSpec<'args, 'model, 'msg, 'req, 'evt>)
-        (wrapMsg : WrapMsg<'agentRunner, 'agentModel, 'agentMsg>)
+        (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)
+        (wrapMsg : WrapMsg<'wrapRunner, 'agentModel, 'agentMsg>)
         (subscribeNow : bool)
-        (runner : IAgent<'args, 'model, 'msg, 'req, 'evt>) =
-    let args : 'args = spec.NewArgs (runner :> IOwner)
+        (runner : 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>) =
     let agent = runner :> IAgent<'msg>
-    let (model, cmd) = spec.Logic.Init agent args
-    let actor = new Actor<'args, 'model, 'msg, 'req, 'evt> (agent, spec, args, model)
-    let updateActor : Update<'agentRunner, NoModel, 'msg> =
+    let (model, cmd) = spec.Logic.Init agent spec.Args
+    let actor = new Actor<'args, 'model, 'msg, 'req, 'evt> (agent, spec, model)
+    let updateActor : Update<'wrapRunner, NoModel, 'msg> =
         fun _runner model' msg ->
             let (model, cmd) = spec.Logic.Update runner actor.State msg
             actor.SetState msg model
             (model', cmd)
-    let wrapperSpec : WrapperSpec<'agentRunner, 'agentModel, 'agentMsg, NoModel, 'msg> =
+    let wrapperSpec : WrapperSpec<'wrapRunner, 'agentModel, 'agentMsg, NoModel, 'msg> =
         {
             GetSub = fun m -> NoModel
             SetSub = fun s -> id
             UpdateSub = updateActor
             ReactSub = noReaction
         }
+    let actor = actor.AsActor
     let wrapper = wrap wrapMsg wrapperSpec
     if subscribeNow then
         let cmd = Cmd.batch [cmd ; spec.Logic.Subscribe runner model]
-        (actor, cmd, wrapper)
+        (actor, wrapper, cmd)
     else
-        (actor, cmd, wrapper)
+        (actor, wrapper, cmd)
