@@ -5,6 +5,7 @@ open Dap.Prelude
 
 type IEnv =
     inherit IRunner
+    inherit IOwner
     abstract Logging : ILogging with get
     abstract Scope : Scope with get
 
