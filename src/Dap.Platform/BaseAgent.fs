@@ -155,7 +155,6 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     member this.HandleAsync (getReq : Callback<'res> -> AgentReq) =
         version <- version.IncReq
         dispatchAsync' this (AgentReq << getReq)
-
     interface IAgent with
         member this.Env = this.Env
         member this.Ident = this.Ident
