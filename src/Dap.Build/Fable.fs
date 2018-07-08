@@ -31,12 +31,12 @@ let options devCleans prodCleans = {
     ProdCleans = prodCleans
 }
 
-let bundle (options : Options) proj = 
+let bundle (options : Options) proj =
     Trace.traceFAKE "Bundle Fable Project: %s" proj
     let setOptions = fun (options' : DotNet.Options) ->
         { options' with
             WorkingDirectory = Path.GetDirectoryName(proj)
-        } 
+        }
     let package = DapDotNet.getPackage proj
     sprintf "webpack -- -p --config %s" options.ProdConfig
     |> DotNet.exec setOptions "fable"
@@ -44,14 +44,14 @@ let bundle (options : Options) proj =
         if not result.OK then
             failwith <| sprintf "Bundle Fable Project Failed: %s -> [%i] %A %A" package result.ExitCode result.Messages result.Errors
 
-let serve (options : Options) proj = 
+let serve (options : Options) proj =
     Trace.traceFAKE "Watch Fable Project: %s" proj
     let setOptions = fun (options' : DotNet.Options) ->
         { options' with
             WorkingDirectory = Path.GetDirectoryName(proj)
-        } 
+        }
     let package = DapDotNet.getPackage proj
-    sprintf "webpack-dev-server -- --config %s" options.DevConfig
+    sprintf "webpack-dev-server --port free -- --config %s" options.DevConfig
     |> DotNet.exec setOptions "fable"
     |> fun result ->
         if not result.OK then
@@ -61,13 +61,13 @@ let private createTargets' (options : Options) noPrefix projects =
     let (label, prefix) = DapDotNet.getLabelAndPrefix noPrefix projects
     Target.setLastDescription <| sprintf "Serve %s" label
     Target.create (prefix + Serve) (fun _ ->
-        File.deleteAll options.DevCleans 
+        File.deleteAll options.DevCleans
         projects
         |> Seq.iter (serve options)
     )
     Target.setLastDescription <| sprintf "Bundle %s" label
     Target.create (prefix + Bundle) (fun _ ->
-        File.deleteAll options.ProdCleans 
+        File.deleteAll options.ProdCleans
         projects
         |> Seq.iter (bundle options)
     )
