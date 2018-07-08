@@ -20,10 +20,10 @@ type IClock =
     abstract Now' : Instant with get
     abstract CalcDuration' : Instant -> Instant * Duration
 
-let dateTimeUtcNow = System.DateTime.UtcNow
+let dateTimeUtcNow () = System.DateTime.UtcNow
 
 #if FABLE_COMPILER
-let inline getNow' () = dateTimeUtcNow
+let inline getNow' () = System.DateTime.UtcNow
 #else
 let inline getNow' () = SystemClock.Instance.GetCurrentInstant ()
 let toDateTimeUtc (time : Instant) =
