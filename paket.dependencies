@@ -41,4 +41,7 @@ group Build
     nuget Fake.Tools.Git 5.1
 
     clitool dotnet-sourcelink
-    nuget Microsoft.SourceLink.GitHub
+    nuget Microsoft.SourceLink.GitHub 1.0.0-beta-62925-02
+    nuget Microsoft.Build.Tasks.Git 1.0.0-beta-62925-02
+    nuget Microsoft.SourceLink.Common 1.0.0-beta-62925-02
+
