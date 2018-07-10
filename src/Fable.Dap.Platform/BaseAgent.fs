@@ -52,10 +52,10 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
                 | Some actor ->
                     raiseAgentErr "Already_Started" actor
                 | None ->
-                    logger <- enrichLoggerForAgent this logger
                     let (model, cmd) = this.Spec.Logic.Init runner this.Spec.Args
                     let actor' = new Actor<'args, 'model, 'msg, 'req, 'evt> (this, this.Spec, model)
                     actor <- Some <| actor'
+                    logger <- enrichLoggerForAgent this logger
                     (model, cmd)
             let runner = this.Runner
             try

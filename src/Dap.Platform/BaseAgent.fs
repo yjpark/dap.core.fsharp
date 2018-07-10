@@ -82,9 +82,11 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member _this.State = state
         member _this.SetDispatch dispatch' = dispatch <- Some dispatch'
         member this.Start () =
-            if state.IsNone then
+            let stateWasNone = state.IsNone
+            let cmd = start' this this.SetState
+            if stateWasNone then
                 logger <- enrichLoggerForAgent this logger
-            start' this this.SetState
+            cmd
         member this.Process parcel = process' this parcel this.SetState
         member this.Deliver cmd = deliver' this cmd
         member this.Initer = this.Runner
