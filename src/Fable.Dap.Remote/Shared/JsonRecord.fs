@@ -45,7 +45,8 @@ let decodeDateTime : D.Decoder<DateTime> =
     //NOT Tested Yet
     D.string
     |> D.map (fun s ->
-        DateTime.ParseExact (s, TIMESTAMP_FORMAT, System.Globalization.CultureInfo.InvariantCulture)
+        //Fable doesn't support ParseExact
+        DateTime.Parse (s)
     )
 
 let encodeInstant (instant : Instant) = encodeDateTime instant
