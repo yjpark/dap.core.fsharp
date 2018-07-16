@@ -45,12 +45,15 @@ let internal doConnectAsync : GetTask<Part<'actorMsg, 'pkt>, WebSocketTypes.Conn
 
 let internal doReconnectFailed : OnFailed<Part<'actorMsg, 'pkt>> =
     fun runner e ->
-        runner.Deliver <| InternalEvt ^<| OnDisconnected None
+        if not runner.Actor.State.Connected then
+            runner.Deliver <| InternalEvt ^<| OnDisconnected None
 
 
 let internal doReconnectAsync : GetTask<Part<'actorMsg, 'pkt>, unit> =
     fun runner -> task {
-        let! stats = doConnectAsync runner
+        if not runner.Actor.State.Connected then
+            let! stats = doConnectAsync runner
+            ()
         return ()
     }
 

@@ -111,14 +111,19 @@ let private tryReconnect : PartOperate<'actorMsg, 'pkt> =
         | None ->
             (model, cmd)
         | Some delay ->
-            (runner, model, cmd)
-            |=|> addFutureCmd delay ^<| InternalEvt DoReconnect
+            match model.Reconnecting with
+            | true -> (model, cmd)
+            | false ->
+                (runner, model, cmd)
+                |-|> updateModel (fun m -> {m with Reconnecting = true})
+                |=|> addFutureCmd delay ^<| InternalEvt DoReconnect
 
 let private doReconnect : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         if runner.Actor.State.Running then
-            runner.RunTask doReconnectFailed doReconnectAsync
-        (model, cmd)
+            runner.AddTask doReconnectFailed doReconnectAsync
+        (runner, model, cmd)
+        |=|> updateModel (fun m -> {m with Reconnecting = false})
 
 let private handleInternalEvt evt : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
@@ -160,6 +165,7 @@ let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
             Client = None
             Recorder = None
             Running = false
+            Reconnecting = false
         }, noCmd)
 
 let spec<'actorMsg, 'pkt when 'actorMsg :> IMsg> (args : Args<'pkt>) =

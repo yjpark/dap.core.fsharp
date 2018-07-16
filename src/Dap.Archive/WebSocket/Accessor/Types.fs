@@ -33,6 +33,7 @@ and Model<'pkt> = {
     Client : Client<'pkt> option
     Recorder : EventRecorder.Agent option
     Running : bool
+    Reconnecting : bool
 } with
     member this.Connected =
         this.Client
