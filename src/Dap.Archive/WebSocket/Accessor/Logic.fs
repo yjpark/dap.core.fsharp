@@ -38,7 +38,7 @@ let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats optio
                     if client.Actor.State.Connected then
                         reply runner callback <| ack req None
                     else
-                        replyAsync runner req callback doStartFailed doStartAsync
+                        replyAsync runner req callback nakOnFailed doStartAsync
                     (runner, model, cmd)
                     |=|> updateModel (fun m -> {m with Running = true})
         | None ->

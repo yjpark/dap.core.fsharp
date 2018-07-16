@@ -57,11 +57,6 @@ let internal doReconnectAsync : GetTask<Part<'actorMsg, 'pkt>, unit> =
         return ()
     }
 
-let internal doStartFailed : OnReplyFailed<Part<'actorMsg, 'pkt>, WebSocketTypes.ConnectedStats option> =
-    fun req callback runner e ->
-        reply runner callback <| nak req "Start_Failed" e
-        runner.Deliver <| InternalEvt ^<| OnDisconnected None
-
 let internal doStartAsync : GetReplyTask<Part<'actorMsg, 'pkt>, WebSocketTypes.ConnectedStats option> =
     fun req callback runner -> task {
         let! stats = doConnectAsync runner
