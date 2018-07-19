@@ -122,7 +122,7 @@ let private onReceived (pkt : Packet') (model : Model) : Model =
             | None ->
                 logException model.Args.Logger "Receive" "Request_Not_Found" pkt e
             | Some req ->
-                logException model.Args.Logger "Receive" "Stub_OnResponse_Failed" pkt e
+                logException model.Args.Logger "Receive" "Stub_OnResponse_Failed" (req, pkt) e
                 model.Args.Stub.OnResponse (req.Req, Error <| Local' ^<| LocalException e.Message)
         match found with
         | None ->
