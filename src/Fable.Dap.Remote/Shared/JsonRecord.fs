@@ -35,18 +35,16 @@ let decodeNoExtra : D.Decoder<NoExtra> =
     fun _token ->
         Ok NoExtra
 
-let private TIMESTAMP_FORMAT = "yyyy-MM-ddTHH:mm:ss";
-
 let encodeDateTime (time : DateTime) =
-    E.string <| time.ToString TIMESTAMP_FORMAT
+    E.string <| dateTimeToText time
 
 #if FABLE_COMPILER
 let decodeDateTime : D.Decoder<DateTime> =
     //NOT Tested Yet
     D.string
     |> D.map (fun s ->
-        //Fable doesn't support ParseExact
-        DateTime.Parse (s)
+        dateTimeOfText s
+        |> Result.get
     )
 
 let encodeInstant (instant : Instant) = encodeDateTime instant
@@ -99,11 +97,10 @@ let decodeDateTime : D.Decoder<DateTime> =
             Ok <| token.Value<DateTime> ()
         elif token.Type = JTokenType.String then
             let s = token.Value<string> ()
-            try
-                DateTime.ParseExact (s, TIMESTAMP_FORMAT, System.Globalization.CultureInfo.InvariantCulture)
-                |> Ok
-            with e ->
-                Error <| D.FailMessage ^<| sprintf "parse failed: %s -> %s" s e.Message
+            dateTimeOfText s
+            |> Result.mapError (fun e ->
+                D.FailMessage ^<| sprintf "parse failed: %s -> %s" s e.Message
+            )
         else
             Error <| D.BadPrimitive ("a string", token)
 

@@ -1,9 +1,8 @@
 [<AutoOpen>]
 module Dap.Platform.Clock
 
-#if FABLE_COMPILER
 open System
-
+#if FABLE_COMPILER
 type Instant = System.DateTime
 type Duration = System.TimeSpan
 #else
@@ -51,8 +50,27 @@ type FakeClock () =
         member this.Now' = getNow' ()
         member _this.CalcDuration' fromTime = calcDuration fromTime
 
+let private TIMESTAMP_FORMAT = "yyyy-MM-ddTHH:mm:ss";
+
+let dateTimeToText (time : DateTime) =
+    time.ToString TIMESTAMP_FORMAT
+
 #if FABLE_COMPILER
+let dateTimeOfText (text : string) : Result<DateTime, exn> =
+    try
+        //Fable doesn't support ParseExact
+        DateTime.Parse (text)
+        |> Ok
+    with e ->
+        Error e
+
 #else
+let dateTimeOfText (text : string) : Result<DateTime, exn> =
+    try
+        DateTime.ParseExact (text, TIMESTAMP_FORMAT, System.Globalization.CultureInfo.InvariantCulture)
+        |> Ok
+    with e ->
+        Error e
 let instantToText (instant : Instant) =
     InstantPattern.General.Format (instant)
 
