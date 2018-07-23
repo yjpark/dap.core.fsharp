@@ -34,7 +34,7 @@ let private doAddService req ((service, callback) : IAgent * Callback<int * int>
         | Some kindServices ->
             match Map.tryFind key kindServices with
             | Some service' ->
-                reply runner callback <| nak req "Already_Exist" service'
+                reply runner callback <| nak req "Already_Exist" (kind, key, service')
                 (model, cmd)
             | None ->
                 replyAck kindServices
