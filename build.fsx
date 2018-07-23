@@ -4,8 +4,6 @@
 open Fake.Core
 open Fake.IO.Globbing.Operators
 
-#load "src/Dap.Build/DotNet.fs"
-#load "src/Dap.Build/NuGet.fs"
 module NuGet = Dap.Build.NuGet
 
 let feed : NuGet.Feed = {
@@ -14,8 +12,7 @@ let feed : NuGet.Feed = {
 }
 
 let projects =
-    !! "src/Dap.Build/*.fsproj"
-    ++ "src/Fable.Dap.Prelude/*.fsproj"
+    !! "src/Fable.Dap.Prelude/*.fsproj"
     ++ "src/Dap.Prelude/*.fsproj"
     ++ "src/Fable.Dap.Platform/*.fsproj"
     ++ "src/Dap.Platform/*.fsproj"
