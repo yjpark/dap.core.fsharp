@@ -82,7 +82,7 @@ type ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt
     member _this.Param = inUse <- true ; param
     member this.WithSubscribe subscribe =
         if inUse then
-            raiseWithError "ActorSpec" "Already_In_Use" subscribe
+            failWith "Already_In_Use" subscribe
         logic <-
             {
                 Init = logic.Init
@@ -92,12 +92,12 @@ type ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt
         this
     member this.WithParam (param' : ActorParam<'msg>) =
         if inUse then
-            raiseWithError "ActorSpec" "Already_In_Use" (param, param')
+            failWith "Already_In_Use" (param, param')
         param <- param'
         this
     member this.WithParam (update : ActorParam<'msg> -> ActorParam<'msg>) =
         if inUse then
-            raiseWithError "ActorSpec" "Already_In_Use" (param, update)
+            failWith "Already_In_Use" (param, update)
         param <- update param
         this
     interface IActorSpec<'args, 'msg, 'req, 'evt> with

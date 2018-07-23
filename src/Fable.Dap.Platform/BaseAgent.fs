@@ -8,9 +8,6 @@ open Dap.Platform
 let private tplAgentErr = LogEvent.Template3<string, obj, obj>(LogLevelFatal, "[{Section}] {Err}: {Detail}")
 let private tplAgentFailed = LogEvent.Template2WithException<string, obj>(LogLevelError, "[{Section}] {Msg} -> Failed")
 
-let private raiseAgentErr err detail =
-    raiseWith <| tplAgentErr "Actor" err detail
-
 //Can NOT use same name in Actor implementation in Fable 1.x
 //https://github.com/fable-compiler/Fable/issues/1343
 //TODO: this is not needed now, since Actor<> been created now
@@ -33,7 +30,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
     member _this.Setup' spec' =
         if spec.IsSome then
-            raiseWithError "BaseAgent" "Already_Setup" (spec, spec')
+            failWith "Already_Setup" (spec, spec')
         spec <- Some spec'
     member this.Spec = spec |> Option.get
     //IRunner<'runner>
@@ -50,7 +47,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
             let (model, cmd) =
                 match actor with
                 | Some actor ->
-                    raiseAgentErr "Already_Started" actor
+                    failWith "Already_Started" actor
                 | None ->
                     let (model, cmd) = this.Spec.Logic.Init runner this.Spec.Args
                     let actor' = new Actor<'args, 'model, 'msg, 'req, 'evt> (this, this.Spec, model)
@@ -63,15 +60,10 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
                     cmd
                     this.Spec.Logic.Subscribe runner model
                 ]
-            with
-            | e ->
+            with e ->
                 runner.Log <| tplAgentFailed "Subscribe" () e
                 noCmd
-        with
-        | MessageException msg ->
-            runner.Log msg
-            noCmd
-        | e ->
+        with e ->
             runner.Log <| tplAgentFailed "Init" () e
             noCmd
     member this.Process' msg =
@@ -80,17 +72,13 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
             let (model, cmd) =
                 match actor with
                 | None ->
-                    raiseAgentErr "Not_Started" msg
+                    failWith "Not_Started" msg
                 | Some actor ->
                     let (model, cmd) = this.Spec.Logic.Update runner actor.State msg
                     actor.SetState msg model
                     (model, cmd)
             cmd
-        with
-        | MessageException msg ->
-            runner.Log msg
-            noCmd
-        | e ->
+        with e ->
             runner.Log <| tplAgentFailed "Update" msg e
             noCmd
     member _this.SetDispatch' dispatch' : unit =

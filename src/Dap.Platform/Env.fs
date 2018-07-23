@@ -9,10 +9,9 @@ open Elmish
 open Dap.Prelude
 open Dap.Platform.Internal.Env
 open Dap.Platform.Internal.Agent
-let private tplSpawnErr = LogEvent.Template4<string, string, AgentParam, obj>(LogLevelFatal, "[{Section}] {Err}: {Param} ~> {Actual}")
 
 let private raiseSpawnErr err param actual =
-    raiseWith <| tplSpawnErr "Spawn" err param actual
+    failWith "Spawn" err (param, actual)
 
 let private doQuit req (forceQuit, callback) : EnvOperate =
     fun runner (model, cmd) ->
@@ -77,7 +76,7 @@ let private doRegister req ((kind, spawner, callback) : Kind * Spawner * Callbac
             (model, cmd)
         | None ->
             let spawners = Map.add kind spawner model.Spawners
-            reply runner callback <| ack req ^<| Map.count spawners
+            replyAfter runner callback <| ack req ^<| Map.count spawners
             logReqInfo runner "Spawn" req "Spawner_Registered" spawner
             let agents = Map.add kind Map.empty model.Agents
             ({model with Spawners = spawners; Agents = agents}, cmd)
@@ -98,13 +97,12 @@ let private doNewAgent req ((kind, key, callback) : Kind * Key * Callback<IAgent
                     || agent.Ident.Key <> key)
                     then raiseSpawnErr "Invalid_Ident" param agent.Ident
                 logReqInfo runner "Spawn" req "Agent_Created" agent
-                reply runner callback <| ack req (agent, true)
+                replyAfter runner callback <| ack req (agent, true)
                 let agents = Map.add kind (Map.add key agent kindAgents) model.Agents
                 (runner, model, cmd)
                 |-|> updateModel ^<| fun m -> {m with Agents = agents}
                 |=|> addCmd ^<| EnvEvt ^<| OnNewAgent (kind, key, agent)
-            with
-            | e ->
+            with e ->
                 reply runner callback <| nak req "Spawn_Failed" e
                 (model, cmd)
         | None ->
@@ -197,8 +195,15 @@ let addServiceAsync spec kind key (env : IEnv) : Task<IAgent> = task {
 }
 
 let getService (kind : Kind) (key : Key) (env : IEnv) : IAgent =
-    let kindServices = Map.find kind env.State.Services
-    Map.find key kindServices
+    match Map.tryFind kind env.State.Services with
+    | Some kindServices ->
+        match Map.tryFind key kindServices with
+        | Some service ->
+            service
+        | None ->
+            failWith "Key_Not_Exist" (kind, key, kindServices.Count)
+    | None ->
+        failWith "Kind_Not_Exist" (kind, key, env.State.Services.Count)
 
 let tryFindService (kind : Kind) (key : Key) (env : IEnv) : IAgent option =
     Map.tryFind kind env.State.Services

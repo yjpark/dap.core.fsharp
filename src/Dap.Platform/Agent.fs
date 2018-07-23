@@ -36,13 +36,13 @@ let cast<'agent when 'agent :> IAgent> (owner : IOwner) =
     | :? IAgent as agent ->
         agent
     | _ ->
-        raiseWithError "Agent" "Invalid_Owner" (owner.GetType().FullName, typeof<'agent>.FullName)
+        failWith "Invalid_Owner" (owner.GetType().FullName, typeof<'agent>.FullName)
     |> fun (agent : IAgent) ->
         match agent with
         | :? 'agent as agent ->
             agent
         | _ ->
-            raiseWithError "Agent" "Cast_Failed" (agent.GetType().FullName, typeof<'agent>.FullName)
+            failWith "Cast_Failed" (agent.GetType().FullName, typeof<'agent>.FullName)
 
 let tryCast<'agent when 'agent :> IAgent> (owner : IOwner) =
     match owner with

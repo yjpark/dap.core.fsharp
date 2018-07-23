@@ -17,14 +17,9 @@ type IRunnable<'initer, 'runner, 'args, 'model, 'msg>
     abstract Initer : 'initer
     abstract Runner : 'runner
 
-let private tplRunnableFatal = LogEvent.Template3<string, obj, obj>(LogLevelFatal, "[{Section}] {Err}: {Detail}")
-
 let private tplRunnableFailed = LogEvent.Template2WithException<string, obj>(LogLevelError, "[{Section}] {Msg} -> Failed")
 
 let private tplSlowStats = LogEvent.Template4<string, float<ms>, IMsg, DurationStats<ms>>(LogLevelWarning, "[{Section}] {Duration}<ms> {Msg} ~> {Detail}")
-
-let private raiseRunnableFatal err detail =
-    raiseWith <| tplRunnableFatal "Runnable" err detail
 
 let internal start' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>)
                 (setState : 'model -> unit) : Cmd<'msg> =
@@ -35,7 +30,7 @@ let internal start' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>
             | None ->
                 runnable.Logic.Init runner runnable.Args
             | Some state ->
-                raiseRunnableFatal "Already_Started" state
+                failWith "Already_Started" state
         setState model
         (runner :> ITaskManager).StartPendingTasks () |> ignore
         let runner = runnable.Runner
@@ -47,11 +42,7 @@ let internal start' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>
         with e ->
             runner.Log <| tplRunnableFailed "Subscribe" runnable.Args e
             noCmd
-    with
-    | MessageException m ->
-        runner.Log m
-        noCmd
-    | e ->
+    with e ->
         runner.Log <| tplRunnableFailed "Init" runnable.Args e
         noCmd
 
@@ -74,18 +65,14 @@ let internal process' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'ms
         let (model, cmd) =
             match runnable.State with
             | None ->
-                raiseRunnableFatal "Not_Started" msg
+                failWith "Not_Started" msg
             | Some state ->
                 runnable.Logic.Update runner state msg
         setState model
         (runner :> ITaskManager).StartPendingTasks () |> ignore
         trackDurationStatsInMs runner time runnable.Stats.Process (getSlowProcessMessage msg) |> ignore
         cmd
-    with
-    | MessageException m ->
-        runner.Log m
-        noCmd
-    | e ->
+    with e ->
         runner.Log <| tplRunnableFailed "Update" msg e
         noCmd
 

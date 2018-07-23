@@ -203,8 +203,6 @@ type LogEvent with
                 Exception = Some e
             }
 
-exception MessageException of LogEvent
-
 let private tplInfo = LogEvent.Template3<string, string, obj>(LogLevelInformation, "[{Section}] {Info}: {Detail}")
 
 let private tplWarn = LogEvent.Template3<string, string, obj>(LogLevelWarning, "[{Section}] {Warn}: {Detail}")
@@ -216,11 +214,8 @@ let log (evt : LogEvent) (logger : ILogger) =
     logger.Log evt
     logger
 
-let raiseWith (evt : LogEvent) =
-    raise <| MessageException evt
-
-let raiseWithError section err detail =
-    raise <| MessageException ^<| tplError section err detail
+let failWith err detail =
+    failwithf "%s: %A" err detail
 
 let logInfo (logger : ILogger) section info detail : unit =
     logger.Log <| tplInfo section info detail

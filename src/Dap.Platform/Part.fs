@@ -65,9 +65,9 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.RunTask4 onFailed getTask = runTask' this onFailed getTask
         member this.Setup' agent' partMsg' actor' wrapper' cmd =
             if agent.IsSome then
-                raiseWithError "BasePart" "Already_Setup" (agent, agent')
+                failWith "Already_Setup" (agent, agent')
             if env <> agent'.Env || ident <> agent'.Ident then
-                raiseWithError "BasePart" "Invalid_Agent" (env, ident, agent')
+                failWith "Invalid_Agent" (env, ident, agent')
             agent <- Some agent'
             partMsg <- Some partMsg'
             actor <- Some actor'

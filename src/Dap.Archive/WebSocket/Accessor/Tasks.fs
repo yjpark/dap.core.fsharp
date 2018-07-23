@@ -28,7 +28,7 @@ let internal doSetupAsync : GetReplyTask<Part<'actorMsg, 'pkt>, unit> =
         let clientKey = sprintf "%s_%s" runner.Ident.Kind runner.Ident.Key
         let! (client, isNew) = runner.Env.HandleAsync <| DoGetAgent' runner.Actor.Args.ClientKind clientKey
         if not isNew then
-            raiseWithError "Accessor" "Client_Is_Not_New" (uri, client)
+            failWith "Client_Is_Not_New" (uri, client)
         let client = client :?> Client<'pkt>
         let! recorder = createRecorderAsync client runner
         runner.Deliver <| InternalEvt ^<| OnSetup (req, callback, client, recorder)

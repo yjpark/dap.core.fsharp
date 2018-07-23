@@ -61,7 +61,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     member private this.AsAgent = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
     member _this.Setup' spec' logic' =
         if spec.IsSome then
-            raiseWithError "BaseAgent" "Already_Setup" (spec, spec')
+            failWith "Already_Setup" (spec, spec')
         spec <- Some spec'
         logic <- Some logic'
         spec'.Param.GetSlowCap
