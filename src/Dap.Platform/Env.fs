@@ -28,7 +28,7 @@ let private doAddService req ((service, callback) : IAgent * Callback<int * int>
         let replyAck = fun kindServices ->
             let kindServices = kindServices |> Map.add key service
             let services = Map.add kind kindServices model.Services
-            reply runner callback <| ack req ^<| (Map.count services, Map.count kindServices)
+            replyAfter runner callback <| ack req ^<| (Map.count services, Map.count kindServices)
             logReqInfo runner "Service" req "Service_Added" service
             ({model with Services = services}, cmd)
         match Map.tryFind kind model.Services with
