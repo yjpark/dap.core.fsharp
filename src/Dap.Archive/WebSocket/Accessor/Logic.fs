@@ -21,6 +21,21 @@ let private doSetup req ((uri, callback) : string * Callback<unit>) : PartOperat
             (runner, model, cmd)
             |=|> updateModel (fun m -> {m with Uri = Some uri})
 
+let private doSetUri req ((uri, callback) : string * Callback<unit>) : PartOperate<'actorMsg, 'pkt> =
+    fun runner (model, cmd) ->
+        match model.Uri with
+        | Some uri' ->
+            if uri' = uri then
+                reply runner callback <| nak req "Same_Uri" uri
+                (model, cmd)
+            else
+                //TODO: check current connection, maybe reconnect
+                (runner, model, cmd)
+                |=|> updateModel (fun m -> {m with Uri = Some uri})
+        | None ->
+            reply runner callback <| nak req "Not_Setup" ()
+            (model, cmd)
+
 let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats option>) : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match model.Uri with
@@ -87,6 +102,7 @@ let private handleReq req : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match req with
         | DoSetup (a, b) -> doSetup req (a, b)
+        | DoSetUri (a, b) -> doSetUri req (a, b)
         | DoStart a -> doStart req a
         | DoStop a -> doStop req a
         | DoSend (a, b) -> doSend req (a, b)

@@ -42,6 +42,7 @@ and Model<'pkt> = {
 
 and Req<'pkt> =
     | DoSetup of string * Callback<unit>
+    | DoSetUri of string * Callback<unit>
     | DoStart of Callback<WebSocketTypes.ConnectedStats option>
     | DoStop of Callback<unit>
     | DoSend of 'pkt * Callback<WebSocketTypes.SendStats>
@@ -73,6 +74,9 @@ let castEvt<'pkt> : CastEvt<Msg<'pkt>, Evt<'pkt>> =
 
 let DoSetup' uri callback =
     DoSetup (uri, callback)
+
+let DoSetUri' uri callback =
+    DoSetUri (uri, callback)
 
 let DoSend' pkt callback =
     DoSend (pkt, callback)
