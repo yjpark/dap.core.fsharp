@@ -1,5 +1,10 @@
 namespace Dap.Platform
 
+#if !FABLE_COMPILER
+open System.Threading
+open System.Threading.Tasks
+#endif
+
 // Copied From Elmish
 type Dispatch<'msg> = 'msg -> unit
 
@@ -61,3 +66,8 @@ type SubUpdate<'runner, 'model, 'msg, 'subMsg> =
 
 type Api<'runner, 'req, 'res> =
     'runner -> ('res -> unit) -> 'req -> unit
+
+#if !FABLE_COMPILER
+type AsyncApi<'runner, 'req, 'res> =
+    'runner -> 'req -> Task<'res>
+#endif

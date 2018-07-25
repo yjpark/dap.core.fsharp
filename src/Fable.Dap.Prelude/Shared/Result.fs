@@ -35,8 +35,7 @@ type Result<'T, 'TError> with
     member this.IsError = isError this
     member this.Value = get this
 
-#if FABLE_COMPILER
-#else
+#if !FABLE_COMPILER
 let mapError' (mapping : 'E1 -> Async<'E2>) (result : Result<'T, 'E1>) : Result<'T, 'E2> =
     match result with
     | Ok res ->
