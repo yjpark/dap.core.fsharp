@@ -65,7 +65,7 @@ type SubUpdate<'runner, 'model, 'msg, 'subMsg> =
     'runner -> 'model -> 'subMsg -> 'model * Cmd<'msg>
 
 type Api<'runner, 'req, 'res> =
-    'runner -> ('res -> unit) -> 'req -> unit
+    'runner -> 'req -> ('res -> unit) -> unit
 
 #if !FABLE_COMPILER
 type AsyncApi<'runner, 'req, 'res> =
