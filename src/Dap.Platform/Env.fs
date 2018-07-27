@@ -180,7 +180,7 @@ let registerAsync (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)
                     (kind : Kind)
                     (env : IEnv) : Task<unit> = task {
     let spawner = Agent.getSpawner spec
-    let _ = env.HandleAsync <| DoRegister' kind spawner
+    let! _ = env.HandleAsync <| DoRegister' kind spawner
     return ()
 }
 
@@ -191,7 +191,7 @@ let private spawn (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)
 let addServiceAsync (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)
                     kind key (env : IEnv) : Task<'runner> = task {
     let service = env |> spawn spec kind key
-    let _ = env.HandleAsync <| DoAddService' service
+    let! _ = env.HandleAsync <| DoAddService' service
     return service
 }
 
