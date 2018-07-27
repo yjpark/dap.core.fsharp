@@ -194,10 +194,6 @@ let addServiceAsync spec kind key (env : IEnv) : Task<IAgent> = task {
     return service
 }
 
-let addService spec kind key (env : IEnv) : IAgent =
-    Async.AwaitTask <| addServiceAsync spec kind key env
-    |> Async.RunSynchronously
-
 let getService (kind : Kind) (key : Key) (env : IEnv) : IAgent =
     match Map.tryFind kind env.State.Services with
     | Some kindServices ->
