@@ -184,11 +184,12 @@ let registerAsync (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)
     return ()
 }
 
-let private spawn spec kind key (env : IEnv) : IAgent =
-    (Agent.spawn spec <| AgentParam.Create env kind key)
-    :> IAgent
+let private spawn (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)
+                    kind key (env : IEnv) : 'runner =
+    Agent.spawn spec <| AgentParam.Create env kind key
 
-let addServiceAsync spec kind key (env : IEnv) : Task<IAgent> = task {
+let addServiceAsync (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)
+                    kind key (env : IEnv) : Task<'runner> = task {
     let service = env |> spawn spec kind key
     let _ = env.HandleAsync <| DoAddService' service
     return service
