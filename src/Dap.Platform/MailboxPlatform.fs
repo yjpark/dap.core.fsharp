@@ -1,12 +1,14 @@
 [<AutoOpen>]
 module Dap.Platform.MailboxPlatform
 
+open Dap.Prelude
+
 let private loop (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>)
                     (mailbox : MailboxProcessor<Parcel<'msg>>) : Async<unit> =
     let rec handle() =
         async {
             let! (time, msg) = mailbox.Receive()
-            //logWip runnable "LOOP:HANDLE" msg
+            //logWarn runnable "MailboxPlatform" "loop" msg
             trackDeliverDuration runnable time msg
             runnable.Process msg |> runnable.Deliver
             return! handle()
