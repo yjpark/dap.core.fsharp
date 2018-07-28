@@ -158,7 +158,7 @@ type Bus<'evt> (owner') =
                 match this.TryFindWatchers owner (Some ident) with
                 | [] ->
                     let watcher = Watcher<'evt>.Create owner ident action
-                    watchers <- watchers @ [ watcher ]
+                    addWatcher watcher
                 | old ->
                     owner.Log <| tplAddWatcherError "Bus:Watcher_Already_Exist" owner ident action old
             member _x.SetWatcher owner ident action =
