@@ -28,7 +28,7 @@ let private doAddService req ((service, callback) : IAgent * Callback<int * int>
             let kindServices = kindServices |> Map.add key service
             let services = Map.add kind kindServices model.Services
             replyAfter runner callback <| ack req ^<| (Map.count services, Map.count kindServices)
-            logReqInfo runner "Service" req "Service_Added" service
+            logReqInfo runner "Service" req "Service_Added" (kind, key, service)
             ({model with Services = services}, cmd)
         match Map.tryFind kind model.Services with
         | Some kindServices ->
@@ -77,7 +77,7 @@ let private doRegister req ((kind, spawner, callback) : Kind * Spawner * Callbac
         | None ->
             let spawners = Map.add kind spawner model.Spawners
             replyAfter runner callback <| ack req ^<| Map.count spawners
-            logReqInfo runner "Spawn" req "Spawner_Registered" spawner
+            logReqInfo runner "Spawn" req "Spawner_Registered" (kind, spawner)
             let agents = Map.add kind Map.empty model.Agents
             ({model with Spawners = spawners; Agents = agents}, cmd)
 
@@ -96,7 +96,7 @@ let private doNewAgent req ((kind, key, callback) : Kind * Key * Callback<IAgent
                     || agent.Ident.Kind <> kind
                     || agent.Ident.Key <> key)
                     then raiseSpawnErr "Invalid_Ident" param agent.Ident
-                logReqInfo runner "Spawn" req "Agent_Created" agent
+                logReqInfo runner "Spawn" req "Agent_Created" (kind, key, agent)
                 replyAfter runner callback <| ack req (agent, true)
                 let agents = Map.add kind (Map.add key agent kindAgents) model.Agents
                 (runner, model, cmd)
