@@ -89,6 +89,8 @@ type InstantFormat =
     | Date
     | DateHour
     | DateHourMinute
+    | DateHourMinuteSecond
+    | DateHourMinuteSecond'
     | Custom of string
 with
     member this.Format =
@@ -96,6 +98,8 @@ with
         | Date -> instantToString "uuuu-MM-dd"
         | DateHour -> instantToString "uuuu-MM-ddTHH"
         | DateHourMinute -> instantToString "uuuu-MM-ddTHH:mm"
+        | DateHourMinuteSecond -> instantToString "uuuu-MM-ddTHH:mm:ss"
+        | DateHourMinuteSecond' -> instantToString "uuuu-MM-ddTHH_mm_ss"
         | Custom format -> instantToString format
 
 let noDuration = Duration.Zero
