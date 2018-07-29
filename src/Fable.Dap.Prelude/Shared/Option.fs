@@ -11,3 +11,13 @@ let bind3 (binder : 'a -> 'b -> 'c -> Option<'r> ) (a : Option<'a>) (b : Option<
     match (a, b, c) with
     | (Some a, Some b, Some c) -> binder a b c
     | _ -> None
+
+let toResult (err : 'err) (a : Option<'a>) : Result<'a, 'err> =
+    match a with
+    | Some a -> Ok a
+    | None -> Error err
+
+let toResultWith (toErr : unit -> 'err) (a : Option<'a>) : Result<'a, 'err> =
+    match a with
+    | Some a -> Ok a
+    | None -> Error <| toErr ()
