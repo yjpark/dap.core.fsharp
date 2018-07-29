@@ -6,12 +6,14 @@ open System
 module E = Thoth.Json.Encode
 module D = Thoth.Json.Decode
 type Value = E.Value
+let nil = E.nil
 #else
 open Newtonsoft.Json
 open Newtonsoft.Json.Linq
 module E = Thoth.Json.Net.Encode
 module D = Thoth.Json.Net.Decode
 type Value = JToken
+let nil = E.nil
 #endif
 
 open Dap.Platform
