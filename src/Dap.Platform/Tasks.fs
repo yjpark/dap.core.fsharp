@@ -139,3 +139,7 @@ type internal TaskManager () =
             let tasks = runningTasks
             runningTasks <- []
             List.foldBack cancelTask tasks 0
+
+type System.Threading.Tasks.Task with
+    static member Delay (delay : float<second>) =
+        Task.Delay (int (System.Math.Round (1000.0 * float delay)))
