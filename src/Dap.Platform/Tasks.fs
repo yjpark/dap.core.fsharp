@@ -142,4 +142,7 @@ type internal TaskManager () =
 
 type System.Threading.Tasks.Task with
     static member Delay (delay : float<second>) =
-        Task.Delay (int (System.Math.Round (1000.0 * float delay)))
+        if delay > 0.0<second> then
+            Task.Delay (int (System.Math.Round (1000.0 * float delay)))
+        else
+            Task.CompletedTask
