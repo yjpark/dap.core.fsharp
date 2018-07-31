@@ -33,6 +33,7 @@ and EnvParam = {
 }
 
 and IEnv =
+    inherit IOwner
     inherit IRunner
     inherit IHandler<EnvReq>
     inherit IAsyncHandler<EnvReq>

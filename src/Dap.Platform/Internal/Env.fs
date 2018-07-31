@@ -44,7 +44,6 @@ type internal Env (param' : EnvParam, logic') =
         member this.Initer = this :> IEnv
         member this.Runner = this :> IEnv
     interface IRunner with
-        member this.Log m = logger.Log m
         member this.Clock = param.Clock
         member this.Stats = stats
         member this.RunFunc0 func = runFunc' this func
@@ -65,4 +64,8 @@ type internal Env (param' : EnvParam, logic') =
         member this.Logging = param.Logging
         member this.Scope = param.Scope
         member this.State = state |> Option.get
-
+    interface IOwner with
+        member _this.Ident = param.Scope
+        member _this.Disposed = false
+    interface ILogger with
+        member this.Log m = logger.Log m
