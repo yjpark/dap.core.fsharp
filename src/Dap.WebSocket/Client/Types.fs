@@ -17,8 +17,8 @@ and Req<'pkt> =
     | DoDisconnect of Callback<unit>
 with interface IReq
 
-let DoConnect' (uri : string) (token : CancellationToken) callback =
+let DoConnect (uri : string) (token : CancellationToken) callback =
     DoConnect (uri, token, callback)
 
-let DoSend' (pkt : 'pkt) callback =
+let DoSend (pkt : 'pkt) callback =
     DoSend (pkt, callback)

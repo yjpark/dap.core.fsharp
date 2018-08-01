@@ -17,9 +17,9 @@ and Req<'pkt> =
     | DoSend of 'pkt * Callback<SendStats>
 with interface IReq
 
-let DoAttach' (ident : string) (token : CancellationToken) (socket : WebSocket) callback =
+let DoAttach (ident : string) (token : CancellationToken) (socket : WebSocket) callback =
     DoAttach (ident, token, socket, callback)
 
-let DoSend' (pkt : 'pkt) callback =
+let DoSend (pkt : 'pkt) callback =
     DoSend (pkt, callback)
 

@@ -29,9 +29,9 @@ let watch (agent : EventRecorder.Agent) (onEvent : IBus<WebSocketTypes.Evt<strin
 
 let createForClientAsync (profile : Profile) (param : EventRecorder.BundleParam') (client : TextClient.Agent) = task {
     let recorderKey = sprintf "%s_%s" client.Ident.Kind client.Ident.Key
-    let! (recorder, _) = client.Env.HandleAsync <| DoGetAgent' EventRecorder.Kind recorderKey
+    let! (recorder, _) = client.Env.HandleAsync <| DoGetAgent EventRecorder.Kind recorderKey
     let recorder = recorder :?> EventRecorder.Agent
-    let! meta = recorder.PostAsync <| RecorderTypes.DoBeginRecording' (EventRecorder.createBundle' profile param)
+    let! meta = recorder.PostAsync <| RecorderTypes.DoBeginRecording (EventRecorder.createBundle' profile param)
     logInfo recorder "Recorder" "Start_Recording" (recorder.Ident, meta)
     watch recorder client.Actor.OnEvent
     return recorder

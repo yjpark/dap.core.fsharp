@@ -119,24 +119,24 @@ and AgentEvt =
     | OnDidStop of StopStats
 with interface IEvt
 
-let DoQuit' (forceQuit : bool) callback =
+let DoQuit (forceQuit : bool) callback =
     DoQuit (forceQuit, callback)
 
-let DoAddService' (service : IAgent) callback =
+let DoAddService (service : IAgent) callback =
     DoAddService (service, callback)
 
-let DoGetService' (kind : Kind) (key : Key) callback =
+let DoGetService (kind : Kind) (key : Key) callback =
     DoGetService (kind, key, callback)
 
-let TryFindService' (kind : Kind) (key : Key) callback =
+let TryFindService (kind : Kind) (key : Key) callback =
     TryFindService (kind, key, callback)
 
-let DoRegister' (kind : Kind) (spawner : Spawner) callback =
+let DoRegister (kind : Kind) (spawner : Spawner) callback =
     DoRegister (kind, spawner, callback)
 
-let DoGetAgent' (kind : Kind) (key : Key) callback =
+let DoGetAgent (kind : Kind) (key : Key) callback =
     DoGetAgent (kind, key, callback)
 
-let DoStop' (forceStop : bool) callback =
+let DoStop (forceStop : bool) callback =
     DoStop (forceStop, callback)
 

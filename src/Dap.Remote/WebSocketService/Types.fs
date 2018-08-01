@@ -36,7 +36,7 @@ and Msg<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     | ServiceReq of Req
 with interface IMsg
 
-let DoAttach' (token : CancellationToken) (socket : WebSocket) callback =
+let DoAttach (token : CancellationToken) (socket : WebSocket) callback =
     DoAttach (token, socket, callback)
 
 type Agent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt (param) =

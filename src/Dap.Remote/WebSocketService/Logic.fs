@@ -73,7 +73,7 @@ let private doSend (runner : Agent<'req, 'evt>) pkt =
         logError runner "doSend" "Socket_Is_None" pkt
         Some <| SendFailed "Socket_Is_None"
     | Some socket ->
-        socket.Post <| WebSocketConn.DoSend (pkt, None)
+        socket.Post <| WebSocketConn.DoSend pkt None
         None
 
 let private setSocket (socket : PacketConn.Agent) : ActorOperate<'req, 'evt> =

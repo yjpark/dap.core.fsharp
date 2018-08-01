@@ -36,22 +36,22 @@ let castEvt<'k, 'v> : CastEvt<Msg<'k, 'v>, Evt<'k, 'v>> =
     | RegistryEvt evt -> Some evt
     | _ -> None
 
-let DoGetEntry' key callback =
+let DoGetEntry key callback =
     DoGetEntry (key, callback)
 
-let DoSetEntry' key v callback =
+let DoSetEntry key v callback =
     DoSetEntry (key, v, callback)
 
-let DoAddEntry' key v callback =
+let DoAddEntry key v callback =
     DoAddEntry (key, v, callback)
 
-let DoRemoveEntry' key callback =
+let DoRemoveEntry key callback =
     DoRemoveEntry (key, callback)
 
-let TryFindEntry' key callback =
+let TryFindEntry key callback =
     TryFindEntry (key, callback)
 
-let TryRemoveEntry' key callback =
+let TryRemoveEntry key callback =
     TryRemoveEntry (key, callback)
 
 type Agent<'k, 'v when 'k : comparison> (param) =

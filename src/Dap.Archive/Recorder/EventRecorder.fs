@@ -84,7 +84,7 @@ let appendEvent' (agent : Agent) (kind : string) (payload : string) : unit =
                 Payload = payload
             }
     }
-    agent.Post <| DoAppendFrame' frame None
+    agent.Post <| DoAppendFrame frame None
 
 let appendEvent (agent : Agent) (evt : IEvent) : unit =
     appendEvent' agent evt.Kind evt.Payload

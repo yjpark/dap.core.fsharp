@@ -8,8 +8,8 @@ open Dap.Platform
 open Dap.WebSocket.Client
 
 let doSimpleTestAsync (env : IEnv) delay : Task<unit> = task {
-    let! _ = env.HandleAsync <| DoRegister' "Dummy" ^<| Agent.getSpawner env noAgent
-    let! (agent, isNew) = env.HandleAsync <| DoGetAgent' "Dummy" "test"
+    let! _ = env.HandleAsync <| DoRegister "Dummy" ^<| Agent.getSpawner env noAgent
+    let! (agent, isNew) = env.HandleAsync <| DoGetAgent "Dummy" "test"
     logInfo agent "Simple" (if isNew then "Created" else "Returned") agent.Ident
 
     logInfo env "Simple" "Delay_For_Seconds" delay
@@ -18,13 +18,13 @@ let doSimpleTestAsync (env : IEnv) delay : Task<unit> = task {
 
 let doConnectAndSendTextAsync (env : IEnv) (delay : float<second>) : Task<unit> = task {
     let spawner = TextClient.getUtf8Spawner env true None
-    let! _ = env.HandleAsync <| DoRegister' TextClient.Kind spawner
-    let! (agent, _) = env.HandleAsync <| DoGetAgent' TextClient.Kind "test"
+    let! _ = env.HandleAsync <| DoRegister TextClient.Kind spawner
+    let! (agent, _) = env.HandleAsync <| DoGetAgent TextClient.Kind "test"
     let cts = new CancellationTokenSource()
     let agent = agent :?> TextClient.Agent
     agent.Actor.OnEvent.Add(logWip agent "OnEvent")
-    let! _ = agent.PostAsync <| DoConnect' "wss://echo.websocket.org" cts.Token
-    let! _ = agent.PostAsync <| DoSend' "Async_Test"
+    let! _ = agent.PostAsync <| DoConnect "wss://echo.websocket.org" cts.Token
+    let! _ = agent.PostAsync <| DoSend "Async_Test"
     logInfo env "WebSocket" "Delay_For_Seconds" delay
     do! Task.Delay (int ^<| delay * msPerSecond)
 }

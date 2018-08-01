@@ -26,7 +26,7 @@ let internal doSetupAsync : GetReplyTask<Part<'actorMsg, 'pkt>, unit> =
     fun req callback runner -> task {
         let uri = runner.Actor.State.Uri |> Option.get
         let clientKey = sprintf "%s_%s" runner.Ident.Kind runner.Ident.Key
-        let! (client, isNew) = runner.Env.HandleAsync <| DoGetAgent' runner.Actor.Args.ClientKind clientKey
+        let! (client, isNew) = runner.Env.HandleAsync <| DoGetAgent runner.Actor.Args.ClientKind clientKey
         if not isNew then
             failWith "Client_Is_Not_New" (uri, client)
         let client = client :?> Client<'pkt>
@@ -39,7 +39,7 @@ let internal doConnectAsync : GetTask<Part<'actorMsg, 'pkt>, WebSocketTypes.Conn
         let uri = runner.Actor.State.Uri |> Option.get
         let cts = runner.Actor.State.Cts
         let client = runner.Actor.State.Client |> Option.get
-        let! stats = client.PostAsync <| WebSocketClientTypes.DoConnect' uri cts.Token
+        let! stats = client.PostAsync <| WebSocketClientTypes.DoConnect uri cts.Token
         return stats
     }
 
@@ -73,7 +73,7 @@ let internal doStopAsync : GetReplyTask<Part<'actorMsg, 'pkt>, unit> =
 let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Part<'actorMsg, 'pkt>, WebSocketTypes.SendStats> =
     fun req callback runner -> task {
         let client = runner.Actor.State.Client |> Option.get
-        let! stats = client.PostAsync <| WebSocketClientTypes.DoSend' pkt
+        let! stats = client.PostAsync <| WebSocketClientTypes.DoSend pkt
         reply runner callback <| ack req stats
     }
 

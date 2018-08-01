@@ -35,10 +35,10 @@ let castEvt<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame> : Cas
     | RecorderEvt evt -> Some evt
     | _ -> None
 
-let DoBeginRecording' (bundle : Bundle'<'extra, 'frame>)  callback =
+let DoBeginRecording (bundle : Bundle'<'extra, 'frame>)  callback =
     DoBeginRecording (bundle, callback)
 
-let DoAppendFrame' (frame : 'frame) callback =
+let DoAppendFrame (frame : 'frame) callback =
     DoAppendFrame (frame, callback)
 
 type Agent<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame (param) =

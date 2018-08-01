@@ -72,13 +72,13 @@ let castEvt<'pkt> : CastEvt<Msg<'pkt>, Evt<'pkt>> =
     | AccessorEvt evt -> Some evt
     | _ -> None
 
-let DoSetup' uri callback =
+let DoSetup uri callback =
     DoSetup (uri, callback)
 
-let DoSetUri' uri callback =
+let DoSetUri uri callback =
     DoSetUri (uri, callback)
 
-let DoSend' pkt callback =
+let DoSend pkt callback =
     DoSend (pkt, callback)
 
 type Part<'actorMsg, 'pkt when 'actorMsg :> IMsg> (param) =
