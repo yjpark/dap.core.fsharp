@@ -18,7 +18,7 @@ type Param<'frame> = {
     ReadFrame : ReadFrame<'frame>
 }
 
-type Volume<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame (param', meta') =
+type Volume<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', meta') =
     let param : Param<'frame> = param'
     let mutable meta : Meta<'extra> = meta'
     let mutable mode : Mode = Ready
@@ -72,7 +72,7 @@ type Param'<'frame> = {
     KeepFrames : bool
 }
 
-type Volume'<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame (param', meta') =
+type Volume'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', meta') =
     let param : Param'<'frame> = param'
     let mutable meta : Meta<'extra> = meta'
     let mutable mode : Mode' = Ready

@@ -25,8 +25,12 @@ let dateTimeUtcNow () = System.DateTime.UtcNow
 let inline getNow' () = System.DateTime.UtcNow
 #else
 let inline getNow' () = SystemClock.Instance.GetCurrentInstant ()
+
 let toDateTimeUtc (time : Instant) =
     time.ToDateTimeUtc ()
+
+let ofDateTimeUtc (time : System.DateTime) =
+    Instant.FromDateTimeUtc time
 #endif
 
 let private calcDuration (fromTime : Instant) =

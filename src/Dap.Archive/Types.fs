@@ -5,11 +5,12 @@ open System.IO
 open Dap.Prelude
 open Dap.Platform
 open Dap.Remote
+open Dap.Remote.Internal
 
 module E = Thoth.Json.Net.Encode
 module D = Thoth.Json.Net.Decode
 
-type Meta<'extra> when 'extra :> JsonRecord = {
+type Meta<'extra> when 'extra :> IJson = {
     Kind : string
     Key : string
     Version : int
@@ -29,30 +30,28 @@ type Meta<'extra> when 'extra :> JsonRecord = {
         EndTime = endTime
         Memo = memo
     }
-    static member Decoder (extraDecoder : D.Decoder<'extra>) =
+    static member JsonDecoder (extraDecoder : D.Decoder<'extra>) =
         D.decode Meta<'extra>.Create
         |> D.required "kind" D.string
         |> D.required "key" D.string
         |> D.required "version" D.int
         |> D.required "length" D.int
         |> D.required "extra" extraDecoder
-        |> D.optional "begin_time" (D.option decodeInstant) None
-        |> D.optional "end_time" (D.option decodeInstant) None
+        |> D.optional "begin_time" (D.option D.instant) None
+        |> D.optional "end_time" (D.option D.instant) None
         |> D.optional "memo" (D.option D.string) None
-    static member Encoder (this : Meta<'extra>) =
-        E.object [
-            "kind", E.string this.Kind
-            "key", E.string this.Key
-            "version", E.int this.Version
-            "length", E.int this.Length
-            "extra", this.Extra.ToJsonObject ()
-            "begin_time", (E.option encodeInstant) this.BeginTime
-            "end_time", (E.option encodeInstant) this.EndTime
-            "memo", (E.option E.string) this.Memo
-        ]
-    interface JsonRecord with
-        member this.ToJsonObject () =
-            Meta<'extra>.Encoder this
+    interface IJson with
+        member this.ToJson () =
+            E.object [
+                "kind", E.string this.Kind
+                "key", E.string this.Key
+                "version", E.int this.Version
+                "length", E.int this.Length
+                "extra", E.json this.Extra
+                "begin_time", (E.option E.instant) this.BeginTime
+                "end_time", (E.option E.instant) this.EndTime
+                "memo", (E.option E.string) this.Memo
+            ]
 
 type IFrame =
     abstract Time : Instant with get
@@ -62,24 +61,32 @@ type ReadFrame<'frame> = BinaryReader -> Result<'frame, exn>
 
 type PacketFrame = {
     Time : Instant
-    Packet : Packet'
+    Id : PacketId
+    Kind : PacketKind
+    Payload : string
 }
 with
+    static member Create time id kind payload = {
+        Time = time
+        Id = id
+        Kind = kind
+        Payload = payload
+    }
+    static member OfPacket (pkt : Packet) =
+        PacketFrame.Create (pkt.Time |> ofDateTimeUtc) pkt.Id pkt.Kind (pkt.Payload.EncodeJson 4)
     static member ReadFrom : ReadFrame<PacketFrame> =
         fun reader ->
             try
                 let time = reader.ReadString ()
                 instantOfText time
-                |> Result.map (fun time' ->
-                    let packet = {
-                        Id = reader.ReadString ()
-                        Kind = reader.ReadString ()
-                        Payload = reader.ReadString ()
-                    }
-                    {
-                        Time = time'
-                        Packet = packet
-                    }
+                |> Result.map (fun t ->
+                    let i = reader.ReadString ()
+                    let k = reader.ReadString ()
+                    let p = reader.ReadString ()
+                    let newline = reader.ReadString ()
+                    if (newline <> "\n") then
+                        failWith "Invalid_Newline" newline
+                    PacketFrame.Create t i k p
                 )
             with e ->
                 Error e
@@ -87,14 +94,15 @@ with
         member this.Time = this.Time
         member this.WriteTo writer =
             writer.Write (instantToText this.Time)
-            writer.Write (this.Packet.Id)
-            writer.Write (this.Packet.Kind)
-            writer.Write (this.Packet.Payload)
+            writer.Write (this.Id)
+            writer.Write (this.Kind)
+            writer.Write (this.Payload)
+            writer.Write ("\n")
 
-type IStorage<'extra> when 'extra :> JsonRecord =
+type IStorage<'extra> when 'extra :> IJson =
     abstract OpenFramesStream : IRunner -> string -> Stream
 
-type IStorage'<'extra> when 'extra :> JsonRecord =
+type IStorage'<'extra> when 'extra :> IJson =
     abstract WriteMetaAsync : Meta<'extra> -> GetTask<IRunner, unit>
     abstract NewFramesStream : IRunner -> string -> Stream
 

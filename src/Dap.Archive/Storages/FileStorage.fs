@@ -21,7 +21,7 @@ type Param = {
     Root : string
 }
 
-type Storage<'extra> when 'extra :> JsonRecord (param') =
+type Storage<'extra> when 'extra :> IJson (param') =
     let param : Param = param'
     member _this.Param with get () = param
     interface IStorage<'extra> with
@@ -34,7 +34,7 @@ type Param' = {
     CalcRelPath : string -> string
 }
 
-type Storage'<'extra> when 'extra :> JsonRecord (param') =
+type Storage'<'extra> when 'extra :> IJson (param') =
     let param : Param' = param'
     member _this.Param with get () = param
     interface IStorage'<'extra> with
@@ -45,7 +45,7 @@ type Storage'<'extra> when 'extra :> JsonRecord (param') =
                 checkDirectory runner path "FileStorage"
                 use stream = new FileStream (path + MetaExtension, FileMode.CreateNew, FileAccess.Write)
                 use writer = new StreamWriter (stream)
-                let json = (meta :> JsonRecord).ToJsonString 4
+                let json = (meta :> IJson).EncodeJson 4
                 do! writer.WriteAsync (json)
             }
         member _this.NewFramesStream (runner : IRunner) (key : string) =
@@ -63,7 +63,7 @@ let calRelPathWithPrefixes (prefixes : int list) (key : string) =
     |> List.toArray
     |> Path.Combine
 
-let create'<'extra when 'extra :> JsonRecord> (prefixes : int list) (root : string) =
+let create'<'extra when 'extra :> IJson> (prefixes : int list) (root : string) =
     let param : Param' =
         {
             Root = root

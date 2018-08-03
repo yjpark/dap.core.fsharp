@@ -3,13 +3,14 @@ module Dap.Remote.WebSocketProxy.Types
 open Dap.Prelude
 open Dap.Platform
 open Dap.Remote
+open Dap.Remote.Internal
 
 module WebSocketTypes = Dap.WebSocket.Client.Types
 
 type InternalEvt =
     | DoInit
-    | OnSent of IRequest * Packet' * Result<System.DateTime, LocalReason>
-    | DoEnqueue of IRequest * Packet'
+    | OnSent of IRequest * Packet * Result<System.DateTime, LocalReason>
+    | DoEnqueue of IRequest * Packet
     | DoReconnect
 
 and Args<'res, 'evt> when 'evt :> IEvent = {
@@ -26,16 +27,16 @@ and Args<'res, 'evt> when 'evt :> IEvent = {
 
 and Msg<'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEvent =
     | InternalEvt of InternalEvt
-    | SocketEvt of WebSocketTypes.Evt<Packet'>
+    | SocketEvt of WebSocketTypes.Evt<Packet>
     | ProxyReq of 'req
     | ProxyRes of 'res
     | ProxyEvt of 'evt
 with interface IMsg
 
 and Model<'res, 'evt> when 'evt :> IEvent = {
-    Socket : WebSocketTypes.Agent<Packet'>
+    Socket : WebSocketTypes.Agent<Packet>
     Client : Client.Model option
-    SendQueue : (IRequest * Packet') list
+    SendQueue : (IRequest * Packet) list
     ResponseEvent : Bus<'res>
 } with
     member this.Connected = this.Socket.Actor.State.Connected

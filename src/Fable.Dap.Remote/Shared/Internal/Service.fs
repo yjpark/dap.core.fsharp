@@ -1,15 +1,18 @@
+[<AutoOpen>]
 [<RequireQualifiedAccess>]
-module Dap.Remote.Service
+module Dap.Remote.Internal.Service
 
 open Dap.Prelude
+open Dap.Platform
 open Dap.Remote
+open Dap.Remote.Internal
 
 type Hub = {
-    OnRequest : Packet' -> unit
+    OnRequest : Packet -> unit
 }
 
 type Link = {
-    Send : Packet' -> LocalReason option
+    Send : Packet -> LocalReason option
 }
 
 type Args = {
@@ -26,15 +29,15 @@ type Model = {
 type Msg =
     | DoSendResponse of PacketId * Result<IResponse, HubReason>
     | DoSendEvent of IEvent
-    | OnSent of Packet'
-    | OnReceived of Packet'
+    | OnSent of Packet
+    | OnReceived of Packet
 
 let create args =
     {
         Args = args
     }
 
-let private doSendPacket' (section : string) (pkt: Packet') (model : Model) : Model =
+let private doSendPacket' (section : string) (pkt: Packet) (model : Model) : Model =
     try
         match model.Args.Link.Send pkt with
         | Some err ->
@@ -45,7 +48,7 @@ let private doSendPacket' (section : string) (pkt: Packet') (model : Model) : Mo
         logException model.Args.Logger section "Exception_Raised" pkt e
     model
 
-let private doSendPacket (section : string) (pkt: Packet' option) =
+let private doSendPacket (section : string) (pkt: Packet option) =
     match pkt with
     | None -> id
     | Some pkt ->
@@ -55,6 +58,7 @@ let private doSendEvent (evt : IEvent) (model : Model) : Model =
     let mutable pkt = None
     try
         pkt <- Some {
+            Time = dateTimeUtcNow ()
             Id = Const.IdEvt
             Kind = evt.Kind
             Payload = evt.Payload
@@ -72,13 +76,14 @@ let private doSendResponse (requestId : PacketId) (res : Result<IResponse, HubRe
                 (Const.KindAck, res.Payload)
             | Error reason ->
                 match reason with
-                | HubBad payload ->
-                    (Const.KindBad, payload)
-                | HubFailed err ->
-                    (Const.KindNak, err.Payload)
-                | HubException payload ->
-                    (Const.KindExn, payload)
+                | HubNak nak ->
+                    (Const.KindNak, nak.Payload)
+                | HubError err ->
+                    (Const.KindErr, err.Payload)
+                | HubException exn ->
+                    (Const.KindExn, exn.Payload)
         pkt <- Some {
+            Time = dateTimeUtcNow ()
             Id = requestId
             Kind = kind
             Payload = payload
@@ -87,17 +92,17 @@ let private doSendResponse (requestId : PacketId) (res : Result<IResponse, HubRe
         logException model.Args.Logger "Send_Response" "Encode_Failed" (requestId, res) e
     doSendPacket "Send_Response" pkt model
 
-let private onReceived (pkt : Packet') (model : Model) : Model =
+let private onReceived (pkt : Packet) (model : Model) : Model =
     if model.Args.LogTraffic then
         logInfo model.Args.Logger "Traffic" "Received" pkt
     try
         model.Args.Hub.OnRequest pkt
         model
     with e ->
-        logException model.Args.Logger "Receive" "Decode_Failed" pkt e
-        doSendResponse pkt.Id (Error <| HubBad e.Message) model
+        logException model.Args.Logger "Receive" "Exception_Raised" pkt e
+        doSendResponse pkt.Id (Error <| HubException ^<| ExnJson.OfExn e) model
 
-let private onSent (pkt : Packet') (model : Model) : Model =
+let private onSent (pkt : Packet) (model : Model) : Model =
     if model.Args.LogTraffic then
         logInfo model.Args.Logger "Traffic" "Sent" pkt
     model

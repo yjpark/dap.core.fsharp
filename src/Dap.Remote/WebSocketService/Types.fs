@@ -3,8 +3,10 @@ module Dap.Remote.WebSocketService.Types
 open System.Threading
 open System.Threading.Tasks
 open System.Net.WebSockets
+
 open Dap.Prelude
 open Dap.Remote
+open Dap.Remote.Internal
 open Dap.Platform
 module WebSocket = Dap.WebSocket.Types
 
@@ -13,7 +15,7 @@ type InternalEvt<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     | SetHub of Hub<'req, 'evt>
     | SetSocket of PacketConn.Agent
     | HubEvt of 'evt
-    | SocketEvt of WebSocket.Evt<Packet'>
+    | SocketEvt of WebSocket.Evt<Packet>
     | OnHandled of PacketId * Result<IResponse, HubReason>
 
 and Args<'req, 'evt> when 'req :> IReq and 'evt :> IEvt = {

@@ -7,14 +7,12 @@ open Fable.PowerPack
 
 let utcNow = System.DateTime.UtcNow
 
-type Second = float
-
-let private sleepForSeconds (delay : Second) = promise {
-    do! Promise.sleep <| int (delay * 1000.0)
+let private sleepForSeconds (delay : float<second>) = promise {
+    do! Promise.sleep <| int (1000.0 * float delay)
     return delay
 }
 
-let addFutureCmd (delay : Second) (msg : 'msg) : Operate<'runner, 'model, 'msg> =
+let addFutureCmd (delay : float<second>) (msg : 'msg) : Operate<'runner, 'model, 'msg> =
     Cmd.ofPromise
         sleepForSeconds delay
         (fun _ -> msg)

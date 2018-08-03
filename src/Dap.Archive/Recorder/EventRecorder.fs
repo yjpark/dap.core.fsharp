@@ -22,17 +22,15 @@ type Extra = {
     static member Create events = {
         Events = events
     }
-    static member Decoder (extraDecoder : D.Decoder<'extra>) =
+    static member JsonDecoder (extraDecoder : D.Decoder<'extra>) =
         D.decode Extra.Create
         |> D.required "events" (D.dict D.int)
-    static member Encoder (this : Extra) =
-        let events = this.Events |> Map.map (fun k v -> E.int v)
-        E.object [
-            "events", E.dict events
-        ]
-    interface JsonRecord with
-        member this.ToJsonObject () =
-            Extra.Encoder this
+    interface IJson with
+        member this.ToJson () =
+            let events = this.Events |> Map.map (fun k v -> E.int v)
+            E.object [
+                "events", E.dict events
+            ]
 
 type Meta = Meta<Extra>
 type Frame = PacketFrame
@@ -59,14 +57,13 @@ let newExtra () =
 let updateExtra (extra : Extra) (frame : Frame) : Extra * Frame =
     let count =
         extra.Events
-        |> Map.tryFind frame.Packet.Kind
+        |> Map.tryFind frame.Kind
         |> Option.defaultValue 0
     let count = count + 1
-    let packet = {frame.Packet with Id = count.ToString()}
     let events =
         extra.Events
-        |> Map.add frame.Packet.Kind count
-    ({extra with Events = events}, {frame with Packet = packet})
+        |> Map.add frame.Kind count
+    ({extra with Events = events}, {frame with Id = count.ToString ()})
 
 let registerAsync' kind env =
     let spec = Logic.spec<Extra, Frame>
@@ -75,19 +72,11 @@ let registerAsync' kind env =
 let registerAsync a = registerAsync' Kind a
 
 let appendEvent' (agent : Agent) (kind : string) (payload : string) : unit =
-    let frame = {
-        Time = agent.Env.Clock.Now
-        Packet =
-            {
-                Id = ""
-                Kind = kind
-                Payload = payload
-            }
-    }
+    let frame = PacketFrame.Create agent.Env.Clock.Now "" kind payload
     agent.Post <| DoAppendFrame frame None
 
 let appendEvent (agent : Agent) (evt : IEvent) : unit =
-    appendEvent' agent evt.Kind evt.Payload
+    appendEvent' agent evt.Kind <| evt.Payload.EncodeJson 4
 
 let watchEvents (agent : Agent)
                 (onEvent : IEvent<'evt> when 'evt :> IEvent)

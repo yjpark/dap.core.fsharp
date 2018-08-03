@@ -4,9 +4,11 @@ module Dap.Remote.WebSocketService.Logic
 open System
 open System.Net.WebSockets
 open Elmish
+
 open Dap.Prelude
 open Dap.Platform
 open Dap.Remote
+open Dap.Remote.Internal
 open Dap.Remote.WebSocketService.Types
 open Dap.Remote.WebSocketService.Tasks
 module WebSocket = Dap.WebSocket.Types
@@ -21,7 +23,7 @@ let private handleService (msg : Service.Msg) : ActorOperate<'req, 'evt> =
         let service = Service.handle msg service
         ({model with Service = Some service}, cmd)
 
-let private handlerSocketEvt (evt : WebSocket.Evt<Packet'>) : ActorOperate<'req, 'evt> =
+let private handlerSocketEvt (evt : WebSocket.Evt<Packet>) : ActorOperate<'req, 'evt> =
     match evt with
     | WebSocket.OnReceived (_stats, pkt) ->
         handleService <| Service.OnReceived pkt
@@ -46,7 +48,7 @@ let private doInit : ActorOperate<'req, 'evt> =
         runner.Actor.Args.HubSpec.GetHub runner.Ident.Key (runner.Deliver << InternalEvt << SetHub)
         (model, cmd)
 
-let private setHub hub : ActorOperate<'req, 'evt> =
+let private setHub (hub : Hub<'req, 'evt>) : ActorOperate<'req, 'evt> =
     fun runner (model, cmd) ->
         match model.Hub with
         | None ->
@@ -57,7 +59,7 @@ let private setHub hub : ActorOperate<'req, 'evt> =
             logError runner "WebSocketService" "Hub_Exist" (hub', hub)
             (model, cmd)
 
-let private onRequest (runner : Agent<'req, 'evt>) (pkt : Packet') : unit =
+let private onRequest (runner : Agent<'req, 'evt>) (pkt : Packet) : unit =
     match runner.Actor.State.Hub with
     | None ->
         logError runner "onRequest" "Hub_Is_None" pkt

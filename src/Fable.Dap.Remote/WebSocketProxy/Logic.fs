@@ -3,9 +3,13 @@ module Dap.Remote.WebSocketProxy.Logic
 
 open System
 open Elmish
+module E = Thoth.Json.Encode
+module D = Thoth.Json.Decode
+
 open Dap.Prelude
 open Dap.Platform
 open Dap.Remote
+open Dap.Remote.Internal
 open Dap.Remote.WebSocketProxy.Types
 
 module WebSocketTypes = Dap.WebSocket.Client.Types
@@ -30,13 +34,13 @@ let private doReconnect : ActorOperate<'req, 'res, 'evt> =
         (model, cmd)
 
 let private doSend' (runner : Proxy<'req, 'res, 'evt>)
-                   ((req, pkt) : IRequest * Packet') : unit =
+                   ((req, pkt) : IRequest * Packet) : unit =
     let onAck = fun res ->
         runner.Deliver <| InternalEvt ^<| OnSent ^<| (req, pkt, Ok res)
     let onNak = fun (err, detail) ->
         logError runner "Send" "Link_Failed" (req, err, detail)
         runner.Deliver <| InternalEvt ^<| OnSent ^<| (req, pkt, Error <| SendFailed err)
-    runner.Actor.State.Socket.Actor.Handle <| WebSocketTypes.DoSend (pkt, callback' runner onAck onNak)
+    runner.Actor.State.Socket.Actor.Handle <| WebSocketTypes.DoSend (pkt, callback' runner onNak onAck)
 
 let private doSendQueue : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
@@ -44,11 +48,11 @@ let private doSendQueue : ActorOperate<'req, 'res, 'evt> =
         |> List.iter ^<| doSend' runner
         ({model with SendQueue = []}, cmd)
 
-let private doEnqueue' (runner : Proxy<'req, 'res, 'evt>) ((req, pkt) : IRequest * Packet') : unit =
+let private doEnqueue' (runner : Proxy<'req, 'res, 'evt>) ((req, pkt) : IRequest * Packet) : unit =
     runner.Deliver <| InternalEvt ^<| DoEnqueue ^<| (req, pkt)
 
 let private doSend (runner : Proxy<'req, 'res, 'evt>)
-                   ((req, pkt) : IRequest * Packet') : LocalReason option =
+                   ((req, pkt) : IRequest * Packet) : LocalReason option =
     let socket = runner.Actor.State.Socket
     match socket.Actor.State.Connected with
     | false ->
@@ -57,7 +61,7 @@ let private doSend (runner : Proxy<'req, 'res, 'evt>)
         doSend' runner (req, pkt)
     None
 
-let private onResponse (runner : Proxy<'req, 'res, 'evt>) ((req, res) : IRequest * Result<string, Reason'>) : unit =
+let private onResponse (runner : Proxy<'req, 'res, 'evt>) ((req, res) : IRequest * Result<Json, Reason'>) : unit =
     let args = runner.Actor.Args
     match res with
     | Ok json ->
@@ -70,7 +74,7 @@ let private onResponse (runner : Proxy<'req, 'res, 'evt>) ((req, res) : IRequest
             args.Spec.RemoteErr req reason
     |> (runner.Deliver << ProxyRes)
 
-let private onEvent (runner : Proxy<'req, 'res, 'evt>) ((kind, json) : PacketKind * string) : unit =
+let private onEvent (runner : Proxy<'req, 'res, 'evt>) ((kind, json) : PacketKind * Json) : unit =
     runner.Deliver <| ProxyEvt ^<| runner.Actor.Args.Spec.DecodeEvt kind json
 
 let private doInit : ActorOperate<'req, 'res, 'evt> =
@@ -108,13 +112,13 @@ let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'req, 'res, 'ev
 let private handleProxyReq (req : 'req) : ActorOperate<'req, 'res, 'evt> =
     handleClient <| Client.DoSend req
 
-let private handlerSocketEvt (evt : WebSocketTypes.Evt<Packet'>) : ActorOperate<'req, 'res, 'evt> =
+let private handlerSocketEvt (evt : WebSocketTypes.Evt<Packet>) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         match evt with
         | WebSocketTypes.OnConnected ->
             doSendQueue
         | WebSocketTypes.OnDisconnected ->
-            addFutureCmd 1.0 <| InternalEvt DoReconnect
+            addFutureCmd 1.0<second> <| InternalEvt DoReconnect
         | WebSocketTypes.OnReceived pkt ->
             handleClient <| Client.OnReceived pkt
         | _ ->
@@ -135,8 +139,15 @@ let private update : ActorUpdate<Proxy<'req, 'res, 'evt>, Args<'res, 'evt>, Mode
 
 let private init : ActorInit<Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>> =
     fun runner args ->
-        let args = WebSocketAgent.Args<Packet'>.Create Packet.encode Packet.decode args.Uri false
-        let socket = runner.Env |> WebSocketAgent.spawn runner.Ident.Key args :?> WebSocketTypes.Agent<Packet'>
+        let encode = fun (pkt : Packet) -> box (pkt.EncodeJson 0)
+        let decode = fun (json : obj) ->
+            match json with
+            | :? string as pkt ->
+                decodeJson Packet.JsonDecoder pkt
+            | _ ->
+                castJson Packet.JsonDecoder json
+        let args = WebSocketAgent.Args<Packet>.Create encode decode args.Uri false
+        let socket = runner.Env |> WebSocketAgent.spawn runner.Ident.Key args :?> WebSocketTypes.Agent<Packet>
         ({
             Socket = socket
             Client = None

@@ -1,22 +1,30 @@
+[<AutoOpen>]
 [<RequireQualifiedAccess>]
-module Dap.Remote.Client
+module Dap.Remote.Internal.Client
 
 open System
 open Dap.Prelude
+open Dap.Platform
+open Dap.Remote
+open Dap.Remote.Internal
+
+type Reason' =
+    | Local' of LocalReason
+    | Remote' of RemoteReason'
 
 type PendingRequest = {
     Req : IRequest
-    Packet : Packet'
+    Packet : Packet
     SentTime : DateTime
 }
 
 type Stub = {
-    OnResponse : IRequest * Result<string, Reason'> -> unit
-    OnEvent : PacketKind * string -> unit
+    OnResponse : IRequest * Result<Json, Reason'> -> unit
+    OnEvent : PacketKind * Json -> unit
 }
 
 type Link = {
-    Send : IRequest * Packet' -> LocalReason option
+    Send : IRequest * Packet -> LocalReason option
 }
 
 type Args = {
@@ -33,8 +41,8 @@ type Model = {
 
 type Msg =
     | DoSend of IRequest
-    | OnSent of IRequest * Packet' * Result<DateTime, LocalReason>
-    | OnReceived of Packet'
+    | OnSent of IRequest * Packet * Result<DateTime, LocalReason>
+    | OnReceived of Packet
 
 let create args =
     {
@@ -51,9 +59,10 @@ let private removePendingRequest (packetId : PacketId) (model : Model) : Model =
     {model with PendingRequests = requests}
 
 let private doSend (req : IRequest) (model : Model) : Model =
-    let mutable encoded : Packet' option = None
+    let mutable encoded : Packet option = None
     try
         let pkt = {
+            Time = dateTimeUtcNow ()
             Id = Guid.NewGuid().ToString()
             Kind = req.Kind
             Payload = req.Payload
@@ -72,10 +81,10 @@ let private doSend (req : IRequest) (model : Model) : Model =
             model.Args.Stub.OnResponse (req, Error <| Local' ^<| EncodeFailed e.Message)
         | Some packet ->
             logException model.Args.Logger "Send" "Exception_Raised" packet e
-            model.Args.Stub.OnResponse (req, Error <| Local' ^<| LocalException e.Message)
+            model.Args.Stub.OnResponse (req, Error <| Local' ^<| LocalException (e.Message, e.StackTrace))
     model
 
-let private onSend ((req, pkt, res) : IRequest * Packet' * Result<DateTime, LocalReason>) (model : Model) : Model =
+let private onSend ((req, pkt, res) : IRequest * Packet * Result<DateTime, LocalReason>) (model : Model) : Model =
     match res with
     | Ok time ->
         if model.Args.LogTraffic then
@@ -90,7 +99,7 @@ let private onSend ((req, pkt, res) : IRequest * Packet' * Result<DateTime, Loca
         model.Args.Stub.OnResponse (req, Error <| Local' reason)
         model
 
-let private onReceived (pkt : Packet') (model : Model) : Model =
+let private onReceived (pkt : Packet) (model : Model) : Model =
     if model.Args.LogTraffic then
         logInfo model.Args.Logger "Traffic" "Received" pkt
     if pkt.Id = Const.IdEvt then
@@ -108,10 +117,10 @@ let private onReceived (pkt : Packet') (model : Model) : Model =
                 match pkt.Kind with
                 | Const.KindAck ->
                     Ok <| pkt.Payload
-                | Const.KindBad ->
-                    Error <| Remote' ^<| BadRequest' pkt.Payload
                 | Const.KindNak ->
-                    Error <| Remote' ^<| RemoteFailed' pkt.Payload
+                    Error <| Remote' ^<| RemoteNak' pkt.Payload
+                | Const.KindErr ->
+                    Error <| Remote' ^<| RemoteError' pkt.Payload
                 | Const.KindExn ->
                     Error <| Remote' ^<| RemoteException' pkt.Payload
                 | _ ->
@@ -123,7 +132,7 @@ let private onReceived (pkt : Packet') (model : Model) : Model =
                 logException model.Args.Logger "Receive" "Request_Not_Found" pkt e
             | Some req ->
                 logException model.Args.Logger "Receive" "Stub_OnResponse_Failed" (req, pkt) e
-                model.Args.Stub.OnResponse (req.Req, Error <| Local' ^<| LocalException e.Message)
+                model.Args.Stub.OnResponse (req.Req, Error <| Local' ^<| LocalException (e.Message, e.StackTrace))
         match found with
         | None ->
             model

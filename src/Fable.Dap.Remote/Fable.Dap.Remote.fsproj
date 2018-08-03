@@ -11,11 +11,13 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Shared/Json.fs" />
     <Compile Include="Shared/Types.fs" />
-    <Compile Include="Shared/Client.fs" />
-    <Compile Include="Shared/Service.fs" />
-    <Compile Include="Shared/JsonRecord.fs" />
-    <Compile Include="Shared/Packet.fs" />
+    <Compile Include="Shared/Internal/Types.fs" />
+    <Compile Include="Shared/Hub.fs" />
+    <Compile Include="Shared/Stub.fs" />
+    <Compile Include="Shared/Internal/Client.fs" />
+    <Compile Include="Shared/Internal/Service.fs" />
     <Compile Include="Shared/Util.fs" />
     <Compile Include="WebSocketProxy/Types.fs" />
     <Compile Include="WebSocketProxy/Logic.fs" />

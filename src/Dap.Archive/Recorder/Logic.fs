@@ -9,7 +9,7 @@ open Dap.Remote
 open Dap.Archive
 open Dap.Archive.Recorder.Types
 
-type ActorOperate<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame> =
+type ActorOperate<'extra, 'frame when 'extra :> IJson and 'frame :> IFrame> =
     ActorOperate<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
 
 let private doBeginRecording req ((bundle, callback) : Bundle'<'extra, 'frame> * Callback<Meta<'extra>>)
@@ -100,6 +100,6 @@ let private init : ActorInit<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
             Bundle = None
         }, noCmd)
 
-let spec<'extra, 'frame when 'extra :> JsonRecord and 'frame :> IFrame> =
+let spec<'extra, 'frame when 'extra :> IJson and 'frame :> IFrame> =
     new ActorSpec<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
         (Agent<'extra, 'frame>.Spawn, NoArgs, RecorderReq, castEvt<'extra, 'frame>, init, update)

@@ -9,20 +9,20 @@ open Dap.Remote
 
 module D = Thoth.Json.Net.Decode
 
-type Spec<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame = {
+type Spec<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame = {
     Kind : string
     Version : int
     ExtraDecoder : D.Decoder<'extra>
     ReadFrame : ReadFrame<'frame>
 }
 
-type Param<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame = {
+type Param<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame = {
     Storage : IStorage<'extra>
     KeepVolumes : bool
     KeepVolumeFrames : bool
 }
 
-type Bundle<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame (spec', param') =
+type Bundle<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (spec', param') =
     let spec : Spec<'extra, 'frame> = spec'
     let param : Param<'extra, 'frame> = param'
     let mutable volume : Volume<'extra, 'frame> option = None
@@ -33,7 +33,7 @@ type Bundle<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame (spec
     member _this.Volume with get () = volume
     member _this.Volumes with get () = volumes
 
-type Spec'<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame = {
+type Spec'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame = {
     Kind : string
     Version : int
     CalcVolumeKey : Instant -> string
@@ -42,13 +42,13 @@ type Spec'<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame = {
     UpdateExtra : 'extra -> 'frame -> 'extra * 'frame
 }
 
-type Param'<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame = {
+type Param'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame = {
     Storage : IStorage'<'extra>
     KeepVolumes : bool
     KeepVolumeFrames : bool
 }
 
-type Bundle'<'extra, 'frame> when 'extra :> JsonRecord and 'frame :> IFrame (spec', param') =
+type Bundle'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (spec', param') =
     let spec : Spec'<'extra, 'frame> = spec'
     let param : Param'<'extra, 'frame> = param'
     let mutable volume : Volume'<'extra, 'frame> option = None

@@ -28,7 +28,7 @@ let reply<'res> (logger : ILogger) (callback : Callback<'res>) (reply : Reply<'r
         | Nak (req, err, detail) ->
             logger.Log <| tplNakReply req err detail
 
-let callback'<'res> (logger : ILogger) onAck onNak : Callback<'res> =
+let callback'<'res> (logger : ILogger) onNak onAck : Callback<'res> =
     let startTime = System.DateTime.UtcNow
     Some <| fun (r : Reply<'res>) ->
         let duration = System.DateTime.UtcNow - startTime
@@ -44,4 +44,4 @@ let callback'<'res> (logger : ILogger) onAck onNak : Callback<'res> =
                 onNak (err, detail)
 
 let callback<'res> (logger : ILogger) onAck : Callback<'res> =
-    callback' logger onAck ignore
+    callback' logger ignore onAck

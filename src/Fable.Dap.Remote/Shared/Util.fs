@@ -1,74 +1,48 @@
+[<AutoOpen>]
 module Dap.Remote.Util
-
-open Dap.Prelude
-open Dap.Remote
 
 #if FABLE_COMPILER
 open Fable.Core
+open Fable.Core.JsInterop
+module E = Thoth.Json.Encode
+module D = Thoth.Json.Decode
+#else
+module E = Thoth.Json.Net.Encode
+module D = Thoth.Json.Net.Decode
 #endif
+
+open Dap.Prelude
+open Dap.Remote
+open Dap.Remote.Internal
 
 // http://fable.io/docs/interacting.html#json-serialization
 #if FABLE_COMPILER
-open Fable.Core.JsInterop
-
-let [<PassGenericsAttribute>] fableDecodeJson<'t> (str : string) =
+[<PassGenericsAttribute>]
+let fableDecodeJson<'t> (str : string) =
     ofJson<'t> str
 
-let fableEncodeJson v =
+let fableEncodeJson v : string =
     toJson v
 
 #else
 open Newtonsoft.Json
 
 let private fableJsonConverter = Fable.JsonConverter () :> JsonConverter
+
 let fableDecodeJson<'t> (str : string) =
     JsonConvert.DeserializeObject<'t>(str, [| fableJsonConverter |])
-let fableEncodeJson v =
+
+let fableEncodeJson v : string =
     JsonConvert.SerializeObject(v, [| fableJsonConverter |])
+
 #endif
 
-let checkKind (kind : string) (req : IRequest) : unit =
-    if kind <> req.Kind then
-        failwith <| sprintf "Kind_Not_Matched: %s -> %A" kind req
-
-let decodeReason (decode : string -> Result<'err, string>) (reason : RemoteReason') : RemoteReason<'err> =
-    match reason with
-    | InvalidKind' kind -> InvalidKind kind
-    | BadRequest' message -> BadRequest message
-    | RemoteFailed' json -> RemoteFailed <| Result.get ^<| decode json
-    | RemoteException' message -> RemoteException message
-    | Timeout' seconds -> Timeout seconds
+let fableToJson v : Json =
+    fableEncodeJson v |> parseJson
 
 #if FABLE_COMPILER
-let [<PassGenericsAttribute>] getReasonContent<'err when 'err :> IError> (reason : Reason<'err>) : string * string option =
-#else
-let getReasonContent (reason : Reason<'err> when 'err :> IError) : string * string option =
+[<PassGenericsAttribute>]
 #endif
-    match reason with
-    | Local reason ->
-        match reason with
-        | EncodeFailed message -> ("Encode Failed", Some message)
-        | DecodeFailed message -> ("Decode Failed", Some message)
-        | SendFailed message -> ("Send Failed", Some message)
-        | LocalException message -> ("Local Exception", Some message)
-    | Remote reason ->
-        match reason with
-        | InvalidKind kind -> ("Invalid Kind", Some kind)
-        | BadRequest message -> ("Bad Request", Some message)
-        | RemoteFailed err -> (err.Payload, None)
-        | RemoteException message -> ("Remote Exception", Some message)
-        | Timeout seconds -> ("Timeout", Some <| sprintf "%As" seconds)
-
-#if FABLE_COMPILER
-#else
-let forwardAck (onHandled : OnHandled) (res : Result<'res, 'err> when 'res :> IResponse and 'err :> IError) : unit =
-    match res with
-    | Ok res ->
-        onHandled <| Ok (res :> IResponse)
-    | Error err ->
-        onHandled <| Error ^<| HubFailed (err :> IError)
-
-let forwardNak (onHandled : OnHandled) ((err, detail) : string * obj) : unit =
-    onHandled <| Error ^<| HubException err
-
-#endif
+let fableCastJson<'t> (v : Json)  =
+    v.EncodeJson 0
+    |> fableDecodeJson<'t>

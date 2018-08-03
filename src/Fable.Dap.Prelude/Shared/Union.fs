@@ -8,20 +8,41 @@ open Fable.Core
 #endif
 
 #if FABLE_COMPILER
-let [<PassGenericsAttribute>] getKind<'a> (x : obj) = 
-#else
-let getKind<'a> (x : obj) = 
+[<PassGenericsAttribute>]
 #endif
+let getKind<'a> (x : obj) =
     match FSharpValue.GetUnionFields(x, typeof<'a>) with
     | kind, _ -> kind.Name
 
 #if FABLE_COMPILER
-let [<PassGenericsAttribute>] fromKind<'a> (s : string) =
-#else
-let fromKind<'a> (s : string) =
+[<PassGenericsAttribute>]
 #endif
-    match FSharpType.GetUnionCases typeof<'a> |> Array.filter (fun case -> case.Name = s) with
+let tryFindCase<'a> (kind : string) =
+    match FSharpType.GetUnionCases typeof<'a> |> Array.filter (fun case -> case.Name = kind) with
     |[|case|] ->
-        Ok (FSharpValue.MakeUnion(case, [||]) :?> 'a)
+        Ok case
     |_ ->
-        Error <| sprintf "Decode_Failed: <%s> %s" typeof<'a>.FullName s
+        Error <| sprintf "Invalid_Kind: <%s> %s" typeof<'a>.FullName kind
+
+#if FABLE_COMPILER
+[<PassGenericsAttribute>]
+#endif
+let tryFromKind<'a> (kind : string) =
+    tryFindCase<'a> (kind)
+    |> Result.map (fun case ->
+        FSharpValue.MakeUnion(case, [||]) :?> 'a
+    )
+
+#if FABLE_COMPILER
+[<PassGenericsAttribute>]
+#endif
+let findCase<'a> (kind : string) =
+    tryFindCase<'a> (kind)
+    |> Result.get
+
+#if FABLE_COMPILER
+[<PassGenericsAttribute>]
+#endif
+let fromKind<'a> (kind : string) =
+    tryFromKind<'a> (kind)
+    |> Result.get
