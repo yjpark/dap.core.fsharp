@@ -16,6 +16,7 @@ let private doReadPktAsync (link : Link<'socket>)
         let mutable capacity = link.Buffer.Length
         try
             let time = runner.Clock.Now
+            let processTime = time
             let mutable finished = false
             let socket = link.Socket :> WebSocket
             while not finished do
@@ -39,10 +40,11 @@ let private doReadPktAsync (link : Link<'socket>)
                             let (time, transferDuration) = runner.Clock.CalcDuration(time)
                             match runner.RunFunc<'pkt> (fun _ -> runner.Actor.Args.Decode (link.Buffer, 0, length)) with
                             | Ok pkt ->
-                                let (_time, decodeDuration) = runner.Clock.CalcDuration(time)
+                                let (time, decodeDuration) = runner.Clock.CalcDuration(time)
                                 let stats : ReceiveStats = {
-                                    ProcessTime = time
+                                    ProcessTime = processTime
                                     BytesCount = length
+                                    ReceivedTime = time
                                     TransferDuration = transferDuration
                                     DecodeDuration = decodeDuration
                                 }
@@ -81,15 +83,17 @@ let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
 let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'socket, 'pkt, 'req>, SendStats> =
     fun req callback runner -> task {
         let time = runner.Clock.Now
+        let processTime = time
         let buffer = runner.Actor.Args.Encode pkt
         let (time, encodeDuration) = runner.Clock.CalcDuration(time)
         let link = runner.Actor.State.Link |> Option.get
         let socket = link.Socket :> WebSocket
         do! socket.SendAsync (buffer, runner.Actor.Args.SendType, true, link.Token)
-        let (_time, transferDuration) = runner.Clock.CalcDuration(time)
+        let (time, transferDuration) = runner.Clock.CalcDuration(time)
         let stats : SendStats = {
-            ProcessTime = time
+            ProcessTime = processTime
             BytesCount = buffer.Count
+            SentTime = time
             EncodeDuration = encodeDuration
             TransferDuration = transferDuration
         }

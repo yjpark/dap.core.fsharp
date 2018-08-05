@@ -1,5 +1,6 @@
 module Dap.Remote.Proxy.Types
 
+open System
 open Dap.Prelude
 open Dap.Platform
 open Dap.Remote
@@ -10,12 +11,12 @@ type SubSpec<'extra, 'sub, 'req, 'res, 'evt> when 'req :> IRequest and 'evt :> I
     DoInit : ActorOperate<'extra, 'sub, 'req, 'res, 'evt>
     CalcConnected : 'extra -> bool
     HandleSub : 'sub -> ActorOperate<'extra, 'sub, 'req, 'res, 'evt>
-    DoSend : Proxy<'extra, 'sub, 'req, 'res, 'evt> -> Packet -> Callback<Instant> -> unit
+    DoSend : Proxy<'extra, 'sub, 'req, 'res, 'evt> -> Packet -> Callback<DateTime> -> unit
 }
 
 and Args<'extra, 'sub, 'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEvent = {
     Sub : SubSpec<'extra, 'sub, 'req, 'res, 'evt>
-    Spec : StubSpec<'res, 'evt>
+    Spec : StubSpec<'req, 'res, 'evt>
     Uri : string
     LogTraffic : bool
 } with
@@ -29,7 +30,7 @@ and Args<'extra, 'sub, 'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEven
 
 and InternalEvt =
     | DoInit
-    | OnSent of IRequest * Packet * Result<Instant, LocalReason>
+    | OnSent of IRequest * Packet * Result<DateTime, LocalReason>
     | DoEnqueue of IRequest * Packet
 
 and Msg<'sub, 'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEvent =

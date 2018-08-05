@@ -22,6 +22,8 @@ let private doAttach req (ident, token, socket, callback) : ActorOperate<'pkt> =
             reply runner callback <| nak req "Link_Exist" link
             (model, cmd)
         | None ->
+            let time = runner.Clock.Now
+            let processTime = time
             let link : Link<WebSocket> = {
                 Ident = ident
                 Token = token
@@ -30,7 +32,12 @@ let private doAttach req (ident, token, socket, callback) : ActorOperate<'pkt> =
             }
             let task = doReceiveAsync runner
             reply runner callback <| ack req (task :> Task)
-            let stats = ConnectedStats.Create runner.Clock.Now noDuration
+            let (time, duration) = runner.Clock.CalcDuration(time)
+            let stats : ConnectedStats = {
+                ProcessTime = processTime
+                ConnectedTime = time
+                ConnectDuration = duration
+            }
             (runner, model, cmd)
             |-|> updateModel (fun m -> {m with Link = Some link})
             |=|> addCmd ^<| WebSocketEvt ^<| OnConnected stats

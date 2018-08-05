@@ -19,16 +19,21 @@ let internal doConnectFailed : OnReplyFailed<Agent<'pkt>, ConnectedStats> =
 let internal doConnectAsync : GetReplyTask<Agent<'pkt>, ConnectedStats> =
     fun req callback runner -> task {
         let time = runner.Clock.Now
+        let processTime = time
         while Option.isNone runner.Actor.State.Link do
             do! Task.Delay 20
         let link = runner.Actor.State.Link |> Option.get
         logInfo runner "Link" "Connecting" link
         //link.Socket.Options.Proxy <- (new WebProxy("http://127.0.0.1:1104/")) :> IWebProxy
         do! link.Socket.ConnectAsync (Uri(link.Ident), link.Token)
-        let (_, duration) = runner.Clock.CalcDuration(time)
+        let (time, duration) = runner.Clock.CalcDuration(time)
         match link.Socket.State with
         | WebSocketState.Open ->
-            let stats = ConnectedStats.Create time duration
+            let stats : ConnectedStats = {
+                ProcessTime = processTime
+                ConnectedTime = time
+                ConnectDuration = duration
+            }
             logInfo runner "Link" "Connected" link
             reply runner callback <| ack req stats
             runner.Deliver <| WebSocketEvt ^<| OnConnected stats

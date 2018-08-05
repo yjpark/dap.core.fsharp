@@ -131,7 +131,7 @@ let private spawnRes (spec : ResponseSpec<'res> list)
         FSharpValue.MakeUnion(spec.Case, Array.append param [| result |]) :?> 'res
     )
 
-type StubSpec<'res, 'evt> when 'evt :> IEvent = {
+type StubSpec<'req, 'res, 'evt> when 'evt :> IEvent = {
     Response : ResponseSpec<'res> list
     Event : CaseSpec<'evt> list
 } with

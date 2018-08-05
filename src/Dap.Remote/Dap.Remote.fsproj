@@ -18,11 +18,18 @@
     <Compile Include="../Fable.Dap.Remote/Shared/Internal/Client.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Internal/Service.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Util.fs" />
+    <Compile Include="../Fable.Dap.Remote/Shared/Proxy/Types.fs" />
+    <Compile Include="../Fable.Dap.Remote/Shared/Proxy/Logic.fs" />
     <Compile Include="WebSocketService/PacketConn.fs" />
     <Compile Include="WebSocketService/Types.fs" />
     <Compile Include="WebSocketService/Tasks.fs" />
     <Compile Include="WebSocketService/Logic.fs" />
     <Compile Include="WebSocketService/Agent.fs" />
+    <Compile Include="WebSocketProxy/PacketClient.fs" />
+    <Compile Include="WebSocketProxy/Types.fs" />
+    <Compile Include="WebSocketProxy/Tasks.fs" />
+    <Compile Include="WebSocketProxy/Logic.fs" />
+    <Compile Include="WebSocketProxy/Proxy.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.Platform\Dap.Platform.fsproj" />

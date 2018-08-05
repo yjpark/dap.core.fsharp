@@ -16,6 +16,7 @@ type Decode<'pkt> = array<byte> * int * int -> 'pkt
 type SendStats = {
     ProcessTime : Instant
     BytesCount : int
+    SentTime : Instant
     EncodeDuration : Duration
     TransferDuration : Duration
 }
@@ -23,19 +24,16 @@ type SendStats = {
 type ReceiveStats = {
     ProcessTime : Instant
     BytesCount : int
+    ReceivedTime : Instant
     TransferDuration : Duration
     DecodeDuration : Duration
 }
 
 type ConnectedStats = {
     ProcessTime : Instant
+    ConnectedTime : Instant
     ConnectDuration : Duration
-} with
-    static member Create time duration =
-        {
-            ProcessTime = time
-            ConnectDuration = duration
-        }
+}
 
 type ConnectionStats = {
     Connected : ConnectedStats
