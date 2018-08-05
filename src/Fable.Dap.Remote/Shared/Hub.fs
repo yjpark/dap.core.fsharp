@@ -49,7 +49,8 @@ type RequestSpec<'req> = {
             GetCallback = getCallback
         }
 
-type HubSpec<'req, 'evt> = {
+type HubSpec<'req, 'evt
+            when 'req :> IReq and 'evt :> IEvt> = {
     Request : RequestSpec<'req> list
     GetHub : GetHub<'req, 'evt>
 } with
@@ -92,3 +93,17 @@ let forwardNak (onHandled : OnHandled) ((err, detail) : string * obj) : unit =
 let getCallback<'res, 'err when 'res :> IResult and 'err :> IError> (runner : IRunner) (onHandled : OnHandled) =
     callback' runner (forwardNak onHandled) (forwardAck<'res, 'err> onHandled)
     :> obj
+
+#if !FABLE_COMPILER
+let getHub<'agent, 'req, 'evt when 'agent :> IAgent<'req, 'evt>> (env : IEnv) (kind : Kind) (onDisconnected : 'agent -> unit) : GetHub<'req, 'evt> =
+    fun key setHub ->
+        let setHub' = fun ((agent, _isNew) : IAgent * bool) ->
+            let agent = agent :?> 'agent
+            let hub : Hub<'req, 'evt> = {
+                PostReq = agent.Post
+                OnEvent = agent.Actor.OnEvent
+                OnDisconnected = fun () -> onDisconnected agent
+            }
+            setHub hub
+        env.Handle <| DoGetAgent kind key ^<| callback env setHub'
+#endif
