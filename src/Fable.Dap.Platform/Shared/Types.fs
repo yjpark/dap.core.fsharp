@@ -20,13 +20,13 @@ type Kind = string
 type Key = string
 
 [<Literal>]
-let noScope = ""
+let NoScope = ""
 
 [<Literal>]
-let noKind = ""
+let NoKind = ""
 
 [<Literal>]
-let noKey = ""
+let NoKey = ""
 
 let private calVersion scope kind key =
     let mutable versions : Map<string, int> = Map.empty
@@ -64,11 +64,11 @@ type Ident = {
         }
     member this.Ident = sprintf "[%s:%s:%s]<%i>" this.Scope this.Kind this.Key this.Ver
 
-let noIdent =
+let NoIdent =
     {
-        Scope = noScope
-        Kind = noKind
-        Key = noKey
+        Scope = NoScope
+        Kind = NoKind
+        Key = NoKey
         Ver = 0
     }
 
