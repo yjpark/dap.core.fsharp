@@ -54,6 +54,7 @@ let private setSocket (socket : WebSocketClientTypes.Agent<Packet>) : ActorOpera
         | None ->
             socket.Actor.OnEvent.AddWatcher runner "SocketEvt" (runner.Deliver << SubEvt << SocketEvt)
             updateModel (fun m -> m.WithExtra {m.Extra with Socket = Some socket})
+            |-|- addFutureCmd 1.0<second> ^<| SubEvt DoReconnect
         | Some socket' ->
             logError runner "WebSocketService" "Socket_Exist" (socket', socket)
             noOperation
