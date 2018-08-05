@@ -76,7 +76,7 @@ let appendEvent' (agent : Agent) (kind : string) (payload : string) : unit =
     agent.Post <| DoAppendFrame frame None
 
 let appendEvent (agent : Agent) (evt : IEvent) : unit =
-    appendEvent' agent evt.Kind <| evt.Payload.EncodeJson 4
+    appendEvent' agent evt.Kind <| evt.EncodeJson 4
 
 let watchEvents (agent : Agent)
                 (onEvent : IEvent<'evt> when 'evt :> IEvent)

@@ -16,22 +16,21 @@ open Dap.Remote
 
 module Const =
     [<Literal>]
-    let KindUnknown = "N/A"
+    let KindReq = "Req"
 
     [<Literal>]
-    let KindAck = "Ack"
+    let KindRes = "Res"
+    [<Literal>]
+    let KindErr = "Err"
 
     [<Literal>]
     let KindNak = "Nak"
 
     [<Literal>]
-    let KindErr = "Err"
-
-    [<Literal>]
     let KindExn = "Exn"
 
     [<Literal>]
-    let IdEvt = "Evt"
+    let KindEvt = "Evt"
 
 [<StructuredFormatDisplay("<Agent>{AsDisplay}")>]
 type Packet = {
@@ -75,19 +74,17 @@ type NakJson = {
             Err = err
             Detail = detail
         }
+    static member JsonEncoder (this : NakJson) =
+        E.object [
+            "e", E.string this.Err
+            "d", E.string this.Detail
+        ]
     static member JsonDecoder =
         D.decode NakJson.Create
         |> D.required "e" D.string
         |> D.required "d" D.string
     interface IJson with
-        member this.ToJson () =
-            E.object [
-                "e", E.string this.Err
-                "d", E.string this.Detail
-            ]
-    member this.Payload = E.json this
-    interface IPayload with
-        member this.Payload = this.Payload
+        member this.ToJson () = NakJson.JsonEncoder this
 
 type ExnJson = {
     Msg : string
@@ -100,17 +97,14 @@ type ExnJson = {
             Msg = msg
             Trace = trace
         }
+    static member JsonEncoder (this : ExnJson) =
+        E.object [
+            "m", E.string this.Msg
+            "t", E.string this.Trace
+        ]
     static member JsonDecoder =
         D.decode ExnJson.Create
         |> D.required "m" D.string
         |> D.required "t" D.string
     interface IJson with
-        member this.ToJson () =
-            E.object [
-                "m", E.string this.Msg
-                "t", E.string this.Trace
-            ]
-    member this.Payload = E.json this
-    interface IPayload with
-        member this.Payload = this.Payload
-
+        member this.ToJson () = ExnJson.JsonEncoder this

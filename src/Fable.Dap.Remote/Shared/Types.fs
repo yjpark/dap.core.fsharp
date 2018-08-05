@@ -16,70 +16,79 @@ open Dap.Platform
 type PacketId = string
 type PacketKind = string
 
-type IPayload =
-    abstract Payload : Json with get
-
-[<AutoOpen>]
-module Extensions =
-    type Json.E with
-        static member json (payload : 'payload when 'payload :> IPayload) = (payload :> IPayload) .Payload
-
 type IRequest =
     inherit IReq
-    inherit IPayload
-    abstract Kind : PacketKind with get
+    inherit IJson
+    abstract Kind : String with get
 
-type IResponse = IPayload
+type IResult = IJson
 
-type IError = IPayload
+type IError = IJson
 
 type IEvent =
     inherit IEvt
-    inherit IPayload
-    abstract Kind : PacketKind with get
+    inherit IJson
+    abstract Kind : String with get
 
-type NoResponse = NoResponse
-    with
-        interface IResponse with
-            member _this.Payload = E.nil
+type NoResult = NoResult
+with
+    static member JsonEncoder (_this : NoResult) =
+        E.nil
+    static member JsonDecoder =
+        D.nil NoResult
+    interface IResult with
+        member this.ToJson () = NoResult.JsonEncoder this
 
 type NoError = NoError
-    with
-        interface IError with
-            member _this.Payload = E.nil
-
-type BoolPayload =
-    BoolPayload of bool
 with
+    static member JsonEncoder (_this : NoError) =
+        E.nil
     static member JsonDecoder =
-        D.bool
-        |> D.map (fun v -> BoolPayload v)
-    member this.Value =
-        let (BoolPayload v) = this
-        v
-    interface IPayload with
-        member this.Payload = E.bool this.Value
+        D.nil NoError
+    interface IError with
+        member this.ToJson () = NoError.JsonEncoder this
 
-type IntPayload =
-    IntPayload of int
+type JsonNil = JsonNil
 with
+    static member JsonEncoder (_this : JsonNil) =
+        E.nil
     static member JsonDecoder =
-        D.int
-        |> D.map (fun v -> IntPayload v)
-    member this.Value =
-        let (IntPayload v) = this
-        v
-    interface IPayload with
-        member this.Payload = E.int this.Value
+        D.nil JsonNil
+    interface IJson with
+        member this.ToJson () = JsonNil.JsonEncoder this
 
-type StringPayload =
-    StringPayload of string
+type JsonBool = JsonBool of bool
 with
-    static member JsonDecoder =
-        D.string
-        |> D.map (fun v -> StringPayload v)
     member this.Value =
-        let (StringPayload v) = this
+        let (JsonBool v) = this
         v
-    interface IPayload with
-        member this.Payload = E.string this.Value
+    static member JsonEncoder (this : JsonBool) =
+        E.bool this.Value
+    static member JsonDecoder =
+        D.bool |> D.map (fun v -> JsonBool v)
+    interface IJson with
+        member this.ToJson () = JsonBool.JsonEncoder this
+
+type JsonInt = JsonInt of int
+with
+    member this.Value =
+        let (JsonInt v) = this
+        v
+    static member JsonEncoder (this : JsonInt) =
+        E.int this.Value
+    static member JsonDecoder =
+        D.int |> D.map (fun v -> JsonInt v)
+    interface IJson with
+        member this.ToJson () = JsonInt.JsonEncoder this
+
+type JsonString = JsonString of string
+with
+    member this.Value =
+        let (JsonString v) = this
+        v
+    static member JsonEncoder (this : JsonString) =
+        E.string this.Value
+    static member JsonDecoder =
+        D.string |> D.map (fun v -> JsonString v)
+    interface IJson with
+        member this.ToJson () = JsonString.JsonEncoder this

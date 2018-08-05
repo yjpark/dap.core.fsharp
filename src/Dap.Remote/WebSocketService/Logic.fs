@@ -59,14 +59,14 @@ let private setHub (hub : Hub<'req, 'evt>) : ActorOperate<'req, 'evt> =
             logError runner "WebSocketService" "Hub_Exist" (hub', hub)
             (model, cmd)
 
-let private onRequest (runner : Agent<'req, 'evt>) (pkt : Packet) : unit =
+let private onRequest (runner : Agent<'req, 'evt>) ((id, payload) : PacketId * Json) : unit =
     match runner.Actor.State.Hub with
     | None ->
-        logError runner "onRequest" "Hub_Is_None" pkt
+        logError runner "onRequest" "Hub_Is_None" payload
     | Some hub ->
-        let callback = fun res ->
-            runner.Deliver <| InternalEvt ^<| OnHandled (pkt.Id, res)
-        let req = runner.Actor.Args.HubSpec.DecodeReq pkt.Kind pkt.Payload callback
+        let onHandled = fun res ->
+            runner.Deliver <| InternalEvt ^<| OnHandled (id, res)
+        let req = runner.Actor.Args.HubSpec.DecodeRequest runner payload onHandled
         hub.PostReq req
 
 let private doSend (runner : Agent<'req, 'evt>) pkt =

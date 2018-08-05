@@ -41,19 +41,11 @@ type RemoteReason' =
     | RemoteException' of Json
     | Timeout' of float<second>
 
+type Reason' =
+    | Local' of LocalReason
+    | Remote' of RemoteReason'
+
 type StubResult<'res, 'err> = Result<'res, Reason<'err>>
-
-type LocalStubErr<'res> = IRequest -> LocalReason -> 'res
-type RemoteStubErr<'res> = IRequest -> RemoteReason' -> 'res
-type DecodeStubRes<'res> = IRequest -> Json -> 'res
-type DecodeStubEvt<'evt> = PacketKind -> Json -> 'evt
-
-type StubSpec<'res, 'evt> when 'evt :> IEvent = {
-    LocalErr : LocalStubErr<'res>
-    RemoteErr : RemoteStubErr<'res>
-    DecodeRes : DecodeStubRes<'res>
-    DecodeEvt : DecodeStubEvt<'evt>
-}
 
 type IProxy<'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEvent =
     inherit IAgent<'req, 'evt>
@@ -63,7 +55,7 @@ type IProxy<'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEvent =
 type ResponseSpec<'res> = {
     Kind : string
     Case : UnionCaseInfo
-    DecodeParam : Json -> obj
+    ParamDecoder : JsonDecoder<obj array>
     GetResResult : Json -> obj
     GetErrResult : RemoteReason' -> obj
 } with
@@ -71,19 +63,17 @@ type ResponseSpec<'res> = {
     [<PassGenericsAttribute>]
 #endif
     static member Create<'param, 'result, 'error>
-                            (kind : PacketKind) (case : PacketKind)
-                            (paramDecoder : JsonDecoder<'param>)
+                            (kind : PacketKind)
+                            (fields : FieldSpec list)
+                            (case : PacketKind)
                             (resDecoder : JsonDecoder<'result>)
                             (errDecoder : JsonDecoder<'error>) : ResponseSpec<'res> =
-        let case =
-            case
-            |> Union.tryFindCase<'res>
-            |> Result.get
-        let decodeParam = fun (json : Json) ->
-            castJson paramDecoder json
-            :> obj
+        let case = case |> Union.findCase<'res>
         let getResResult = fun (json : Json) ->
-            castJson resDecoder json
+            tryCastJson resDecoder json
+            |> Result.mapError (fun err ->
+                sprintf "Stub.DecodeRes<%s> -> %s" (typeof<'result>.FullName) err
+            )|> Result.get
             |> Ok
             :> obj
         let getErrResult = fun (reason : RemoteReason') ->
@@ -91,14 +81,23 @@ type ResponseSpec<'res> = {
             | InvalidKind' kind ->
                 InvalidKind kind
             | RemoteNak' json ->
-                castJson NakJson.JsonDecoder json
+                tryCastJson NakJson.JsonDecoder json
+                |> Result.mapError (fun err ->
+                    sprintf "Stub.DecodeNak -> %s" err
+                )|> Result.get
                 |> fun nak -> (nak.Err, nak.Detail)
                 |> RemoteNak
             | RemoteError' json ->
-                castJson errDecoder json
+                tryCastJson errDecoder json
+                |> Result.mapError (fun err ->
+                    sprintf "Stub.DecodeErr<%s> -> %s" (typeof<'error>.FullName) err
+                )|> Result.get
                 |> RemoteError
             | RemoteException' json ->
-                castJson ExnJson.JsonDecoder json
+                tryCastJson ExnJson.JsonDecoder json
+                |> Result.mapError (fun err ->
+                    sprintf "Stub.DecodeExn -> %s" err
+                )|> Result.get
                 |> fun exn -> (exn.Msg, exn.Trace)
                 |> RemoteException
             | Timeout' seconds ->
@@ -109,68 +108,62 @@ type ResponseSpec<'res> = {
         {
             Kind = kind
             Case = case
-            DecodeParam = decodeParam
+            ParamDecoder = FieldSpec.GetFieldsDecoder fields
             GetResResult = getResResult
             GetErrResult = getErrResult
         }
 
-type EventSpec<'evt> = {
-    Case : UnionCaseInfo
-    DecodeEvt : Json -> obj
-} with
 #if FABLE_COMPILER
-    [<PassGenericsAttribute>]
+[<PassGenericsAttribute>]
 #endif
-    static member Create<'event>
-                            (kind : PacketKind)
-                            (evtDecoder : JsonDecoder<'event>) : EventSpec<'evt> =
-        let case =
-            kind
-            |> Union.tryFindCase<'evt>
-            |> Result.get
-        let decodeEvt = fun (json : Json) ->
-            castJson evtDecoder json
-            :> obj
-        {
-            Case = case
-            DecodeEvt = decodeEvt
-        }
-
 let private spawnRes (spec : ResponseSpec<'res> list)
                         (req : IRequest)
                         (getResult : ResponseSpec<'res> -> obj) =
     spec
     |> List.find (fun s -> s.Kind = req.Kind)
     |> (fun spec ->
-        let param = spec.DecodeParam req.Payload
+        let json = req.ToJson ()
+#if FABLE_COMPILER
+        let json = json :> obj
+#endif
+        let param = json |> spec.ParamDecoder |> Result.get
         let result = getResult spec
-        FSharpValue.MakeUnion(spec.Case, [| param ; result |]) :?> 'res
+        FSharpValue.MakeUnion(spec.Case, Array.append param [| result |]) :?> 'res
     )
 
-let localErr (spec : ResponseSpec<'res> list) : LocalStubErr<'res> =
-    fun req reason ->
-        spawnRes spec req (fun _s ->
-            Local reason
-            |> Error
-            :> obj
-        )
-
-let remoteErr (spec : ResponseSpec<'res> list) : RemoteStubErr<'res> =
-    fun req reason ->
-        spawnRes spec req (fun s -> s.GetErrResult reason)
-
-let decodeRes (spec : ResponseSpec<'res> list) : DecodeStubRes<'res> =
-    fun req payload ->
-        spawnRes spec req (fun s -> s.GetResResult payload)
-
-let decodeEvt (spec : EventSpec<'evt> list) : DecodeStubEvt<'evt> =
-    fun kind payload ->
-        spec
-        |> List.find (fun s -> s.Case.Name = kind)
-        |> (fun spec ->
-            let event = spec.DecodeEvt payload
-            FSharpValue.MakeUnion(spec.Case, [| event |]) :?> 'evt
-        )
+type StubSpec<'res, 'evt> when 'evt :> IEvent = {
+    Response : ResponseSpec<'res> list
+    Event : CaseSpec<'evt> list
+} with
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
+    member this.DecodeResponse (runner : IRunner) (req : IRequest) (res : Result<Json, Reason'>) : 'res =
+        try
+            match res with
+            | Ok json ->
+                spawnRes this.Response req (fun s -> s.GetResResult json)
+            | Error reason ->
+                match reason with
+                | Local' reason ->
+                    spawnRes this.Response req (fun _s -> Local reason |> Error :> obj)
+                | Remote' reason ->
+                    spawnRes this.Response req (fun s -> s.GetErrResult reason)
+        with e ->
+            logException runner "Stub.DecodeResponse" typeof<'res>.FullName (req, res) e
+            raise e
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
+    member this.DecodeEvent (runner : IRunner) (json : Json) : 'evt =
+        try
+#if FABLE_COMPILER
+            let json = json :> obj
+#endif
+            castJson (D.union this.Event) json
+        with e ->
+            logException runner "Stub.DecodeEvent" typeof<'evt>.FullName json e
+            raise e
 
 let getReasonContent (reason : Reason<'err> when 'err :> IError) : string * string * string option =
     match reason with
@@ -184,6 +177,6 @@ let getReasonContent (reason : Reason<'err> when 'err :> IError) : string * stri
         match reason with
         | InvalidKind kind -> ("Invalid Kind", kind, None)
         | RemoteNak (err, detail) -> ("Remote Nak", err, Some detail)
-        | RemoteError err -> ("Remote Error", E.encode 4 err.Payload, None)
+        | RemoteError err -> ("Remote Error", err.EncodeJson 4, None)
         | RemoteException (msg, trace) -> ("Remote Exception", msg, Some trace)
         | Timeout seconds -> ("Timeout", sprintf "%A" seconds, None)

@@ -2,6 +2,7 @@
 module Dap.Remote.WebSocketProxy.Logic
 
 open System
+open Fable.Core
 open Elmish
 module E = Thoth.Json.Encode
 module D = Thoth.Json.Decode
@@ -61,22 +62,17 @@ let private doSend (runner : Proxy<'req, 'res, 'evt>)
         doSend' runner (req, pkt)
     None
 
+[<PassGenericsAttribute>]
 let private onResponse (runner : Proxy<'req, 'res, 'evt>) ((req, res) : IRequest * Result<Json, Reason'>) : unit =
-    let args = runner.Actor.Args
-    match res with
-    | Ok json ->
-        args.Spec.DecodeRes req json
-    | Error reason ->
-        match reason with
-        | Local' reason ->
-            args.Spec.LocalErr req reason
-        | Remote' reason ->
-            args.Spec.RemoteErr req reason
+    runner.Actor.Args.Spec.DecodeResponse runner req res
     |> (runner.Deliver << ProxyRes)
 
-let private onEvent (runner : Proxy<'req, 'res, 'evt>) ((kind, json) : PacketKind * Json) : unit =
-    runner.Deliver <| ProxyEvt ^<| runner.Actor.Args.Spec.DecodeEvt kind json
+[<PassGenericsAttribute>]
+let private onEvent (runner : Proxy<'req, 'res, 'evt>) ((_id, evt) : PacketId * Json) : unit =
+    runner.Actor.Args.Spec.DecodeEvent runner evt
+    |> (runner.Deliver << ProxyEvt)
 
+[<PassGenericsAttribute>]
 let private doInit : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         let link : Client.Link = {
@@ -97,6 +93,7 @@ let private doInit : ActorOperate<'req, 'res, 'evt> =
         (runner, model, cmd)
         |=|> updateModel (fun m -> {m with Client = Some client})
 
+[<PassGenericsAttribute>]
 let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         match evt with
@@ -109,9 +106,11 @@ let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'req, 'res, 'ev
             doReconnect
         <| runner <| (model, noCmd)
 
+[<PassGenericsAttribute>]
 let private handleProxyReq (req : 'req) : ActorOperate<'req, 'res, 'evt> =
     handleClient <| Client.DoSend req
 
+[<PassGenericsAttribute>]
 let private handlerSocketEvt (evt : WebSocketTypes.Evt<Packet>) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         match evt with
@@ -125,6 +124,7 @@ let private handlerSocketEvt (evt : WebSocketTypes.Evt<Packet>) : ActorOperate<'
             noOperation
         <| runner <| (model, noCmd)
 
+[<PassGenericsAttribute>]
 let private update : ActorUpdate<Proxy<'req, 'res, 'evt>, Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt> =
     fun runner model msg ->
         (match msg with
@@ -159,6 +159,7 @@ let private subscribe : ActorSubscribe<Proxy<'req, 'res, 'evt>, Args<'res, 'evt>
     fun runner model ->
         subscribeBus runner model SocketEvt model.Socket.Actor.OnEvent
 
+[<PassGenericsAttribute>]
 let spec<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> (args : Args<'res, 'evt>) =
     (new ActorSpec<Proxy<'req, 'res, 'evt>, Args<'res, 'evt>, Model<'res, 'evt>, Msg<'req, 'res, 'evt>, 'req, 'evt>
         (Proxy<'req, 'res, 'evt>.Spawn, args, ProxyReq, castEvt<'req, 'res, 'evt>, init, update)

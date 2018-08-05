@@ -16,7 +16,7 @@ type InternalEvt<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     | SetSocket of PacketConn.Agent
     | HubEvt of 'evt
     | SocketEvt of WebSocket.Evt<Packet>
-    | OnHandled of PacketId * Result<IResponse, HubReason>
+    | OnHandled of PacketId * Result<IResult, HubReason>
 
 and Args<'req, 'evt> when 'req :> IReq and 'evt :> IEvt = {
     HubSpec : HubSpec<'req, 'evt>

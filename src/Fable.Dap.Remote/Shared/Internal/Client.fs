@@ -8,10 +8,6 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Remote.Internal
 
-type Reason' =
-    | Local' of LocalReason
-    | Remote' of RemoteReason'
-
 type PendingRequest = {
     Req : IRequest
     Packet : Packet
@@ -20,7 +16,7 @@ type PendingRequest = {
 
 type Stub = {
     OnResponse : IRequest * Result<Json, Reason'> -> unit
-    OnEvent : PacketKind * Json -> unit
+    OnEvent : PacketId * Json -> unit
 }
 
 type Link = {
@@ -64,8 +60,8 @@ let private doSend (req : IRequest) (model : Model) : Model =
         let pkt = {
             Time = dateTimeUtcNow ()
             Id = Guid.NewGuid().ToString()
-            Kind = req.Kind
-            Payload = req.Payload
+            Kind = Const.KindReq
+            Payload = E.json req
         }
         encoded <- Some pkt
         match model.Args.Link.Send (req, pkt) with
@@ -102,9 +98,9 @@ let private onSend ((req, pkt, res) : IRequest * Packet * Result<DateTime, Local
 let private onReceived (pkt : Packet) (model : Model) : Model =
     if model.Args.LogTraffic then
         logInfo model.Args.Logger "Traffic" "Received" pkt
-    if pkt.Id = Const.IdEvt then
+    if pkt.Kind = Const.KindEvt then
         try
-            model.Args.Stub.OnEvent (pkt.Kind, pkt.Payload)
+            model.Args.Stub.OnEvent (pkt.Id, pkt.Payload)
         with e ->
             logException model.Args.Logger "Receive" "Stub_OnEvent_Failed" pkt e
         model
@@ -115,12 +111,12 @@ let private onReceived (pkt : Packet) (model : Model) : Model =
             found <- Some req
             let res =
                 match pkt.Kind with
-                | Const.KindAck ->
+                | Const.KindRes ->
                     Ok <| pkt.Payload
-                | Const.KindNak ->
-                    Error <| Remote' ^<| RemoteNak' pkt.Payload
                 | Const.KindErr ->
                     Error <| Remote' ^<| RemoteError' pkt.Payload
+                | Const.KindNak ->
+                    Error <| Remote' ^<| RemoteNak' pkt.Payload
                 | Const.KindExn ->
                     Error <| Remote' ^<| RemoteException' pkt.Payload
                 | _ ->

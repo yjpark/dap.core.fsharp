@@ -28,55 +28,58 @@ type Hub<'req, 'evt> = {
     OnDisconnected : unit -> unit
 }
 
-type OnHandled = Result<IResponse, HubReason> -> unit
-type DecodeHubReq<'req> = PacketKind -> Json -> OnHandled -> 'req
+type OnHandled = Result<IResult, HubReason> -> unit
 type GetHub<'req, 'evt> = string -> (Hub<'req, 'evt> -> unit) -> unit
-
-type HubSpec<'req, 'evt> = {
-    DecodeReq : DecodeHubReq<'req>
-    GetHub : GetHub<'req, 'evt>
-}
 
 type RequestSpec<'req> = {
     Case : UnionCaseInfo
-    DecodeParam : Json -> obj
+    ParamDecoder : JsonDecoder<obj array>
     GetCallback : IRunner -> OnHandled -> obj
 } with
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
-    static member Create (kind : PacketKind) (paramDecoder : JsonDecoder<'param>)
+    static member Create (kind : PacketKind)
+                            (fields : FieldSpec list)
                             getCallback : RequestSpec<'req> =
-        let case =
-            kind
-            |> Union.tryFindCase<'req>
-            |> Result.get
-        let decodeParam = fun (json : Json) ->
-            castJson paramDecoder json
-            :> obj
+        let case = kind |> Union.findCase<'req>
         {
             Case = case
-            DecodeParam = decodeParam
+            ParamDecoder = FieldSpec.GetFieldsDecoder fields
             GetCallback = getCallback
         }
 
-let decodeReq (spec : RequestSpec<'req> list) (runner : IRunner) : DecodeHubReq<'req> =
-    fun kind payload onHandled ->
-        spec
-        |> List.find (fun s -> s.Case.Name = kind)
-        |> (fun spec ->
-            let param = spec.DecodeParam payload
-            let callback = spec.GetCallback runner onHandled
-            FSharpValue.MakeUnion(spec.Case, [| param ; callback |]) :?> 'req
-        )
+type HubSpec<'req, 'evt> = {
+    Request : RequestSpec<'req> list
+    GetHub : GetHub<'req, 'evt>
+} with
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
+    member this.DecodeRequest (runner : IRunner) (json : Json) (onHandled : OnHandled) =
+        try
+            let kind = JsonKind.Cast json
+            this.Request
+            |> List.find (fun s -> s.Case.Name = kind.Value)
+            |> (fun spec ->
+#if FABLE_COMPILER
+                let json = json :> obj
+#endif
+                let param = spec.ParamDecoder json |> Result.get
+                let callback = spec.GetCallback runner onHandled
+                FSharpValue.MakeUnion(spec.Case, Array.append param [| callback |]) :?> 'req
+            )
+        with e ->
+            logException runner "Hub.DecodeRequest" typeof<'req>.FullName json e
+            raise e
 
 #if FABLE_COMPILER
 [<PassGenericsAttribute>]
 #endif
-let forwardAck<'res, 'err when 'res :> IResponse and 'err :> IError> (onHandled : OnHandled) (res : Result<'res, 'err>) : unit =
+let forwardAck<'res, 'err when 'res :> IResult and 'err :> IError> (onHandled : OnHandled) (res : Result<'res, 'err>) : unit =
     match res with
     | Ok res ->
-        onHandled <| Ok (res :> IResponse)
+        onHandled <| Ok (res :> IResult)
     | Error err ->
         onHandled <| Error ^<| HubError (err :> IError)
 
@@ -86,6 +89,6 @@ let forwardNak (onHandled : OnHandled) ((err, detail) : string * obj) : unit =
 #if FABLE_COMPILER
 [<PassGenericsAttribute>]
 #endif
-let getCallback<'res, 'err when 'res :> IResponse and 'err :> IError> (runner : IRunner) (onHandled : OnHandled) =
+let getCallback<'res, 'err when 'res :> IResult and 'err :> IError> (runner : IRunner) (onHandled : OnHandled) =
     callback' runner (forwardNak onHandled) (forwardAck<'res, 'err> onHandled)
     :> obj
