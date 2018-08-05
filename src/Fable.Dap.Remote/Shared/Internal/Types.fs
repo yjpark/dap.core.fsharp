@@ -60,7 +60,7 @@ type Packet = {
                 "t", E.dateTime this.Time
                 "i", E.string this.Id
                 "k", E.string this.Kind
-                "p", E.json this.Payload
+                "p", this.Payload
             ]
 
 type NakJson = {

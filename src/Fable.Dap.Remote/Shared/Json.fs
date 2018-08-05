@@ -288,8 +288,8 @@ let getUnionDecoder<'u> (spec : CaseSpec<'u> list) : JsonDecoder<'u> =
             Error <| D.FailMessage err
 
 type E = Encoder with
+    static member encodeJson (indent : int) (json : IJson) = E.encode indent <| json.ToJson ()
     static member json (json : IJson) = json.ToJson ()
-    static member json (json : Json) = Json.JsonEncoder json
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
