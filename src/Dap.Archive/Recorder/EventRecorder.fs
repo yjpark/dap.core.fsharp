@@ -19,7 +19,7 @@ type Extra = {
     static member Create events = {
         Events = events
     }
-    static member JsonDecoder (extraDecoder : D.Decoder<'extra>) =
+    static member JsonDecoder (extraDecoder : JsonDecoder<'extra>) =
         D.decode Extra.Create
         |> D.required "events" (D.dict D.int)
     interface IJson with

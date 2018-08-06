@@ -27,7 +27,7 @@ type Meta<'extra> when 'extra :> IJson = {
         EndTime = endTime
         Memo = memo
     }
-    static member JsonDecoder (extraDecoder : D.Decoder<'extra>) =
+    static member JsonDecoder (extraDecoder : JsonDecoder<'extra>) =
         D.decode Meta<'extra>.Create
         |> D.required "kind" D.string
         |> D.required "key" D.string

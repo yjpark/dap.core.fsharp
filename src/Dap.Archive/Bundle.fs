@@ -10,7 +10,7 @@ open Dap.Remote
 type Spec<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame = {
     Kind : string
     Version : int
-    ExtraDecoder : D.Decoder<'extra>
+    ExtraDecoder : JsonDecoder<'extra>
     ReadFrame : ReadFrame<'frame>
 }
 
