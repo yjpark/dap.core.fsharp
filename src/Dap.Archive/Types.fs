@@ -7,9 +7,6 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Remote.Internal
 
-module E = Thoth.Json.Net.Encode
-module D = Thoth.Json.Net.Decode
-
 type Meta<'extra> when 'extra :> IJson = {
     Kind : string
     Key : string

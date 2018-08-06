@@ -11,13 +11,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Fable.Dap.Remote/Shared/Json.fs" />
+    <Compile Include="../Fable.Dap.Remote/Shared/Spec.fs" />
+    <Compile Include="../Fable.Dap.Remote/Shared/Fable.fs" />
+    <Compile Include="../Fable.Dap.Remote/Shared/ED.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Types.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Internal/Types.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Hub.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Stub.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Internal/Client.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Internal/Service.fs" />
-    <Compile Include="../Fable.Dap.Remote/Shared/Util.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Proxy/Types.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Proxy/Logic.fs" />
     <Compile Include="WebSocketService/PacketConn.fs" />

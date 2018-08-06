@@ -12,6 +12,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Shared/Json.fs" />
+    <Compile Include="Shared/Spec.fs" />
+    <Compile Include="Shared/Fable.fs" />
+    <Compile Include="Shared/ED.fs" />
     <Compile Include="Shared/Types.fs" />
     <Compile Include="Shared/Internal/Types.fs" />
     <Compile Include="Shared/Hub.fs" />
@@ -20,7 +23,6 @@
     <Compile Include="Shared/Internal/Service.fs" />
     <Compile Include="Shared/Proxy/Types.fs" />
     <Compile Include="Shared/Proxy/Logic.fs" />
-    <Compile Include="Shared/Util.fs" />
     <Compile Include="WebSocketProxy/Types.fs" />
     <Compile Include="WebSocketProxy/Logic.fs" />
     <Compile Include="WebSocketProxy/Proxy.fs" />

@@ -8,9 +8,6 @@ open Dap.Archive
 
 open Dap.Archive.Recorder.Types
 
-module E = Thoth.Json.Net.Encode
-module D = Thoth.Json.Net.Decode
-
 [<Literal>]
 let Kind = "EventRecorder"
 [<Literal>]

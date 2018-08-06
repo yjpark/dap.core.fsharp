@@ -5,11 +5,6 @@ module Dap.Remote.Hub
 open Microsoft.FSharp.Reflection
 #if FABLE_COMPILER
 open Fable.Core
-module E = Thoth.Json.Encode
-module D = Thoth.Json.Decode
-#else
-module E = Thoth.Json.Net.Encode
-module D = Thoth.Json.Net.Decode
 #endif
 
 open Dap.Prelude

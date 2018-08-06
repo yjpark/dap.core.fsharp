@@ -7,8 +7,6 @@ open Dap.Prelude
 open Dap.Platform
 open Dap.Remote
 
-module D = Thoth.Json.Net.Decode
-
 type Spec<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame = {
     Kind : string
     Version : int

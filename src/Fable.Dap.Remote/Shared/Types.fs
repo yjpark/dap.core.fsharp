@@ -2,14 +2,6 @@ namespace Dap.Remote
 
 open System
 
-#if FABLE_COMPILER
-module E = Thoth.Json.Encode
-module D = Thoth.Json.Decode
-#else
-module E = Thoth.Json.Net.Encode
-module D = Thoth.Json.Net.Decode
-#endif
-
 open Dap.Prelude
 open Dap.Platform
 
