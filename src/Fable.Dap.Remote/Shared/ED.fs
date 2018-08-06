@@ -21,6 +21,10 @@ type E = Encoder with
     [<PassGenericsAttribute>]
 #endif
     static member fable<'t> (v : 't) = fableToJson (v :> obj)
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
+    static member encodeFable (indent : int) (v : 't) = TE.encode indent <| E.fable<'t> v
     static member encodeJson (indent : int) (json : IJson) = TE.encode indent <| json.ToJson ()
     static member json (json : IJson) = json.ToJson ()
 #if FABLE_COMPILER
