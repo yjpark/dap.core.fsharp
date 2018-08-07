@@ -1,6 +1,5 @@
 Elmish
 NodaTime
-TaskBuilder.fs
 
 group Build
     dotnet-sourcelink

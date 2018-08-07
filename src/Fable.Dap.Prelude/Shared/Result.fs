@@ -2,6 +2,12 @@
 [<RequireQualifiedAccess>]
 module Dap.Prelude.Result
 
+#if !FABLE_COMPILER
+open System.Threading
+open System.Threading.Tasks
+open FSharp.Control.Tasks.V2
+#endif
+
 // https://github.com/fsharp/fslang-suggestions/issues/623
 let isOk = function
     | Ok _ -> true
@@ -68,4 +74,38 @@ let bind' (binder : 'T1 -> Async<Result<'T2, 'E>>) (result : Result<'T1, 'E>) : 
         Async.RunSynchronously <| binder res
     | Error err ->
         Error err
+
+let mapErrorAsync (mappingAsync : 'E1 -> Task<'E2>) (result : Task<Result<'T, 'E1>>) : Task<Result<'T, 'E2>> = task {
+    let! result = result
+    match result with
+    | Ok res ->
+        return (Ok res)
+    | Error err ->
+        let! err = mappingAsync err
+        return (Error err)
+}
+
+let mapAsync (mappingAsync : 'T1 -> Task<'T2>) (result : Task<Result<'T1, 'E>>) : Task<Result<'T2, 'E>> = task {
+    let! result = result
+    match result with
+    | Ok res ->
+        let! res = mappingAsync res
+        return (Ok res)
+    | Error err ->
+        return (Error err)
+}
+
+let bindAsync (binderAsync : 'T1 -> Task<Result<'T2, 'E>>) (result : Task<Result<'T1, 'E>>) : Task<Result<'T2, 'E>> = task {
+    let! result = result
+    match result with
+    | Ok res ->
+        return! binderAsync res
+    | Error err ->
+        return (Error err)
+}
+
+let getAsync (result : Task<Result<'T2, 'E>>) : Task<'T2> = task {
+    let! result = result
+    return result |> get
+}
 #endif
