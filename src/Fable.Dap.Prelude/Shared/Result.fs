@@ -35,6 +35,16 @@ type Result<'T, 'TError> with
     member this.IsError = isError this
     member this.Value = get this
 
+let ofTry (mapping : 'a -> 'b) (a : 'a) : Result<'b, exn> =
+    try
+        mapping a |> Ok
+    with e ->
+        Error e
+
+let tryMap (mapping : 'a -> 'b) (a : Result<'a, exn>) : Result<'b, exn> =
+    a
+    |> Result.bind (fun a -> ofTry mapping a)
+
 #if !FABLE_COMPILER
 let mapError' (mapping : 'E1 -> Async<'E2>) (result : Result<'T, 'E1>) : Result<'T, 'E2> =
     match result with
