@@ -28,6 +28,11 @@ let getError = function
     | Error err ->
         err
 
+let getWith (toRes : 'err -> 'a) (a : Result<'a, 'err>) : 'a =
+    match a with
+    | Ok res -> res
+    | Error err -> toRes err
+
 let iter action = function
     | Ok res -> action res
     | Error _ -> ()
