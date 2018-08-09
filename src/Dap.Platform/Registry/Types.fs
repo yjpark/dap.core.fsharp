@@ -1,5 +1,3 @@
-[<AutoOpen>]
-[<RequireQualifiedAccess>]
 module Dap.Platform.Registry.Types
 
 open Dap.Platform

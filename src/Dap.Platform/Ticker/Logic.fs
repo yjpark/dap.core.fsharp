@@ -7,6 +7,8 @@ open NodaTime
 open Dap.Prelude
 open Dap.Platform
 
+open Dap.Platform.Ticker.Types
+
 type private ActorOperate = ActorOperate<Agent, Args, Model, Msg, Req, Evt>
 
 let private doStartTimer req (callback : Callback<Instant>) : ActorOperate =

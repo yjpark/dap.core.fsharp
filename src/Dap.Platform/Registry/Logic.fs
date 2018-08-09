@@ -4,6 +4,7 @@ module Dap.Platform.Registry.Logic
 
 open Dap.Prelude
 open Dap.Platform
+open Dap.Platform.Registry.Types
 
 type ActorOperate<'k, 'v when 'k : comparison> = ActorOperate<Agent<'k, 'v>, Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
 

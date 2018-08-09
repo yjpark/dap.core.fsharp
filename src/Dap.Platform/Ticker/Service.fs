@@ -3,6 +3,7 @@
 module Dap.Platform.Ticker.Service
 
 open Dap.Platform
+open Dap.Platform.Ticker.Types
 
 [<Literal>]
 let Kind = "Ticker"

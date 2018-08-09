@@ -3,6 +3,7 @@
 module Dap.Platform.Registry.Service
 
 open Dap.Platform
+open Dap.Platform.Registry.Types
 
 [<Literal>]
 let Kind = "Registry"

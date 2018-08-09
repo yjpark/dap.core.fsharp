@@ -1,5 +1,3 @@
-[<AutoOpen>]
-[<RequireQualifiedAccess>]
 module Dap.Platform.Ticker.Types
 
 open NodaTime
