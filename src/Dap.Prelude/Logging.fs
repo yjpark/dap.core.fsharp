@@ -126,9 +126,8 @@ let setupSerilog (sinks : AddSink list) : SerilogLogging =
         |> ignore
     logging
 
-let addConsoleSink (minimumLevel : LogLevel option) : AddSink =
+let addConsoleSink (minimumLevel : LogLevel) : AddSink =
     fun config ->
-        let minimumLevel = defaultArg minimumLevel LogLevelInformation
         let theme = Serilog.Sinks.SystemConsole.Themes.AnsiConsoleTheme.Code
         Serilog.ConsoleLoggerConfigurationExtensions.Console(config.WriteTo,
             restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
@@ -163,5 +162,5 @@ let addSeqSink (uri : string) : AddSink =
     fun config ->
         Serilog.SeqLoggerConfigurationExtensions.Seq(config.WriteTo, uri)
 
-let setupConsole (minimumLevel : LogLevel option) =
+let setupConsole (minimumLevel : LogLevel) =
     setupSerilog [ addConsoleSink minimumLevel ]
