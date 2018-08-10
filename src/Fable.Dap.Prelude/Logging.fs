@@ -61,7 +61,6 @@ type ConsoleLogging (minimumLevel : int) =
         interface ILogger with
             member this.Log evt = this.Logger.Log evt
 
-let setupConsole (minimumLevel : LogLevel option) =
-    let minimumLevel = (defaultArg minimumLevel LogLevelInformation).ToInt
+let setupConsole (minimumLevel : LogLevel) =
     ConsoleLogging (minimumLevel)
     |> setLogging'
