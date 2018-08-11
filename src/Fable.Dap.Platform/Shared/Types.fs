@@ -103,7 +103,10 @@ type Reply<'res> =
     | Ack of IReq * 'res
     | Nak of IReq * string * obj
 
-exception ReplyException of string * obj
+exception ReplyException of err : string * detail : obj
+with
+    override this.Message =
+        sprintf "ReplyException: %s: %A" this.err this.detail
 
 type Callback<'res> = (Reply<'res> -> unit) option
 
