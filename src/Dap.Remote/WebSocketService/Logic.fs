@@ -125,7 +125,7 @@ let private handleReq (req : Req) : ActorOperate<'req, 'evt> =
         (model, cmd)
 
 let private update : ActorUpdate<Agent<'req, 'evt>, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
-    fun runner model msg ->
+    fun runner msg model ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
         | ServiceReq req -> handleReq req

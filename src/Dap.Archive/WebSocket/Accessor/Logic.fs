@@ -166,7 +166,7 @@ let private handleInternalEvt evt : PartOperate<'actorMsg, 'pkt> =
             |=|> doReconnect
 
 let private update : ActorUpdate<Part<'actorMsg, 'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
-    fun runner model msg ->
+    fun runner msg model ->
         match msg with
         | AccessorReq req -> handleReq req
         | AccessorEvt _evt -> noOperation

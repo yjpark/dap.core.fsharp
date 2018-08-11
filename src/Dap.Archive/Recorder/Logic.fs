@@ -88,7 +88,7 @@ let private handleEvt evt : ActorOperate<'extra, 'frame> =
         <| runner <| (model, cmd)
 
 let private update : ActorUpdate<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
-    fun runner model msg ->
+    fun runner msg model ->
         match msg with
         | RecorderReq req -> handleReq req
         | RecorderEvt evt -> handleEvt evt

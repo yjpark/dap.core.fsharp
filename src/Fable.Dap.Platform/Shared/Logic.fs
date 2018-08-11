@@ -20,7 +20,7 @@ type Init<'initer, 'args, 'model, 'msg> =
 
 /// Change model according to msg, also may generate cmds.
 type Update<'runner, 'model, 'msg> =
-    'runner -> 'model -> 'msg -> 'model * Cmd<'msg>
+    'runner -> 'msg -> 'model -> 'model * Cmd<'msg>
 
 /// Generate msg from outside. e.g. an timer, or keyboard.
 type Subscribe<'runner, 'model, 'msg> =

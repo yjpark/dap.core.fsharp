@@ -112,7 +112,7 @@ let private handleProxyReq (req : 'req) : ActorOperate<'extra, 'sub, 'req, 'res,
 [<PassGenericsAttribute>]
 #endif
 let private update : Update<Proxy<'extra, 'sub, 'req, 'res, 'evt>, Model<'extra, 'res, 'evt>, Msg<'sub, 'req, 'res, 'evt>> =
-    fun runner model msg ->
+    fun runner msg model ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
         | SubEvt evt -> runner.Actor.Args.Sub.HandleSub evt

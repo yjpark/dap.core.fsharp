@@ -44,7 +44,7 @@ let private handleEvt evt : ActorOperate<'socket, 'pkt, 'req> =
         <| runner <| (model, cmd)
 
 let private update : ActorUpdate<Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
-    fun runner model msg ->
+    fun runner msg model ->
         match msg with
         | WebSocketReq req -> runner.Actor.Args.HandleReq req
         | WebSocketEvt evt -> handleEvt evt

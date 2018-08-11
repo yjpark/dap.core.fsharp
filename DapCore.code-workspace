@@ -1,9 +1,6 @@
 {
 	"folders": [
 		{
-			"path": "src/Dap.Build"
-		},
-		{
 			"path": "src/Fable.Dap.Prelude"
 		},
 		{

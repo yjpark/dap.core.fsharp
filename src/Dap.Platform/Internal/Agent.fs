@@ -52,7 +52,7 @@ let internal update<'runner, 'args, 'model, 'msg, 'req, 'evt
                     and 'model : not struct and 'msg :> IMsg
                     and 'req :> IReq and 'evt :> IEvt>
                 : AgentUpdate<'runner, 'args, 'model, 'msg, 'req, 'evt> =
-    fun runner model msg ->
+    fun runner msg model ->
         match msg with
         | AgentReq req ->
             handleReq req

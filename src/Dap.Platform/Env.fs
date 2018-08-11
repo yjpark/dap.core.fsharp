@@ -134,7 +134,7 @@ let private handleReq (req : EnvReq) : EnvOperate =
     | DoGetAgent (a, b, c) -> doGetAgent req (a, b, c)
 
 let private update : Update<IEnv, EnvModel, EnvMsg> =
-    fun runner model msg ->
+    fun runner msg model ->
         match msg with
         | EnvReq req -> handleReq req
         | EnvEvt _evt -> noOperation

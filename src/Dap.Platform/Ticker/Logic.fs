@@ -125,7 +125,7 @@ let private handleInternalEvt evt : ActorOperate =
         <| runner <| (model, cmd)
 
 let private update : ActorUpdate<Agent, Args, Model, Msg, Req, Evt> =
-    fun runner model msg ->
+    fun runner msg model ->
         match msg with
         | InternalEvt evt -> handleInternalEvt evt
         | TickerReq req -> handleReq req

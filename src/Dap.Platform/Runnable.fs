@@ -67,7 +67,7 @@ let internal process' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'ms
             | None ->
                 failWith "Not_Started" msg
             | Some state ->
-                runnable.Logic.Update runner state msg
+                runnable.Logic.Update runner msg state
         setState model
         (runner :> ITaskManager).StartPendingTasks () |> ignore
         trackDurationStatsInMs runner time runnable.Stats.Process (getSlowProcessMessage msg) |> ignore

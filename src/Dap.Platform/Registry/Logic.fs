@@ -88,7 +88,7 @@ let private handleReq req : ActorOperate<'k, 'v> =
         <| runner <| (model, cmd)
 
 let private update : ActorUpdate<Agent<'k, 'v>, Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
-    fun runner model msg ->
+    fun runner msg model ->
         match msg with
         | RegistryReq req ->
             handleReq req

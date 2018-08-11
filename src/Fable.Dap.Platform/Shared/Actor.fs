@@ -158,8 +158,8 @@ let internal create'
     let (model, cmd) = spec.Logic.Init agent spec.Args
     let actor = new Actor<'args, 'model, 'msg, 'req, 'evt> (agent, spec, model)
     let updateActor : Update<'wrapRunner, NoModel, 'msg> =
-        fun _runner model' msg ->
-            let (model, cmd) = spec.Logic.Update runner actor.State msg
+        fun _runner msg model' ->
+            let (model, cmd) = spec.Logic.Update runner msg actor.State
             actor.SetState msg model
             (model', cmd)
     let wrapperSpec : WrapperSpec<'wrapRunner, 'agentModel, 'agentMsg, NoModel, 'msg> =

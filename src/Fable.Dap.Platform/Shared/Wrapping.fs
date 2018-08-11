@@ -15,7 +15,7 @@ type Wrapping<'runner, 'model, 'msg, 'subModel, 'subMsg> (wrapMsg', spec', subMs
     member _this.SubMsg = subMsg
     member _this.Operate =
         fun runner (model, cmd) ->
-            let (subModel, subCmd) = spec.UpdateSub runner (spec.GetSub model) subMsg
+            let (subModel, subCmd) = spec.UpdateSub runner subMsg (spec.GetSub model)
             let (reactModel, reactCmd) = spec.ReactSub runner subMsg subModel (spec.SetSub subModel model)
             let mapSubCmd = fun (m : 'subMsg) ->
                 wrapMsg <| new Wrapping<'runner, 'model, 'msg, 'subModel, 'subMsg> (wrapMsg, spec, m)

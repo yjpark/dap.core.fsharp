@@ -74,7 +74,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
                 | None ->
                     failWith "Not_Started" msg
                 | Some actor ->
-                    let (model, cmd) = this.Spec.Logic.Update runner actor.State msg
+                    let (model, cmd) = this.Spec.Logic.Update runner msg actor.State
                     actor.SetState msg model
                     (model, cmd)
             cmd
