@@ -89,12 +89,16 @@ let instantToString (format : string) =
     let pattern = InstantPattern.CreateWithInvariantCulture (format)
     fun (time : Instant) -> pattern.Format (time)
 
+// https://nodatime.org/2.0.x/api/NodaTime.Text.InstantPattern.html
+
 type InstantFormat =
     | Date
     | DateHour
     | DateHourMinute
     | DateHourMinuteSecond
     | DateHourMinuteSecond'
+    | DateHourMinuteSecondSub
+    | DateHourMinuteSecondSub'
     | Custom of string
 with
     member this.Format =
@@ -104,6 +108,8 @@ with
         | DateHourMinute -> instantToString "uuuu-MM-ddTHH:mm"
         | DateHourMinuteSecond -> instantToString "uuuu-MM-ddTHH:mm:ss"
         | DateHourMinuteSecond' -> instantToString "uuuu-MM-ddTHH_mm_ss"
+        | DateHourMinuteSecondSub -> instantToString "uuuu-MM-ddTHH:mm:ss;FFFFFFFFF"
+        | DateHourMinuteSecondSub' -> instantToString "uuuu-MM-ddTHH_mm_ss_FFFFFFFFF"
         | Custom format -> instantToString format
 
 let noDuration = Duration.Zero
