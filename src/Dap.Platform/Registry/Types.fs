@@ -2,7 +2,9 @@ module Dap.Platform.Registry.Types
 
 open Dap.Platform
 
-type Args = NoArgs
+type Registry<'k, 'v when 'k : comparison> = IActor<Req<'k, 'v>, Evt<'k, 'v>>
+
+and Args = NoArgs
 
 and Model<'k, 'v when 'k : comparison> = {
     Entries : Map<'k, 'v>
@@ -27,7 +29,6 @@ and Msg<'k, 'v> =
     | RegistryReq of Req<'k, 'v>
     | RegistryEvt of Evt<'k, 'v>
 with interface IMsg
-
 
 let castEvt<'k, 'v> : CastEvt<Msg<'k, 'v>, Evt<'k, 'v>> =
     function

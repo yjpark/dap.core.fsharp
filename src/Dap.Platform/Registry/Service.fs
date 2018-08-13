@@ -8,6 +8,8 @@ open Dap.Platform.Registry.Types
 [<Literal>]
 let Kind = "Registry"
 
+type Registry<'k, 'v when 'k : comparison> = IActor<Req<'k, 'v>, Evt<'k, 'v>>
+
 type Service<'k, 'v when 'k : comparison> = IAgent<Req<'k, 'v>, Evt<'k, 'v>>
 
 let addAsync'<'k, 'v when 'k : comparison> kind key =

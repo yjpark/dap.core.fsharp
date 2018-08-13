@@ -8,6 +8,7 @@ open Dap.Platform.Ticker.Types
 [<Literal>]
 let Kind = "Ticker"
 
+type Ticker = Ticker
 type Service = IAgent<Req, Evt>
 type Args = Dap.Platform.Ticker.Types.Args
 
