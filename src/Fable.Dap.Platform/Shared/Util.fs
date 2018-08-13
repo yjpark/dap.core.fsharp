@@ -120,3 +120,6 @@ let subscribeEvent (owner : IOwner) (_model : 'model)
         let ident = sprintf "%A" wrapper
         onEvent.Add (dispatch << wrapper)
     Elmish.Cmd.ofSub sub
+
+let newGuid () =
+    (System.Guid.NewGuid ()) .ToString ()
