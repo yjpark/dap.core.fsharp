@@ -2,6 +2,8 @@
 [<RequireQualifiedAccess>]
 module Dap.Platform.Part
 
+open FSharp.Control.Tasks.V2
+
 open Dap.Prelude
 
 type IPart =
@@ -80,7 +82,10 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
             (this :> IDispatcher<'msg>).SetDispatch (fun (_time, msg) ->
                 agent'.Deliver <| partMsg' msg
             )
-            cmd |> List.iter (fun m -> m <| dispatch' this)
+            if cmd.Length > 0 then
+                this.AddTask ignoreOnFailed (fun _ -> task {
+                    cmd |> List.iter (fun m -> m <| dispatch' this)
+                })
     interface IDispatcher<'msg> with
         member _this.Dispatch = dispatch
         member _this.SetDispatch dispatch' = dispatch <- Some dispatch'
