@@ -15,6 +15,7 @@ type IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
     inherit IPart
     inherit IAgent<'args, 'model, 'msg, 'req, 'evt>
     abstract Agent : IAgent<'actorMsg> with get
+    abstract Part : IActor<'args, 'model, 'req, 'evt> with get
     abstract Wrapper : Wrapper<'actorMsg, 'msg> with get
     abstract RunFunc4<'res> : Func<IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>, 'res> -> Result<'res, exn>
     abstract AddTask4 : OnFailed<IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>> -> GetTask<IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>, unit> -> unit
@@ -57,8 +58,10 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
     member _this.Wrapper = wrapper |> Option.get
     interface IPart with
         member this.Agent = this.Agent :> IAgent
+    member _this.Part = actor |> Option.get
     interface IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> with
         member this.Agent = this.Agent
+        member this.Part = this.Part
         member this.Wrapper = this.Wrapper
         member this.RunFunc4 func = runFunc' this func
         member this.AddTask4 onFailed getTask = addTask' this onFailed getTask
@@ -105,19 +108,18 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.Ident = (this.Agent :> IOwner).Ident
         member this.Disposed = (this.Agent :> IOwner).Disposed
     //IAgent<'args, 'model, 'msg, 'req, 'evt>
-    member _this.Actor = actor |> Option.get
     interface IAgent<'args, 'model, 'msg, 'req, 'evt> with
-        member this.Actor = this.Actor
+        member this.Actor = this.Part
         member this.RunFunc3 func = runFunc' this func
         member this.AddTask3 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask3 onFailed getTask = runTask' this onFailed getTask
     //IAgent<'req, 'evt>
-    member this.Post (req : 'req) = this.Actor.Handle req
-    member this.PostAsync (getReq : Callback<'res> -> 'req) = this.Actor.HandleAsync getReq
+    member this.Post (req : 'req) = this.Part.Handle req
+    member this.PostAsync (getReq : Callback<'res> -> 'req) = this.Part.HandleAsync getReq
     interface IAgent<'req, 'evt> with
         member this.Post req = this.Post req
         member this.PostAsync getReq = this.PostAsync getReq
-        member this.Actor = this.Actor :> IActor<'req, 'evt>
+        member this.Actor = this.Part :> IActor<'req, 'evt>
         member this.RunFunc2 func = runFunc' this func
         member this.AddTask2 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask2 onFailed getTask = runTask' this onFailed getTask

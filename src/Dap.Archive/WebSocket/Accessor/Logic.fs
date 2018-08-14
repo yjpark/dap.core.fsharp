@@ -123,7 +123,7 @@ let private onClientEvent (runner : Part<'actorMsg, 'pkt>)
 
 let private tryReconnect : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
-        match runner.Actor.Args.RetryDelay with
+        match runner.Part.Args.RetryDelay with
         | None ->
             (model, cmd)
         | Some delay ->
@@ -136,7 +136,7 @@ let private tryReconnect : PartOperate<'actorMsg, 'pkt> =
 
 let private doReconnect : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
-        if runner.Actor.State.Running then
+        if runner.Part.State.Running then
             runner.AddTask doReconnectFailed doReconnectAsync
         (runner, model, cmd)
         |=|> updateModel (fun m -> {m with Reconnecting = false})
@@ -150,7 +150,7 @@ let private handleInternalEvt evt : PartOperate<'actorMsg, 'pkt> =
             (runner, model, cmd)
             |=|> updateModel (fun m -> {m with Client = Some client ; Recorder = recorder})
         | OnConnected stats ->
-            match runner.Actor.Args.OnConnectedAsync with
+            match runner.Part.Args.OnConnectedAsync with
             | None -> ()
             | Some handler ->
                 runner.AddTask ignoreOnFailed <| callOnConnectedAsync handler
