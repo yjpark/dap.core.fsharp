@@ -109,8 +109,12 @@ let bindAsync (binderAsync : 'T1 -> Task<Result<'T2, 'E>>) (result : Task<Result
         return (Error err)
 }
 
-let getAsync (result : Task<Result<'T2, 'E>>) : Task<'T2> = task {
+let getAsync (result : Task<Result<'T, 'E>>) : Task<'T> = task {
     let! result = result
     return result |> get
+}
+
+let toAsync (result : Result<'T, 'E>) : Task<Result<'T, 'E>> = task {
+    return result
 }
 #endif
