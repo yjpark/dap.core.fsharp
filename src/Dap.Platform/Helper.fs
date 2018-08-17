@@ -25,3 +25,14 @@ let checkDirectory (runner : IRunner) (path : string) (section : string) =
     if not dirInfo.Exists then
         dirInfo.Create();
         logInfo runner section "Directory_Created" dirInfo
+
+let calcSha256Sum2 (content : string) : string =
+    use sha256 = System.Security.Cryptography.SHA256.Create()
+    let hash = sha256.ComputeHash (System.Text.Encoding.UTF8.GetBytes content)
+    hash
+    |> Array.map (fun b -> b.ToString "x2")
+    |> String.concat ""
+
+let calcSha256Sum2WithSalt (salt : string) (content : string) : string =
+    calcSha256Sum2 <| content + salt
+
