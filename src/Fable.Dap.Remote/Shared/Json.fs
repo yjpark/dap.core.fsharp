@@ -173,7 +173,9 @@ type Int64 with
 type NodaTime.Instant with
     static member JsonDecoder : JsonDecoder<Instant> =
         fun token ->
-            if token.Type <> JTokenType.String then
+            if token.Type = JTokenType.Date then
+                Ok <| Instant.FromDateTimeUtc (token.Value<DateTime> ())
+            elif token.Type <> JTokenType.String then
                 Error <| D.BadPrimitive("a string of Instant", token)
             else
                 instantOfText (token.Value<string> ())
