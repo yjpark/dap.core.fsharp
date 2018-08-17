@@ -34,4 +34,4 @@ let decrypt (runner : IRunner) (key : string) (content : string) =
         Encoding.UTF8.GetString (output, 0, output.Length)
     with e ->
         logException runner "Crypto" "Decrypt_Failed" (key, content) e
-        ""
+        content
