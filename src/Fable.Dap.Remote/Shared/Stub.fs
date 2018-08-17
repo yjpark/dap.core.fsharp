@@ -53,6 +53,7 @@ type ResponseSpec<'res> = {
     ParamDecoder : JsonDecoder<obj array>
     GetResResult : Json -> obj
     GetErrResult : RemoteReason' -> obj
+    GetErrReason : LocalReason -> obj
 } with
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
@@ -72,40 +73,45 @@ type ResponseSpec<'res> = {
             |> Ok
             :> obj
         let getErrResult = fun (reason : RemoteReason') ->
-            match reason with
-            | InvalidKind' kind ->
-                InvalidKind kind
-            | RemoteNak' json ->
-                tryCastJson NakJson.JsonDecoder json
-                |> Result.mapError (fun err ->
-                    sprintf "Stub.DecodeNak -> %s" err
-                )|> Result.get
-                |> fun nak -> (nak.Err, nak.Detail)
-                |> RemoteNak
-            | RemoteError' json ->
-                tryCastJson errDecoder json
-                |> Result.mapError (fun err ->
-                    sprintf "Stub.DecodeErr<%s> -> %s" (typeof<'error>.FullName) err
-                )|> Result.get
-                |> RemoteError
-            | RemoteException' json ->
-                tryCastJson ExnJson.JsonDecoder json
-                |> Result.mapError (fun err ->
-                    sprintf "Stub.DecodeExn -> %s" err
-                )|> Result.get
-                |> fun exn -> (exn.Msg, exn.Trace)
-                |> RemoteException
-            | Timeout' seconds ->
-                Timeout seconds
-            |> Remote
-            |> Error
-            :> obj
+            let res : Result<'result, Reason<'error>> =
+                match reason with
+                | InvalidKind' kind ->
+                    InvalidKind kind
+                | RemoteNak' json ->
+                    tryCastJson NakJson.JsonDecoder json
+                    |> Result.mapError (fun err ->
+                        sprintf "Stub.DecodeNak -> %s" err
+                    )|> Result.get
+                    |> fun nak -> (nak.Err, nak.Detail)
+                    |> RemoteNak
+                | RemoteError' json ->
+                    tryCastJson errDecoder json
+                    |> Result.mapError (fun err ->
+                        sprintf "Stub.DecodeErr<%s> -> %s" (typeof<'error>.FullName) err
+                    )|> Result.get
+                    |> RemoteError
+                | RemoteException' json ->
+                    tryCastJson ExnJson.JsonDecoder json
+                    |> Result.mapError (fun err ->
+                        sprintf "Stub.DecodeExn -> %s" err
+                    )|> Result.get
+                    |> fun exn -> (exn.Msg, exn.Trace)
+                    |> RemoteException
+                | Timeout' seconds ->
+                    Timeout seconds
+                |> Remote
+                |> Error
+            res :> obj
+        let getErrReason = fun (reason : LocalReason) ->
+            let res : Result<'result, Reason<'error>> = Error <| Local reason
+            res :> obj
         {
             Kind = kind
             Case = case
             ParamDecoder = FieldSpec.GetFieldsDecoder fields
             GetResResult = getResResult
             GetErrResult = getErrResult
+            GetErrReason = getErrReason
         }
 
 #if FABLE_COMPILER
@@ -141,7 +147,7 @@ type StubSpec<'req, 'res, 'evt> when 'evt :> IEvent = {
             | Error reason ->
                 match reason with
                 | Local' reason ->
-                    spawnRes this.Response req (fun _s -> Local reason |> Error :> obj)
+                    spawnRes this.Response req (fun s -> s.GetErrReason reason)
                 | Remote' reason ->
                     spawnRes this.Response req (fun s -> s.GetErrResult reason)
         with e ->
