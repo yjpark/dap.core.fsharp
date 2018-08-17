@@ -66,14 +66,15 @@ type ResponseSpec<'res> = {
                             (errDecoder : JsonDecoder<'error>) : ResponseSpec<'res> =
         let case = case |> Union.findCase<'res>
         let getResResult = fun (json : Json) ->
-            tryCastJson resDecoder json
-            |> Result.mapError (fun err ->
-                sprintf "Stub.DecodeRes<%s> -> %s" (typeof<'result>.FullName) err
-            )|> Result.get
-            |> Ok
-            :> obj
+            let res : StubResult<'result, 'error> =
+                tryCastJson resDecoder json
+                |> Result.mapError (fun err ->
+                    sprintf "Stub.DecodeRes<%s> -> %s" (typeof<'result>.FullName) err
+                )|> Result.get
+                |> Ok
+            res :> obj
         let getErrResult = fun (reason : RemoteReason') ->
-            let res : Result<'result, Reason<'error>> =
+            let reason : RemoteReason<'error> =
                 match reason with
                 | InvalidKind' kind ->
                     InvalidKind kind
@@ -99,11 +100,12 @@ type ResponseSpec<'res> = {
                     |> RemoteException
                 | Timeout' seconds ->
                     Timeout seconds
-                |> Remote
-                |> Error
+            let res : StubResult<'result, 'error> =
+                Error <| Remote reason
             res :> obj
         let getErrReason = fun (reason : LocalReason) ->
-            let res : Result<'result, Reason<'error>> = Error <| Local reason
+            let res : StubResult<'result, 'error> =
+                Error <| Local reason
             res :> obj
         {
             Kind = kind
