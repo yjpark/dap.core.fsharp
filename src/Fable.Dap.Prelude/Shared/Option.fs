@@ -15,6 +15,26 @@ let bind3 (binder : 'a -> 'b -> 'c -> Option<'r> ) (a : Option<'a>) (b : Option<
     | (Some a, Some b, Some c) -> binder a b c
     | _ -> None
 
+let map2 (mapper : 'a -> 'b -> 'r ) (a : Option<'a>) (b : Option<'b>) =
+    match (a, b) with
+    | (Some a, Some b) -> Some <| mapper a b
+    | _ -> None
+
+let map3 (mapper : 'a -> 'b -> 'c -> 'r ) (a : Option<'a>) (b : Option<'b>) (c : Option<'c>) =
+    match (a, b, c) with
+    | (Some a, Some b, Some c) -> Some <| mapper a b c
+    | _ -> None
+
+let iter2 (func : 'a -> 'b -> unit ) (a : Option<'a>) (b : Option<'b>) =
+    match (a, b) with
+    | (Some a, Some b) -> func a b
+    | _ -> ()
+
+let iter3 (func : 'a -> 'b -> 'c -> unit ) (a : Option<'a>) (b : Option<'b>) (c : Option<'c>) =
+    match (a, b, c) with
+    | (Some a, Some b, Some c) -> func a b c
+    | _ -> ()
+
 let toResult (err : 'err) (a : Option<'a>) : Result<'a, 'err> =
     match a with
     | Some a -> Ok a
