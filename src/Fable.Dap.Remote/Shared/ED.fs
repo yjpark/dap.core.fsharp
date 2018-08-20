@@ -34,6 +34,9 @@ type E = Encoder with
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
+    static member kindStr<'a> (a : 'a) =
+        Union.getKind<'a> (a :> obj)
+        |> TE.string
     static member kind<'a> (a : 'a) =
         Union.getKind<'a> (a :> obj)
         |> JsonKind |> JsonKind.JsonEncoder
@@ -74,6 +77,17 @@ type D = Decoder with
 #endif
     static member union<'u> (spec : CaseSpec<'u> list) : JsonDecoder<'u> = getUnionDecoder<'u> spec
 
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+    static member kindStr<'u> (json : obj) : Result<'u, TD.DecoderError> =
+#else
+    static member kindStr<'u> (json : Json) : Result<'u, TD.DecoderError> =
+#endif
+        json
+        |> TD.string
+        |> Result.map (fun kind ->
+            Union.fromKind<'u> kind
+        )
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
     static member kind<'u> (json : obj) : Result<'u, TD.DecoderError> =
