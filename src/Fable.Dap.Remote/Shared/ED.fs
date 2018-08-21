@@ -37,6 +37,9 @@ type E = Encoder with
     static member kindStr<'a> (a : 'a) =
         Union.getKind<'a> (a :> obj)
         |> TE.string
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
     static member kind<'a> (a : 'a) =
         Union.getKind<'a> (a :> obj)
         |> JsonKind |> JsonKind.JsonEncoder
