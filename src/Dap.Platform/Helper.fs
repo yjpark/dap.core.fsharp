@@ -13,9 +13,12 @@ let inline addFutureCmd (delay : float<second>) (msg : 'msg) (runner : ^runner) 
     (model, cmd)
 
 let calcSha256Sum (content : string) : string =
-    use sha256 = System.Security.Cryptography.SHA256.Create()
-    let hash = sha256.ComputeHash (System.Text.Encoding.UTF8.GetBytes content)
-    System.Convert.ToBase64String hash
+    if content = "" || content =? null then
+        ""
+    else
+        use sha256 = System.Security.Cryptography.SHA256.Create()
+        let hash = sha256.ComputeHash (System.Text.Encoding.UTF8.GetBytes content)
+        System.Convert.ToBase64String hash
 
 let calcSha256SumWithSalt (salt : string) (content : string) : string =
     calcSha256Sum <| content + salt
