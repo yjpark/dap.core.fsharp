@@ -39,16 +39,20 @@ let doSendQueue : ActorOperate<'extra, 'sub, 'req, 'res, 'evt> =
         |> List.iter ^<| doSend' runner
         ({model with SendQueue = []}, cmd)
 
+let doDropQueue : ActorOperate<'extra, 'sub, 'req, 'res, 'evt> =
+    fun runner (model, cmd) ->
+        ({model with SendQueue = []}, cmd)
+
 let private doEnqueue' (runner : Proxy<'extra, 'sub, 'req, 'res, 'evt>) ((req, pkt) : IRequest * Packet) : unit =
     runner.Deliver <| InternalEvt ^<| DoEnqueue ^<| (req, pkt)
 
 let private doSend (runner : Proxy<'extra, 'sub, 'req, 'res, 'evt>)
                    ((req, pkt) : IRequest * Packet) : LocalReason option =
-    match runner.Actor.Args.Sub.CalcConnected runner.Actor.State.Extra with
-    | false ->
-        doEnqueue' runner (req, pkt)
-    | true ->
+    match runner.Actor.State.Status with
+    | LinkStatus.Linked ->
         doSend' runner (req, pkt)
+    | _ ->
+        doEnqueue' runner (req, pkt)
     None
 
 #if FABLE_COMPILER
@@ -100,6 +104,19 @@ let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'extra, 'sub, '
             handleClient <| Client.OnSent (req, pkt, res)
         | DoEnqueue (req, pkt) ->
             updateModel <| doEnqueue (req, pkt)
+        | DoSetStatus status ->
+            (match status with
+            | LinkStatus.Linked ->
+                doSendQueue
+            | LinkStatus.Closed ->
+                doDropQueue
+            | _ ->
+                noOperation
+            )|-|- updateModel (fun m -> {m with Status = status})
+            |-|- addSubCmd InternalEvt DoTriggerOnStatus
+        | DoTriggerOnStatus ->
+            model.StatusEvent.Trigger model.Status
+            noOperation
         <| runner <| (model, cmd)
 
 #if FABLE_COMPILER
@@ -128,7 +145,9 @@ let private init : ActorInit<Args<'extra, 'sub, 'req, 'res, 'evt>, Model<'extra,
         ({
             Client = None
             SendQueue = []
+            StatusEvent = new Bus<LinkStatus> (runner :> IOwner)
             ResponseEvent = new Bus<'res> (runner :> IOwner)
+            Status = LinkStatus.NoLink
             Extra = args.Sub.NewExtra ()
         }, Cmd.ofMsg (InternalEvt DoInit))
 

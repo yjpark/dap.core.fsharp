@@ -20,7 +20,7 @@ let private doReadPktAsync (link : Link<'socket>)
             let mutable finished = false
             let socket = link.Socket :> WebSocket
             while not finished do
-                if runner.Actor.State.Closing then
+                if runner.Actor.State.Status = LinkStatus.Closing then
                     finished <- true
                     closed <- true
                 else
@@ -62,7 +62,7 @@ let private doReadPktAsync (link : Link<'socket>)
 
 let internal doReceiveFailed : OnFailed<Agent<'socket, 'pkt, 'req>> =
     fun runner e ->
-        fireOnDisconnected runner (Some e)
+        runner.Deliver <| InternalEvt ^<| DoRefreshStatus (Some e)
 
 let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
     fun runner -> task {
@@ -77,7 +77,7 @@ let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
         if socket.State = WebSocketState.Open then
             logInfo runner "Link" "Closing" link.Ident
             do! socket.CloseAsync (WebSocketCloseStatus.Empty, "", link.Token)
-        fireOnDisconnected runner None
+        runner.Deliver <| InternalEvt ^<| DoRefreshStatus None
     }
 
 let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'socket, 'pkt, 'req>, SendStats> =

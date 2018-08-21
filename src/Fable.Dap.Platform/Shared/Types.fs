@@ -163,3 +163,11 @@ with interface IReq
 
 and NoEvt = NoEvt
 with interface IEvt
+
+type LinkStatus =
+    | Unknown
+    | NoLink
+    | Linking
+    | Linked
+    | Closing
+    | Closed

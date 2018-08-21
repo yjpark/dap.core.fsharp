@@ -31,12 +31,17 @@ let internal doSend (runner : Proxy<'req, 'res, 'evt>)
 let private handlerSocketEvt (evt : WebSocketTypes.Evt<Packet>) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         match evt with
-        | WebSocketTypes.OnConnected ->
-            BaseLogic.doSendQueue
-        | WebSocketTypes.OnDisconnected ->
-            addFutureCmd 1.0<second> <| SubEvt DoReconnect
         | WebSocketTypes.OnReceived pkt ->
             BaseLogic.handleClient <| Client.OnReceived pkt
+        | WebSocketTypes.OnStatusChanged status ->
+            addSubCmd InternalEvt <| DoSetStatus status
+            |-|- (
+                match status with
+                | LinkStatus.Closed ->
+                    addFutureCmd 1.0<second> <| SubEvt DoReconnect
+                | _ ->
+                    noOperation
+            )
         | _ ->
             noOperation
         <| runner <| (model, noCmd)
@@ -73,9 +78,3 @@ let internal doInit : ActorOperate<'req, 'res, 'evt> =
         let socket = runner.Env |> WebSocketAgent.spawn runner.Ident.Key args :?> WebSocketTypes.Agent<Packet>
         (runner, model, cmd)
         |=|> addSubCmd SubEvt ^<| SetSocket socket
-
-let internal calcConnected : Extra -> bool =
-    fun extra ->
-        extra.Socket
-        |> Option.map (fun s -> s.Actor.State.Connected)
-        |> Option.defaultValue false

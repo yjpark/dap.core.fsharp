@@ -11,9 +11,9 @@ type ActorOperate<'pkt> = ActorOperate<Agent<'pkt>, Args<'pkt>, Model<'pkt>, Msg
 let private createSocket (runner : Agent<'pkt>)  =
     let socket = Fable.Import.Browser.WebSocket.Create runner.Actor.Args.Uri
     socket.onopen <- fun _ ->
-        runner.Deliver <| WebSocketEvt OnConnected
+        runner.Deliver <| InternalEvt OnLinked
     socket.onclose <- fun _ ->
-        runner.Deliver <| WebSocketEvt OnDisconnected
+        runner.Deliver <| InternalEvt OnClosed
     socket.onmessage <- fun m ->
         try
             let pkt = runner.Actor.Args.Decode m.data
@@ -24,12 +24,20 @@ let private createSocket (runner : Agent<'pkt>)  =
             logException runner "Receive" "Decode_Failed" m e
     socket
 
+let internal doSetStatus (status : LinkStatus)  : ActorOperate<'pkt> =
+    fun runner (model, cmd) ->
+        (runner, model, cmd)
+        |-|> updateModel (fun m -> {m with Status = status})
+        |=|> addSubCmd WebSocketEvt ^<| OnStatusChanged status
+
 let private doConnect : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match model.Socket with
         | None ->
             let socket = createSocket runner
-            ({model with Socket = Some socket}, cmd)
+            (runner, model, cmd)
+            |-|> updateModel (fun m -> {m with Socket = Some socket})
+            |=|> doSetStatus LinkStatus.Linking
         | Some socket ->
             logError runner "Connect" "Socket_Exist" (runner.Actor.Args.Uri, socket)
             (model, cmd)
@@ -72,31 +80,29 @@ let private handleReq (req : Req<'pkt>) : ActorOperate<'pkt> =
             doSend req (pkt, callback)
         <| runner <| (model, cmd)
 
-let private handleEvt (evt : Evt<'pkt>) : ActorOperate<'pkt> =
+let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match evt with
-        | OnConnected ->
-            updateModel <| fun m -> {m with Connected = true}
-        | OnDisconnected ->
-            updateModel <| fun m -> {m with Socket = None ; Connected = false}
-        | _ ->
-            noOperation
+        | OnLinked ->
+            doSetStatus LinkStatus.Linked
+        | OnClosed ->
+            updateModel (fun m -> {m with Socket = None})
+            |-|- doSetStatus LinkStatus.Closed
         <| runner <| (model, cmd)
 
 let private update : ActorUpdate<Agent<'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
     fun runner msg model ->
         match msg with
-        | WebSocketReq req ->
-            handleReq req
-        | WebSocketEvt evt ->
-            handleEvt evt
+        | WebSocketReq req -> handleReq req
+        | WebSocketEvt evt -> noOperation
+        | InternalEvt evt -> handleInternalEvt evt
         <| runner <| (model, noCmd)
 
 let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
     fun _runner _args ->
         ({
             Socket = None
-            Connected = false
+            Status = LinkStatus.NoLink
         }, Cmd.ofMsg <| WebSocketReq DoConnect)
 
 let spec<'pkt> (args : Args<'pkt>) =

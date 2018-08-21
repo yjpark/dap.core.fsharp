@@ -22,7 +22,6 @@ let spawn'<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent>
         DoInit = Logic.doInit
         HandleSub = Logic.handleSub
         DoSend = Logic.doSend
-        CalcConnected = Logic.calcConnected
     }
     let args = Args<Extra, SubEvt, 'req, 'res, 'evt>.Create subSpec stubSpec uri logTraffic
     let spec = BaseLogic.spec<Extra, SubEvt, 'req, 'res, 'evt> args

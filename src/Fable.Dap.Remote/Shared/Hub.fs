@@ -20,7 +20,7 @@ type HubReason =
 type Hub<'req, 'evt> = {
     PostReq : 'req -> unit
     OnEvent : IBus<'evt>
-    OnDisconnected : unit -> unit
+    OnStatusChanged : LinkStatus -> unit
 }
 
 type OnHandled = Result<IResult, HubReason> -> unit
@@ -90,14 +90,14 @@ let getCallback<'res, 'err when 'res :> IResult and 'err :> IError> (runner : IR
     :> obj
 
 #if !FABLE_COMPILER
-let getHub<'agent, 'req, 'evt when 'agent :> IAgent<'req, 'evt>> (env : IEnv) (kind : Kind) (onDisconnected : 'agent -> unit) : GetHub<'req, 'evt> =
+let getHub<'agent, 'req, 'evt when 'agent :> IAgent<'req, 'evt>> (env : IEnv) (kind : Kind) (onStatusChanged : 'agent -> LinkStatus -> unit) : GetHub<'req, 'evt> =
     fun key setHub ->
         let setHub' = fun ((agent, _isNew) : IAgent * bool) ->
             let agent = agent :?> 'agent
             let hub : Hub<'req, 'evt> = {
                 PostReq = agent.Post
                 OnEvent = agent.Actor.OnEvent
-                OnDisconnected = fun () -> onDisconnected agent
+                OnStatusChanged = onStatusChanged agent
             }
             setHub hub
         env.Handle <| DoGetAgent kind key ^<| callback env setHub'

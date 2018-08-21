@@ -18,7 +18,6 @@ let spec (stubSpec : StubSpec<'req, 'res, 'evt>) uri logTraffic =
         DoInit = Logic.doInit
         HandleSub = Logic.handleSub
         DoSend = Logic.doSend
-        CalcConnected = Logic.calcConnected
     }
     Args<Extra, SubEvt, 'req, 'res, 'evt>.Create subSpec stubSpec uri logTraffic
     |> BaseLogic.spec<Extra, SubEvt, 'req, 'res, 'evt>

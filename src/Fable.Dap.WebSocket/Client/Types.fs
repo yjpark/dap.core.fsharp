@@ -25,7 +25,7 @@ type Args<'pkt> = {
 
 and Model<'pkt> = {
     Socket : Fable.Import.Browser.WebSocket option
-    Connected : bool
+    Status : LinkStatus
 }
 
 and Req<'pkt> =
@@ -34,15 +34,19 @@ and Req<'pkt> =
 with interface IReq
 
 and Evt<'pkt> =
-    | OnConnected
-    | OnDisconnected
     | OnSent of 'pkt
     | OnReceived of 'pkt
+    | OnStatusChanged of LinkStatus
 with interface IEvt
+
+and InternalEvt =
+    | OnLinked
+    | OnClosed
 
 and Msg<'pkt> =
     | WebSocketReq of Req<'pkt>
     | WebSocketEvt of Evt<'pkt>
+    | InternalEvt of InternalEvt
 with interface IMsg
 
 let castEvt<'pkt> : CastEvt<Msg<'pkt>, Evt<'pkt>> =

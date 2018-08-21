@@ -44,7 +44,8 @@ type StubResult<'res, 'err> = Result<'res, Reason<'err>>
 
 type IProxy<'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEvent =
     inherit IAgent<'req, 'evt>
-    abstract Connected : bool with get
+    abstract Status : LinkStatus with get
+    abstract OnStatus : IBus<LinkStatus>
     abstract OnResponse : IBus<'res>
 
 type ResponseSpec<'res> = {

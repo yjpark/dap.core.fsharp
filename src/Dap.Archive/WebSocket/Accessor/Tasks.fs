@@ -34,7 +34,7 @@ let internal doSetupAsync : GetReplyTask<Part<'actorMsg, 'pkt>, unit> =
         runner.Deliver <| InternalEvt ^<| OnSetup (req, callback, client, recorder)
     }
 
-let internal doConnectAsync : GetTask<Part<'actorMsg, 'pkt>, WebSocketTypes.ConnectedStats> =
+let internal doConnectAsync : GetTask<Part<'actorMsg, 'pkt>, WebSocketTypes.LinkedStats> =
     fun runner -> task {
         let uri = runner.Part.State.Uri |> Option.get
         let cts = runner.Part.State.Cts
@@ -45,19 +45,21 @@ let internal doConnectAsync : GetTask<Part<'actorMsg, 'pkt>, WebSocketTypes.Conn
 
 let internal doReconnectFailed : OnFailed<Part<'actorMsg, 'pkt>> =
     fun runner e ->
-        if not runner.Part.State.Connected then
-            runner.Deliver <| InternalEvt ^<| OnDisconnected None
+        if runner.Part.State.Status <> LinkStatus.Closed then
+            runner.Deliver <| InternalEvt ^<| OnClosed None
 
 
 let internal doReconnectAsync : GetTask<Part<'actorMsg, 'pkt>, unit> =
     fun runner -> task {
-        if not runner.Part.State.Connected then
+        if runner.Part.State.Status <> LinkStatus.Linking
+                && runner.Part.State.Status <> LinkStatus.Linked then
+            let! stats = doConnectAsync runner
             let! stats = doConnectAsync runner
             ()
         return ()
     }
 
-let internal doStartAsync : GetReplyTask<Part<'actorMsg, 'pkt>, WebSocketTypes.ConnectedStats option> =
+let internal doStartAsync : GetReplyTask<Part<'actorMsg, 'pkt>, WebSocketTypes.LinkedStats option> =
     fun req callback runner -> task {
         let! stats = doConnectAsync runner
         reply runner callback <| ack req ^<| Some stats
@@ -77,8 +79,8 @@ let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Part<'actorMsg, 'pkt>, WebS
         reply runner callback <| ack req stats
     }
 
-let internal callOnConnectedAsync (onConnectedAsync : GetTask<Client<'pkt>, unit>) : GetTask<Part<'actorMsg, 'pkt>, unit> =
+let internal callOnLinkedAsync (onLinkedAsync : GetTask<Client<'pkt>, unit>) : GetTask<Part<'actorMsg, 'pkt>, unit> =
     fun runner -> task {
         let client = runner.Part.State.Client |> Option.get
-        do! onConnectedAsync client
+        do! onLinkedAsync client
     }

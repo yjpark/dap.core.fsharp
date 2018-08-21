@@ -29,16 +29,14 @@ let private handlerSocketEvt (evt : WebSocket.Evt<Packet>) : ActorOperate<'req, 
         handleService <| Service.OnReceived pkt
     | WebSocket.OnSent (_stats, pkt) ->
         handleService <| Service.OnSent pkt
-    | WebSocket.OnDisconnected _stats ->
+    | WebSocket.OnStatusChanged status ->
         fun _runner (model, msg) ->
             model.Hub
             |> Option.map (fun hub ->
-                hub.OnDisconnected ()
+                hub.OnStatusChanged status
             )
             |> ignore
             (model, msg)
-    | _ ->
-        noOperation
 
 let private handleHubEvt (evt : 'evt) : ActorOperate<'req, 'evt> =
     handleService <| Service.DoSendEvent evt

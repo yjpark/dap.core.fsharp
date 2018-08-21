@@ -22,6 +22,53 @@ let internal doSend (runner : Agent<'socket, 'pkt, 'req>)
     | None ->
         reply runner callback <| nak req "Not_Connected" None
 
+let linkStatusOfSocket (socket : WebSocket) =
+    match socket.State with
+    | WebSocketState.None ->
+        LinkStatus.NoLink
+    | WebSocketState.Connecting ->
+        LinkStatus.Linking
+    | WebSocketState.Open ->
+        LinkStatus.Linked
+    | WebSocketState.CloseSent
+    | WebSocketState.CloseReceived ->
+        LinkStatus.Closing
+    | WebSocketState.Closed
+    | WebSocketState.Aborted ->
+        LinkStatus.Closed
+    | _ ->
+        LinkStatus.Unknown
+
+let internal doSetStatus (status : LinkStatus)  : ActorOperate<'socket, 'pkt, 'req> =
+    fun runner (model, cmd) ->
+        (runner, model, cmd)
+        |-|> updateModel (fun m -> {m with Status = status})
+        |=|> addSubCmd WebSocketEvt ^<| OnStatusChanged status
+
+let private doRefreshStatus (err : exn option) : ActorOperate<'socket, 'pkt, 'req> =
+    fun runner (model, cmd) ->
+        let status =
+            model.Link
+            |> Option.map (fun l -> linkStatusOfSocket l.Socket)
+            |> Option.defaultValue LinkStatus.NoLink
+        match err with
+        | None ->
+            logInfo runner "Link" "Refresh_Status" (model.Status, status, model.Link, model.Stats)
+        | Some e ->
+            logException runner "Link" "Refresh_Status" (model.Status, status, model.Link, model.Stats) e
+        if status <> model.Status then
+            (runner, model, cmd)
+            |=|> doSetStatus status
+        else
+            (model, cmd)
+
+let private onLinked (stats : LinkedStats) : ActorOperate<'socket, 'pkt, 'req> =
+    fun runner (model, cmd) ->
+        let stats = ConnectionStats.Create stats
+        (runner, model, cmd)
+        |-|> updateModel (fun m -> {m with Stats = Some stats})
+        |=|> addSubCmd InternalEvt ^<| DoRefreshStatus None
+
 let private handleEvt evt : ActorOperate<'socket, 'pkt, 'req> =
     fun runner (model, cmd) ->
         match evt with
@@ -37,10 +84,17 @@ let private handleEvt evt : ActorOperate<'socket, 'pkt, 'req> =
                 stats.SentCount <- stats.SentCount + 1
             )
             noOperation
-        | OnConnected stats ->
-            updateModel (fun m -> {m with Stats = Some (ConnectionStats.Create stats) ; Closing = false})
-        | OnDisconnected _stats ->
-            updateModel (fun m -> {m with Link = None ; Stats = None ; Closing = false})
+        | OnStatusChanged status ->
+            match status with
+            | LinkStatus.Closed ->
+                let stats =
+                    model.Stats
+                    |> Option.map (fun stats ->
+                        {stats with ClosedTime = Some runner.Clock.Now}
+                    )
+                updateModel (fun m -> {m with Stats = stats})
+            | _ ->
+                noOperation
         <| runner <| (model, cmd)
 
 let private update : ActorUpdate<Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> =
@@ -48,6 +102,10 @@ let private update : ActorUpdate<Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt,
         match msg with
         | WebSocketReq req -> runner.Actor.Args.HandleReq req
         | WebSocketEvt evt -> handleEvt evt
+        | InternalEvt evt ->
+            match evt with
+            | DoRefreshStatus err -> doRefreshStatus err
+            | OnLinked stats -> onLinked stats
         <| runner <| (model, [])
 
 let private init : ActorInit<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>> =
@@ -55,9 +113,11 @@ let private init : ActorInit<Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Ms
         ({
             Link = None
             Stats = None
-            Closing = false
+            Status = LinkStatus.NoLink
         }, noCmd)
 
 let spec (args : Args<'socket, 'pkt, 'req>) =
     new ActorSpec<Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>>
         (Agent<'socket, 'pkt, 'req>.Spawn, args, WebSocketReq, castEvt<'pkt, 'req>, init, update)
+
+

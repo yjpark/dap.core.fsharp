@@ -12,7 +12,7 @@ open Dap.WebSocket
 type Agent<'pkt> =  Dap.WebSocket.Types.Agent<ClientWebSocket, 'pkt, Req<'pkt>>
 
 and Req<'pkt> =
-    | DoConnect of string * CancellationToken * Callback<ConnectedStats>
+    | DoConnect of string * CancellationToken * Callback<LinkedStats>
     | DoSend of 'pkt * Callback<SendStats>
     | DoDisconnect of Callback<unit>
 with interface IReq

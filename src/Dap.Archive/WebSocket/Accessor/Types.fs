@@ -14,18 +14,18 @@ type Args<'pkt> = {
     ClientKind : Kind
     RetryDelay : float<second> option
     CreateRecorderAsync : GetTask<Client<'pkt>, EventRecorder.Agent option> option
-    OnConnectedAsync : GetTask<Client<'pkt>, unit> option
+    OnLinkedAsync : GetTask<Client<'pkt>, unit> option
 } with
     static member Create clientKind =
         {
             ClientKind = clientKind
             RetryDelay = None
             CreateRecorderAsync = None
-            OnConnectedAsync = None
+            OnLinkedAsync = None
         }
     member this.WithRetryDelay v = {this with RetryDelay = Some v}
     member this.WithCreateRecorderAsync v = {this with CreateRecorderAsync = Some v}
-    member this.WithOnConnectedAsync v = {this with OnConnectedAsync = Some v}
+    member this.WithOnLinkedAsync v = {this with OnLinkedAsync = Some v}
 
 and Model<'pkt> = {
     Uri : string option
@@ -35,21 +35,21 @@ and Model<'pkt> = {
     Running : bool
     Reconnecting : bool
 } with
-    member this.Connected =
+    member this.Status =
         this.Client
-        |> Option.map (fun c -> c.Actor.State.Connected)
-        |> Option.defaultValue false
+        |> Option.map (fun c -> c.Actor.State.Status)
+        |> Option.defaultValue LinkStatus.NoLink
 
 and Req<'pkt> =
     | DoSetup of string * Callback<unit>
     | DoSetUri of string * Callback<unit>
-    | DoStart of Callback<WebSocketTypes.ConnectedStats option>
+    | DoStart of Callback<WebSocketTypes.LinkedStats option>
     | DoStop of Callback<unit>
     | DoSend of 'pkt * Callback<WebSocketTypes.SendStats>
 with interface IReq
 
 and Evt<'pkt> =
-    | OnStarted of WebSocketTypes.ConnectedStats
+    | OnStarted of WebSocketTypes.LinkedStats option
     | OnStopped of WebSocketTypes.ConnectionStats option
     | OnSent of WebSocketTypes.SendStats * 'pkt
     | OnReceived of WebSocketTypes.ReceiveStats * 'pkt
@@ -57,8 +57,8 @@ with interface IEvt
 
 and InternalEvt<'pkt> =
     | OnSetup of  IReq * Callback<unit> * Client<'pkt> * (EventRecorder.Agent option)
-    | OnConnected of WebSocketTypes.ConnectedStats
-    | OnDisconnected of WebSocketTypes.ConnectionStats option
+    | OnLinked of WebSocketTypes.LinkedStats option
+    | OnClosed of WebSocketTypes.ConnectionStats option
     | DoReconnect
 
 and Msg<'pkt> =

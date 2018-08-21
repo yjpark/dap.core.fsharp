@@ -33,14 +33,14 @@ let private doAttach req (ident, token, socket, callback) : ActorOperate<'pkt> =
             let task = doReceiveAsync runner
             reply runner callback <| ack req (task :> Task)
             let (time, duration) = runner.Clock.CalcDuration(time)
-            let stats : ConnectedStats = {
+            let stats : LinkedStats = {
                 ProcessTime = processTime
                 ConnectedTime = time
                 ConnectDuration = duration
             }
             (runner, model, cmd)
             |-|> updateModel (fun m -> {m with Link = Some link})
-            |=|> addCmd ^<| WebSocketEvt ^<| OnConnected stats
+            |=|> addCmd ^<| InternalEvt ^<| OnLinked stats
 
 let private doSend req ((pkt, callback) : 'pkt * Callback<SendStats>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->

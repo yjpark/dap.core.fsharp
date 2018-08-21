@@ -31,21 +31,21 @@ let private doConnect req (uri, token, callback) : ActorOperate<'pkt> =
                 Buffer = Array.create<byte> runner.Actor.Args.BufferSize 0uy
             }
             replyAsync runner req callback doConnectFailed <| doConnectAsync
-            updateModel (fun m -> {m with Link = Some link})
+            BaseLogic.doSetStatus LinkStatus.Linking
         <| runner <| (model, cmd)
 
 let private doDisconnect req (callback : Callback<unit>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match model.Link with
         | Some link ->
-            match model.Closing with
-            | true ->
-                reply runner callback <| nak req "Alreading_Closing" link
-                (model, cmd)
-            | false ->
+            match model.Status with
+            | LinkStatus.Linked ->
                 reply runner callback <| ack req ()
                 (runner, model, cmd)
-                |=|> updateModel (fun m -> {m with Closing = true})
+                |=|> BaseLogic.doSetStatus LinkStatus.Closing
+            | _ ->
+                reply runner callback <| nak req "Not_Linked" (link, model.Status)
+                (model, cmd)
         | None ->
             reply runner callback <| nak req "Link_Not_Exist" ()
             (model, cmd)

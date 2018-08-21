@@ -22,10 +22,8 @@ let watch (agent : EventRecorder.Agent) (onEvent : IBus<WebSocketTypes.Evt<strin
             EventRecorder.appendEvent' agent "OnSent" pkt
         | WebSocketTypes.OnReceived (_stat, pkt) ->
             EventRecorder.appendEvent' agent "OnReceived" pkt
-        | WebSocketTypes.OnConnected stats ->
-            EventRecorder.appendEvent' agent "OnConnected" <| sprintf "%A" stats
-        | WebSocketTypes.OnDisconnected stats ->
-            EventRecorder.appendEvent' agent "OnDisconnected" <| sprintf "%A" stats
+        | WebSocketTypes.OnStatusChanged status ->
+            EventRecorder.appendEvent' agent "OnStatusChanged" <| sprintf "%A" status
     )
 
 let createForClientAsync (profile : Profile) (param : EventRecorder.BundleParam') (client : TextClient.Agent) = task {

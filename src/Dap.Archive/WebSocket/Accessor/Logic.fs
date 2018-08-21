@@ -36,7 +36,7 @@ let private doSetUri req ((uri, callback) : string * Callback<unit>) : PartOpera
             reply runner callback <| nak req "Not_Setup" ()
             (model, cmd)
 
-let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats option>) : PartOperate<'actorMsg, 'pkt> =
+let private doStart req (callback : Callback<WebSocketTypes.LinkedStats option>) : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match model.Uri with
         | Some uri ->
@@ -50,9 +50,11 @@ let private doStart req (callback : Callback<WebSocketTypes.ConnectedStats optio
                     reply runner callback <| nak req "Setup_Not_Succeed" model
                     (model, cmd)
                 | Some client ->
-                    if client.Actor.State.Connected then
+                    match client.Actor.State.Status with
+                    | LinkStatus.Linking
+                    | LinkStatus.Linked ->
                         reply runner callback <| ack req None
-                    else
+                    | _ ->
                         replyAsync runner req callback nakOnFailed doStartAsync
                     (runner, model, cmd)
                     |=|> updateModel (fun m -> {m with Running = true})
@@ -74,9 +76,11 @@ let private doStop req (callback : Callback<unit>) : PartOperate<'actorMsg, 'pkt
                     reply runner callback <| nak req "Setup_Not_Succeed" model
                     (model, cmd)
                 | Some client ->
-                    if not client.Actor.State.Connected || client.Actor.State.Closing then
+                    match client.Actor.State.Status with
+                    | LinkStatus.Closing
+                    | LinkStatus.Closed ->
                         reply runner callback <| ack req ()
-                    else
+                    | _ ->
                         replyAsync runner req callback nakOnFailed doStopAsync
                     (runner, model, cmd)
                     |=|> updateModel (fun m -> {m with Running = false})
@@ -90,12 +94,11 @@ let private doSend req ((pkt, callback) : 'pkt * Callback<WebSocketTypes.SendSta
         | None ->
             reply runner callback <| nak req "Client_Not_Exist" model.Uri
         | Some client ->
-            if not client.Actor.State.Connected then
-                reply runner callback <| nak req "Client_Not_Connected" model.Uri
-            elif client.Actor.State.Closing then
-                reply runner callback <| nak req "Client_Closing" model.Uri
-            else
+            match client.Actor.State.Status with
+            | LinkStatus.Linked ->
                 replyAsync runner req callback nakOnFailed <| doSendAsync pkt
+            | _ ->
+                reply runner callback <| nak req "Client_Not_Linked" model.Uri
         (model, cmd)
 
 let private handleReq req : PartOperate<'actorMsg, 'pkt> =
@@ -108,6 +111,21 @@ let private handleReq req : PartOperate<'actorMsg, 'pkt> =
         | DoSend (a, b) -> doSend req (a, b)
         <| runner <| (model, cmd)
 
+let private onStatusChanged (runner : Part<'actorMsg, 'pkt>) (status : LinkStatus) : unit =
+    match status with
+    | LinkStatus.Linked ->
+        let client = runner.Part.State.Client |> Option.get
+        let stats =
+            client.Actor.State.Stats
+            |> Option.map (fun s -> s.Linked)
+        runner.Deliver <| InternalEvt ^<| OnLinked stats
+    | LinkStatus.Closed ->
+        let client = runner.Part.State.Client |> Option.get
+        let stats = client.Actor.State.Stats
+        runner.Deliver <| InternalEvt ^<| OnClosed stats
+    | _ ->
+        ()
+
 let private onClientEvent (runner : Part<'actorMsg, 'pkt>)
                             : WebSocketTypes.Evt<'pkt> -> unit =
     fun evt ->
@@ -116,10 +134,8 @@ let private onClientEvent (runner : Part<'actorMsg, 'pkt>)
             runner.Deliver <| AccessorEvt ^<| OnSent (stats, pkt)
         | WebSocketTypes.OnReceived (stats, pkt) ->
             runner.Deliver <| AccessorEvt ^<| OnReceived (stats, pkt)
-        | WebSocketTypes.OnConnected stats ->
-            runner.Deliver <| InternalEvt ^<| OnConnected stats
-        | WebSocketTypes.OnDisconnected stats ->
-            runner.Deliver <| InternalEvt ^<| OnDisconnected stats
+        | WebSocketTypes.OnStatusChanged status ->
+            onStatusChanged runner status
 
 let private tryReconnect : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
@@ -149,14 +165,14 @@ let private handleInternalEvt evt : PartOperate<'actorMsg, 'pkt> =
             replyAfter runner callback <| ack req ()
             (runner, model, cmd)
             |=|> updateModel (fun m -> {m with Client = Some client ; Recorder = recorder})
-        | OnConnected stats ->
-            match runner.Part.Args.OnConnectedAsync with
+        | OnLinked stats ->
+            match runner.Part.Args.OnLinkedAsync with
             | None -> ()
             | Some handler ->
-                runner.AddTask ignoreOnFailed <| callOnConnectedAsync handler
+                runner.AddTask ignoreOnFailed <| callOnLinkedAsync handler
             (runner, model, cmd)
             |=|> addCmd ^<| AccessorEvt ^<| OnStarted stats
-        | OnDisconnected stats ->
+        | OnClosed stats ->
             (runner, model, cmd)
             |-|> updateModel (fun m -> {m with Cts = new CancellationTokenSource ()})
             |-|> addCmd ^<| AccessorEvt ^<| OnStopped stats
