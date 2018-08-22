@@ -43,7 +43,7 @@ type Storage'<'extra> when 'extra :> IJson (param') =
                 let relPath = param.CalcRelPath meta.Key
                 let path = Path.Combine (param.Root, relPath)
                 checkDirectory runner path "FileStorage"
-                use stream = new FileStream (path + MetaExtension, FileMode.CreateNew, FileAccess.Write)
+                use stream = new FileStream (path + MetaExtension, FileMode.Create, FileAccess.Write)
                 use writer = new StreamWriter (stream)
                 let json = (meta :> IJson).EncodeJson 4
                 do! writer.WriteAsync (json)
