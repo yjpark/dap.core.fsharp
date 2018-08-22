@@ -51,6 +51,7 @@ type Bundle'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (spec', p
     let param : Param'<'extra, 'frame> = param'
     let mutable volume : Volume'<'extra, 'frame> option = None
     let mutable volumes : Volume'<'extra, 'frame> list = []
+    let mutable isDirty : bool = false
     let closeVolume (runner : IRunner) : unit =
         match volume with
         | Some volume' ->
@@ -91,8 +92,18 @@ type Bundle'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (spec', p
         checkVolume runner frame.Time
         match volume with
         | Some volume ->
+            isDirty <- true
             let (extra, frame) = spec.UpdateExtra volume.Meta.Extra frame
             volume.WriteFrame runner (extra, frame)
         | None ->
             logError runner "Bundle'.WriteFrame" "CheckVolume_Failed" frame
             failwith "Bundle'.WriteFrame Failed: CheckVolume_Failed"
+    member _this.Flush (runner : IRunner) : unit =
+        if isDirty then
+            isDirty <- false
+            match volume with
+            | Some volume' ->
+                volume'.Flush runner
+                runner.RunTask0 ignoreOnFailed <| param.Storage.WriteMetaAsync volume'.Meta
+            | None ->
+                logWarn runner "Bundle'.Flush" "No_Volume" ()

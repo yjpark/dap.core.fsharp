@@ -6,10 +6,23 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Archive
 
-type Args = NoArgs
+module TickerService = Dap.Platform.Ticker.Service
+
+type Args = {
+    Ticker : TickerService.Service
+    FlushInterval : Duration
+} with
+    static member Create ticker flushInterval =
+        {
+            Ticker = ticker
+            FlushInterval = flushInterval
+        }
+    static member Default ticker =
+        Args.Create ticker <| Duration.FromSeconds 30L
 
 and Model<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame = {
     Bundle : Bundle'<'extra, 'frame> option
+    NextFlushTime : Instant
 }
 
 and Req<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame =
@@ -28,6 +41,7 @@ with interface IEvt
 and Msg<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame =
     | RecorderReq of Req<'extra, 'frame>
     | RecorderEvt of Evt<'extra, 'frame>
+    | OnTick of Instant * Duration
 with interface IMsg
 
 let castEvt<'extra, 'frame when 'extra :> IJson and 'frame :> IFrame> : CastEvt<Msg<'extra, 'frame>, Evt<'extra, 'frame>> =

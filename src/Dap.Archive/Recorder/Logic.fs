@@ -8,6 +8,7 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Archive
 open Dap.Archive.Recorder.Types
+module TickerService = Dap.Platform.Ticker.Service
 
 type ActorOperate<'extra, 'frame when 'extra :> IJson and 'frame :> IFrame> =
     ActorOperate<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
@@ -87,19 +88,35 @@ let private handleEvt evt : ActorOperate<'extra, 'frame> =
         | _ -> noOperation
         <| runner <| (model, cmd)
 
+let private onTick ((time, delta) : Instant * Duration) : ActorOperate<'extra, 'frame> =
+    fun runner (model, cmd) ->
+        model.Bundle
+        |> Option.bind (fun bundle ->
+            if runner.Clock.Now > model.NextFlushTime then
+                bundle.Flush runner
+                let nextFlushTime = runner.Clock.Now + runner.Actor.Args.FlushInterval
+                Some <| updateModel (fun m -> {m with NextFlushTime = nextFlushTime})
+            else
+                None
+        )|> Option.defaultValue noOperation
+        <| runner <| (model, cmd)
+
 let private update : ActorUpdate<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
     fun runner msg model ->
         match msg with
         | RecorderReq req -> handleReq req
         | RecorderEvt evt -> handleEvt evt
+        | OnTick (a, b) -> onTick (a, b)
         <| runner <| (model, [])
 
 let private init : ActorInit<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
-    fun _runner args ->
+    fun runner args ->
+        args.Ticker |> TickerService.watchOnTick runner "OnTick" (runner.Deliver << OnTick)
         ({
             Bundle = None
+            NextFlushTime = runner.Clock.Now + args.FlushInterval
         }, noCmd)
 
-let spec<'extra, 'frame when 'extra :> IJson and 'frame :> IFrame> =
+let spec<'extra, 'frame when 'extra :> IJson and 'frame :> IFrame> (args : Args) =
     new ActorSpec<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
-        (Agent<'extra, 'frame>.Spawn, NoArgs, RecorderReq, castEvt<'extra, 'frame>, init, update)
+        (Agent<'extra, 'frame>.Spawn, args, RecorderReq, castEvt<'extra, 'frame>, init, update)

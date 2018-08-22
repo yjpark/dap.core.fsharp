@@ -8,7 +8,7 @@ open Dap.Platform
 open Dap.Remote
 
 type Mode =
-    | Ready 
+    | Ready
     | Closed
     | Loaded
     | Reading of BinaryReader
@@ -64,7 +64,7 @@ type Volume<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', m
             failwith <| sprintf "Volume.ReadFrame Failed: Invalid_Mode %A" mode
 
 type Mode' =
-    | Ready 
+    | Ready
     | Closed
     | Writing of BinaryWriter
 
@@ -78,6 +78,7 @@ type Volume'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', 
     let mutable mode : Mode' = Ready
     let mutable frame : 'frame option = None
     let mutable frames : 'frame list = []
+    let mutable isDirty : bool = false
     member _this.Param with get () = param
     member _this.Meta with get () = meta
     member _this.Mode with get () = mode
@@ -106,6 +107,7 @@ type Volume'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', 
     member _this.WriteFrame (runner : IRunner) ((extra, frame') : 'extra * 'frame) : unit =
         match mode with
         | Writing writer ->
+            isDirty <- true
             frame <- Some frame'
             frame'.WriteTo writer
             meta <- incLengthOfMeta extra meta
@@ -114,4 +116,12 @@ type Volume'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', 
         | _ ->
             logError runner "Volume'.WriteFrame" "Invalid_Mode" (meta, mode)
             failwith <| sprintf "Volume'.WriteFrame Failed: Invalid_Mode %A" mode
+    member _this.Flush (runner : IRunner) : unit =
+        if isDirty then
+            isDirty <- false
+            match mode with
+            | Writing writer ->
+                writer.Flush()
+            | _ ->
+                logWarn runner "Volume'.Flush" "Not_Writing" mode
 

@@ -44,6 +44,7 @@ type BundleSpec' = Bundle.Spec'<Extra, Frame>
 type BundleParam' = Bundle.Param'<Extra, Frame>
 type Bundle' = Bundle'<Extra, Frame>
 
+type Args = Args
 type Agent = IAgent<Req<Extra, Frame>, Evt<Extra, Frame>>
 
 let newExtra () =
@@ -62,8 +63,8 @@ let updateExtra (extra : Extra) (frame : Frame) : Extra * Frame =
         |> Map.add frame.Kind count
     ({extra with Events = events}, {frame with Id = count.ToString ()})
 
-let registerAsync' kind env =
-    let spec = Logic.spec<Extra, Frame>
+let registerAsync' kind args env =
+    let spec = Logic.spec<Extra, Frame> args
     env |> Env.registerAsync spec kind
 
 let registerAsync a = registerAsync' Kind a

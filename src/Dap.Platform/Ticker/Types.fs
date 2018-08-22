@@ -11,8 +11,6 @@ type TickStats = {
     Duration : Duration
 }
 
-and Ticker = IActor<Req, Evt>
-
 and Args = {
     FrameRate : double
     AutoStart : bool
