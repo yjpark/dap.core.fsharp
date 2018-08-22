@@ -36,11 +36,14 @@ let private handlerSocketEvt (evt : WebSocketTypes.Evt<Packet>) : ActorOperate<'
         | WebSocketTypes.OnStatusChanged status ->
             addSubCmd InternalEvt <| DoSetStatus status
             |-|- (
-                match status with
-                | LinkStatus.Closed ->
-                    addFutureCmd 1.0<second> <| SubEvt DoReconnect
-                | _ ->
-                    noOperation
+                runner.Actor.Args.RetryDelay
+                |> Option.map (fun retryDelay ->
+                    match status with
+                    | LinkStatus.Closed ->
+                        addFutureCmd retryDelay <| SubEvt DoReconnect
+                    | _ ->
+                        noOperation
+                )|> Option.defaultValue noOperation
             )
         | _ ->
             noOperation

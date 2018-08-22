@@ -12,18 +12,18 @@ module BaseLogic = Dap.Remote.Proxy.Logic
 [<Literal>]
 let Kind = "WebSocketProxy"
 
-let spec (stubSpec : StubSpec<'req, 'res, 'evt>) uri logTraffic =
+let spec (stubSpec : StubSpec<'req, 'res, 'evt>) uri retryDelay logTraffic =
     let subSpec : SubSpec<Extra, SubEvt, 'req, 'res, 'evt> = {
         NewExtra = Extra.New
         DoInit = Logic.doInit
         HandleSub = Logic.handleSub
         DoSend = Logic.doSend
     }
-    Args<Extra, SubEvt, 'req, 'res, 'evt>.Create subSpec stubSpec uri logTraffic
+    Args<Extra, SubEvt, 'req, 'res, 'evt>.Create subSpec stubSpec uri retryDelay logTraffic
     |> BaseLogic.spec<Extra, SubEvt, 'req, 'res, 'evt>
 
-let addAsync' kind key stubSpec uri logTraffic =
-    let spec = spec stubSpec uri logTraffic
+let addAsync' kind key stubSpec uri retryDelay logTraffic =
+    let spec = spec stubSpec uri retryDelay logTraffic
     Env.addServiceAsync spec kind key
 
 let get'<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> kind key env =
