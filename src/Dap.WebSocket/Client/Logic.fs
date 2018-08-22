@@ -31,7 +31,8 @@ let private doConnect req (uri, token, callback) : ActorOperate<'pkt> =
                 Buffer = Array.create<byte> runner.Actor.Args.BufferSize 0uy
             }
             replyAsync runner req callback doConnectFailed <| doConnectAsync
-            BaseLogic.doSetStatus LinkStatus.Linking
+            updateModel (fun m -> {m with Link = Some link})
+            |-|- BaseLogic.doSetStatus LinkStatus.Linking
         <| runner <| (model, cmd)
 
 let private doDisconnect req (callback : Callback<unit>) : ActorOperate<'pkt> =
