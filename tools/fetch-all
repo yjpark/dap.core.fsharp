@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+echo -en \\0033c
+
 cd `dirname $0`
 cd .. ; fake build -t Fetch
 

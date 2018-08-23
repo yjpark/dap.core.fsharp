@@ -42,7 +42,7 @@ let private doStart req (callback : Callback<WebSocketTypes.LinkedStats option>)
         | Some uri ->
             match model.Running with
             | true ->
-                reply runner callback <| nak req "Already_Running" model
+                reply runner callback <| ack req None
                 (model, cmd)
             | false ->
                 match model.Client with
