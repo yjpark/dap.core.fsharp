@@ -152,10 +152,14 @@ let private tryReconnect : PartOperate<'actorMsg, 'pkt> =
 
 let private doReconnect : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
-        if runner.Part.State.Running then
-            runner.AddTask doReconnectFailed doReconnectAsync
         (runner, model, cmd)
-        |=|> updateModel (fun m -> {m with Reconnecting = false})
+        |-|> (
+            if not runner.Part.State.Running then
+                runner.AddTask doReconnectFailed doReconnectAsync
+                updateModel (fun m -> {m with Running = true})
+            else
+                noOperation
+        )|=|> updateModel (fun m -> {m with Reconnecting = false})
 
 let private handleInternalEvt evt : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
@@ -174,8 +178,12 @@ let private handleInternalEvt evt : PartOperate<'actorMsg, 'pkt> =
             |=|> addCmd ^<| AccessorEvt ^<| OnStarted stats
         | OnClosed stats ->
             (runner, model, cmd)
-            |-|> updateModel (fun m -> {m with Cts = new CancellationTokenSource ()})
-            |-|> addCmd ^<| AccessorEvt ^<| OnStopped stats
+            |-|> updateModel (fun m ->
+                {m with
+                    Cts = new CancellationTokenSource ()
+                    Running = false
+                }
+            )|-|> addCmd ^<| AccessorEvt ^<| OnStopped stats
             |=|> tryReconnect
         | DoReconnect ->
             (runner, model, cmd)
