@@ -28,6 +28,14 @@ type RemoteReason<'err> =
 type Reason<'err> =
     | Local of LocalReason
     | Remote of RemoteReason<'err>
+with
+    member this.AsError : 'err option =
+        match this with
+        | Local _ -> None
+        | Remote reason ->
+            match reason with
+            | RemoteError err -> Some err
+            | _ -> None
 
 type RemoteReason' =
     | InvalidKind' of string
