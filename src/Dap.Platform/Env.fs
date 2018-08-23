@@ -4,7 +4,6 @@ module Dap.Platform.Env
 
 open System.Threading.Tasks
 open FSharp.Control.Tasks.V2
-open Elmish
 
 open Dap.Prelude
 open Dap.Platform.Internal.Env

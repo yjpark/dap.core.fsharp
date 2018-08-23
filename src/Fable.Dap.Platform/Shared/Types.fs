@@ -4,7 +4,6 @@ module Dap.Platform.Types
 #if !FABLE_COMPILER
 open System.Threading.Tasks
 #endif
-open Elmish
 open Dap.Prelude
 
 [<Measure>]

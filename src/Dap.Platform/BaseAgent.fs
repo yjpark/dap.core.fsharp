@@ -1,8 +1,6 @@
 [<AutoOpen>]
 module Dap.Platform.BaseAgent
 
-open Elmish
-
 open Dap.Prelude
 open Dap.Platform.Internal.Env
 

@@ -2,7 +2,7 @@
 module Dap.Archive.Recorder.Logic
 
 open System.IO
-open Elmish
+
 open Dap.Prelude
 open Dap.Platform
 open Dap.Remote

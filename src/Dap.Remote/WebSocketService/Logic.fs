@@ -135,7 +135,7 @@ let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt
             Hub = None
             Socket = None
             Service = None
-        }, Cmd.ofMsg (InternalEvt DoInit))
+        }, cmdOfMsg (InternalEvt DoInit))
 
 let logic =
     {

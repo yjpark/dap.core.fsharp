@@ -3,7 +3,6 @@ module Dap.WebSocket.Internal.Logic
 
 open System.Net.WebSockets
 
-open Elmish
 open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket.Const

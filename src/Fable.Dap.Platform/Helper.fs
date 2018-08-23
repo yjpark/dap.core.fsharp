@@ -1,7 +1,6 @@
 [<AutoOpen>]
 module Dap.Platform.Helper
 
-open Elmish
 open Fable.Core
 open Fable.PowerPack
 
@@ -13,7 +12,7 @@ let private sleepForSeconds (delay : float<second>) = promise {
 }
 
 let addFutureCmd (delay : float<second>) (msg : 'msg) : Operate<'runner, 'model, 'msg> =
-    Cmd.ofPromise
+    Elmish.Cmd.ofPromise
         sleepForSeconds delay
         (fun _ -> msg)
         (fun e ->

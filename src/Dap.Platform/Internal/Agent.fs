@@ -1,7 +1,5 @@
 module Dap.Platform.Internal.Agent
 
-open Elmish
-
 open Dap.Prelude
 open Dap.Platform
 open Dap.Platform.Internal.Env
@@ -77,7 +75,7 @@ let internal init<'runner, 'args, 'model, 'msg, 'req, 'evt
             Actor = actor
             Wrapper = wrapper
         }
-        (model, Cmd.map wrapper cmd)
+        (model, mapCmd wrapper cmd)
 
 let internal subscribe<'runner, 'args, 'model, 'msg, 'req, 'evt
             when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
@@ -85,4 +83,4 @@ let internal subscribe<'runner, 'args, 'model, 'msg, 'req, 'evt
                     and 'req :> IReq and 'evt :> IEvt>
                 : AgentSubscribe<'runner, 'args, 'model, 'msg, 'req, 'evt> =
     fun runner model ->
-        Cmd.map model.Wrapper <| model.Spec.Logic.Subscribe runner model.Actor.State
+        mapCmd model.Wrapper <| model.Spec.Logic.Subscribe runner model.Actor.State

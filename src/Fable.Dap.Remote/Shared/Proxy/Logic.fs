@@ -6,8 +6,6 @@ open System
 open Fable.Core
 #endif
 
-open Elmish
-
 open Dap.Prelude
 open Dap.Platform
 open Dap.Remote
@@ -149,7 +147,7 @@ let private init : ActorInit<Args<'extra, 'sub, 'req, 'res, 'evt>, Model<'extra,
             ResponseEvent = new Bus<'res> (runner :> IOwner)
             Status = LinkStatus.NoLink
             Extra = args.Sub.NewExtra ()
-        }, Cmd.ofMsg (InternalEvt DoInit))
+        }, cmdOfMsg (InternalEvt DoInit))
 
 #if FABLE_COMPILER
 [<PassGenericsAttribute>]

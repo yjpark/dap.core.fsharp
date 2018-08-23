@@ -1,7 +1,6 @@
 [<AutoOpen>]
 module Dap.Platform.BaseAgent
 
-open Elmish
 open Dap.Prelude
 open Dap.Platform
 
@@ -56,7 +55,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
                     (model, cmd)
             let runner = this.Runner
             try
-                Cmd.batch [
+                batchCmd [
                     cmd
                     this.Spec.Logic.Subscribe runner model
                 ]
@@ -100,7 +99,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.Post req = this.Post req
         member this.Actor = this.Actor :> IActor<'req, 'evt>
     //IAgent<'msg>
-    member this.Deliver (msg : 'msg) = this.Deliver' <| Cmd.ofMsg msg
+    member this.Deliver (msg : 'msg) = this.Deliver' <| cmdOfMsg msg
     interface IAgent<'msg> with
         member this.Deliver msg = this.Deliver msg
     //IAgent

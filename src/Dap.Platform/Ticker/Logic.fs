@@ -2,8 +2,8 @@
 [<RequireQualifiedAccess>]
 module Dap.Platform.Ticker.Logic
 
-open Elmish
 open NodaTime
+
 open Dap.Prelude
 open Dap.Platform
 
@@ -136,7 +136,7 @@ let private init : ActorInit<Args, Model, Msg> =
     fun runner args ->
         let cmd =
             if args.AutoStart then
-                Cmd.ofMsg <| TickerReq ^<| DoStartTimer None
+                cmdOfMsg <| TickerReq ^<| DoStartTimer None
             else
                 noCmd
         ({

@@ -2,8 +2,6 @@
 [<RequireQualifiedAccess>]
 module Dap.Platform.Agent
 
-open Elmish
-
 open Dap.Prelude
 open Dap.Platform.Internal.Env
 open Dap.Platform.Internal.Agent

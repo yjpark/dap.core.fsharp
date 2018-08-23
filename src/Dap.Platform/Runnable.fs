@@ -1,7 +1,6 @@
 [<AutoOpen>]
 module Dap.Platform.Runnable
 
-open Elmish
 open Dap.Prelude
 
 type IRunnable<'initer, 'runner, 'args, 'model, 'msg>
@@ -35,7 +34,7 @@ let internal start' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>
         (runner :> ITaskManager).StartPendingTasks () |> ignore
         let runner = runnable.Runner
         try
-            Cmd.batch [
+            batchCmd [
                 cmd
                 runnable.Logic.Subscribe runner model
             ]

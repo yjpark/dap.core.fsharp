@@ -12,6 +12,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Shared/Logic.fs" />
+    <Compile Include="Shared/Cmd.fs" />
     <Compile Include="Shared/Bus.fs" />
     <Compile Include="Shared/Types.fs" />
     <Compile Include="Shared/Callback.fs" />

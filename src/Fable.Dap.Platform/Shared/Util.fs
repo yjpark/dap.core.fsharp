@@ -1,8 +1,6 @@
 [<AutoOpen>]
 module Dap.Platform.Util
 
-open Elmish
-
 open Dap.Prelude
 
 let private tplMsgInfo = LogEvent.Template4<string, IMsg, string, obj>(LogLevelInformation, "[{Section}] {Msg} ~> {Info}: {Detail}")
@@ -59,19 +57,17 @@ let inline updateExtra (update : 'extra -> 'extra) : Operate<'runner, ^model, 'm
         (newModel, cmd)
 
 #endif
-let noCmd = Cmd.none
-
 let addCmd' (newCmd : Cmd<'msg>) : Operate<'runner, 'model, 'msg> =
     fun _runner (model, cmd) ->
-        (model, Cmd.batch [cmd; newCmd])
+        (model, batchCmd [cmd; newCmd])
 
 let addCmd (msg : 'msg) : Operate<'runner, 'model, 'msg> =
     fun _runner (model, cmd) ->
-        (model, Cmd.batch [cmd; Cmd.ofMsg msg])
+        (model, batchCmd [cmd; cmdOfMsg msg])
 
 let addSubCmd' (wrapper : Wrapper<'msg, 'subMsg>) (subCmd : Cmd<'subMsg>) : Operate<'runner, 'model, 'msg> =
     fun _runner (model, cmd) ->
-        (model, Cmd.batch [cmd; Cmd.map wrapper subCmd])
+        (model, batchCmd [cmd; mapCmd wrapper subCmd])
 
 let addSubCmd (wrapper : Wrapper<'msg, 'subMsg>) (subMsg : 'subMsg) : Operate<'runner, 'model, 'msg> =
     wrapper subMsg
@@ -111,7 +107,7 @@ let subscribeBus (owner : IOwner) (_model : 'model)
     let sub = fun dispatch ->
         let ident = sprintf "%A" wrapper
         onEvent.AddWatcher owner ident (dispatch << wrapper)
-    Elmish.Cmd.ofSub sub
+    cmdOfSub sub
 
 let subscribeEvent (owner : IOwner) (_model : 'model)
                     (wrapper : 'evt -> 'msg)
@@ -119,7 +115,7 @@ let subscribeEvent (owner : IOwner) (_model : 'model)
     let sub = fun dispatch ->
         let ident = sprintf "%A" wrapper
         onEvent.Add (dispatch << wrapper)
-    Elmish.Cmd.ofSub sub
+    cmdOfSub sub
 
 let newGuid () =
     (System.Guid.NewGuid ()) .ToString ()

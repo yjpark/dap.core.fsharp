@@ -1,7 +1,6 @@
 [<AutoOpen>]
 module Dap.Platform.Wrapping
 
-open Elmish
 open Dap.Prelude
 
 // This warpper logic is mostly following elm-component-updater
@@ -19,8 +18,8 @@ type Wrapping<'runner, 'model, 'msg, 'subModel, 'subMsg> (wrapMsg', spec', subMs
             let (reactModel, reactCmd) = spec.ReactSub runner subMsg subModel (spec.SetSub subModel model)
             let mapSubCmd = fun (m : 'subMsg) ->
                 wrapMsg <| new Wrapping<'runner, 'model, 'msg, 'subModel, 'subMsg> (wrapMsg, spec, m)
-            let subCmd = Cmd.map mapSubCmd subCmd
-            let cmd = Cmd.batch [cmd; subCmd; reactCmd]
+            let subCmd = mapCmd mapSubCmd subCmd
+            let cmd = batchCmd [cmd; subCmd; reactCmd]
             (reactModel, cmd)
     interface IWrapping<'runner, 'model, 'msg> with
         member this.Operate = this.Operate

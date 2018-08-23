@@ -5,7 +5,6 @@ module Dap.Platform.Actor
 open System.Threading.Tasks
 #endif
 
-open Elmish
 open Dap.Prelude
 
 //Note: during Init, the model is not created yet
@@ -67,7 +66,7 @@ type ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt
     let mutable inUse : bool = false
     let mutable logic : Logic<IAgent<'msg>, 'runner, 'args, 'model, 'msg> =
         let noSubscription : Subscribe<'runner, 'model, 'msg> =
-            fun _runner _model -> Cmd.none
+            fun _runner _model -> noCmd
         {
             Init = init'
             Update = update'
@@ -172,7 +171,7 @@ let internal create'
     let actor = actor.AsActor
     let wrapper = wrap wrapMsg wrapperSpec
     if subscribeNow then
-        let cmd = Cmd.batch [cmd ; spec.Logic.Subscribe runner model]
+        let cmd = batchCmd [cmd ; spec.Logic.Subscribe runner model]
         (actor, wrapper, cmd)
     else
         (actor, wrapper, cmd)

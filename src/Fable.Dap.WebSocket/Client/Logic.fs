@@ -1,7 +1,6 @@
 [<RequireQualifiedAccess>]
 module Dap.WebSocket.Client.Logic
 
-open Elmish
 open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket.Client.Types
@@ -103,7 +102,7 @@ let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
         ({
             Socket = None
             Status = LinkStatus.NoLink
-        }, Cmd.ofMsg <| WebSocketReq DoConnect)
+        }, cmdOfMsg <| WebSocketReq DoConnect)
 
 let spec<'pkt> (args : Args<'pkt>) =
     new ActorSpec<Agent<'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
