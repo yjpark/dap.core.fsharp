@@ -48,7 +48,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         (param : AgentParam) =
     let env : IEnv = param.Env
     let ident : Ident = Ident.Create param.Env.Scope param.Kind param.Key
-    let mutable logger : ILogger = env.Logging.GetLogger ident.Ident
+    let mutable logger : ILogger = env.Logging.GetLogger <| ident.ToLuid ()
     let mutable spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt> option = None
     let mutable logic : AgentLogic<'runner, 'args, 'model, 'msg, 'req, 'evt> option = None
     let mutable stats : Stats = statsOfCap getDefaultSlowCap
@@ -112,7 +112,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     interface ILogger with
         member this.Log m = this.Log m
     interface IOwner with
-        member _this.Ident = ident.Ident
+        member _this.Luid = ident.ToLuid ()
         member _this.Disposed = disposed
     //IRunner<'runner>
     abstract member Runner : 'runner with get

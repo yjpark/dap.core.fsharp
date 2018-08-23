@@ -62,7 +62,7 @@ type Ident = {
             Key = key
             Ver = calVersion scope kind key
         }
-    member this.Ident = sprintf "[%s:%s:%s]<%i>" this.Scope this.Kind this.Key this.Ver
+    member this.ToLuid () = sprintf "[%s:%s:%s]<%i>" this.Scope this.Kind this.Key this.Ver
 
 let NoIdent =
     {

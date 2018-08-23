@@ -65,7 +65,7 @@ type internal Env (param' : EnvParam, logic') =
         member this.Scope = param.Scope
         member this.State = state |> Option.get
     interface IOwner with
-        member _this.Ident = param.Scope
+        member _this.Luid = param.Scope
         member _this.Disposed = false
     interface ILogger with
         member this.Log m = logger.Log m

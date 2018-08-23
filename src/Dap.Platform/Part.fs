@@ -78,7 +78,7 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
             actor <- Some actor'
             wrapper <- Some wrapper'
             wrapper <- Some <| wrapper'
-            logger <- Some <| enrichLoggerForAgent this ^<| env.Logging.GetLogger ^<| sprintf "%s%A" ident.Ident partMsg'
+            logger <- Some <| enrichLoggerForAgent this ^<| env.Logging.GetLogger ^<| sprintf "%s%A" (ident.ToLuid ()) partMsg'
             (this :> IDispatcher<'msg>).SetDispatch (fun (_time, msg) ->
                 agent'.Deliver <| partMsg' msg
             )
@@ -109,9 +109,10 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.ClearPendingTasks () = this.Agent.ClearPendingTasks ()
         member this.RunningTasksCount = this.Agent.RunningTasksCount
         member this.CancelRunningTasks () = this.Agent.CancelRunningTasks ()
+    member this.Owner = this.Agent :> IOwner
     interface IOwner with
-        member this.Ident = (this.Agent :> IOwner).Ident
-        member this.Disposed = (this.Agent :> IOwner).Disposed
+        member this.Luid = this.Owner.Luid
+        member this.Disposed = this.Owner.Disposed
     //IAgent<'args, 'model, 'msg, 'req, 'evt>
     interface IAgent<'args, 'model, 'msg, 'req, 'evt> with
         member this.Actor = this.Part

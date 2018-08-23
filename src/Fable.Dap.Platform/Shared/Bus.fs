@@ -8,11 +8,13 @@ open Dap.Prelude
 //
 // Related Readings:
 // - https://www.codeproject.com/Articles/29922/Weak-Events-in-C
-// - https://sachabarbs.wordpress.com/2014/04/23/f-21-events/ 
+// - https://sachabarbs.wordpress.com/2014/04/23/f-21-events/
+
+type Luid = string //Local Unique ID
 
 type IOwner =
     inherit ILogger
-    abstract Ident : string with get
+    abstract Luid : Luid with get
     abstract Disposed : bool with get
 
 let private tplBusError = LogEvent.Template2WithException<string, obj>(LogLevelError, "[{Section}] {Msg} -> Failed")
@@ -31,37 +33,37 @@ let private tplWatcherDebug = LogEvent.Template3<string, obj, obj>(LogLevelDebug
 
 let private tplWatcherFailed = LogEvent.Template3WithException<string, obj, obj>(LogLevelError, "[{Section}] {Watcher} {Detail} -> Failed")
 
-let private tplAddWatcherError = LogEvent.Template5<string, IOwner, string, obj, obj>(LogLevelError, "[{Section}] {Owner} {Ident} {Action} -> {Old}")
+let private tplAddWatcherError = LogEvent.Template5<string, IOwner, Luid, obj, obj>(LogLevelError, "[{Section}] {Owner} {Luid} {Action} -> {Old}")
 
 type Watcher<'evt> = {
-    OwnerIdent : string
+    OwnerLuid : Luid
 #if FABLE_COMPILER
     OwnerRef : IOwner
 #else
     OwnerRef : WeakReference<IOwner>
 #endif
-    Ident : string
+    Luid : Luid
     Action : 'evt -> unit
 } with
-    static member Create (owner : IOwner) ident action =
+    static member Create (owner : IOwner) luid action =
         {
-            OwnerIdent = owner.Ident
+            OwnerLuid = owner.Luid
         #if FABLE_COMPILER
             OwnerRef = owner
         #else
             OwnerRef = new WeakReference<IOwner> (owner)
         #endif
-            Ident = ident
+            Luid = luid
             Action = action
         }
 
 type IBus<'evt> =
-    abstract AddWatcher : IOwner -> string -> ('evt -> unit) -> unit
-    abstract SetWatcher : IOwner -> string -> ('evt -> unit) -> bool    // -> isNew
-    abstract RemoveWatcher' : IOwner -> string list                      // -> ident list
-    abstract RemoveWatcher' : IOwner * string -> string list             // -> ident list
+    abstract AddWatcher : IOwner -> Luid -> ('evt -> unit) -> unit
+    abstract SetWatcher : IOwner -> Luid -> ('evt -> unit) -> bool    // -> isNew
+    abstract RemoveWatcher' : IOwner -> Luid list                      // -> luid list
+    abstract RemoveWatcher' : IOwner * Luid -> Luid list             // -> luid list
     abstract RemoveWatcher : IOwner -> unit
-    abstract RemoveWatcher : IOwner * string -> unit
+    abstract RemoveWatcher : IOwner * Luid -> unit
 
 [<StructuredFormatDisplay("{AsString}")>]
 type Bus<'evt> (owner') =
@@ -81,8 +83,8 @@ type Bus<'evt> (owner') =
             watchers
             |> List.filter (fun w ->
                 let check = fun w' ->
-                    w.OwnerIdent = w'.OwnerIdent
-                    && w.Ident = w'.Ident
+                    w.OwnerLuid = w'.OwnerLuid
+                    && w.Luid = w'.Luid
                 not (List.exists check toRemove)
             )
         if logAddRemove then
@@ -97,9 +99,9 @@ type Bus<'evt> (owner') =
     #endif
     override _this.ToString () : string =
     #if FABLE_COMPILER
-        let prefixFormat = sprintf "[Bus %s <%i>]" owner.Ident
+        let prefixFormat = sprintf "[Bus %s <%i>]" owner.Luid
     #else
-        let prefixFormat = sprintf "[Bus<%s> %s <%i>]" (typeof<'evt>.FullName) owner.Ident
+        let prefixFormat = sprintf "[Bus<%s> %s <%i>]" (typeof<'evt>.FullName) owner.Luid
     #endif
         prefixFormat watchers.Length
     member this.AsString =
@@ -136,17 +138,17 @@ type Bus<'evt> (owner') =
                 | None -> ()
                 | Some garbage ->
                     removeWatchers garbage
-    member _this.TryFindWatchers (owner : IOwner) (ident : string option) =
+    member _this.TryFindWatchers (owner : IOwner) (luid : string option) =
         watchers
         |> List.filter (fun watcher ->
-            ident
-            |> Option.map (fun ident -> ident = watcher.Ident)
+            luid
+            |> Option.map (fun luid -> luid = watcher.Luid)
             |> Option.defaultValue true
             |> function
             | true ->
                 match tryGetTarget watcher with
                 | (true, owner') ->
-                    owner.Ident = owner'.Ident
+                    owner.Luid = owner'.Luid
                 | (false, _) ->
                     false
             | false ->
@@ -154,16 +156,16 @@ type Bus<'evt> (owner') =
         )
     member this.Publish : IBus<'evt> =
         { new IBus<'evt> with
-            member _x.AddWatcher owner ident action =
-                match this.TryFindWatchers owner (Some ident) with
+            member _x.AddWatcher owner luid action =
+                match this.TryFindWatchers owner (Some luid) with
                 | [] ->
-                    let watcher = Watcher<'evt>.Create owner ident action
+                    let watcher = Watcher<'evt>.Create owner luid action
                     addWatcher watcher
                 | old ->
-                    owner.Log <| tplAddWatcherError "Bus:Watcher_Already_Exist" owner ident action old
-            member _x.SetWatcher owner ident action =
-                let watcher = Watcher<'evt>.Create owner ident action
-                match this.TryFindWatchers owner (Some ident) with
+                    owner.Log <| tplAddWatcherError "Bus:Watcher_Already_Exist" owner luid action old
+            member _x.SetWatcher owner luid action =
+                let watcher = Watcher<'evt>.Create owner luid action
+                match this.TryFindWatchers owner (Some luid) with
                 | [] ->
                     addWatcher watcher
                     true
@@ -177,16 +179,16 @@ type Bus<'evt> (owner') =
                     []
                 | old ->
                     removeWatchers old
-                    old |> List.map (fun w -> w.Ident)
-            member _x.RemoveWatcher' (owner, ident) =
-                match this.TryFindWatchers owner (Some ident) with
+                    old |> List.map (fun w -> w.Luid)
+            member _x.RemoveWatcher' (owner, luid) =
+                match this.TryFindWatchers owner (Some luid) with
                 | [] ->
                     []
                 | old ->
                     removeWatchers old
-                    old |> List.map (fun w -> w.Ident)
+                    old |> List.map (fun w -> w.Luid)
             member x.RemoveWatcher owner =
                 x.RemoveWatcher' owner |> ignore
-            member x.RemoveWatcher (owner, ident) =
-                x.RemoveWatcher' (owner, ident) |> ignore
+            member x.RemoveWatcher (owner, luid) =
+                x.RemoveWatcher' (owner, luid) |> ignore
         }

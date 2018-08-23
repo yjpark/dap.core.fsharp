@@ -24,7 +24,7 @@ type internal Env (logging', scope', clock') =
         member _this.Scope = scope
     //IOwner
     interface IOwner with
-        member _this.Ident = scope
+        member _this.Luid = scope
         member _this.Disposed = false
 
 let spawn spec kind key (env : IEnv) : IAgent =

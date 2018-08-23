@@ -94,7 +94,7 @@ let noEvent =
         let logger = getLogger "<noOwner>"
         { new IOwner with
             member _this.Log m = logger.Log m
-            member _this.Ident = NoIdent.Ident
+            member _this.Luid = NoIdent.ToLuid ()
             member _this.Disposed = false
         }
     let bus = new Bus<NoEvt>(noOwner)

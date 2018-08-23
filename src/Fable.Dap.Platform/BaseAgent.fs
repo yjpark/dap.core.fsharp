@@ -21,7 +21,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         (param) =
     let env : IEnv = param.Env
     let ident : Ident = Ident.Create param.Env.Scope param.Kind param.Key
-    let mutable logger : ILogger = env.Logging.GetLogger ident.Ident
+    let mutable logger : ILogger = env.Logging.GetLogger <| ident.ToLuid ()
     let mutable spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt> option = None
     let mutable dispatch : Elmish.Dispatch<'msg> option = None
     let mutable actor : Actor<'args, 'model, 'msg, 'req, 'evt> option = None
@@ -87,7 +87,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         let dispatch' = Option.get dispatch
         cmd |> List.iter (fun m -> m <| dispatch')
     interface IOwner with
-        member _this.Ident = ident.Ident
+        member _this.Luid = ident.ToLuid ()
         member _this.Disposed = false
     //IAgent<'args, 'model, 'msg, 'req, 'evt>
     member _this.Actor = actor |> Option.get |> fun a -> a.AsActor
