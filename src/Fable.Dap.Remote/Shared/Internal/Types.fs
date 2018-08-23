@@ -61,7 +61,10 @@ type NakJson = {
     Detail : string
 } with
     static member OfNak err (detail : obj) =
-        NakJson.Create err <| detail.ToString ()
+        if detail =? null then
+            NakJson.Create err ""
+        else
+            NakJson.Create err <| detail.ToString ()
     static member Create err detail =
         {
             Err = err

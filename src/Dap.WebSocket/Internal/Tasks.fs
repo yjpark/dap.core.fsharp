@@ -60,9 +60,26 @@ let private doReadPktAsync (link : Link<'socket>)
         return closed
     }
 
-let internal doReceiveFailed : OnFailed<Agent<'socket, 'pkt, 'req>> =
+let internal refreshStatusOnFailed : OnFailed<Agent<'socket, 'pkt, 'req>> =
     fun runner e ->
         runner.Deliver <| InternalEvt ^<| DoRefreshStatus (Some e)
+
+let private needCloseSocket (socket : WebSocket) =
+    match socket.State with
+    | WebSocketState.None ->
+        false
+    | WebSocketState.Connecting ->
+        true
+    | WebSocketState.Open ->
+        true
+    | WebSocketState.CloseSent
+    | WebSocketState.CloseReceived ->
+        true
+    | WebSocketState.Closed
+    | WebSocketState.Aborted ->
+        false
+    | _ ->
+        false
 
 let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
     fun runner -> task {
@@ -74,7 +91,7 @@ let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
             let! closed' = doReadPktAsync link runner
             closed <- closed'
         let socket = link.Socket :> WebSocket
-        if socket.State = WebSocketState.Open then
+        if needCloseSocket socket then
             logInfo runner "Link" "Closing" link.Ident
             do! socket.CloseAsync (WebSocketCloseStatus.Empty, "", link.Token)
         runner.Deliver <| InternalEvt ^<| DoRefreshStatus None
@@ -88,18 +105,25 @@ let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'socket, 'pkt, 'req>,
         let (time, encodeDuration) = runner.Clock.CalcDuration(time)
         let link = runner.Actor.State.Link |> Option.get
         let socket = link.Socket :> WebSocket
-        do! socket.SendAsync (buffer, runner.Actor.Args.SendType, true, link.Token)
-        let (time, transferDuration) = runner.Clock.CalcDuration(time)
-        let stats : SendStats = {
-            ProcessTime = processTime
-            BytesCount = buffer.Count
-            SentTime = time
-            EncodeDuration = encodeDuration
-            TransferDuration = transferDuration
-        }
-        if runner.Actor.Args.LogTraffic then
-            logInfo runner "Traffic" "Sent" (stats, pkt)
-        reply runner callback <| ack req stats
-        runner.Deliver <| WebSocketEvt ^<| OnSent (stats, pkt)
+        try
+            do! socket.SendAsync (buffer, runner.Actor.Args.SendType, true, link.Token)
+            let (time, transferDuration) = runner.Clock.CalcDuration(time)
+            let stats : SendStats = {
+                ProcessTime = processTime
+                BytesCount = buffer.Count
+                SentTime = time
+                EncodeDuration = encodeDuration
+                TransferDuration = transferDuration
+            }
+            if runner.Actor.Args.LogTraffic then
+                logInfo runner "Traffic" "Sent" (stats, pkt)
+            reply runner callback <| ack req stats
+            runner.Deliver <| WebSocketEvt ^<| OnSent (stats, pkt)
+        with e ->
+            logException runner "Send" "Exception_Raised" link e
+            if needCloseSocket socket then
+                logInfo runner "Link" "Closing" link.Ident
+                do! socket.CloseAsync (WebSocketCloseStatus.Empty, "", link.Token)
+            runner.Deliver <| InternalEvt ^<| DoRefreshStatus None
     }
 

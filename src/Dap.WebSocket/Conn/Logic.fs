@@ -17,11 +17,11 @@ type ActorOperate<'pkt> = ActorOperate<WebSocket, 'pkt, Req<'pkt>>
 
 let private doAttach req (ident, token, socket, callback) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
-        match model.Link with
-        | Some link ->
-            reply runner callback <| nak req "Link_Exist" link
+        match model.Status with
+        | LinkStatus.Linked ->
+            reply runner callback <| nak req "Already_Linked" model.Link
             (model, cmd)
-        | None ->
+        | _ ->
             let time = runner.Clock.Now
             let processTime = time
             let link : Link<WebSocket> = {

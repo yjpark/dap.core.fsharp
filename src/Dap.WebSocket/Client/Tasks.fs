@@ -37,7 +37,7 @@ let internal doConnectAsync : GetReplyTask<Agent<'pkt>, LinkedStats> =
             logInfo runner "Link" "Connected" link
             reply runner callback <| ack req stats
             runner.Deliver <| InternalEvt ^<| OnLinked stats
-            runner.AddTask doReceiveFailed doReceiveAsync
+            runner.AddTask refreshStatusOnFailed doReceiveAsync
         | state' ->
             reply runner callback <| nak req "Connect_Failed" (link, time, duration, state')
             runner.Deliver <| InternalEvt ^<| DoRefreshStatus None

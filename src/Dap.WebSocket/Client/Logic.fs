@@ -18,11 +18,11 @@ type ActorOperate<'pkt> = ActorOperate<ClientWebSocket, 'pkt, Req<'pkt>>
 
 let private doConnect req (uri, token, callback) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
-        match model.Link with
-        | Some link ->
-            reply runner callback <| nak req "Link_Exist" link
-            noOperation
-        | None ->
+        match model.Status with
+        | LinkStatus.Linked ->
+            reply runner callback <| nak req "Already_Linked" model.Link
+            (model, cmd)
+        | _ ->
             let link : Link<ClientWebSocket> = {
                 Ident = uri
                 Token = token
@@ -30,9 +30,9 @@ let private doConnect req (uri, token, callback) : ActorOperate<'pkt> =
                 Buffer = Array.create<byte> runner.Actor.Args.BufferSize 0uy
             }
             replyAsync runner req callback doConnectFailed <| doConnectAsync
-            updateModel (fun m -> {m with Link = Some link})
-            |-|- BaseLogic.doSetStatus LinkStatus.Linking
-        <| runner <| (model, cmd)
+            (runner, model, cmd)
+            |-|> updateModel (fun m -> {m with Link = Some link})
+            |=|> BaseLogic.doSetStatus LinkStatus.Linking
 
 let private doDisconnect req (callback : Callback<unit>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
