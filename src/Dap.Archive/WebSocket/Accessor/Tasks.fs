@@ -43,7 +43,7 @@ let internal doConnectAsync : GetTask<Part<'actorMsg, 'pkt>, WebSocketTypes.Link
         return stats
     }
 
-let internal doReconnectFailed : OnFailed<Part<'actorMsg, 'pkt>> =
+let internal closeOnFailed : OnFailed<Part<'actorMsg, 'pkt>> =
     fun runner e ->
         if runner.Part.State.Status <> LinkStatus.Closed then
             runner.Deliver <| InternalEvt ^<| OnClosed None
@@ -54,10 +54,14 @@ let internal doReconnectAsync : GetTask<Part<'actorMsg, 'pkt>, unit> =
         if runner.Part.State.Status <> LinkStatus.Linking
                 && runner.Part.State.Status <> LinkStatus.Linked then
             let! stats = doConnectAsync runner
-            let! stats = doConnectAsync runner
             ()
         return ()
     }
+
+let internal doStartFailed : OnReplyFailed<Part<'actorMsg, 'pkt>, WebSocketTypes.LinkedStats option> =
+    fun req callback runner e ->
+        reply runner callback <| nak req "Exception_Raised" e
+        closeOnFailed runner e
 
 let internal doStartAsync : GetReplyTask<Part<'actorMsg, 'pkt>, WebSocketTypes.LinkedStats option> =
     fun req callback runner -> task {

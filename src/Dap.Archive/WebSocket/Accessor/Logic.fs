@@ -55,7 +55,7 @@ let private doStart req (callback : Callback<WebSocketTypes.LinkedStats option>)
                     | LinkStatus.Linked ->
                         reply runner callback <| ack req None
                     | _ ->
-                        replyAsync runner req callback nakOnFailed doStartAsync
+                        replyAsync runner req callback doStartFailed doStartAsync
                     (runner, model, cmd)
                     |=|> updateModel (fun m -> {m with Running = true})
         | None ->
@@ -155,7 +155,7 @@ let private doReconnect : PartOperate<'actorMsg, 'pkt> =
         (runner, model, cmd)
         |-|> (
             if not runner.Part.State.Running then
-                runner.AddTask doReconnectFailed doReconnectAsync
+                runner.AddTask closeOnFailed doReconnectAsync
                 updateModel (fun m -> {m with Running = true})
             else
                 noOperation
