@@ -1,10 +1,6 @@
 [<RequireQualifiedAccess>]
 module Dap.Remote.WebSocketService.Logic
 
-open System
-open System.Net.WebSockets
-open Elmish
-
 open Dap.Prelude
 open Dap.Platform
 open Dap.Remote
