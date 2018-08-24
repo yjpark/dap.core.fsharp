@@ -117,5 +117,5 @@ let subscribeEvent (owner : IOwner) (_model : 'model)
         onEvent.Add (dispatch << wrapper)
     cmdOfSub sub
 
-let newGuid () =
+let newGuid () : Guid =
     (System.Guid.NewGuid ()) .ToString ()

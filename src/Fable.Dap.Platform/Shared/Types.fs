@@ -12,6 +12,9 @@ type second = Microsoft.FSharp.Data.UnitSystems.SI.UnitNames.second
 [<Measure>]
 type ms
 
+type Luid = Bus.Luid  //Local Unique ID
+type Guid = string    //Global Unique ID
+
 let msPerSecond : float<ms/second> = 1000.0<ms/second>
 
 type Scope = string
