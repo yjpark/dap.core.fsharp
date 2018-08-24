@@ -2,6 +2,12 @@
 [<RequireQualifiedAccess>]
 module Dap.Prelude.Option
 
+#if !FABLE_COMPILER
+open System.Threading
+open System.Threading.Tasks
+open FSharp.Control.Tasks.V2
+#endif
+
 type Option<'T> with
     member this.Value = Option.get this
 
@@ -55,3 +61,47 @@ let tryMap (mapping : 'a -> 'b) (a : Option<'a>) : Option<'b> =
     a
     |> Option.bind (fun a -> ofTry mapping a)
 
+#if !FABLE_COMPILER
+let mapAsync (mappingAsync : 'T1 -> Task<'T2>) (a : Task<Option<'T1>>) : Task<Option<'T2>> = task {
+    match! a with
+    | Some a ->
+        let! a = mappingAsync a
+        return Some a
+    | None ->
+        return None
+}
+
+let bindAsync (binderAsync : 'T1 -> Task<Option<'T2>>) (a : Task<Option<'T1>>) : Task<Option<'T2>> = task {
+    match! a with
+    | Some a ->
+        return! binderAsync a
+    | None ->
+        return None
+}
+
+let getAsync (a : Task<Option<'T>>) : Task<'T> = task {
+    let! a = a
+    return a |> Option.get
+}
+
+let toAsync (a : Option<'T>) : Task<Option<'T>> = task {
+    return a
+}
+
+let mapTask (mapping : 'T1 -> 'T2) (a : Task<Option<'T1>>) : Task<Option<'T2>> = task {
+    match! a with
+    | Some a ->
+        return Some (mapping a)
+    | None ->
+        return None
+}
+
+let bindTask (binder : 'T1 -> Option<'T2>) (a : Task<Option<'T1>>) : Task<Option<'T2>> = task {
+    match! a with
+    | Some a ->
+        return binder a
+    | None ->
+        return None
+}
+
+#endif
