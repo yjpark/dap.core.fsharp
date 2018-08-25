@@ -6,6 +6,7 @@ open System.Threading.Tasks
 #endif
 
 open Dap.Prelude
+open Dap.Context
 
 //Note: during Init, the model is not created yet
 type ActorInit<'args, 'model, 'msg>

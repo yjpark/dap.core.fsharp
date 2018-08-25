@@ -2,6 +2,7 @@
 module Dap.Platform.Types'
 
 open Dap.Prelude
+open Dap.Context
 
 type IEnv =
     inherit IRunner

@@ -2,6 +2,7 @@
 module Dap.Platform.Util
 
 open Dap.Prelude
+open Dap.Context
 
 let private tplMsgInfo = LogEvent.Template4<string, IMsg, string, obj>(LogLevelInformation, "[{Section}] {Msg} ~> {Info}: {Detail}")
 

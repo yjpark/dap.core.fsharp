@@ -3,6 +3,7 @@
 module Dap.Platform.Agent
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform.Internal.Env
 open Dap.Platform.Internal.Agent
 

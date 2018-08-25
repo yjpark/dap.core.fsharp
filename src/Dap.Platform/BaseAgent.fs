@@ -2,6 +2,7 @@
 module Dap.Platform.BaseAgent
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform.Internal.Env
 
 type AgentModel<'runner, 'args, 'model, 'msg, 'req, 'evt>

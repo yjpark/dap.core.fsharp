@@ -13,6 +13,7 @@
     <Compile Include="Shared/Json.fs" />
     <Compile Include="Shared/UnionSpec.fs" />
     <Compile Include="Shared/Ed.fs" />
+    <Compile Include="Shared/Bus.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Prelude\Fable.Dap.Prelude.fsproj" />

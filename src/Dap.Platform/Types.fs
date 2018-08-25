@@ -3,6 +3,7 @@ module Dap.Platform.Types'
 
 open System.Threading.Tasks
 open Dap.Prelude
+open Dap.Context
 
 type QuitStats = {
     ForceQuit : bool

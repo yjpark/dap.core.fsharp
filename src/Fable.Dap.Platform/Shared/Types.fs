@@ -5,12 +5,16 @@ module Dap.Platform.Types
 open System.Threading.Tasks
 #endif
 open Dap.Prelude
+open Dap.Context
 
 [<Measure>]
 type second = Microsoft.FSharp.Data.UnitSystems.SI.UnitNames.second
 
 [<Measure>]
 type ms
+
+type IOwner = Bus.IOwner
+type IBus<'evt> = Bus.IBus<'evt>
 
 type Luid = Bus.Luid  //Local Unique ID
 type Guid = string    //Global Unique ID

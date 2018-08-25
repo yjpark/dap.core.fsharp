@@ -12,7 +12,6 @@
   <ItemGroup>
     <Compile Include="../Fable.Dap.Platform/Shared/Logic.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Cmd.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/Bus.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Types.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Callback.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Wrapping.fs" />

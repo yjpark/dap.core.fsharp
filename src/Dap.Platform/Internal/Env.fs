@@ -1,6 +1,7 @@
 module Dap.Platform.Internal.Env
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform
 
 type internal EnvMsg =

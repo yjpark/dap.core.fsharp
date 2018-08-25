@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Platform.Bus
+module Dap.Context.Bus
 
 open System
 open Dap.Prelude
