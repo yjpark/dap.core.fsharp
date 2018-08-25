@@ -2,6 +2,7 @@
 module Dap.Archive.Recorder.EventRecorder
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform
 open Dap.Remote
 open Dap.Archive

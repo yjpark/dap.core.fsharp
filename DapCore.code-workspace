@@ -7,6 +7,12 @@
 			"path": "src/Dap.Prelude"
 		},
 		{
+			"path": "src/Fable.Dap.Context"
+		},
+		{
+			"path": "src/Dap.Context"
+		},
+		{
 			"path": "src/Fable.Dap.Platform"
 		},
 		{

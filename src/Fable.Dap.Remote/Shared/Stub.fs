@@ -8,8 +8,8 @@ open Fable.Core
 #endif
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform
-open Dap.Remote
 open Dap.Remote.Internal
 
 type LocalReason =

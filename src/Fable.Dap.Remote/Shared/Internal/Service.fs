@@ -4,6 +4,7 @@ module Dap.Remote.Internal.Service
 
 open System
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform
 open Dap.Remote
 open Dap.Remote.Internal

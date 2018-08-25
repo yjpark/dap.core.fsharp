@@ -10,9 +10,6 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Fable.Dap.Remote/Shared/Json.fs" />
-    <Compile Include="../Fable.Dap.Remote/Shared/Spec.fs" />
-    <Compile Include="../Fable.Dap.Remote/Shared/Fable.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/ED.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Types.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Internal/Types.fs" />

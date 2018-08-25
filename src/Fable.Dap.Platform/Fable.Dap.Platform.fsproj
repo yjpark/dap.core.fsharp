@@ -20,6 +20,7 @@
     <Compile Include="Shared/Operator.fs" />
     <Compile Include="Shared/Util.fs" />
     <Compile Include="Shared/Clock.fs" />
+    <Compile Include="Shared/ED.fs" />
     <Compile Include="Const.fs" />
     <Compile Include="Runner.fs" />
     <Compile Include="Types.fs" />
@@ -32,7 +33,7 @@
     <Compile Include="Helper.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Fable.Dap.Prelude\Fable.Dap.Prelude.fsproj" />
+    <ProjectReference Include="..\Fable.Dap.Context\Fable.Dap.Context.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="*.fsproj; **\*.fs; **\*.js" PackagePath="fable" />

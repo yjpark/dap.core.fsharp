@@ -1,5 +1,6 @@
-Fable.JsonConverter
+Thoth.Json.Net
 
 group Build
     dotnet-sourcelink
     Microsoft.SourceLink.GitHub
+

@@ -14,6 +14,8 @@ let feed : NuGet.Feed = {
 let projects =
     !! "src/Fable.Dap.Prelude/*.fsproj"
     ++ "src/Dap.Prelude/*.fsproj"
+    ++ "src/Fable.Dap.Context/*.fsproj"
+    ++ "src/Dap.Context/*.fsproj"
     ++ "src/Fable.Dap.Platform/*.fsproj"
     ++ "src/Dap.Platform/*.fsproj"
     ++ "src/Fable.Dap.WebSocket/*.fsproj"

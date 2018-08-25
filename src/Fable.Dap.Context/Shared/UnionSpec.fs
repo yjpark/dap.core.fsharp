@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Remote.Spec
+module Dap.Context.UnionSpec
 
 open System
 open Microsoft.FSharp.Reflection
@@ -14,7 +14,6 @@ module D = Thoth.Json.Net.Decode
 #endif
 
 open Dap.Prelude
-open Dap.Platform
 
 type FieldSpec = {
     Type : Type

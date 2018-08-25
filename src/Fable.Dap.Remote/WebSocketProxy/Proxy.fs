@@ -4,6 +4,7 @@ module Dap.Remote.WebSocketProxy.Proxy
 open Fable.Core
 
 open Dap.Platform
+open Dap.Context
 open Dap.Remote
 open Dap.Remote.Proxy.Types
 open Dap.Remote.WebSocketProxy.Types

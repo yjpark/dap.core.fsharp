@@ -1,6 +1,7 @@
 module Dap.Remote.WebSocketProxy.Types
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform
 open Dap.Remote
 open Dap.Remote.Internal

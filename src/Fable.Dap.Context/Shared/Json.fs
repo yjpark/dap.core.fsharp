@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Remote.Json
+module Dap.Context.Json
 
 open System
 open Microsoft.FSharp.Reflection
@@ -12,7 +12,6 @@ module E = Thoth.Json.Encode
 module D = Thoth.Json.Decode
 type Json = E.Value
 #else
-open Newtonsoft.Json
 open Newtonsoft.Json.Linq
 module E = Thoth.Json.Net.Encode
 module D = Thoth.Json.Net.Decode
@@ -20,7 +19,6 @@ type Json = JToken
 #endif
 
 open Dap.Prelude
-open Dap.Platform
 
 type JsonDecoder<'json> = D.Decoder<'json>
 type JsonEncoder<'json> = 'json -> Json
@@ -121,32 +119,6 @@ type JToken with
     member this.EncodeJson (indent : int) =
         E.encode indent this
 
-type DateTime with
-    static member JsonDecoder : JsonDecoder<DateTime> =
-#if FABLE_COMPILER
-        //NOT Tested Yet
-        D.string
-        |> D.map (fun s ->
-            dateTimeOfText s
-            |> Result.get
-        )
-#else
-        fun token ->
-            if token.Type = JTokenType.Date then
-                Ok <| token.Value<DateTime> ()
-            elif token.Type = JTokenType.String then
-                let s = token.Value<string> ()
-                dateTimeOfText s
-                |> Result.mapError (fun e ->
-                    D.FailMessage ^<| sprintf "parse failed: %s -> %s" s e.Message
-                )
-            else
-                Error <| D.BadPrimitive ("a string", token)
-#endif
-    static member JsonEncoder : JsonEncoder<DateTime> =
-        fun this -> E.string <| dateTimeToText this
-    member this.ToJson () = DateTime.JsonEncoder this
-
 type Decimal with
     static member JsonDecoder : JsonDecoder<Decimal> =
         D.string |> D.map (fun s -> Decimal.Parse s)
@@ -170,20 +142,4 @@ type Int64 with
     member this.ToJson () =
         JValue(this) :> JToken
 
-type NodaTime.Instant with
-    static member JsonDecoder : JsonDecoder<Instant> =
-        fun token ->
-            if token.Type = JTokenType.Date then
-                Ok <| Instant.FromDateTimeUtc (token.Value<DateTime> ())
-            elif token.Type <> JTokenType.String then
-                Error <| D.BadPrimitive("a string of Instant", token)
-            else
-                instantOfText (token.Value<string> ())
-                |> Result.mapError (fun e ->
-                    D.BadPrimitiveExtra ("a string of Instant", token, e.Message)
-                )
-    static member JsonEncoder : JsonEncoder<NodaTime.Instant> =
-        fun this -> this.ToJson ()
-    member this.ToJson () =
-        E.string <| instantToText this
 #endif

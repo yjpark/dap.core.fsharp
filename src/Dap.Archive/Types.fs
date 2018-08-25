@@ -3,6 +3,7 @@ module Dap.Archive.Types
 
 open System.IO
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform
 open Dap.Remote
 open Dap.Remote.Internal

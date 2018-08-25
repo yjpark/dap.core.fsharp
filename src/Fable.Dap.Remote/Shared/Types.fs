@@ -3,6 +3,7 @@ namespace Dap.Remote
 open System
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform
 
 type PacketId = string
