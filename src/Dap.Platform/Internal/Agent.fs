@@ -69,7 +69,7 @@ let internal init<'runner, 'args, 'model, 'msg, 'req, 'evt
                 (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)
                             : AgentInit<'runner, 'args, 'model, 'msg, 'req, 'evt> =
     fun runner (_args : NoArgs) ->
-        let (actor, wrapper, cmd) = runner |> create' spec ActorMsg' false
+        let (actor, wrapper, cmd) = runner |> createActor' spec ActorMsg' false
         let model = {
             Spec = spec
             Actor = actor

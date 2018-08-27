@@ -149,7 +149,7 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
         member _this.State = state
         member _this.Version = version
 
-let internal create'
+let internal createActor'
         (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)
         (wrapMsg : WrapMsg<'wrapRunner, 'agentModel, 'agentMsg>)
         (subscribeNow : bool)

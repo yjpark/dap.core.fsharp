@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Context.Internal.PropertyMap
+module Dap.Context.Internal.MapProperty
 
 open System
 #if FABLE_COMPILER
@@ -8,21 +8,22 @@ open Fable.Core
 
 open Dap.Prelude
 open Dap.Context
+open Dap.Context.Unsafe
 open Dap.Context.Internal
 
-type internal PropertyMap<'v> (owner', spec') =
+type internal MapProperty<'v> (owner', spec') =
     let owner : IOwner = owner'
     let spec : PropertySpec<'v> = spec'
     let mutable sealed' : bool = false
     let mutable ver = 0
-    let mutable value : Map<Key, IProperty<'v>> = Map.empty
-    let onAdded = new Bus<IProperty<'v>> (owner)
-    let onRemoved = new Bus<IProperty<'v>> (owner)
+    let mutable value : Map<Key, IVarProperty<'v>> = Map.empty
+    let onAdded = new Bus<IVarProperty<'v>> (owner)
+    let onRemoved = new Bus<IVarProperty<'v>> (owner)
     let onChanged = new Bus<PropertyChanged<'v>> (owner)
     let onAdded0 = new Bus<IProperty> (owner)
     let onRemoved0 = new Bus<IProperty> (owner)
     let onChanged0 = new Bus<PropertyChanged> (owner)
-    let toJson (props : Map<string, IProperty<'v>>) =
+    let toJson (props : Map<string, IVarProperty<'v>>) =
         props
         |> Map.toList
         |> List.map (fun (k, prop) ->
@@ -33,8 +34,8 @@ type internal PropertyMap<'v> (owner', spec') =
             failWith "Already_Sealed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'v>.FullName value.Count tip
     let add (k : Key) (v : 'v) =
         let subSpec = spec.GetSubSpec k
-        let prop = new Property<'v> (owner, subSpec)
-        let prop = prop.AsProperty
+        let prop = VarProperty<'v>.Create owner subSpec
+        let prop = prop.AsVarProperty
         prop.OnChanged.AddWatcher owner spec.Luid onChanged.Trigger
         prop.OnChanged0.AddWatcher owner spec.Luid onChanged0.Trigger
         ver <- ver + 1
@@ -56,22 +57,24 @@ type internal PropertyMap<'v> (owner', spec') =
             onRemoved0.Trigger (prop :> IProperty)
             prop
         )
-    static member Create o s = new PropertyMap<'v>(o, s)
-    member this.AsPropertyMap = this :> IPropertyMap<'v>
+    static member Create o s = new MapProperty<'v>(o, s)
+    member this.AsMapProperty = this :> IMapProperty<'v>
+    member this.AsMapProperty0 = this :> IMapProperty
+    member this.AsProperties = this :> IProperties
     member this.AsProperty = this :> IProperty
-    interface IPropertyMap<'v> with
+    interface IMapProperty<'v> with
         member _this.Value = value
         member _this.Spec = spec.AsSpec
         member _this.TryGet k =
             value
             |> Map.tryFind k
         member this.Get k =
-            this.AsPropertyMap.TryGet k
+            this.AsMapProperty.TryGet k
             |> function
                 | Some prop -> prop
                 | None -> failWith "Not_Found" k
         member this.Set k v =
-            this.AsPropertyMap.TryGet k
+            this.AsMapProperty.TryGet k
             |> function
                 | Some prop ->
                     prop.SetValue v
@@ -81,7 +84,7 @@ type internal PropertyMap<'v> (owner', spec') =
                     true
         member this.Add k v =
             checkChange <| sprintf "Add: %s" k
-            this.AsPropertyMap.TryGet k
+            this.AsMapProperty.TryGet k
             |> Option.iter (fun prop ->
                 failWith "Already_Exist" <| sprintf "[%s] <%s> [%s] %A -> %A" spec.Luid typeof<'v>.FullName k prop v
             )
@@ -106,21 +109,32 @@ type internal PropertyMap<'v> (owner', spec') =
         member _this.OnAdded = onAdded.Publish
         member _this.OnRemoved = onRemoved.Publish
         member _this.OnChanged = onChanged.Publish
-    interface IPropertyMap with
+        member this.Clone o k =
+            let clone = MapProperty<'v>.Create o <| spec.ForClone k
+            this.AsProperty.ToJson () |> clone.AsProperty.WithJson |> ignore
+            if sealed' then clone.AsProperty.Seal ()
+            clone.AsMapProperty
+    interface IMapProperty with
+        member _this.ElementType = typeof<'v>
         member _this.Count = value.Count
         member this.Has k =
-            (this.AsPropertyMap.TryGet k).IsSome
+            (this.AsMapProperty.TryGet k).IsSome
         member _this.OnAdded0 = onAdded0.Publish
         member _this.OnRemoved0 = onRemoved0.Publish
+    interface IProperties with
+        member this.Clone1 o k = this.AsMapProperty.Clone o k :> IProperties
     interface IProperty with
+        member _this.Kind = PropertyKind.MapProperty
         member _this.Ver = ver
         member _this.Spec = spec.AsSpec1
         member _this.Seal () =
             if not sealed' then
                 sealed' <- true
-                true
-            else
-                false
+                value
+                |> Map.toList
+                |> List.iter (fun (_key, prop) ->
+                    prop.Seal ()
+                )
         member _this.Sealed = sealed'
         member _this.WithJson json =
             if sealed' then
@@ -146,5 +160,21 @@ type internal PropertyMap<'v> (owner', spec') =
                 *)
                 ok
         member this.OnChanged0 = onChanged0.Publish
+        member this.Clone0 o k = this.AsMapProperty.Clone o k :> IProperty
+    interface IUnsafeProperty with
+        member this.AsVar = failWith (this.GetType().FullName) "Cast_Failed"
+        member this.AsMap = this.AsMapProperty0
+        member this.AsList = failWith (this.GetType().FullName) "Cast_Failed"
+        member this.AsCombo = failWith (this.GetType().FullName) "Cast_Failed"
+        member this.ToVar<'v1> () : IVarProperty<'v1> = failWith (this.GetType().FullName) "Cast_Failed"
+#if FABLE_COMPILER
+        [<PassGenericsAttribute>]
+#endif
+        member this.ToMap<'v1> () =
+            if typeof<'v> = typeof<'v1> then
+                this.AsMapProperty0 :?> IMapProperty<'v1>
+            else
+                failWith (this.GetType().FullName) <| "Cast_Failed: " + typeof<'v1>.FullName
+        member this.ToList<'v1> () : IListProperty<'v1> = failWith (this.GetType().FullName) "Cast_Failed"
     interface IJson with
         member _this.ToJson () = toJson value

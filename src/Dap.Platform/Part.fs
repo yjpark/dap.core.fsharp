@@ -161,7 +161,7 @@ let create<'actorRunner, 'actorModel, 'actorMsg, 'runner, 'args, 'model, 'msg, '
         (agent : IAgent<'actorMsg>)
         : 'runner =
     let part = spec.Spawner <| AgentParam.Create agent.Env agent.Ident.Kind agent.Ident.Key
-    let (actor, wrapper, cmd) = part |> create' spec wrapMsg true
+    let (actor, wrapper, cmd) = part |> createActor' spec wrapMsg true
     part.Setup' agent partMsg actor wrapper cmd
     part
 

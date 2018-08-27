@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Context.Internal.Property
+module Dap.Context.Internal.VarProperty
 
 open System
 #if FABLE_COMPILER
@@ -8,12 +8,13 @@ open Fable.Core
 
 open Dap.Prelude
 open Dap.Context
+open Dap.Context.Unsafe
 
 let internal tplPropertyDebug = LogEvent.Template4<string, Luid, obj, obj>(LogLevelDebug, "[{Section}] {Spec} {Value} {Detail}")
 let internal tplPropertyInfo = LogEvent.Template4<string, Luid, obj, obj>(LogLevelInformation, "[{Section}] {Spec} {Value} {Detail}")
 let internal tplPropertyError = LogEvent.Template4<string, Luid, obj, obj>(LogLevelError, "[{Section}] {Spec} {Value} {Detail}")
 
-type internal Property<'v> (owner', spec') =
+type internal VarProperty<'v> (owner', spec') =
     let owner : IOwner = owner'
     let spec : PropertySpec<'v> = spec'
     let mutable ver = 0
@@ -42,10 +43,11 @@ type internal Property<'v> (owner', spec') =
                     New = toJson evt.New
                 }
             onChanged0.Trigger evt0
-    static member Create o s = new Property<'v>(o, s)
-    member this.AsProperty = this :> IProperty<'v>
-    member this.AsProperty0 = this :> IProperty
-    interface IProperty<'v> with
+    static member Create o s = new VarProperty<'v>(o, s)
+    member this.AsVarProperty = this :> IVarProperty<'v>
+    member this.AsVarProperty0 = this :> IVarProperty
+    member this.AsProperty = this :> IProperty
+    interface IVarProperty<'v> with
         member _this.Spec = spec.AsSpec
         member _this.Value = value
         member this.SetValue v =
@@ -54,7 +56,7 @@ type internal Property<'v> (owner', spec') =
                 setValue v
                 true
             | Some validator ->
-                match validator this.AsProperty v with
+                match validator this.AsVarProperty v with
                 | true ->
                     setValue v
                     true
@@ -62,15 +64,20 @@ type internal Property<'v> (owner', spec') =
                     owner.Log <| tplPropertyDebug "Property:Invalid_Value" spec.Luid value v
                     false
         member _this.OnChanged = onChanged.Publish
+        member this.Clone o k =
+            let clone = VarProperty<'v>.Create o <| spec.ForClone k
+            this.AsProperty.ToJson () |> clone.AsProperty.WithJson |> ignore
+            if sealed' then clone.AsProperty.Seal ()
+            clone.AsVarProperty
+    interface IVarProperty with
+        member _this.ValueType = typeof<'v>
     interface IProperty with
+        member _this.Kind = PropertyKind.VarProperty
         member _this.Ver = ver
         member _this.Spec = spec :> IPropertySpec
         member _this.Seal () =
             if not sealed' then
                 sealed' <- true
-                true
-            else
-                false
         member _this.Sealed = sealed'
         member this.WithJson json =
             if sealed' then
@@ -80,10 +87,26 @@ type internal Property<'v> (owner', spec') =
                 tryCastJson spec.Decoder json
                 |> function
                     | Ok v ->
-                        this.AsProperty.SetValue v
+                        this.AsVarProperty.SetValue v
                     | Error err ->
                         owner.Log <| tplPropertyError "Property:Decode_Failed" spec.Luid value (E.encode 4 json, err)
                         false
         member this.OnChanged0 = onChanged0.Publish
+        member this.Clone0 o k = this.AsVarProperty.Clone o k :> IProperty
+    interface IUnsafeProperty with
+        member this.AsVar = this.AsVarProperty0
+        member this.AsMap = failWith (this.GetType().FullName) "Cast_Failed"
+        member this.AsList = failWith (this.GetType().FullName) "Cast_Failed"
+        member this.AsCombo = failWith (this.GetType().FullName) "Cast_Failed"
+#if FABLE_COMPILER
+        [<PassGenericsAttribute>]
+#endif
+        member this.ToVar<'v1> () =
+            if typeof<'v> = typeof<'v1> then
+                this.AsVarProperty0 :?> IVarProperty<'v1>
+            else
+                failWith (this.GetType().FullName) <| "Cast_Failed: " + typeof<'v1>.FullName
+        member this.ToMap<'v1> () : IMapProperty<'v1> = failWith (this.GetType().FullName) "Cast_Failed"
+        member this.ToList<'v1> () : IListProperty<'v1> = failWith (this.GetType().FullName) "Cast_Failed"
     interface IJson with
         member this.ToJson () = toJson value

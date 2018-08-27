@@ -29,6 +29,7 @@ type internal AspectSpec = {
         {this with
             Luid = AspectSpec.CalcSubLuid parent.Luid this.Key
         }
+    member this.ForClone key = AspectSpec.Create key key
     member this.AsSpec = this :> IAspectSpec
     interface IAspectSpec with
         member this.Luid = this.Luid
@@ -43,8 +44,15 @@ type internal PropertySpec = {
             InitValue = initValue
             Aspect = AspectSpec.Create luid key
         }
+    static member GetSubSpec' (this : IPropertySpec) subKey =
+        let luid = AspectSpec.CalcSubLuid this.Luid subKey
+        PropertySpec.Create luid subKey this.InitValue
+    static member AsSubSpec' (this : IPropertySpec) (parent : IAspectSpec) =
+        let luid = AspectSpec.CalcSubLuid parent.Luid this.Key
+        PropertySpec.Create luid this.Key this.InitValue
     member this.GetSubSpec subKey = {this with Aspect = this.Aspect.GetSubSpec subKey}
     member this.AsSubSpec parent = {this with Aspect = this.Aspect.AsSubSpec parent}
+    member this.ForClone key = {this with Aspect = this.Aspect.ForClone key}
     member this.AsSpec = this :> IPropertySpec
     member this.AsSpec0 = this :> IAspectSpec
     member this.Luid = this.Aspect.Luid
@@ -84,6 +92,7 @@ type internal PropertySpec<'v> = {
         PropertySpec<'v>.Create this.Encoder this.Decoder luid this.Key this.InitValue this.Validator
     member this.GetSubSpec subKey = {this with Aspect = this.Aspect.GetSubSpec subKey}
     member this.AsSubSpec parent = {this with Aspect = this.Aspect.AsSubSpec parent}
+    member this.ForClone key = {this with Aspect = this.Aspect.ForClone key}
     member this.AsSpec = this :> IPropertySpec<'v>
     member this.AsSpec1 = this :> IPropertySpec
     member this.AsSpec0 = this :> IAspectSpec
@@ -101,16 +110,16 @@ type internal PropertySpec<'v> = {
 type internal ContextSpec = {
     Kind : Kind
     Luid : Luid
-    InitValue : Json
+    PropertiesSpawner : IOwner -> IProperties
 } with
-    static member Create kind initValue =
+    static member Create kind propertiesSpawner =
         {
             Luid = newLuid kind
             Kind = kind
-            InitValue = initValue
+            PropertiesSpawner = propertiesSpawner
         }
     member this.AsSpec = this :> IContextSpec
     interface IContextSpec with
         member this.Kind = this.Kind
         member this.Luid = this.Luid
-        member this.InitValue = this.InitValue
+        member this.PropertiesSpawner owner = this.PropertiesSpawner owner

@@ -6,6 +6,8 @@ open FSharp.Control.Tasks.V2
 
 open Dap.Prelude
 open Dap.Context
+open Dap.Context.Builder
+open Dap.Context.Unsafe
 open Dap.Platform
 open Dap.WebSocket.Client
 
@@ -42,25 +44,57 @@ let doSimpleTest (env : IEnv) : unit =
     env.Handle <| DoGetAgent ("Dummy", "test", callback env onGetAgent)
 *)
 
+type Publisher (owner : IOwner, key : Key) =
+    inherit CustomProperty<Publisher> ()
+    let target = Properties.combo owner key
+    let name = target.AddString "name" "John Doe" None
+    let year = target.AddInt "year" 1990 None
+    do (
+        target.SealCombo ()
+        base.Setup (target)
+    )
+    static member Empty () = new Publisher (noOwner, NoKey)
+    override this.Self = this
+    override this.Spawn o k = new Publisher (o, k)
+    member __.Name = name
+    member __.Year = year
+
+type PublisherBuilder () =
+    inherit ObjBuilder<Publisher> ()
+    override __.Zero () =
+        Publisher.Empty ()
+    [<CustomOperation("name")>]
+    member __.Name (this : Publisher, v) =
+        this.Name.SetValue v |> ignore
+        this
+    [<CustomOperation("year")>]
+    member __.Year (this : Publisher, v) =
+        this.Year.SetValue v |> ignore
+        this
+
+let publisher = new PublisherBuilder ()
+
 let doContextTest (env : IEnv) : unit =
-    let book =
-        context "Book" {
+    let author = combo {
+        string "name" "John Doe" None
+        int "age" 30 None
+    }
+    let book = context "Book" {
+        properties (combo {
             bool "published" false None
             int "copies" 100 None
-            (*
-            properties "author" {
-                string "name" "John Doe" None
-            }
-            *)
-            add (properties "author" {
-                int "age" 30 None
-                string "name" "John Doe" None
+            combo "author" author
+            custom "publisher1" (Publisher.Empty ())
+            custom "publisher" (publisher {
+                name "test"
+                year 2001
             })
-        }
+        })
+    }
     logWarn book "Test" "Init" (E.encodeJson 4 book)
     let copies =
-        book.Get "copies"
-        :?> IProperty<int>
+        book.Properties.AsCombo.Get "copies"
+        :?> IVarProperty<int>
     copies.OnChanged.AddWatcher env "test" (fun evt ->
         logWarn book "Test" "copies.OnChanged" evt
     )

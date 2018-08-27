@@ -1,54 +1,54 @@
-[<AutoOpen>]
 module Dap.Context.Builder
 
 open Dap.Prelude
 
-type PropertiesBuilder (key') =
-    let key : Key = key'
-    member __.Yield (_ : 'a) =
-        let owner = noOwner
-        Properties.create owner key <| E.object []
-    member __.Combine(this : 'p when 'p :> IProperties, prop : IProperty) =
-        this.Add prop
+[<AbstractClass>]
+type ObjBuilder<'obj when 'obj :> IObj> () =
+    member this.Yield (_ : 'a) =
+        this.Zero ()
+    abstract member Zero : unit -> 'obj
+
+type ComboBuilder () =
+    inherit ObjBuilder<IComboProperty> ()
+    override __.Zero () =
+        Properties.combo noOwner NoKey
+    [<CustomOperation("custom")>]
+    member __.Custom (this : IComboProperty, key, prop : ICustomProperty) =
+        this.AddCustom0 key prop.Clone0 |> ignore
         this
-    (*
-    member __.Zero () =
-        let owner = noOwner
-        Properties.create owner key <| E.object []
-    member __.For(this : IProperties, that : IProperties) =
-        this.Add that
-        this
-    *)
-    [<CustomOperation("add")>]
-    member __.Add(this : 'p when 'p :> IProperties, prop : IProperty) =
-        this.Add prop
+    [<CustomOperation("combo")>]
+    member __.Combo (this : IComboProperty, key, prop : IComboProperty) =
+        this.AddCustom0 key prop.Clone0 |> ignore
         this
     [<CustomOperation("bool")>]
-    member __.Bool(this : 'p when 'p :> IProperties, key, initValue, validator) =
+    member __.Bool (this : IComboProperty, key, initValue, validator) =
         this.AddBool key initValue validator |> ignore
         this
     [<CustomOperation("int")>]
-    member __.Int(this : 'p when 'p :> IProperties, key, initValue, validator) =
+    member __.Int (this : IComboProperty, key, initValue, validator) =
         this.AddInt key initValue validator |> ignore
         this
 #if !FABLE_COMPILER
     [<CustomOperation("long")>]
-    member __.Long(this : 'p when 'p :> IProperties, key, initValue, validator) =
+    member __.Long (this : IComboProperty, key, initValue, validator) =
         this.AddLong key initValue validator |> ignore
         this
 #endif
     [<CustomOperation("string")>]
-    member __.String(this : 'p when 'p :> IProperties, key, initValue, validator) =
+    member __.String (this: IComboProperty, key, initValue, validator) =
         this.AddString key initValue validator |> ignore
         this
 
 type ContextBuilder (kind') =
-    inherit PropertiesBuilder (NoKey)
+    inherit ObjBuilder<IContext> ()
     let kind : Kind = kind'
-    member __.Yield (x : 'a) =
-        let logging = getLogging ()
-        Context.create logging kind <| E.object []
+    override __.Zero () =
+        Context.combo kind
+    [<CustomOperation("properties")>]
+    member __.Properties (_: IContext, properties : IProperties) =
+        fun owner -> properties.Clone1 owner NoKey
+        |> Context.create kind
 
-let properties key = new PropertiesBuilder (key)
+let combo = new ComboBuilder ()
 
 let context kind = new ContextBuilder (kind)
