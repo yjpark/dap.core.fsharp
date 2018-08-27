@@ -87,13 +87,6 @@ let noReaction : React<'runner, 'model, 'msg, 'subModel, 'subMsg> =
         (model, [])
 
 let noEvent =
-    let noOwner =
-        let logger = getLogger "<noOwner>"
-        { new IOwner with
-            member _this.Log m = logger.Log m
-            member _this.Luid = NoIdent.ToLuid ()
-            member _this.Disposed = false
-        }
     let bus = new Bus<NoEvt>(noOwner)
     bus.Publish
 
@@ -117,6 +110,3 @@ let subscribeEvent (owner : IOwner) (_model : 'model)
         let ident = sprintf "%A" wrapper
         onEvent.Add (dispatch << wrapper)
     cmdOfSub sub
-
-let newGuid () : Guid =
-    (System.Guid.NewGuid ()) .ToString ()

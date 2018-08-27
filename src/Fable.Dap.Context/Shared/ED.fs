@@ -15,7 +15,7 @@ module TD = Thoth.Json.Net.Decode
 
 open Dap.Prelude
 
-type E = Encoder with
+type E = JsonEncodeHelper with
     static member encodeJson (indent : int) (json : IJson) = TE.encode indent <| json.ToJson ()
     static member json (json : IJson) = json.ToJson ()
 #if FABLE_COMPILER
@@ -40,7 +40,7 @@ type E = Encoder with
     static member long = Int64.JsonEncoder
 #endif
 
-type D = Decoder with
+type D = JsonDecodeHelper with
     static member bind (binder : 'a -> Result<'b, string>) (d1 : JsonDecoder<'a>) : JsonDecoder<'b> =
         d1
         |> TD.map (fun a ->

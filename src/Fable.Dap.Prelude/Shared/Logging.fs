@@ -69,6 +69,8 @@ let mutable private ``_Logging`` = FallBackLogging () :> ILogging
 let getLogger (context : string) =
     _Logging.GetLogger context
 
+let getLogging () = _Logging
+
 let setLogging'<'logging when 'logging :> ILogging> (logging : 'logging) =
     _Logging <- logging
     logging

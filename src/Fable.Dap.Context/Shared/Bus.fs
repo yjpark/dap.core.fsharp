@@ -10,13 +10,6 @@ open Dap.Prelude
 // - https://www.codeproject.com/Articles/29922/Weak-Events-in-C
 // - https://sachabarbs.wordpress.com/2014/04/23/f-21-events/
 
-type Luid = string //Local Unique ID
-
-type IOwner =
-    inherit ILogger
-    abstract Luid : Luid with get
-    abstract Disposed : bool with get
-
 let private tplBusError = LogEvent.Template2WithException<string, obj>(LogLevelError, "[{Section}] {Msg} -> Failed")
 
 let private tplDisposedInfo = LogEvent.Template3<string, obj, obj>(LogLevelInformation, "[{Section}] {Owner} {Detail}")
@@ -35,7 +28,7 @@ let private tplWatcherFailed = LogEvent.Template3WithException<string, obj, obj>
 
 let private tplAddWatcherError = LogEvent.Template5<string, IOwner, Luid, obj, obj>(LogLevelError, "[{Section}] {Owner} {Luid} {Action} -> {Old}")
 
-type Watcher<'evt> = {
+type Watcher<'msg> = {
     OwnerLuid : Luid
 #if FABLE_COMPILER
     OwnerRef : IOwner
@@ -43,7 +36,7 @@ type Watcher<'evt> = {
     OwnerRef : WeakReference<IOwner>
 #endif
     Luid : Luid
-    Action : 'evt -> unit
+    Action : 'msg -> unit
 } with
     static member Create (owner : IOwner) luid action =
         {
@@ -57,19 +50,11 @@ type Watcher<'evt> = {
             Action = action
         }
 
-type IBus<'evt> =
-    abstract AddWatcher : IOwner -> Luid -> ('evt -> unit) -> unit
-    abstract SetWatcher : IOwner -> Luid -> ('evt -> unit) -> bool    // -> isNew
-    abstract RemoveWatcher' : IOwner -> Luid list                      // -> luid list
-    abstract RemoveWatcher' : IOwner * Luid -> Luid list             // -> luid list
-    abstract RemoveWatcher : IOwner -> unit
-    abstract RemoveWatcher : IOwner * Luid -> unit
-
 [<StructuredFormatDisplay("{AsString}")>]
-type Bus<'evt> (owner') =
+type Bus<'msg> (owner') =
     let owner : IOwner = owner'
     let mutable logAddRemove = true
-    let mutable watchers : Watcher<'evt> list = []
+    let mutable watchers : Watcher<'msg> list = []
     let setLogAddRemove (v : bool) =
         logAddRemove <- v
     let addWatcher watcher =
@@ -78,7 +63,7 @@ type Bus<'evt> (owner') =
             owner.Log <| tplWatcherInfo "Bus:Watcher_Added" watcher ()
         else
             owner.Log <| tplWatcherDebug "Bus:Watcher_Added" watcher ()
-    let removeWatchers (toRemove : Watcher<'evt> list) =
+    let removeWatchers (toRemove : Watcher<'msg> list) =
         watchers <-
             watchers
             |> List.filter (fun w ->
@@ -91,7 +76,7 @@ type Bus<'evt> (owner') =
             owner.Log <| tplWatcherInfo "Bus:Watchers_Removed" toRemove ()
         else
             owner.Log <| tplWatcherDebug "Bus:Watchers_Removed" toRemove ()
-    let tryGetTarget (watcher : Watcher<'evt>) =
+    let tryGetTarget (watcher : Watcher<'msg>) =
     #if FABLE_COMPILER
         (true, watcher.OwnerRef)
     #else
@@ -101,12 +86,13 @@ type Bus<'evt> (owner') =
     #if FABLE_COMPILER
         let prefixFormat = sprintf "[Bus %s <%i>]" owner.Luid
     #else
-        let prefixFormat = sprintf "[Bus<%s> %s <%i>]" (typeof<'evt>.FullName) owner.Luid
+        let prefixFormat = sprintf "[Bus<%s> %s <%i>]" (typeof<'msg>.FullName) owner.Luid
     #endif
         prefixFormat watchers.Length
     member this.AsString =
         this.ToString ()
-    member _this.Trigger (evt : 'evt) =
+    member _this.HasWatchers = watchers.Length > 0
+    member _this.Trigger (evt : 'msg) =
         if owner.Disposed then
             owner.Log <| tplDisposedInfo "Bus:Owner_Disposed" owner evt
         else
@@ -154,17 +140,17 @@ type Bus<'evt> (owner') =
             | false ->
                 false
         )
-    member this.Publish : IBus<'evt> =
-        { new IBus<'evt> with
+    member this.Publish : IBus<'msg> =
+        { new IBus<'msg> with
             member _x.AddWatcher owner luid action =
                 match this.TryFindWatchers owner (Some luid) with
                 | [] ->
-                    let watcher = Watcher<'evt>.Create owner luid action
+                    let watcher = Watcher<'msg>.Create owner luid action
                     addWatcher watcher
                 | old ->
                     owner.Log <| tplAddWatcherError "Bus:Watcher_Already_Exist" owner luid action old
             member _x.SetWatcher owner luid action =
-                let watcher = Watcher<'evt>.Create owner luid action
+                let watcher = Watcher<'msg>.Create owner luid action
                 match this.TryFindWatchers owner (Some luid) with
                 | [] ->
                     addWatcher watcher

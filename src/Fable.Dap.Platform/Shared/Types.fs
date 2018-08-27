@@ -7,52 +7,52 @@ open System.Threading.Tasks
 open Dap.Prelude
 open Dap.Context
 
+module ContextTypes = Dap.Context.Types
+
+//Alias Context Types Begin
+type Luid = ContextTypes.Luid
+type Guid = ContextTypes.Guid
+
+let newGuid () = ContextTypes.newGuid ()
+let newLuid kind = ContextTypes.newLuid kind
+
+type Kind = ContextTypes.Kind
+type Key = ContextTypes.Key
+type Index = ContextTypes.Index
+
+type IOwner = ContextTypes.IOwner
+type IBus<'evt> = ContextTypes.IBus<'evt>
+
+type IEvt = ContextTypes.IEvt
+type IChannel<'evt> when 'evt :> IEvt = ContextTypes.IChannel<'evt>
+
+type IReq = ContextTypes.IReq
+type IHandler<'req> when 'req :> IReq = ContextTypes.IHandler<'req>
+
+type Reply<'res> = ContextTypes.Reply<'res>
+type Callback<'res> = ContextTypes.Callback<'res>
+
+#if !FABLE_COMPILER
+type IAsyncHandler<'req> when 'req :> IReq = ContextTypes.IAsyncHandler<'req>
+#endif
+//Alias Context Types End
+
 [<Measure>]
 type second = Microsoft.FSharp.Data.UnitSystems.SI.UnitNames.second
 
 [<Measure>]
 type ms
 
-type IOwner = Bus.IOwner
-type IBus<'evt> = Bus.IBus<'evt>
-
-type Luid = Bus.Luid  //Local Unique ID
-type Guid = string    //Global Unique ID
-
 let msPerSecond : float<ms/second> = 1000.0<ms/second>
 
 type Scope = string
-type Kind = string
-type Key = string
 
 [<Literal>]
 let NoScope = ""
 
-[<Literal>]
-let NoKind = ""
-
-[<Literal>]
-let NoKey = ""
-
 let private calVersion scope kind key =
-    let mutable versions : Map<string, int> = Map.empty
-    let ident = sprintf "%s:%s:%s" scope kind key
-    let calc = fun () ->
-        versions
-        |> Map.tryFind ident
-        |> function
-            | None ->
-                versions <- versions |> Map.add ident 1
-                1
-            | Some v ->
-                versions <- versions |> Map.add ident (v + 1)
-                (v + 1)
-#if FABLE_COMPILER
-    calc ()
-#else
-    let locker = obj()
-    lock locker calc
-#endif
+    sprintf "%s:%s:%s" scope kind key
+    |> newLuid'
 
 [<StructuredFormatDisplay("{Ident}")>]
 type Ident = {
@@ -70,7 +70,7 @@ type Ident = {
         }
     member this.ToLuid () = sprintf "[%s:%s:%s]<%i>" this.Scope this.Kind this.Key this.Ver
 
-let NoIdent =
+let noIdent =
     {
         Scope = NoScope
         Kind = NoKind
@@ -102,33 +102,11 @@ type Version = {
     member this.IncEvt = {this with EvtCount = this.EvtCount + 1}
 
 type IMsg = interface end
-type IReq = interface end
-type IEvt = interface end
-
-type Reply<'res> =
-    | Ack of IReq * 'res
-    | Nak of IReq * string * obj
-
-exception ReplyException of err : string * detail : obj
-with
-    override this.Message =
-        sprintf "ReplyException: %s: %A" this.err this.detail
-
-type Callback<'res> = (Reply<'res> -> unit) option
-
-type IHandler<'req> when 'req :> IReq =
-    abstract Handle : 'req -> unit
 
 type IPoster<'req> =
     abstract Post : 'req -> unit
 
-and IChannel<'evt> when 'evt :> IEvt =
-    abstract OnEvent : IBus<'evt> with get
-
 #if !FABLE_COMPILER
-type IAsyncHandler<'req> when 'req :> IReq =
-    abstract HandleAsync<'res> : (Callback<'res> -> 'req) -> Task<'res>
-
 type IAsyncPoster<'req> when 'req :> IReq =
     abstract PostAsync<'res> : (Callback<'res> -> 'req) -> Task<'res>
 #endif

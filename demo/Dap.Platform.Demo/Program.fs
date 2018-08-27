@@ -3,10 +3,13 @@
 open System.Threading
 open System.Threading.Tasks
 open FSharp.Control.Tasks.V2
+
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform
 open Dap.WebSocket.Client
 
+(*
 let doSimpleTestAsync (env : IEnv) delay : Task<unit> = task {
     let! _ = env.HandleAsync <| DoRegister "Dummy" ^<| Agent.getSpawner env noAgent
     let! (agent, isNew) = env.HandleAsync <| DoGetAgent "Dummy" "test"
@@ -37,18 +40,48 @@ let rec onGetAgent ((agent, isNew) : IAgent * bool) =
 let doSimpleTest (env : IEnv) : unit =
     env |> Env.register "Dummy" noAgent |> ignore
     env.Handle <| DoGetAgent ("Dummy", "test", callback env onGetAgent)
+*)
+
+let doContextTest (env : IEnv) : unit =
+    let book =
+        context "Book" {
+            bool "published" false None
+            int "copies" 100 None
+            (*
+            properties "author" {
+                string "name" "John Doe" None
+            }
+            *)
+            add (properties "author" {
+                int "age" 30 None
+                string "name" "John Doe" None
+            })
+        }
+    logWarn book "Test" "Init" (E.encodeJson 4 book)
+    let copies =
+        book.Get "copies"
+        :?> IProperty<int>
+    copies.OnChanged.AddWatcher env "test" (fun evt ->
+        logWarn book "Test" "copies.OnChanged" evt
+    )
+    copies.SetValue 0
+    |> ignore
+    logWarn book "Test" "Updated" (E.encodeJson 4 book)
 
 [<EntryPoint>]
 let main _argv =
-    let logging = setupConsole None
+    let logging = setupConsole LogLevelWarning
     let env = Env.live MailboxPlatform logging "Demo"
+    doContextTest env
 
+    (*
     //doSimpleTest env
     //Async.AwaitTask.WaitTask <| doSimpleTestAsync env 0.1<second>
     //|> Async.RunSynchronously
 
     Async.AwaitTask <| doConnectAndSendTextAsync env 3.0<second>
     |> Async.RunSynchronously
+    *)
 
     printfn "Quit..."
     0 // return an integer exit code

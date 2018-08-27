@@ -52,7 +52,9 @@
 		"cSpell.words": [
 			"Guid",
 			"Luid",
-			"sprintf"
+			"printfn",
+			"sprintf",
+			"typeof"
 		]
 	}
 }

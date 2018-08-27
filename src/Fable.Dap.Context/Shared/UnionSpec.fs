@@ -17,7 +17,7 @@ open Dap.Prelude
 
 type FieldSpec = {
     Type : Type
-    Encoder : obj -> Json
+    Encoder : JsonEncoder<obj>
     Decoder : JsonDecoder<obj>
 } with
 #if FABLE_COMPILER

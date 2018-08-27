@@ -3,7 +3,7 @@
 module Dap.Platform.Callback
 
 open Dap.Prelude
-open Dap.Platform
+open Dap.Context
 
 let wrap (wrapper : 'res -> 'a) (callback : Callback<'a>) : Callback<'res> =
     callback
