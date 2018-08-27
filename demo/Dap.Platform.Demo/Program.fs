@@ -45,7 +45,7 @@ let doSimpleTest (env : IEnv) : unit =
 *)
 
 type Publisher (owner : IOwner, key : Key) =
-    inherit CustomProperty<Publisher> ()
+    inherit WrapProperty<Publisher> ()
     let target = Properties.combo owner key
     let name = target.AddString "name" "John Doe" None
     let year = target.AddInt "year" 1990 None
@@ -55,7 +55,7 @@ type Publisher (owner : IOwner, key : Key) =
     )
     static member Empty () = new Publisher (noOwner, NoKey)
     override this.Self = this
-    override this.Spawn o k = new Publisher (o, k)
+    override __.Spawn o k = new Publisher (o, k)
     member __.Name = name
     member __.Year = year
 
@@ -95,8 +95,8 @@ let doContextTest (env : IEnv) : unit =
     let copies =
         book.Properties.AsCombo.Get "copies"
         :?> IVarProperty<int>
-    copies.OnChanged.AddWatcher env "test" (fun evt ->
-        logWarn book "Test" "copies.OnChanged" evt
+    copies.OnValueChanged.AddWatcher env "test" (fun evt ->
+        logWarn book "Test" "copies.OnValueChanged" evt
     )
     copies.SetValue 0
     |> ignore

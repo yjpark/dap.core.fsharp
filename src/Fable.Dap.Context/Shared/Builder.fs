@@ -14,11 +14,11 @@ type ComboBuilder () =
         Properties.combo noOwner NoKey
     [<CustomOperation("custom")>]
     member __.Custom (this : IComboProperty, key, prop : ICustomProperty) =
-        this.AddCustom0 key prop.Clone0 |> ignore
+        this.AddAny key prop.Clone0 |> ignore
         this
     [<CustomOperation("combo")>]
     member __.Combo (this : IComboProperty, key, prop : IComboProperty) =
-        this.AddCustom0 key prop.Clone0 |> ignore
+        this.AddAny key prop.Clone0 |> ignore
         this
     [<CustomOperation("bool")>]
     member __.Bool (this : IComboProperty, key, initValue, validator) =

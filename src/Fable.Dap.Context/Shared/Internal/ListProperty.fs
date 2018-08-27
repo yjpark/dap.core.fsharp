@@ -13,21 +13,20 @@ open Dap.Context.Internal
 
 let private newSubKey () = newLuid "SubKey"
 
-type internal ListProperty<'v> (owner', spec') =
+type internal ListProperty<'p when 'p :> IProperty> private (owner', spec') =
     let owner : IOwner = owner'
-    let spec : PropertySpec<'v> = spec'
+    let spec : IPropertySpec<'p> = spec'
     let mutable sealed' : bool = false
     let mutable ver = 0
-    let mutable value' : Map<Luid, IVarProperty<'v> * Index> = Map.empty
-    let mutable value : IVarProperty<'v> list = []
+    let mutable value' : Map<Luid, 'p * Index> = Map.empty
+    let mutable value : 'p list = []
     let onMoved = new Bus<PropertyMoved> (owner)
-    let onAdded = new Bus<IVarProperty<'v> * Index> (owner)
-    let onRemoved = new Bus<IVarProperty<'v> * Index> (owner)
-    let onChanged = new Bus<PropertyChanged<'v>> (owner)
+    let onAdded = new Bus<'p * Index> (owner)
+    let onRemoved = new Bus<'p * Index> (owner)
     let onAdded0 = new Bus<IProperty * Index> (owner)
     let onRemoved0 = new Bus<IProperty * Index> (owner)
-    let onChanged0 = new Bus<PropertyChanged> (owner)
-    let toJson (props : IVarProperty<'v> list) =
+    let onChanged = new Bus<PropertyChanged> (owner)
+    let toJson (props : 'p list) =
         E.nil
         (*
         props
@@ -36,31 +35,30 @@ type internal ListProperty<'v> (owner', spec') =
             k, prop.ToJson ()
         )|> E.object
         *)
-    let updateValueAndIndexes (overwrites : IVarProperty<'v> list) =
+    let updateValueAndIndexes (overwrites : 'p list) =
         //TODO
         ()
     let checkChange tip =
         if sealed' then
-            failWith "Already_Sealed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'v>.FullName value.Length tip
-    let add (v : 'v) (toIndex : ToIndex option) =
+            failWith "Already_Sealed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName value.Length tip
+    let add (toIndex : ToIndex option) =
         let k = newSubKey ()
         let subSpec = spec.GetSubSpec k
-        let prop = VarProperty<'v>.Create owner subSpec
-        let prop = prop.AsVarProperty
-        prop.OnChanged.AddWatcher owner spec.Luid onChanged.Trigger
-        prop.OnChanged0.AddWatcher owner spec.Luid onChanged0.Trigger
+        let prop = subSpec.Spawner owner k
+        let prop' = prop :> IProperty
+        prop'.OnChanged.AddWatcher owner spec.Luid onChanged.Trigger
         match toIndex with
         | None ->
             let index = value'.Count
             value' <- value' |> Map.add k (prop, index)
             onAdded.Trigger (prop, index)
-            onAdded0.Trigger (prop :> IProperty, index)
+            onAdded0.Trigger (prop', index)
             value <- value @ [prop]
         | Some toIndex ->
             value' <- value' |> Map.add k (prop, toIndex)
             updateValueAndIndexes [prop]
             onAdded.Trigger (prop, toIndex)
-            onAdded0.Trigger (prop :> IProperty, toIndex)
+            onAdded0.Trigger (prop', toIndex)
         prop
     let remove (i : Index) =
         let prop = value |> List.item i
@@ -76,16 +74,16 @@ type internal ListProperty<'v> (owner', spec') =
         )
     let checkIndex (i : Index) =
         if i < 0 || i >= value.Length then
-            failWith "Invalid_Index" <| sprintf "[%s] <%s> [%d] -> [%d]" spec.Luid typeof<'v>.FullName value.Length i
-    static member Create o s = new ListProperty<'v>(o, s)
-    member this.AsListProperty = this :> IListProperty<'v>
+            failWith "Invalid_Index" <| sprintf "[%s] <%s> [%d] -> [%d]" spec.Luid typeof<'p>.FullName value.Length i
+    static member Create o s = new ListProperty<'p>(o, s)
+    member this.AsListProperty = this :> IListProperty<'p>
     member this.AsListProperty0 = this :> IListProperty
     member this.AsProperties = this :> IProperties
     member this.AsProperty = this :> IProperty
-    interface IListProperty<'v> with
-        member _this.Value = value
-        member _this.Spec = spec.AsSpec
-        member _this.TryGet i =
+    interface IListProperty<'p> with
+        member __.Value = value
+        member __.Spec = spec
+        member __.TryGet i =
             if i >= 0 && i < value.Length then
                 Some <| List.item i value
             else
@@ -93,27 +91,21 @@ type internal ListProperty<'v> (owner', spec') =
         member this.Get i =
             checkIndex i
             List.item i value
-        member this.Set i v =
-            this.AsListProperty.TryGet i
-            |> function
-                | Some prop ->
-                    prop.SetValue v
-                | None -> failWith "Not_Found" i
-        member this.Add v =
+        member this.Add () =
             checkChange "Add"
-            add v None
-        member this.Insert v i =
+            add None
+        member this.Insert i =
             checkChange <| sprintf "Insert: %d" i
             if i = value.Length then
-                this.AsListProperty.Add v
+                this.AsListProperty.Add ()
             else
                 checkIndex i
-                add v <| Some i
+                add <| Some i
         member this.Remove i =
             checkChange <| sprintf "Remove: %d" i
             checkIndex i
             remove i
-        member _this.Clear () =
+        member __.Clear () =
             checkChange "Clear"
             let oldValue = value
             value' <- Map.empty
@@ -124,18 +116,17 @@ type internal ListProperty<'v> (owner', spec') =
                 onRemoved0.Trigger (prop :> IProperty, i)
             )
             oldValue
-        member _this.OnAdded = onAdded.Publish
-        member _this.OnRemoved = onRemoved.Publish
-        member _this.OnChanged = onChanged.Publish
+        member __.OnAdded = onAdded.Publish
+        member __.OnRemoved = onRemoved.Publish
         member this.Clone o k =
-            let clone = ListProperty<'v>.Create o <| spec.ForClone k
+            let clone = ListProperty<'p>.Create o <| spec.ForClone k
             this.AsProperty.ToJson () |> clone.AsProperty.WithJson |> ignore
             if sealed' then clone.AsProperty.Seal ()
             clone.AsListProperty
     interface IListProperty with
-        member _this.ElementType = typeof<'v>
-        member _this.Count = value.Length
-        member _this.Has i =
+        member __.ElementType = typeof<'p>
+        member __.Count = value.Length
+        member __.Has i =
             i >= 0 && i < value.Length
         member this.MoveTo i toIndex =
             checkIndex toIndex
@@ -152,24 +143,24 @@ type internal ListProperty<'v> (owner', spec') =
                 |> Map.add propA.Spec.Luid (propA, indexB)
                 |> Map.add propB.Spec.Luid (propB, indexA)
             updateValueAndIndexes [propA ; propB]
-        member _this.OnMoved = onMoved.Publish
-        member _this.OnAdded0 = onAdded0.Publish
-        member _this.OnRemoved0 = onRemoved0.Publish
+        member __.OnMoved = onMoved.Publish
+        member __.OnAdded0 = onAdded0.Publish
+        member __.OnRemoved0 = onRemoved0.Publish
     interface IProperties with
         member this.Clone1 o k = this.AsListProperty.Clone o k :> IProperties
     interface IProperty with
-        member _this.Kind = PropertyKind.ListProperty
-        member _this.Ver = ver
-        member _this.Spec = spec :> IPropertySpec
-        member _this.Seal () =
+        member __.Kind = PropertyKind.ListProperty
+        member __.Ver = ver
+        member __.Spec = spec :> IPropertySpec
+        member __.Seal () =
             if not sealed' then
                 sealed' <- true
                 value
                 |> List.iter (fun prop ->
                     prop.Seal ()
                 )
-        member _this.Sealed = sealed'
-        member _this.WithJson json =
+        member __.Sealed = sealed'
+        member __.WithJson json =
             if sealed' then
                 owner.Log <| tplPropertyError "Property:Already_Sealed" spec.Luid value (E.encode 4 json)
                 false
@@ -192,22 +183,24 @@ type internal ListProperty<'v> (owner', spec') =
                     logError owner "Properties:WithJson" "Decode_Has_Error" (E.encode 4 json)
                 *)
                 ok
-        member this.OnChanged0 = onChanged0.Publish
+        member this.OnChanged = onChanged.Publish
         member this.Clone0 o k = this.AsListProperty.Clone o k :> IProperty
     interface IUnsafeProperty with
         member this.AsVar = failWith (this.GetType().FullName) "Cast_Failed"
         member this.AsMap = failWith (this.GetType().FullName) "Cast_Failed"
         member this.AsList = this.AsListProperty0
         member this.AsCombo = failWith (this.GetType().FullName) "Cast_Failed"
+        member this.AsCustom = failWith (this.GetType().FullName) "Cast_Failed"
         member this.ToVar<'v1> () : IVarProperty<'v1> = failWith (this.GetType().FullName) "Cast_Failed"
-        member this.ToMap<'v1> () : IMapProperty<'v1> = failWith (this.GetType().FullName) "Cast_Failed"
+        member this.ToMap<'p1 when 'p1 :> IProperty> () : IMapProperty<'p1> = failWith (this.GetType().FullName) "Cast_Failed"
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]
 #endif
-        member this.ToList<'v1> () =
-            if typeof<'v> = typeof<'v1> then
-                this.AsListProperty0 :?> IListProperty<'v1>
+        member this.ToList<'p1 when 'p1 :> IProperty> () =
+            if typeof<'p> = typeof<'p1> then
+                this.AsListProperty0 :?> IListProperty<'p1>
             else
-                failWith (this.GetType().FullName) <| "Cast_Failed: " + typeof<'v1>.FullName
+                failWith (this.GetType().FullName) <| "Cast_Failed: " + typeof<'p1>.FullName
+        member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () : ICustomProperty<'p1> = failWith (this.GetType().FullName) "Cast_Failed"
     interface IJson with
-        member _this.ToJson () = toJson value
+        member __.ToJson () = toJson value

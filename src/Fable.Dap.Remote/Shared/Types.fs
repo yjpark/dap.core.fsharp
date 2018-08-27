@@ -25,7 +25,7 @@ type IEvent =
 
 type NoResult = NoResult
 with
-    static member JsonEncoder (_this : NoResult) =
+    static member JsonEncoder (__ : NoResult) =
         E.nil
     static member JsonDecoder =
         D.nil NoResult
@@ -34,7 +34,7 @@ with
 
 type NoError = NoError
 with
-    static member JsonEncoder (_this : NoError) =
+    static member JsonEncoder (__ : NoError) =
         E.nil
     static member JsonDecoder =
         D.nil NoError
@@ -43,7 +43,7 @@ with
 
 type JsonNil = JsonNil
 with
-    static member JsonEncoder (_this : JsonNil) =
+    static member JsonEncoder (__ : JsonNil) =
         E.nil
     static member JsonDecoder =
         D.nil JsonNil

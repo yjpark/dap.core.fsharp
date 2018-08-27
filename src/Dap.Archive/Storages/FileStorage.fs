@@ -25,9 +25,9 @@ type Param = {
 
 type Storage<'extra> when 'extra :> IJson (param') =
     let param : Param = param'
-    member _this.Param with get () = param
+    member __.Param with get () = param
     interface IStorage<'extra> with
-        member _this.OpenFramesStream (runner : IRunner) (relPath : string) =
+        member __.OpenFramesStream (runner : IRunner) (relPath : string) =
             let path = Path.Combine (param.Root, relPath, FramesExtension)
             new FileStream (path, FileMode.Open, FileAccess.Read) :> Stream
 
@@ -38,9 +38,9 @@ type Param' = {
 
 type Storage'<'extra> when 'extra :> IJson (param') =
     let param : Param' = param'
-    member _this.Param with get () = param
+    member __.Param with get () = param
     interface IStorage'<'extra> with
-        member _this.WriteMetaAsync (meta : Meta<'extra>) =
+        member __.WriteMetaAsync (meta : Meta<'extra>) =
             fun runner -> task {
                 let relPath = param.CalcRelPath meta.Key
                 let path = Path.Combine (param.Root, relPath)
@@ -50,7 +50,7 @@ type Storage'<'extra> when 'extra :> IJson (param') =
                 let json = (meta :> IJson).EncodeJson 4
                 do! writer.WriteAsync (json)
             }
-        member _this.NewFramesStream (runner : IRunner) (key : string) =
+        member __.NewFramesStream (runner : IRunner) (key : string) =
             let relPath = param.CalcRelPath key
             let path = Path.Combine (param.Root, relPath)
             checkDirectory runner path "FileStorage"

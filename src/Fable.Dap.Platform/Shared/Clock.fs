@@ -39,10 +39,10 @@ let private calcDuration (fromTime : Instant) =
 
 type RealClock () =
     interface IClock with
-        member _this.Now = getNow' ()
-        member _this.CalcDuration fromTime = calcDuration fromTime
-        member _this.Now' = getNow' ()
-        member _this.CalcDuration' fromTime = calcDuration fromTime
+        member __.Now = getNow' ()
+        member __.CalcDuration fromTime = calcDuration fromTime
+        member __.Now' = getNow' ()
+        member __.CalcDuration' fromTime = calcDuration fromTime
 
 type FakeClock () =
     let mutable now = getNow' ()
@@ -52,7 +52,7 @@ type FakeClock () =
         member this.Now = now
         member this.CalcDuration fromTime = (now, now - fromTime)
         member this.Now' = getNow' ()
-        member _this.CalcDuration' fromTime = calcDuration fromTime
+        member __.CalcDuration' fromTime = calcDuration fromTime
 
 let private TIMESTAMP_FORMAT = "yyyy-MM-ddTHH:mm:ss";
 

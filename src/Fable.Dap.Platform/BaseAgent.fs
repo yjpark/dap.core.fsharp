@@ -27,7 +27,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     member this.AsDisplay = (ident, this.Actor)
     member this.AsAgent =
         this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
-    member _this.Setup' spec' =
+    member __.Setup' spec' =
         if spec.IsSome then
             failWith "Already_Setup" (spec, spec')
         spec <- Some spec'
@@ -37,7 +37,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     interface IRunner<'runner> with
         member this.Runner = this.Runner
     //IRunner
-    member _this.Clock = env.Clock
+    member __.Clock = env.Clock
     interface IRunner with
         member this.Clock = env.Clock
     member this.Start' () =
@@ -80,16 +80,16 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         with e ->
             runner.Log <| tplAgentFailed "Update" msg e
             noCmd
-    member _this.SetDispatch' dispatch' : unit =
+    member __.SetDispatch' dispatch' : unit =
         dispatch <- Some dispatch'
-    member _this.Deliver' (cmd : Cmd<'msg>) : unit =
+    member __.Deliver' (cmd : Cmd<'msg>) : unit =
         let dispatch' = Option.get dispatch
         cmd |> List.iter (fun m -> m <| dispatch')
     interface IOwner with
-        member _this.Luid = ident.ToLuid ()
-        member _this.Disposed = false
+        member __.Luid = ident.ToLuid ()
+        member __.Disposed = false
     //IAgent<'args, 'model, 'msg, 'req, 'evt>
-    member _this.Actor = actor |> Option.get |> fun a -> a.AsActor
+    member __.Actor = actor |> Option.get |> fun a -> a.AsActor
     interface IAgent<'args, 'model, 'msg, 'req, 'evt> with
         member this.Actor = this.Actor
     //IAgent<'req, 'evt>
@@ -103,10 +103,10 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     interface IAgent<'msg> with
         member this.Deliver msg = this.Deliver msg
     //IAgent
-    member _this.Env = env
-    member _this.Ident = ident
+    member __.Env = env
+    member __.Ident = ident
     interface IAgent with
         member this.Env = env
-        member _this.Ident = ident
+        member __.Ident = ident
     interface ILogger with
         member this.Log m = logger.Log m

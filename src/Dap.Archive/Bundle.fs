@@ -28,10 +28,10 @@ type Bundle<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (spec', pa
     let mutable volume : Volume<'extra, 'frame> option = None
     let mutable volumes : Volume<'extra, 'frame> list = []
     let mutable volumeForWrite : Volume<'extra, 'frame> option = None
-    member _this.Spec with get () = spec
-    member _this.Param with get () = param
-    member _this.Volume with get () = volume
-    member _this.Volumes with get () = volumes
+    member __.Spec with get () = spec
+    member __.Param with get () = param
+    member __.Volume with get () = volume
+    member __.Volumes with get () = volumes
 
 type Spec'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame = {
     Kind : string
@@ -82,15 +82,15 @@ type Bundle'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (spec', p
             volume <- Some volume'
             if param.KeepVolumes then
                 volumes <- volumes @ [ volume' ]
-    member _this.Spec with get () = spec
-    member _this.Param with get () = param
-    member _this.Volume with get () = volume
-    member _this.Volumes with get () = volumes
-    member _this.Open (runner : IRunner) (time : Instant) : unit =
+    member __.Spec with get () = spec
+    member __.Param with get () = param
+    member __.Volume with get () = volume
+    member __.Volumes with get () = volumes
+    member __.Open (runner : IRunner) (time : Instant) : unit =
         checkVolume runner time
-    member _this.Close (runner : IRunner) : unit =
+    member __.Close (runner : IRunner) : unit =
         closeVolume runner
-    member _this.WriteFrame (runner : IRunner) (frame : 'frame) : unit =
+    member __.WriteFrame (runner : IRunner) (frame : 'frame) : unit =
         checkVolume runner frame.Time
         match volume with
         | Some volume ->
@@ -100,7 +100,7 @@ type Bundle'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (spec', p
         | None ->
             logError runner "Bundle'.WriteFrame" "CheckVolume_Failed" frame
             failwith "Bundle'.WriteFrame Failed: CheckVolume_Failed"
-    member _this.Flush (runner : IRunner) : unit =
+    member __.Flush (runner : IRunner) : unit =
         if isDirty then
             isDirty <- false
             match volume with

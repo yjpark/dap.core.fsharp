@@ -74,12 +74,12 @@ type ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt
             Subscribe = noSubscription
         }
     let mutable param : ActorParam<'msg> = noActorParam
-    member _this.Spawner = spawner
-    member _this.Args = args
-    member _this.WrapReq = wrapReq
-    member _this.CastEvt = castEvt
-    member _this.Logic = inUse <- true ; logic
-    member _this.Param = inUse <- true ; param
+    member __.Spawner = spawner
+    member __.Args = args
+    member __.WrapReq = wrapReq
+    member __.CastEvt = castEvt
+    member __.Logic = inUse <- true ; logic
+    member __.Param = inUse <- true ; param
     member this.WithSubscribe subscribe =
         if inUse then
             failWith "Already_In_Use" subscribe
@@ -101,9 +101,9 @@ type ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt
         param <- update param
         this
     interface IActorSpec<'args, 'msg, 'req, 'evt> with
-        member _this.Args = args
-        member _this.WrapReq = wrapReq
-        member _this.CastEvt = castEvt
+        member __.Args = args
+        member __.WrapReq = wrapReq
+        member __.CastEvt = castEvt
 
 [<StructuredFormatDisplay("<Actor>{AsDisplay}")>]
 type internal Actor<'args, 'model, 'msg, 'req, 'evt
@@ -122,32 +122,32 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
         | Some evt ->
             version <- version.IncEvt
             bus.Trigger evt
-    member _this.AsDisplay = (agent.Ident, version)
-    member _this.State = state
-    member _this.SetState (msg : 'msg) (newState : 'model) =
+    member __.AsDisplay = (agent.Ident, version)
+    member __.State = state
+    member __.SetState (msg : 'msg) (newState : 'model) =
         state <- newState
         version <- version.IncMsg (not (newState =? state))
         tryFireEvent msg
-    member _this.Handle (req : 'req) =
+    member __.Handle (req : 'req) =
         version <- version.IncReq
         agent.Deliver (spec.WrapReq req)
 #if !FABLE_COMPILER
-    member _this.HandleAsync (getReq : Callback<'res> -> 'req) =
+    member __.HandleAsync (getReq : Callback<'res> -> 'req) =
         version <- version.IncReq
         agent.DeliverAsync (spec.WrapReq << getReq)
 #endif
-    member _this.Version = version
+    member __.Version = version
     member this.AsActor = this :> IActor<'args, 'model, 'req, 'evt>
     interface IActor<'args, 'model, 'req, 'evt> with
         member this.Handle req = this.Handle req
 #if !FABLE_COMPILER
         member this.HandleAsync getReq = this.HandleAsync getReq
 #endif
-        member _this.OnEvent = bus.Publish
-        member _this.Ident = agent.Ident
-        member _this.Args = spec.Args
-        member _this.State = state
-        member _this.Version = version
+        member __.OnEvent = bus.Publish
+        member __.Ident = agent.Ident
+        member __.Args = spec.Args
+        member __.State = state
+        member __.Version = version
 
 let internal createActor'
         (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)

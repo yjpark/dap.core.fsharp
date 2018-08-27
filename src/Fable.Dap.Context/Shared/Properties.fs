@@ -22,6 +22,6 @@ type IComboProperty with
         |> this.AddVar<string>
 
 let combo (owner : IOwner) key =
-    PropertySpec.Create key key <| E.object []
+    IPropertySpec.Create (key, E.object [])
     |> ComboProperty.Create owner
     :> IComboProperty

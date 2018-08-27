@@ -26,7 +26,7 @@ type internal Env (param' : EnvParam, logic') =
     let mutable dispatch : DispatchMsg<EnvMsg> option = None
     let mutable state : EnvModel option = None
     let mutable version : Version = Version.Init
-    member _this.AsDisplay = (param.Scope, version)
+    member __.AsDisplay = (param.Scope, version)
     member this.SetState (newState : EnvModel) =
         let stateChanged = state.IsNone || not (newState =? Option.get state)
         state <- Some newState
@@ -34,7 +34,7 @@ type internal Env (param' : EnvParam, logic') =
     member this.Handle (req : EnvReq) = dispatch' this (EnvReq req)
     member this.HandleAsync (getReq : Callback<'res> -> EnvReq) = dispatchAsync' this (EnvReq << getReq)
     interface IRunnable<IEnv, IEnv, NoArgs, EnvModel, EnvMsg> with
-        member _this.Args = NoArgs
+        member __.Args = NoArgs
         member this.Logic = logic
         member this.Dispatch = dispatch
         member this.State = state
@@ -66,7 +66,7 @@ type internal Env (param' : EnvParam, logic') =
         member this.Scope = param.Scope
         member this.State = state |> Option.get
     interface IOwner with
-        member _this.Luid = param.Scope
-        member _this.Disposed = false
+        member __.Luid = param.Scope
+        member __.Disposed = false
     interface ILogger with
         member this.Log m = logger.Log m

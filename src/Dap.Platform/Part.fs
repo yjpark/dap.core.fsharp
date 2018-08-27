@@ -43,7 +43,7 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
     let mutable wrapper : Wrapper<'actorMsg, 'msg> option = None
     let mutable logger : ILogger option = None
     let mutable dispatch : DispatchMsg<'msg> option = None
-    member _this.AsDisplay = (ident, partMsg, actor)
+    member __.AsDisplay = (ident, partMsg, actor)
     member this.AsPart = this :> IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
     member this.AsAgent = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
     //IRunner<'runner>
@@ -57,11 +57,11 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.AddTask onFailed getTask = this.AddTask onFailed getTask
         member this.RunTask onFailed getTask = this.RunTask onFailed getTask
     //IPart
-    member _this.Agent = agent |> Option.get
-    member _this.Wrapper = wrapper |> Option.get
+    member __.Agent = agent |> Option.get
+    member __.Wrapper = wrapper |> Option.get
     interface IPart with
         member this.Agent = this.Agent :> IAgent
-    member _this.Part = actor |> Option.get
+    member __.Part = actor |> Option.get
     interface IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt> with
         member this.Agent = this.Agent
         member this.Part = this.Part
@@ -88,10 +88,10 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
                     cmd |> List.iter (fun m -> m <| dispatch' this)
                 })
     interface IDispatcher<'msg> with
-        member _this.Dispatch = dispatch
-        member _this.SetDispatch dispatch' = dispatch <- Some dispatch'
+        member __.Dispatch = dispatch
+        member __.SetDispatch dispatch' = dispatch <- Some dispatch'
     //ILogger
-    member _this.Log m = (logger |> Option.get).Log m
+    member __.Log m = (logger |> Option.get).Log m
     interface ILogger with
         member this.Log m = this.Log m
     //IRunner
@@ -137,8 +137,8 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.Deliver msg = this.Deliver msg
         member this.DeliverAsync getMsg = this.DeliverAsync getMsg
     //IAgent
-    member _this.Env = env
-    member _this.Ident = ident
+    member __.Env = env
+    member __.Ident = ident
     member this.Handle (req : AgentReq) = this.Agent.Handle req
     member this.HandleAsync (getReq : Callback<'res> -> AgentReq) = this.Agent.HandleAsync getReq
     interface IAgent with

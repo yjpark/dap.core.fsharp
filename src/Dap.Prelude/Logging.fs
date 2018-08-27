@@ -65,12 +65,12 @@ let forContext (context : string) (logger : Serilog.ILogger) =
 type SerilogLogger (target' : Serilog.ILogger, mainTarget' : Serilog.ILogger option) =
     let target = target'
     let mainTarget = mainTarget'
-    member _this.IsMain = mainTarget.IsNone
-    member _this.Log (evt : LogEvent) =
+    member __.IsMain = mainTarget.IsNone
+    member __.Log (evt : LogEvent) =
         toSerilog target mainTarget evt
-    member _this.Target = target
-    member _this.MainTarget = mainTarget
-    member _this.ForContext (context : string) =
+    member __.Target = target
+    member __.MainTarget = mainTarget
+    member __.ForContext (context : string) =
         new SerilogLogger
             (
                 forContext context target,
@@ -93,9 +93,9 @@ let private getMainTargetForLogging (logger : Serilog.ILogger) =
 
 type SerilogLogging (target' : Serilog.ILogger) =
     let logger = new SerilogLogger (target', getMainTargetForLogging target')
-    member _this.IsMain =
+    member __.IsMain =
         logger.IsMain
-    member _this.Close () : unit =
+    member __.Close () : unit =
         if logger.IsMain then
             Serilog.Log.CloseAndFlush ()
         else
@@ -111,11 +111,11 @@ type SerilogLogging (target' : Serilog.ILogger) =
         new SerilogLogging (logger)
     interface ILogging with
         member this.Close () = this.Close ()
-        member _this.GetLogger (context : string) : ILogger =
+        member __.GetLogger (context : string) : ILogger =
             logger.ForContext context
             :> ILogger
     interface ILogger with
-        member _this.Log (evt : LogEvent) =
+        member __.Log (evt : LogEvent) =
             logger.Log evt
 
 let setupSerilog (sinks : AddSink list) : SerilogLogging =

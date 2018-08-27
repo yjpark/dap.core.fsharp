@@ -9,23 +9,23 @@ type internal Env (logging', scope', clock') =
     let scope : Scope = scope'
     let clock : IClock = clock'
     //ILogger
-    member _this.Log m = logging.Log m
+    member __.Log m = logging.Log m
     interface ILogger with
         member this.Log m = this.Log m
     //IRunner
-    member _this.Clock = clock
+    member __.Clock = clock
     interface IRunner with
         member this.Clock = clock
     //IEnv
     member this.Logging = logging
     member this.Scope = scope
     interface IEnv with
-        member _this.Logging = logging
-        member _this.Scope = scope
+        member __.Logging = logging
+        member __.Scope = scope
     //IOwner
     interface IOwner with
-        member _this.Luid = scope
-        member _this.Disposed = false
+        member __.Luid = scope
+        member __.Disposed = false
 
 let spawn spec kind key (env : IEnv) : IAgent =
     (Agent.spawn spec <| AgentParam.Create env kind key)

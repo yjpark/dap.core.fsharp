@@ -58,7 +58,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     let mutable version : Version = Version.Init
     member this.AsDisplay = (ident, version, this.Actor)
     member private this.AsAgent = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
-    member _this.Setup' spec' logic' =
+    member __.Setup' spec' logic' =
         if spec.IsSome then
             failWith "Already_Setup" (spec, spec')
         spec <- Some spec'
@@ -67,7 +67,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         |> Option.iter (fun getSlowCap ->
             stats <- statsOfCap getSlowCap
         )
-    member _this.SetState (newState : AgentModel<'runner, 'args, 'model, 'msg, 'req, 'evt>) =
+    member __.SetState (newState : AgentModel<'runner, 'args, 'model, 'msg, 'req, 'evt>) =
         let stateChanged = state.IsNone || not (newState =? Option.get state)
         state <- Some newState
         version <- version.IncMsg stateChanged
@@ -75,11 +75,11 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     interface IRunnable<'runner, 'runner, NoArgs,
                         AgentModel<'runner, 'args, 'model, 'msg, 'req, 'evt>,
                         AgentMsg<'runner, 'args, 'model, 'msg, 'req, 'evt>> with
-        member _this.Args = NoArgs
-        member _this.Logic = logic |> Option.get
-        member _this.Dispatch = dispatch
-        member _this.State = state
-        member _this.SetDispatch dispatch' = dispatch <- Some dispatch'
+        member __.Args = NoArgs
+        member __.Logic = logic |> Option.get
+        member __.Dispatch = dispatch
+        member __.State = state
+        member __.SetDispatch dispatch' = dispatch <- Some dispatch'
         member this.Start () =
             let stateWasNone = state.IsNone
             let cmd = start' this this.SetState
@@ -94,7 +94,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     member this.Clock = env.Clock
     interface IRunner with
         member this.Clock = this.Clock
-        member _this.Stats = stats
+        member __.Stats = stats
         member this.RunFunc0 func = runFunc' this func
         member this.AddTask0 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask0 onFailed getTask = runTask' this onFailed getTask
@@ -107,12 +107,12 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.RunningTasksCount = taskManager.RunningTasksCount
         member this.CancelRunningTasks () = taskManager.CancelRunningTasks ()
     //ILogger
-    member _this.Log m = logger.Log m
+    member __.Log m = logger.Log m
     interface ILogger with
         member this.Log m = this.Log m
     interface IOwner with
-        member _this.Luid = ident.ToLuid ()
-        member _this.Disposed = disposed
+        member __.Luid = ident.ToLuid ()
+        member __.Disposed = disposed
     //IRunner<'runner>
     abstract member Runner : 'runner with get
     member this.RunFunc (func : Func<'runner, 'res>) = runFunc' this.Runner func
@@ -124,7 +124,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.AddTask onFailed getTask = this.AddTask onFailed getTask
         member this.RunTask onFailed getTask = this.RunTask onFailed getTask
     //IAgent<'args, 'model, 'msg, 'req, 'evt>
-    member _this.Actor = state |> Option.get |> fun m -> m.Actor
+    member __.Actor = state |> Option.get |> fun m -> m.Actor
     interface IAgent<'args, 'model, 'msg, 'req, 'evt> with
         member this.Actor = this.Actor
 
@@ -148,8 +148,8 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.Deliver msg = this.Deliver msg
         member this.DeliverAsync getMsg = this.DeliverAsync getMsg
     //IAgent
-    member _this.Env = env
-    member _this.Ident = ident
+    member __.Env = env
+    member __.Ident = ident
     member this.Handle (req : AgentReq) =
         version <- version.IncReq
         dispatch' this (AgentReq req)

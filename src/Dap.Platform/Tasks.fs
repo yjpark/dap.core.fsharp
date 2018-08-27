@@ -116,25 +116,25 @@ type internal TaskManager () =
         runningTasks <- runningTasks |> List.filter (fun (cts, task) -> not task.IsCompleted)
 
     interface ITaskManager with
-        member _this.StartTask (task : IPendingTask) =
+        member __.StartTask (task : IPendingTask) =
             startTask task 0 |> ignore
-        member _this.ScheduleTask (task : IPendingTask) =
+        member __.ScheduleTask (task : IPendingTask) =
             pendingTasks <- task :: pendingTasks
         member this.PendingTasksCount =
             pendingTasks.Length
-        member _this.StartPendingTasks () =
+        member __.StartPendingTasks () =
             let tasks = pendingTasks
             pendingTasks <- []
             removeCompletedTasks ()
             List.foldBack startTask tasks 0
-        member _this.ClearPendingTasks () =
+        member __.ClearPendingTasks () =
             let tasks = pendingTasks
             pendingTasks <- []
             tasks.Length
         member this.RunningTasksCount =
             removeCompletedTasks ()
             runningTasks.Length
-        member _this.CancelRunningTasks () =
+        member __.CancelRunningTasks () =
             removeCompletedTasks ()
             let tasks = runningTasks
             runningTasks <- []

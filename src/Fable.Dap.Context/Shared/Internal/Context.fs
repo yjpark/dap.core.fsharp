@@ -10,7 +10,7 @@ open Dap.Context
 open Dap.Context.Internal
 
 type internal Context (logging', spec') =
-    let spec : ContextSpec = spec'
+    let spec : IContextSpec = spec'
     let owner' : Owner = new Owner (logging', spec'.Luid)
     let owner = owner'.AsOwner
     let properties = spec.PropertiesSpawner owner
@@ -18,14 +18,15 @@ type internal Context (logging', spec') =
     member this.AsContext = this :> IContext
     member this.AsOwner = this :> IOwner
     interface IContext with
-        member _this.Dispose () = owner'.Dispose ()
-        member _this.Properties = properties
-        member _this.Clone0 logging =
+        member __.Spec = spec
+        member __.Properties = properties
+        member __.Dispose () = owner'.Dispose ()
+        member __.Clone0 logging =
                 Context.Create logging spec
                 :> IContext
     interface IJson with
         member this.ToJson () = properties.ToJson ()
     interface IOwner with
-        member _this.Log m = owner.Log m
-        member _this.Luid = owner.Luid
-        member _this.Disposed = owner.Disposed
+        member __.Log m = owner.Log m
+        member __.Luid = owner.Luid
+        member __.Disposed = owner.Disposed

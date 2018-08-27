@@ -26,12 +26,12 @@ type Volume<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', m
     let mutable mode : Mode = Ready
     let mutable frame : 'frame option = None
     let mutable frames : 'frame list = []
-    member _this.Param with get () = param
-    member _this.Meta with get () = meta
-    member _this.Mode with get () = mode
-    member _this.Frame with get () = frame
-    member _this.Frames with get () = frames
-    member _this.Open (runner : IRunner) (stream : Stream) =
+    member __.Param with get () = param
+    member __.Meta with get () = meta
+    member __.Mode with get () = mode
+    member __.Frame with get () = frame
+    member __.Frames with get () = frames
+    member __.Open (runner : IRunner) (stream : Stream) =
         if mode = Closed then
             logError runner "Volume.Open" "Already_Closed" (meta, mode)
             failwith "Volume.Open Failed: Already_Closed"
@@ -43,7 +43,7 @@ type Volume<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', m
             mode <- Reading <| new BinaryReader (stream)
         else
             mode <- Reading <| new BinaryReader (stream)
-    member _this.Close (runner : IRunner) =
+    member __.Close (runner : IRunner) =
         match mode with
         | Ready ->
             logError runner "Volume.Close" "Not_Opened" (meta, mode)
@@ -57,7 +57,7 @@ type Volume<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', m
             reader.Close()
             mode <- Closed
 
-    member _this.ReadFrame (runner : IRunner) : Result<'frame, exn> =
+    member __.ReadFrame (runner : IRunner) : Result<'frame, exn> =
         match mode with
         | Reading reader ->
             param.ReadFrame reader
@@ -81,12 +81,12 @@ type Volume'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', 
     let mutable frame : 'frame option = None
     let mutable frames : 'frame list = []
     let mutable isDirty : bool = false
-    member _this.Param with get () = param
-    member _this.Meta with get () = meta
-    member _this.Mode with get () = mode
-    member _this.Frame with get () = frame
-    member _this.Frames with get () = frames
-    member _this.Open (runner : IRunner) (stream : Stream) =
+    member __.Param with get () = param
+    member __.Meta with get () = meta
+    member __.Mode with get () = mode
+    member __.Frame with get () = frame
+    member __.Frames with get () = frames
+    member __.Open (runner : IRunner) (stream : Stream) =
         if mode = Closed then
             logError runner "Volume'.Open" "Already_Closed" (meta, mode)
             failwith "Volume'.Open Failed: Already_Closed"
@@ -94,7 +94,7 @@ type Volume'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', 
             logError runner "Volume'.Open" "Already_Opened" (meta, mode)
             failwith "Volume'.Open Failed: Already_Opened"
         mode <- Writing <| new BinaryWriter (stream)
-    member _this.Close (runner : IRunner) =
+    member __.Close (runner : IRunner) =
         match mode with
         | Ready ->
             logError runner "Volume'.Close" "Not_Opened" (meta, mode)
@@ -106,7 +106,7 @@ type Volume'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', 
             writer.Close()
             mode <- Closed
 
-    member _this.WriteFrame (runner : IRunner) ((extra, frame') : 'extra * 'frame) : unit =
+    member __.WriteFrame (runner : IRunner) ((extra, frame') : 'extra * 'frame) : unit =
         match mode with
         | Writing writer ->
             isDirty <- true
@@ -118,7 +118,7 @@ type Volume'<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param', 
         | _ ->
             logError runner "Volume'.WriteFrame" "Invalid_Mode" (meta, mode)
             failwith <| sprintf "Volume'.WriteFrame Failed: Invalid_Mode %A" mode
-    member _this.Flush (runner : IRunner) : unit =
+    member __.Flush (runner : IRunner) : unit =
         if isDirty then
             isDirty <- false
             match mode with

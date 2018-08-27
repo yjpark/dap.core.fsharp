@@ -55,7 +55,7 @@ type Owner (logging' : ILogging, luid') =
     let logger = logging'.GetLogger luid'
     let luid : Luid = luid'
     let mutable disposed = false
-    member _this.Dispose () =
+    member __.Dispose () =
         if not disposed then
             disposed <- true
             true
@@ -63,9 +63,9 @@ type Owner (logging' : ILogging, luid') =
             false
     member this.AsOwner = this :> IOwner
     interface IOwner with
-        member _this.Log m = logger.Log m
-        member _this.Luid = luid
-        member _this.Disposed = disposed
+        member __.Log m = logger.Log m
+        member __.Luid = luid
+        member __.Disposed = disposed
 
 [<Literal>]
 let NoLuid = ""
@@ -79,9 +79,9 @@ let NoKey = ""
 let noOwner =
     let logger = getLogger "<noOwner>"
     { new IOwner with
-        member _this.Log m = logger.Log m
-        member _this.Luid = NoLuid
-        member _this.Disposed = false
+        member __.Log m = logger.Log m
+        member __.Luid = NoLuid
+        member __.Disposed = false
     }
 
 type IBus<'msg> =
@@ -135,7 +135,7 @@ type IPropertySpec =
     abstract InitValue : Json with get
 
 type PropertyChanged = {
-    Spec : IAspectSpec
+    Spec : IPropertySpec
     Old : Json
     New : Json
 }
@@ -148,6 +148,7 @@ type PropertyKind =
     | CustomProperty
 
 and PropertySpawner = IOwner -> Key -> IProperty
+and PropertySpawner<'p when 'p :> IProperty> = IOwner -> Key -> 'p
 
 and IProperty =
     inherit IObj
@@ -158,23 +159,21 @@ and IProperty =
     abstract Seal : unit -> unit
     abstract Sealed : bool with get
     abstract WithJson : Json -> bool
-    abstract OnChanged0 : IBus<PropertyChanged> with get
+    abstract OnChanged : IBus<PropertyChanged> with get
     abstract Clone0 : IOwner -> Key -> IProperty
 
-and IPropertySpec<'v> =
+and IVarPropertySpec<'v> =
     inherit IPropertySpec
     abstract Encoder : JsonEncoder<'v>
     abstract Decoder : JsonDecoder<'v>
     abstract InitValue : 'v with get
     abstract Validator : Validator<'v> option
 
-and PropertyChanged<'v> = {
-    Spec : IPropertySpec<'v>
+and VarPropertyChanged<'v> = {
+    Spec : IVarPropertySpec<'v>
     Old : 'v
     New : 'v
 }
-
-and PropertySpawner<'p when 'p :> IProperty> = IOwner -> Key -> 'p
 
 and IVarProperty =
     inherit IProperty
@@ -183,10 +182,14 @@ and IVarProperty =
 and IVarProperty<'v> =
     inherit IVarProperty
     inherit IValue<'v>
-    abstract Spec : IPropertySpec<'v> with get
+    abstract Spec : IVarPropertySpec<'v> with get
     abstract SetValue : 'v -> bool
-    abstract OnChanged : IBus<PropertyChanged<'v>> with get
+    abstract OnValueChanged : IBus<VarPropertyChanged<'v>> with get
     abstract Clone : IOwner -> Key -> IVarProperty<'v>
+
+and IPropertySpec<'p when 'p :> IProperty> =
+    inherit IPropertySpec
+    abstract Spawner : PropertySpawner<'p> with get
 
 and IProperties =
     inherit IProperty
@@ -200,20 +203,18 @@ and IMapProperty =
     abstract OnAdded0 : IBus<IProperty> with get
     abstract OnRemoved0 : IBus<IProperty> with get
 
-and IMapProperty<'v> =
+and IMapProperty<'p when 'p :> IProperty> =
     inherit IMapProperty
-    inherit IValue<Map<Luid, IVarProperty<'v>>>
-    abstract Spec : IPropertySpec<'v> with get
-    abstract TryGet : Key -> IVarProperty<'v> option
-    abstract Get : Key -> IVarProperty<'v>
-    abstract Set : Key -> 'v -> bool
-    abstract Add : Key -> 'v -> IVarProperty<'v>
-    abstract Remove : Key -> IVarProperty<'v> option
-    abstract Clear : unit -> Map<Luid, IVarProperty<'v>>
-    abstract OnAdded : IBus<IVarProperty<'v>> with get
-    abstract OnRemoved : IBus<IVarProperty<'v>> with get
-    abstract OnChanged : IBus<PropertyChanged<'v>> with get
-    abstract Clone : IOwner -> Key -> IMapProperty<'v>
+    inherit IValue<Map<Luid, 'p>>
+    abstract Spec : IPropertySpec<'p> with get
+    abstract TryGet : Key -> 'p option
+    abstract Get : Key -> 'p
+    abstract Add : Key -> 'p
+    abstract Remove : Key -> 'p option
+    abstract Clear : unit -> Map<Luid, 'p>
+    abstract OnAdded : IBus<'p> with get
+    abstract OnRemoved : IBus<'p> with get
+    abstract Clone : IOwner -> Key -> IMapProperty<'p>
 
 and PropertyMoved = {
     Luid : Luid
@@ -236,21 +237,19 @@ and IListProperty =
     abstract OnAdded0 : IBus<IProperty * Index> with get
     abstract OnRemoved0 : IBus<IProperty * Index> with get
 
-and IListProperty<'v> =
+and IListProperty<'p when 'p :> IProperty> =
     inherit IListProperty
-    inherit IValue<IVarProperty<'v> list>
-    abstract Spec : IPropertySpec<'v> with get
-    abstract TryGet : Index -> IVarProperty<'v> option
-    abstract Get : Index -> IVarProperty<'v>
-    abstract Set : Index -> 'v -> bool
-    abstract Add : 'v -> IVarProperty<'v>
-    abstract Insert : 'v -> ToIndex -> IVarProperty<'v>
-    abstract Remove : Index -> IVarProperty<'v> option
-    abstract Clear : unit -> IVarProperty<'v> list
-    abstract OnAdded : IBus<IVarProperty<'v> * Index> with get
-    abstract OnRemoved : IBus<IVarProperty<'v> * Index> with get
-    abstract OnChanged : IBus<PropertyChanged<'v>> with get
-    abstract Clone : IOwner -> Key -> IListProperty<'v>
+    inherit IValue<'p list>
+    abstract Spec : IPropertySpec<'p> with get
+    abstract TryGet : Index -> 'p option
+    abstract Get : Index -> 'p
+    abstract Add : unit -> 'p
+    abstract Insert : ToIndex -> 'p
+    abstract Remove : Index -> 'p option
+    abstract Clear : unit -> 'p list
+    abstract OnAdded : IBus<'p * Index> with get
+    abstract OnRemoved : IBus<'p * Index> with get
+    abstract Clone : IOwner -> Key -> IListProperty<'p>
 
 and IComboProperty =
     inherit IProperties
@@ -260,12 +259,13 @@ and IComboProperty =
     abstract TryGet : Key -> IProperty option
     abstract Has : Key -> bool
     abstract Get : Key -> IProperty
-    abstract AddVar<'v> : IPropertySpec<'v> -> IVarProperty<'v>
-    abstract AddMap<'v> : IPropertySpec<'v> -> IMapProperty<'v>
-    abstract AddList<'v> : IPropertySpec<'v> -> IListProperty<'v>
+    abstract AddAny : Key -> PropertySpawner -> IProperty
+    abstract AddVar<'v> : IVarPropertySpec<'v> -> IVarProperty<'v>
+    abstract AddMap<'p when 'p :> IProperty> : IPropertySpec<'p> -> IMapProperty<'p>
+    abstract AddList<'p when 'p :> IProperty> : IPropertySpec<'p> -> IListProperty<'p>
     abstract AddCombo : IPropertySpec -> IComboProperty
-    abstract AddCustom<'p when 'p :> IProperty> : Key -> (PropertySpawner<'p>) -> 'p
-    abstract AddCustom0 : Key -> (PropertySpawner) -> IProperty
+    abstract AddCustom<'p when 'p :> ICustomProperty> : IPropertySpec<'p> -> 'p
+    abstract AddCustom0 : IPropertySpec<ICustomProperty> -> ICustomProperty
     abstract OnAdded : IBus<IProperty> with get
     abstract Clone : IOwner -> Key -> IComboProperty
 
@@ -278,13 +278,14 @@ and ICustomProperty<'p when 'p :> ICustomProperty> =
     abstract Clone : IOwner -> Key -> 'p
 
 type IContextSpec =
-    abstract Kind : Kind with get
     abstract Luid : Luid with get
+    abstract Kind : Kind with get
     abstract PropertiesSpawner : IOwner -> IProperties
 
 type IContext =
     inherit IOwner
     inherit IJson
+    abstract Spec : IContextSpec with get
     abstract Properties : IProperties with get
     abstract Dispose : unit -> bool
     abstract Clone0 : ILogging -> IContext

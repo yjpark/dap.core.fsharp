@@ -9,117 +9,113 @@ open Fable.Core
 open Dap.Prelude
 open Dap.Context
 
-type internal AspectSpec = {
-    Luid : Luid
-    Key : Key
-} with
-    static member Create luid key =
-        {
-            Luid = luid
-            Key = key
-        }
+type internal AspectSpec internal (luid', key') =
+    let luid : Luid = luid'
+    let key : Key = key'
+    interface IAspectSpec with
+        member __.Luid = luid
+        member __.Key = key
+
+type IAspectSpec with
     static member CalcSubLuid (parentLuid : Luid) (subKey : Key) =
         sprintf "%s.%s" parentLuid subKey
+    static member Create key =
+        new AspectSpec (key, key)
+        :> IAspectSpec
     member this.GetSubSpec subKey =
-        {this with
-            Luid = AspectSpec.CalcSubLuid this.Luid subKey
-            Key = subKey
-        }
-    member this.AsSubSpec (parent : IAspectSpec) =
-        {this with
-            Luid = AspectSpec.CalcSubLuid parent.Luid this.Key
-        }
-    member this.ForClone key = AspectSpec.Create key key
-    member this.AsSpec = this :> IAspectSpec
-    interface IAspectSpec with
-        member this.Luid = this.Luid
-        member this.Key = this.Key
-
-type internal PropertySpec = {
-    Aspect : AspectSpec
-    InitValue : Json
-} with
-    static member Create luid key initValue =
-        {
-            InitValue = initValue
-            Aspect = AspectSpec.Create luid key
-        }
-    static member GetSubSpec' (this : IPropertySpec) subKey =
         let luid = AspectSpec.CalcSubLuid this.Luid subKey
-        PropertySpec.Create luid subKey this.InitValue
-    static member AsSubSpec' (this : IPropertySpec) (parent : IAspectSpec) =
+        new AspectSpec (luid, subKey)
+        :> IAspectSpec
+    member this.AsSubSpec (parent : IAspectSpec) =
         let luid = AspectSpec.CalcSubLuid parent.Luid this.Key
-        PropertySpec.Create luid this.Key this.InitValue
-    member this.GetSubSpec subKey = {this with Aspect = this.Aspect.GetSubSpec subKey}
-    member this.AsSubSpec parent = {this with Aspect = this.Aspect.AsSubSpec parent}
-    member this.ForClone key = {this with Aspect = this.Aspect.ForClone key}
-    member this.AsSpec = this :> IPropertySpec
-    member this.AsSpec0 = this :> IAspectSpec
-    member this.Luid = this.Aspect.Luid
-    interface IPropertySpec with
-        member this.Luid = this.Aspect.Luid
-        member this.Key = this.Aspect.Key
-        member this.InitValue = this.InitValue
+        new AspectSpec (luid, this.Key)
+        :> IAspectSpec
 
-type internal PropertySpec<'v> = {
-    Encoder : JsonEncoder<'v>
-    Decoder : JsonDecoder<'v>
-    Aspect : AspectSpec
-    InitValue : 'v
-    Validator : Validator<'v> option
-} with
+type internal PropertySpec internal (luid, key, initValue') =
+    inherit AspectSpec (luid, key)
+    let initValue : Json = initValue'
+    interface IPropertySpec with
+        member __.InitValue = initValue
+
+type IPropertySpec with
+    static member Create (key, initValue) =
+        new PropertySpec (key, key, initValue)
+        :> IPropertySpec
+    member this.GetSubSpec subKey =
+        let luid = IAspectSpec.CalcSubLuid this.Luid subKey
+        new PropertySpec (luid, subKey, this.InitValue)
+        :> IPropertySpec
+    member this.AsSubSpec (parent : IAspectSpec) =
+        let luid = IAspectSpec.CalcSubLuid parent.Luid this.Key
+        new PropertySpec (luid, this.Key, this.InitValue)
+        :> IPropertySpec
+    member this.ForClone key =
+        IPropertySpec.Create (key, this.InitValue)
+
+type internal VarPropertySpec<'v> internal (luid, key, encoder', decoder', initValue', validator') =
+    inherit PropertySpec (luid, key, (encoder' initValue'))
+    let encoder : JsonEncoder<'v> = encoder'
+    let decoder : JsonDecoder<'v> = decoder'
+    let initValue : 'v = initValue'
+    let validator : Validator<'v> option = validator'
+    interface IVarPropertySpec<'v> with
+        member __.Encoder = encoder
+        member __.Decoder = decoder
+        member __.InitValue = initValue
+        member __.Validator = validator
+
+type IVarPropertySpec<'v> with
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
-    static member Create (encoder : JsonEncoder<'v>)
-                        (decoder : JsonDecoder<'v>)
-                        (luid : Luid) (key : Key)
-                        (initValue : 'v)
-                        (validator : Validator<'v> option)
-                            : PropertySpec<'v> =
-        {
-            Encoder = encoder
-            Decoder = decoder
-            Aspect = AspectSpec.Create luid key
-            InitValue = initValue
-            Validator = validator
-        }
-    static member GetSubSpec' (this : IPropertySpec<'v>) subKey =
+    static member Create (key, encoder, decoder, initValue, validator) =
+        new VarPropertySpec<'v> (key, key, encoder, decoder, initValue, validator)
+        :> IVarPropertySpec<'v>
+    static member GetSubSpec' (this : IVarPropertySpec<'v>) subKey =
         let luid = AspectSpec.CalcSubLuid this.Luid subKey
-        PropertySpec<'v>.Create this.Encoder this.Decoder luid subKey this.InitValue this.Validator
-    static member AsSubSpec' (this : IPropertySpec<'v>) (parent : IAspectSpec) =
+        new VarPropertySpec<'v> (luid, subKey, this.Encoder, this.Decoder, this.InitValue, this.Validator)
+        :> IVarPropertySpec<'v>
+    static member AsSubSpec' (this : IVarPropertySpec<'v>) (parent : IAspectSpec) =
         let luid = AspectSpec.CalcSubLuid parent.Luid this.Key
-        PropertySpec<'v>.Create this.Encoder this.Decoder luid this.Key this.InitValue this.Validator
-    member this.GetSubSpec subKey = {this with Aspect = this.Aspect.GetSubSpec subKey}
-    member this.AsSubSpec parent = {this with Aspect = this.Aspect.AsSubSpec parent}
-    member this.ForClone key = {this with Aspect = this.Aspect.ForClone key}
-    member this.AsSpec = this :> IPropertySpec<'v>
-    member this.AsSpec1 = this :> IPropertySpec
-    member this.AsSpec0 = this :> IAspectSpec
-    member this.Luid = this.Aspect.Luid
-    interface IPropertySpec<'v> with
-        member this.Encoder = this.Encoder
-        member this.Decoder = this.Decoder
-        member this.Validator = this.Validator
-        member this.InitValue = this.InitValue
-    interface IPropertySpec with
-        member this.Luid = this.Aspect.Luid
-        member this.Key = this.Aspect.Key
-        member this.InitValue = this.Encoder this.InitValue
+        new VarPropertySpec<'v> (luid, this.Key, this.Encoder, this.Decoder, this.InitValue, this.Validator)
+        :> IVarPropertySpec<'v>
+    member this.ForClone key =
+        IVarPropertySpec<'v>.Create (key, this.Encoder, this.Decoder, this.InitValue, this.Validator)
 
-type internal ContextSpec = {
-    Kind : Kind
-    Luid : Luid
-    PropertiesSpawner : IOwner -> IProperties
-} with
-    static member Create kind propertiesSpawner =
-        {
-            Luid = newLuid kind
-            Kind = kind
-            PropertiesSpawner = propertiesSpawner
-        }
-    member this.AsSpec = this :> IContextSpec
+type internal PropertySpec<'p when 'p :> IProperty> internal (luid, key, initValue, spawner') =
+    inherit PropertySpec (luid, key, initValue)
+    let spawner : PropertySpawner<'p> = spawner'
+    interface IPropertySpec<'p> with
+        member __.Spawner = spawner
+
+type IPropertySpec<'p when 'p :> IProperty> with
+    static member Create (key, initValue, spawner) =
+        new PropertySpec<'p> (key, key, initValue, spawner)
+        :> IPropertySpec<'p>
+    member this.GetSubSpec subKey =
+        let luid = IAspectSpec.CalcSubLuid this.Luid subKey
+        new PropertySpec<'p> (luid, subKey, this.InitValue, this.Spawner)
+        :> IPropertySpec<'p>
+    member this.AsSubSpec (parent : IAspectSpec) =
+        let luid = IAspectSpec.CalcSubLuid parent.Luid this.Key
+        new PropertySpec<'p> (luid, this.Key, this.InitValue, this.Spawner)
+        :> IPropertySpec<'p>
+    member this.ForClone key =
+        IPropertySpec<'p>.Create (key, this.InitValue, this.Spawner)
+    member this.Spawn owner =
+        this.Spawner owner ((this :> IPropertySpec).Key)
+
+type internal ContextSpec internal (luid', kind', propertiesSpawner') =
+    let luid : Luid = luid'
+    let kind : Kind = kind'
+    let propertiesSpawner : (IOwner -> IProperties) = propertiesSpawner'
     interface IContextSpec with
-        member this.Kind = this.Kind
-        member this.Luid = this.Luid
-        member this.PropertiesSpawner owner = this.PropertiesSpawner owner
+        member __.Luid = luid
+        member __.Kind = kind
+        member __.PropertiesSpawner owner = propertiesSpawner owner
+
+type IContextSpec with
+    static member Create (kind, propertiesSpawner) =
+        let luid = newLuid kind
+        new ContextSpec (luid, kind, propertiesSpawner)
+        :> IContextSpec

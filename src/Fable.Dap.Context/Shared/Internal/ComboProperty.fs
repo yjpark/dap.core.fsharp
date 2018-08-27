@@ -13,12 +13,12 @@ open Dap.Context.Internal
 
 type internal ComboProperty (owner', spec') =
     let owner : IOwner = owner'
-    let spec : PropertySpec = spec'
+    let spec : IPropertySpec = spec'
     let mutable value : Map<Key, IProperty> = Map.empty
     let mutable sealed' : bool = false
     let mutable comboSealed' : bool = false
     let onAdded = new Bus<IProperty> (owner)
-    let onChanged0 = new Bus<PropertyChanged> (owner)
+    let onChanged = new Bus<PropertyChanged> (owner)
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
@@ -39,7 +39,7 @@ type internal ComboProperty (owner', spec') =
     let add (prop : 'prop when 'prop :> IProperty) =
         let k = (prop :> IProperty) .Spec.Key
         let oldJson =
-            if onChanged0.HasWatchers then
+            if onChanged.HasWatchers then
                 Some <| toJson value
             else
                 None
@@ -51,11 +51,11 @@ type internal ComboProperty (owner', spec') =
         |> Option.iter (fun oldJson ->
             let evt0 : PropertyChanged =
                 {
-                    Spec = spec.AsSpec
+                    Spec = spec
                     Old = oldJson
                     New = toJson value
                 }
-            onChanged0.Trigger evt0
+            onChanged.Trigger evt0
         )
         prop
     static member Create o s = new ComboProperty(o, s)
@@ -63,12 +63,12 @@ type internal ComboProperty (owner', spec') =
     member this.AsProperty = this :> IProperty
     member this.AsProperties = this :> IProperties
     interface IComboProperty with
-        member _this.Value = value
-        member _this.SealCombo () =
+        member __.Value = value
+        member __.SealCombo () =
             if not comboSealed' then
                 comboSealed' <- true
-        member _this.ComboSealed = comboSealed'
-        member _this.TryGet k = value |> Map.tryFind k
+        member __.ComboSealed = comboSealed'
+        member __.TryGet k = value |> Map.tryFind k
         member this.Has k =
             (this.AsComboProperty.TryGet k).IsSome
         member this.Get k =
@@ -76,57 +76,63 @@ type internal ComboProperty (owner', spec') =
             |> function
                 | Some prop -> prop
                 | None -> failWith "Not_Found" k
+        member __.AddAny (key : Key) (spawner : PropertySpawner) =
+            let prop = spawner owner key
+            checkAdd prop.Spec (prop.GetType())
+            add prop
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]
 #endif
-        member _this.AddVar<'v> (subSpec : IPropertySpec<'v>) =
+        member __.AddVar<'v> (subSpec : IVarPropertySpec<'v>) =
             checkAdd subSpec typeof<'v>
-            PropertySpec<'v>.AsSubSpec' subSpec spec
+            VarPropertySpec<'v>.AsSubSpec' subSpec spec
             |> VarProperty<'v>.Create owner
             |> add
             |> fun prop -> prop.AsVarProperty
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]
 #endif
-        member _this.AddMap<'v> (subSpec : IPropertySpec<'v>) =
-            checkAdd subSpec typeof<'v>
-            PropertySpec<'v>.AsSubSpec' subSpec spec
-            |> MapProperty<'v>.Create owner
+        member __.AddMap<'p when 'p :> IProperty> (subSpec : IPropertySpec<'p>) =
+            checkAdd subSpec typeof<'p>
+            subSpec.AsSubSpec spec
+            |> MapProperty<'p>.Create owner
             |> add
             |> fun prop -> prop.AsMapProperty
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]
 #endif
-        member _this.AddList<'v> (subSpec : IPropertySpec<'v>) =
-            checkAdd subSpec typeof<'v>
-            PropertySpec<'v>.AsSubSpec' subSpec spec
-            |> ListProperty<'v>.Create owner
+        member __.AddList<'p when 'p :> IProperty> (subSpec : IPropertySpec<'p>) =
+            checkAdd subSpec typeof<'p>
+            subSpec.AsSubSpec spec
+            |> ListProperty<'p>.Create owner
             |> add
             |> fun prop -> prop.AsListProperty
-        member _this.AddCombo (subSpec : IPropertySpec) =
+        member __.AddCombo (subSpec : IPropertySpec) =
             checkAdd subSpec typeof<IComboProperty>
-            PropertySpec.AsSubSpec' subSpec spec
+            subSpec.AsSubSpec spec
             |> ComboProperty.Create owner
             |> add
             |> fun prop -> prop.AsComboProperty
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]
 #endif
-        member _this.AddCustom<'p when 'p :> IProperty> (key : Key) (spawner : PropertySpawner<'p>) =
-            let prop = spawner owner key
-            checkAdd prop.Spec (prop.GetType())
-            add prop
-        member _this.AddCustom0 (key : Key) (spawner : PropertySpawner) =
-            let prop = spawner owner key
-            checkAdd prop.Spec (prop.GetType())
-            add prop
-        member _this.OnAdded = onAdded.Publish
+        member __.AddCustom<'p when 'p :> ICustomProperty> (subSpec : IPropertySpec<'p>) =
+            checkAdd subSpec typeof<'p>
+            subSpec.AsSubSpec spec
+            |> fun spec -> spec.Spawn owner
+            |> add
+        member __.AddCustom0 (subSpec : IPropertySpec<ICustomProperty>) =
+            checkAdd subSpec typeof<ICustomProperty>
+            subSpec.AsSubSpec spec
+            |> fun spec -> spec.Spawn owner
+            |> add
+        member __.OnAdded = onAdded.Publish
         member this.Clone o k =
             let clone = ComboProperty.Create o <| spec.ForClone k
             value
             |> Map.toList
             |> List.iter (fun (key, prop) ->
-                clone.AsComboProperty.AddCustom0 key prop.Clone0 |> ignore
+                clone.AsComboProperty.AddAny key prop.Clone0 |> ignore
             )
             this.AsProperty.ToJson () |> clone.AsProperty.WithJson |> ignore
             if sealed' then clone.AsProperty.Seal ()
@@ -135,10 +141,10 @@ type internal ComboProperty (owner', spec') =
     interface IProperties with
         member this.Clone1 o k = this.AsComboProperty.Clone o k :> IProperties
     interface IProperty with
-        member _this.Kind = PropertyKind.ComboProperty
-        member _this.Ver = value.Count
-        member _this.Spec = spec.AsSpec
-        member _this.Seal () =
+        member __.Kind = PropertyKind.ComboProperty
+        member __.Ver = value.Count
+        member __.Spec = spec
+        member __.Seal () =
             if not sealed' then
                 sealed' <- true
                 comboSealed' <- true
@@ -147,8 +153,8 @@ type internal ComboProperty (owner', spec') =
                 |> List.iter (fun (_key, prop) ->
                     prop.Seal ()
                 )
-        member _this.Sealed = sealed'
-        member _this.WithJson json =
+        member __.Sealed = sealed'
+        member __.WithJson json =
             if sealed' then
                 owner.Log <| tplPropertyError "Property:Already_Sealed" spec.Luid value (E.encode 4 json)
                 false
@@ -172,15 +178,17 @@ type internal ComboProperty (owner', spec') =
                 if not ok then
                     logError owner "ComboProperty:WithJson" "Decode_Has_Error" (E.encode 4 json)
                 ok
-        member _this.OnChanged0 = onChanged0.Publish
+        member __.OnChanged = onChanged.Publish
         member this.Clone0 o k = this.AsComboProperty.Clone o k :> IProperty
     interface IUnsafeProperty with
         member this.AsVar = failWith (this.GetType().FullName) "Cast_Failed"
         member this.AsMap = failWith (this.GetType().FullName) "Cast_Failed"
         member this.AsList = failWith (this.GetType().FullName) "Cast_Failed"
         member this.AsCombo = this.AsComboProperty
+        member this.AsCustom = failWith (this.GetType().FullName) "Cast_Failed"
         member this.ToVar<'v1> () : IVarProperty<'v1> = failWith (this.GetType().FullName) "Cast_Failed"
-        member this.ToMap<'v1> () : IMapProperty<'v1> = failWith (this.GetType().FullName) "Cast_Failed"
-        member this.ToList<'v1> () : IListProperty<'v1> = failWith (this.GetType().FullName) "Cast_Failed"
+        member this.ToMap<'p1 when 'p1 :> IProperty> () : IMapProperty<'p1> = failWith (this.GetType().FullName) "Cast_Failed"
+        member this.ToList<'p1 when 'p1 :> IProperty> () : IListProperty<'p1> = failWith (this.GetType().FullName) "Cast_Failed"
+        member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () : ICustomProperty<'p1> = failWith (this.GetType().FullName) "Cast_Failed"
     interface IJson with
         member this.ToJson () = toJson value

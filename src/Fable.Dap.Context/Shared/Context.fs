@@ -6,7 +6,7 @@ open Dap.Prelude
 open Dap.Context.Internal
 
 let create' logging kind propertiesSpawner =
-    ContextSpec.Create kind propertiesSpawner
+    ContextSpec.Create (kind, propertiesSpawner)
     |> Context.Create logging
     :> IContext
 

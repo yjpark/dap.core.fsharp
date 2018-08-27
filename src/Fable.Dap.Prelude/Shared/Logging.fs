@@ -41,7 +41,7 @@ type ILogging =
     abstract GetLogger : string -> ILogger
 
 type FallbackLogger (prefix : string) =
-    member _this.Prefix = prefix
+    member __.Prefix = prefix
     member this.Log (evt : LogEvent) =
         printfn "[%s] %s%s" evt.Level.ToShortString this.Prefix evt.Format
         evt.Params
@@ -54,11 +54,11 @@ type FallbackLogger (prefix : string) =
             member this.Log evt = this.Log evt
 
 type FallBackLogging () =
-    member _this.Logger = FallbackLogger ""
+    member __.Logger = FallbackLogger ""
     with
         interface ILogging with
-            member _this.Close () = ()
-            member _this.GetLogger (context : string) =
+            member __.Close () = ()
+            member __.GetLogger (context : string) =
                 FallbackLogger (sprintf "<%s> " context)
                 :> ILogger
         interface ILogger with

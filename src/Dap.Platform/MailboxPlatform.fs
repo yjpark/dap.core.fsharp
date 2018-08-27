@@ -23,4 +23,4 @@ let private start (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>) 
 type MailboxPlatform = MailboxPlatform
 with
     interface IPlatform with
-        member _this.Start runnable = start runnable
+        member __.Start runnable = start runnable

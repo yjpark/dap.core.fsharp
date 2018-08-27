@@ -82,7 +82,7 @@ type Bus<'msg> (owner') =
     #else
         watcher.OwnerRef.TryGetTarget ()
     #endif
-    override _this.ToString () : string =
+    override __.ToString () : string =
     #if FABLE_COMPILER
         let prefixFormat = sprintf "[Bus %s <%i>]" owner.Luid
     #else
@@ -91,8 +91,8 @@ type Bus<'msg> (owner') =
         prefixFormat watchers.Length
     member this.AsString =
         this.ToString ()
-    member _this.HasWatchers = watchers.Length > 0
-    member _this.Trigger (evt : 'msg) =
+    member __.HasWatchers = watchers.Length > 0
+    member __.Trigger (evt : 'msg) =
         if owner.Disposed then
             owner.Log <| tplDisposedInfo "Bus:Owner_Disposed" owner evt
         else
@@ -124,7 +124,7 @@ type Bus<'msg> (owner') =
                 | None -> ()
                 | Some garbage ->
                     removeWatchers garbage
-    member _this.TryFindWatchers (owner : IOwner) (luid : string option) =
+    member __.TryFindWatchers (owner : IOwner) (luid : string option) =
         watchers
         |> List.filter (fun watcher ->
             luid

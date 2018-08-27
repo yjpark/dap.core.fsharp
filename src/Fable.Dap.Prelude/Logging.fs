@@ -22,9 +22,9 @@ type ConsoleLoggerEnricher = {
 
 type ConsoleLogger (minimumLevel : int, prefix : string,
                     enricher : ConsoleLoggerEnricher) =
-    member _this.MinimumLevel = minimumLevel
-    member _this.Prefix = prefix
-    member _this.Enricher = enricher
+    member __.MinimumLevel = minimumLevel
+    member __.Prefix = prefix
+    member __.Enricher = enricher
     member this.Log (evt : LogEvent) =
         if this.MinimumLevel <= evt.Level.ToInt then
             let time = System.DateTime.UtcNow.ToString("HH:mm:ss.fff")
