@@ -7,7 +7,7 @@ open Fable.Core
 
 open Dap.Prelude
 open Dap.Context
-open Dap.Context.Internal
+open Dap.Context.Unsafe
 
 type IContext with
 #if FABLE_COMPILER
@@ -47,13 +47,14 @@ type Context<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<'p> and 'p :>
     interface IContext<'c, 's, 'p> with
         member this.Self = this.Self
         member __.Spec = spec
-        member __.Properties = properties
         member this.Clone l =
             this.Spawn l
             |> this.SetupClone (Some this.SetupCloneBefore)
             |> fun clone ->
                 this.SetupCloneAfter clone
                 clone
+    interface IContext<'p> with
+        member __.Properties = properties
     interface IContext with
         member this.Dispose () =
             if not owner.Disposed then
@@ -65,6 +66,11 @@ type Context<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<'p> and 'p :>
         member __.Spec0 = spec :> IContextSpec
         member __.Properties0 = properties :> IProperties
         member this.Clone0 l = this.AsContext.Clone l :> IContext
+    interface IUnsafeContext with
+#if FABLE_COMPILER
+        [<PassGenericsAttribute>]
+#endif
+        member this.ToContext<'c1 when 'c1 :> IContext> () = this :> IContext :?> 'c1
     interface IJson with
         member this.ToJson () = properties.ToJson ()
     interface IOwner with

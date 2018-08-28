@@ -1,8 +1,11 @@
-module Dap.Context.Unsafe
+[<AutoOpen>]
+module Dap.Context.Unsafe.Types
 
 #if FABLE_COMPILER
 open Fable.Core
 #endif
+
+open Dap.Context
 
 type IUnsafeProperty =
     abstract AsVar : IVarProperty with get
@@ -37,3 +40,12 @@ type IProperty with
     [<PassGenericsAttribute>]
 #endif
     member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = (this :?> IUnsafeProperty) .ToCustom<'p1> ()
+
+type IUnsafeContext =
+    abstract ToContext<'c1 when 'c1 :> IContext> : unit -> 'c1
+
+type IContext with
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
+    member this.ToContext<'c1 when 'c1 :> IContext> () = (this :?> IUnsafeContext) .ToContext<'c1> ()

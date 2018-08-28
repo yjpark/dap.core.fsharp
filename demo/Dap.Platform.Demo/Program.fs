@@ -45,7 +45,7 @@ let doSimpleTest (env : IEnv) : unit =
 *)
 
 type Publisher (owner : IOwner, key : Key) =
-    inherit WrapProperty<Publisher> ()
+    inherit WrapProperties<Publisher, IComboProperty> ()
     let target = Properties.combo owner key
     let name = target.AddString "name" "John Doe" None
     let year = target.AddInt "year" 1990 None
@@ -56,6 +56,7 @@ type Publisher (owner : IOwner, key : Key) =
     static member Empty () = new Publisher (noOwner, NoKey)
     override this.Self = this
     override __.Spawn o k = new Publisher (o, k)
+    override __.SyncTo t = target.SyncTo t.Target
     member __.Name = name
     member __.Year = year
 
@@ -91,9 +92,10 @@ let doContextTest (env : IEnv) : unit =
             })
         })
     }
+    logWarn book "Test" "Book.copied" (book.AsCombo.Properties.Get "copies")
     logWarn book "Test" "Init" (E.encodeJson 4 book)
     let copies =
-        book.Properties.AsCombo.Get "copies"
+        book.Properties0.AsCombo.Get "copies"
         :?> IVarProperty<int>
     copies.OnValueChanged.AddWatcher env "test" (fun evt ->
         logWarn book "Test" "copies.OnValueChanged" evt
@@ -101,6 +103,15 @@ let doContextTest (env : IEnv) : unit =
     copies.SetValue 0
     |> ignore
     logWarn book "Test" "Updated" (E.encodeJson 4 book)
+    let pub = context "Publisher" {
+        properties (publisher {
+            name "a new publisher"
+            year 2010
+        })
+    }
+    let context = pub.ToCustom<Publisher> ()
+    logWarn pub "Test" "Publisher_Context" context.Properties.Name.Value
+    logWarn pub "Test" "Publisher_Context" (E.encodeJson 4 pub)
 
 [<EntryPoint>]
 let main _argv =

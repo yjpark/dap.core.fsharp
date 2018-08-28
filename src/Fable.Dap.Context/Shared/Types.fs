@@ -190,14 +190,14 @@ and IPropertySpec<'p when 'p :> IProperty> =
 
 and IProperties =
     inherit IProperty
-    abstract Clone1 : IOwner -> Key -> IProperties
+    abstract Count : int with get
 
 and IMapProperty =
     inherit IProperties
     abstract ElementType : Type with get
+    abstract ElementSpawner : IOwner -> Key -> IProperty
     abstract SealMap : unit -> unit
     abstract MapSealed : bool with get
-    abstract Count : int with get
     abstract Has : Key -> bool
     abstract OnAdded0 : IBus<IProperty> with get
     abstract OnRemoved0 : IBus<IProperty> with get
@@ -227,9 +227,9 @@ and IndexOffset = int
 and IListProperty =
     inherit IProperties
     abstract ElementType : Type with get
+    abstract ElementSpawner : IOwner -> Key -> IProperty
     abstract SealList : unit -> unit
     abstract ListSealed : bool with get
-    abstract Count : int with get
     abstract Has : Index -> bool
     abstract MoveTo : Index -> ToIndex -> unit
     abstract MoveBy : Index -> IndexOffset -> unit
@@ -274,9 +274,14 @@ and IComboProperty =
 and ICustomProperty =
     inherit IProperty
 
+and ICustomProperties =
+    inherit ICustomProperty
+    inherit IProperties
+
 and ICustomProperty<'p when 'p :> ICustomProperty> =
     inherit ICustomProperty
     abstract Self : 'p with get
+    abstract SyncTo : 'p -> unit
     abstract Clone : IOwner -> Key -> 'p
 
 type IContextSpec =
@@ -295,11 +300,14 @@ type IContext =
     abstract Properties0 : IProperties with get
     abstract Clone0 : ILogging -> IContext
 
-type IContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec and 'p :> IProperties> =
+type IContext<'p when 'p :> IProperties> =
     inherit IContext
+    abstract Properties : 'p with get
+
+type IContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec and 'p :> IProperties> =
+    inherit IContext<'p>
     abstract Self : 'c with get
     abstract Spec : 's with get
-    abstract Properties : 'p with get
     abstract Clone : ILogging -> 'c
 
 [<AutoOpen>]

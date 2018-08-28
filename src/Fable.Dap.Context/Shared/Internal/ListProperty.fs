@@ -172,11 +172,11 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
             :> IListProperty<'p>
     interface IListProperty with
         member __.ElementType = typeof<'p>
+        member __.ElementSpawner o k = spec.Spawner o k :> IProperty
         member __.SealList () =
             if not listSealed then
                 listSealed <- true
         member __.ListSealed = listSealed
-        member this.Count = this.Value.Length
         member this.Has i =
             i >= 0 && i < this.Value.Length
         member this.MoveTo i toIndex =
@@ -200,4 +200,4 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
         member __.OnAdded0 = onAdded0.Publish
         member __.OnRemoved0 = onRemoved0.Publish
     interface IProperties with
-        member this.Clone1 o k = this.AsListProperty.Clone o k :> IProperties
+        member this.Count = this.Value.Length

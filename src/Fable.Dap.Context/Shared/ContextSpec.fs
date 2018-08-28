@@ -16,7 +16,6 @@ type ContextSpec (kind') =
         member __.Kind = kind
         member __.Luid = luid
 
-[<AbstractClass>]
 type ContextSpec<'p when 'p :> IProperties> (kind, propertiesSpawner') =
     inherit ContextSpec (kind)
     let propertiesSpawner : PropertySpawner<'p> = propertiesSpawner'

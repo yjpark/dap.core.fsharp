@@ -80,14 +80,12 @@ type IProperty with
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
-    member this.SetupClone<'p when 'p :> IProperty> (extraSetup : ('p -> unit) option) (clone : 'p) =
-        extraSetup
-        |> Option.iter (fun setup ->
+    member this.SetupClone<'p when 'p :> IProperty> (setup : ('p -> unit) option) (clone : 'p) =
+        setup
+        |> Option.defaultValue this.SyncTo0
+        |> fun setup ->
             setup clone
-        )
-        let clone' = clone :> IProperty
-        this.ToJson () |> clone'.WithJson |> ignore
-        if this.Sealed then clone'.Seal ()
+        if this.Sealed then (clone :> IProperty) .Seal ()
         clone
 
 [<AbstractClass>]

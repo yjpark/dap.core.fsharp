@@ -140,14 +140,14 @@ type internal MapProperty<'p when 'p :> IProperty> private (owner, spec) =
             :> IMapProperty<'p>
     interface IMapProperty with
         member __.ElementType = typeof<'p>
+        member __.ElementSpawner o k = spec.Spawner o k :> IProperty
         member __.SealMap () =
             if not mapSealed then
                 mapSealed <- true
         member __.MapSealed = mapSealed
-        member this.Count = this.Value.Count
         member this.Has k =
             (this.AsMapProperty.TryGet k).IsSome
         member __.OnAdded0 = onAdded0.Publish
         member __.OnRemoved0 = onRemoved0.Publish
     interface IProperties with
-        member this.Clone1 o k = this.AsMapProperty.Clone o k :> IProperties
+        member this.Count = this.Value.Count

@@ -10,9 +10,9 @@ open Dap.Context.Unsafe
 open Dap.Context.Internal
 
 [<AbstractClass>]
-type WrapProperty<'p when 'p :> ICustomProperty> () =
+type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
     let mutable spec : IPropertySpec option = None
-    let mutable target : IProperty option = None
+    let mutable target : 't option = None
     member __.Setup target' =
         if target.IsSome then
             failWith "Already_Setup" (spec, target, target')
@@ -24,13 +24,16 @@ type WrapProperty<'p when 'p :> ICustomProperty> () =
             |> Some
     abstract member Self : 'p with get
     abstract member Spawn : IOwner -> Key -> 'p
+    abstract member SyncTo : 'p -> unit
     member this.AsCustomProperty = this :> ICustomProperty<'p>
     member this.AsCustom = this.Self :> ICustomProperty
     member this.AsProperty = this :> IProperty
     member __.Spec = spec |> Option.get
     member __.Target = target |> Option.get
+    member __.UnsafeTarget = target |> Option.get :> IProperty :?> IUnsafeProperty
     interface ICustomProperty<'p> with
         member this.Self = this.Self
+        member this.SyncTo other = this.SyncTo other
         member this.Clone o k =
             let clone = this.Spawn o k
             let clone' = (clone :> IProperty)
@@ -49,27 +52,33 @@ type WrapProperty<'p when 'p :> ICustomProperty> () =
     interface IJson with
         member this.ToJson () = this.Target.ToJson ()
     interface IUnsafeProperty with
-        member this.AsVar = (this.Target :?> IUnsafeProperty) .AsVar
-        member this.AsMap = (this.Target :?> IUnsafeProperty) .AsMap
-        member this.AsList = (this.Target :?> IUnsafeProperty) .AsList
-        member this.AsCombo = (this.Target :?> IUnsafeProperty) .AsCombo
-        member this.AsCustom = (this.Target :?> IUnsafeProperty) .AsCustom
+        member this.AsVar = this.UnsafeTarget.AsVar
+        member this.AsMap = this.UnsafeTarget.AsMap
+        member this.AsList = this.UnsafeTarget.AsList
+        member this.AsCombo = this.UnsafeTarget.AsCombo
+        member this.AsCustom = this.UnsafeTarget.AsCustom
     #if FABLE_COMPILER
         [<PassGenericsAttribute>]
     #endif
-        member this.ToVar<'v1> () = (this.Target :?> IUnsafeProperty) .ToVar<'v1> ()
+        member this.ToVar<'v1> () = this.UnsafeTarget.ToVar<'v1> ()
     #if FABLE_COMPILER
         [<PassGenericsAttribute>]
     #endif
-        member this.ToMap<'p1 when 'p1 :> IProperty> () = (this.Target :?> IUnsafeProperty) .ToMap<'p1> ()
+        member this.ToMap<'p1 when 'p1 :> IProperty> () = this.UnsafeTarget.ToMap<'p1> ()
     #if FABLE_COMPILER
         [<PassGenericsAttribute>]
     #endif
-        member this.ToList<'p1 when 'p1 :> IProperty> () = (this.Target :?> IUnsafeProperty) .ToList<'p1> ()
+        member this.ToList<'p1 when 'p1 :> IProperty> () = this.UnsafeTarget.ToList<'p1> ()
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]
 #endif
-        member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = (this.Target :?> IUnsafeProperty) .ToCustom<'p1> ()
+        member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = this.UnsafeTarget.ToCustom<'p1> ()
+
+[<AbstractClass>]
+type WrapProperties<'p, 't when 'p :> ICustomProperty and 't :> IProperties> () =
+    inherit WrapProperty<'p, 't> ()
+    interface ICustomProperties with
+        member this.Count = this.Target.Count
 
 [<AbstractClass>]
 type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IPropertySpec> (owner, spec, value) =
@@ -77,6 +86,7 @@ type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IP
     // abstract members
     abstract member Self : 'p with get
     abstract member Spawn : IOwner -> Key -> 'p
+    abstract member SyncTo : 'p -> unit
     // virtual members
     abstract member SetupCloneBefore : 'p -> unit
     abstract member SetupCloneAfter : 'p -> unit
@@ -87,6 +97,7 @@ type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IP
     member this.AsCustomProperty = this :> ICustomProperty<'p>
     interface ICustomProperty<'p> with
         member this.Self = this.Self
+        member this.SyncTo other = this.SyncTo other
         member this.Clone o k =
             this.Spawn o k
             |> this.SetupClone (Some this.SetupCloneBefore)

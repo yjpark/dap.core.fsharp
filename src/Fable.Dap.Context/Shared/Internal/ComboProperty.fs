@@ -150,4 +150,4 @@ type internal ComboProperty (owner, spec) =
             |> this.SetupClone (Some this.AsCombo.SyncTo)
             :> IComboProperty
     interface IProperties with
-        member this.Clone1 o k = this.AsCombo.Clone o k :> IProperties
+        member this.Count = this.Value.Count

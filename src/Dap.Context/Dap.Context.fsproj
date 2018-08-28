@@ -13,7 +13,7 @@
     <Compile Include="../Fable.Dap.Context/Shared/UnionSpec.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/ED.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Types.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Unsafe.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Unsafe/Types.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Bus.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Spec.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Channel.fs" />
@@ -29,6 +29,7 @@
     <Compile Include="../Fable.Dap.Context/Shared/CustomProperty.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/ContextSpec.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Context.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Unsafe/Context.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Builder.fs" />
   </ItemGroup>
   <ItemGroup>
