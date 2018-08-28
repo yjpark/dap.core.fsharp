@@ -71,11 +71,11 @@ type IVarPropertySpec<'v> with
     static member Create (key, encoder, decoder, initValue, validator) =
         new VarPropertySpec<'v> (key, key, encoder, decoder, initValue, validator)
         :> IVarPropertySpec<'v>
-    static member GetSubSpec' (this : IVarPropertySpec<'v>) subKey =
+    member this.GetSubSpec subKey =
         let luid = AspectSpec.CalcSubLuid this.Luid subKey
         new VarPropertySpec<'v> (luid, subKey, this.Encoder, this.Decoder, this.InitValue, this.Validator)
         :> IVarPropertySpec<'v>
-    static member AsSubSpec' (this : IVarPropertySpec<'v>) (parent : IAspectSpec) =
+    member this.AsSubSpec (parent : IAspectSpec) =
         let luid = AspectSpec.CalcSubLuid parent.Luid this.Key
         new VarPropertySpec<'v> (luid, this.Key, this.Encoder, this.Decoder, this.InitValue, this.Validator)
         :> IVarPropertySpec<'v>
@@ -104,18 +104,3 @@ type IPropertySpec<'p when 'p :> IProperty> with
         IPropertySpec<'p>.Create (key, this.InitValue, this.Spawner)
     member this.Spawn owner =
         this.Spawner owner ((this :> IPropertySpec).Key)
-
-type internal ContextSpec internal (luid', kind', propertiesSpawner') =
-    let luid : Luid = luid'
-    let kind : Kind = kind'
-    let propertiesSpawner : (IOwner -> IProperties) = propertiesSpawner'
-    interface IContextSpec with
-        member __.Luid = luid
-        member __.Kind = kind
-        member __.PropertiesSpawner owner = propertiesSpawner owner
-
-type IContextSpec with
-    static member Create (kind, propertiesSpawner) =
-        let luid = newLuid kind
-        new ContextSpec (luid, kind, propertiesSpawner)
-        :> IContextSpec

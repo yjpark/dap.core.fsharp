@@ -5,7 +5,6 @@ open Fable.Core
 #endif
 
 type IUnsafeProperty =
-    inherit IProperty
     abstract AsVar : IVarProperty with get
     abstract AsMap : IMapProperty with get
     abstract AsList : IListProperty with get

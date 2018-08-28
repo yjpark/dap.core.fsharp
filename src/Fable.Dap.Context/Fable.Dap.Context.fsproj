@@ -19,6 +19,7 @@
     <Compile Include="Shared/Internal/Spec.fs" />
     <Compile Include="Shared/Internal/Channel.fs" />
     <Compile Include="Shared/Internal/Handler.fs" />
+    <Compile Include="Shared/Internal/Property.fs" />
     <Compile Include="Shared/Internal/VarProperty.fs" />
     <Compile Include="Shared/Internal/MapProperty.fs" />
     <Compile Include="Shared/Internal/ListProperty.fs" />
@@ -27,6 +28,7 @@
     <Compile Include="Shared/Property.fs" />
     <Compile Include="Shared/Properties.fs" />
     <Compile Include="Shared/CustomProperty.fs" />
+    <Compile Include="Shared/ContextSpec.fs" />
     <Compile Include="Shared/Context.fs" />
     <Compile Include="Shared/Builder.fs" />
   </ItemGroup>

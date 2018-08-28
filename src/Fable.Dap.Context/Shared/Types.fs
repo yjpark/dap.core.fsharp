@@ -62,6 +62,9 @@ type Owner (logging' : ILogging, luid') =
         else
             false
     member this.AsOwner = this :> IOwner
+    member __.Log m = logger.Log m
+    member __.Luid = luid
+    member __.Disposed = disposed
     interface IOwner with
         member __.Log m = logger.Log m
         member __.Luid = luid
@@ -76,13 +79,7 @@ let NoKind = ""
 [<Literal>]
 let NoKey = ""
 
-let noOwner =
-    let logger = getLogger "<noOwner>"
-    { new IOwner with
-        member __.Log m = logger.Log m
-        member __.Luid = NoLuid
-        member __.Disposed = false
-    }
+let noOwner = new Owner (getLogging (), "<noOwner>") :> IOwner
 
 type IBus<'msg> =
     inherit IObj
@@ -198,6 +195,8 @@ and IProperties =
 and IMapProperty =
     inherit IProperties
     abstract ElementType : Type with get
+    abstract SealMap : unit -> unit
+    abstract MapSealed : bool with get
     abstract Count : int with get
     abstract Has : Key -> bool
     abstract OnAdded0 : IBus<IProperty> with get
@@ -228,6 +227,8 @@ and IndexOffset = int
 and IListProperty =
     inherit IProperties
     abstract ElementType : Type with get
+    abstract SealList : unit -> unit
+    abstract ListSealed : bool with get
     abstract Count : int with get
     abstract Has : Index -> bool
     abstract MoveTo : Index -> ToIndex -> unit
@@ -267,6 +268,7 @@ and IComboProperty =
     abstract AddCustom<'p when 'p :> ICustomProperty> : IPropertySpec<'p> -> 'p
     abstract AddCustom0 : IPropertySpec<ICustomProperty> -> ICustomProperty
     abstract OnAdded : IBus<IProperty> with get
+    abstract SyncTo : IComboProperty -> unit
     abstract Clone : IOwner -> Key -> IComboProperty
 
 and ICustomProperty =
@@ -278,14 +280,36 @@ and ICustomProperty<'p when 'p :> ICustomProperty> =
     abstract Clone : IOwner -> Key -> 'p
 
 type IContextSpec =
-    abstract Luid : Luid with get
     abstract Kind : Kind with get
-    abstract PropertiesSpawner : IOwner -> IProperties
+    abstract Luid : Luid with get
+
+type IContextSpec<'p when 'p :> IProperties> =
+    inherit IContextSpec
+    abstract SpawnProperties : IOwner -> 'p
 
 type IContext =
     inherit IOwner
     inherit IJson
-    abstract Spec : IContextSpec with get
-    abstract Properties : IProperties with get
     abstract Dispose : unit -> bool
+    abstract Spec0 : IContextSpec with get
+    abstract Properties0 : IProperties with get
     abstract Clone0 : ILogging -> IContext
+
+type IContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec and 'p :> IProperties> =
+    inherit IContext
+    abstract Self : 'c with get
+    abstract Spec : 's with get
+    abstract Properties : 'p with get
+    abstract Clone : ILogging -> 'c
+
+[<AutoOpen>]
+module Extensions =
+    type IOwner with
+        static member Create (logging, luid) =
+            new Owner (logging, luid)
+            :> IOwner
+    type IProperty with
+        member this.SyncTo0 (other : IProperty) =
+            this.ToJson ()
+            |> other.WithJson
+            |> ignore

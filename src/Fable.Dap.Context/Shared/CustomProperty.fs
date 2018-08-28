@@ -25,10 +25,10 @@ type WrapProperty<'p when 'p :> ICustomProperty> () =
     abstract member Self : 'p with get
     abstract member Spawn : IOwner -> Key -> 'p
     member this.AsCustomProperty = this :> ICustomProperty<'p>
-    member this.AsCustomProperty0 = this.Self :> ICustomProperty
+    member this.AsCustom = this.Self :> ICustomProperty
     member this.AsProperty = this :> IProperty
-    member this.Spec = spec |> Option.get
-    member this.Target = target |> Option.get
+    member __.Spec = spec |> Option.get
+    member __.Target = target |> Option.get
     interface ICustomProperty<'p> with
         member this.Self = this.Self
         member this.Clone o k =
@@ -71,3 +71,25 @@ type WrapProperty<'p when 'p :> ICustomProperty> () =
 #endif
         member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = (this.Target :?> IUnsafeProperty) .ToCustom<'p1> ()
 
+[<AbstractClass>]
+type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IPropertySpec> (owner, spec, value) =
+    inherit Property<'spec, 'value> (owner, spec, value)
+    // abstract members
+    abstract member Self : 'p with get
+    abstract member Spawn : IOwner -> Key -> 'p
+    // virtual members
+    abstract member SetupCloneBefore : 'p -> unit
+    abstract member SetupCloneAfter : 'p -> unit
+    default __.SetupCloneBefore (_p : 'p) = ()
+    default __.SetupCloneAfter (_p : 'p) = ()
+    override __.Kind = PropertyKind.CustomProperty
+    override this.AsCustom = this.Self :> ICustomProperty
+    member this.AsCustomProperty = this :> ICustomProperty<'p>
+    interface ICustomProperty<'p> with
+        member this.Self = this.Self
+        member this.Clone o k =
+            this.Spawn o k
+            |> this.SetupClone (Some this.SetupCloneBefore)
+            |> fun clone ->
+                this.SetupCloneAfter clone
+                clone

@@ -5,7 +5,23 @@ module Dap.Context.Properties
 open Dap.Prelude
 open Dap.Context.Internal
 
+let map<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
+    IPropertySpec<'p>.Create (key, E.object [], spawner)
+    |> MapProperty<'p>.Create owner
+    :> IMapProperty<'p>
+
+let list<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
+    IPropertySpec<'p>.Create (key, E.list [], spawner)
+    |> ListProperty<'p>.Create owner
+    :> IListProperty<'p>
+
+let combo (owner : IOwner) (key : Key) =
+    IPropertySpec.Create (key, E.object [])
+    |> ComboProperty.Create owner
+    :> IComboProperty
+
 type IComboProperty with
+    static member Empty owner = combo owner NoKey
     member this.AddBool key initValue validator =
         Property.boolSpec key initValue None
         |> this.AddVar<bool>
@@ -20,8 +36,3 @@ type IComboProperty with
     member this.AddString key initValue validator =
         Property.stringSpec key initValue None
         |> this.AddVar<string>
-
-let combo (owner : IOwner) key =
-    IPropertySpec.Create (key, E.object [])
-    |> ComboProperty.Create owner
-    :> IComboProperty

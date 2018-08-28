@@ -1,6 +1,7 @@
 module Dap.Context.Builder
 
 open Dap.Prelude
+open Dap.Context
 
 [<AbstractClass>]
 type ObjBuilder<'obj when 'obj :> IObj> () =
@@ -11,7 +12,7 @@ type ObjBuilder<'obj when 'obj :> IObj> () =
 type ComboBuilder () =
     inherit ObjBuilder<IComboProperty> ()
     override __.Zero () =
-        Properties.combo noOwner NoKey
+        IComboProperty.Empty noOwner
     [<CustomOperation("custom")>]
     member __.Custom (this : IComboProperty, key, prop : ICustomProperty) =
         this.AddAny key prop.Clone0 |> ignore
@@ -43,11 +44,13 @@ type ContextBuilder (kind') =
     inherit ObjBuilder<IContext> ()
     let kind : Kind = kind'
     override __.Zero () =
-        Context.combo kind
+        IContext.Empty kind
     [<CustomOperation("properties")>]
-    member __.Properties (_: IContext, properties : IProperties) =
-        fun owner -> properties.Clone1 owner NoKey
-        |> Context.create kind
+    member __.Properties (_: IContext, properties : IComboProperty) =
+        Context.combo kind
+        |> fun context ->
+            properties.SyncTo context.Properties |> ignore
+            context
 
 let combo = new ComboBuilder ()
 

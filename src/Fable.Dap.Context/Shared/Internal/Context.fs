@@ -9,21 +9,62 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Internal
 
-type internal Context (logging', spec') =
-    let spec : IContextSpec = spec'
-    let owner' : Owner = new Owner (logging', spec'.Luid)
-    let owner = owner'.AsOwner
-    let properties = spec.PropertiesSpawner owner
-    static member Create l s = new Context (l, s)
-    member this.AsContext = this :> IContext
+type IContext with
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
+    member this.SetupClone<'c when 'c :> IContext> (extraSetup : ('c -> unit) option) (clone : 'c) =
+        extraSetup
+        |> Option.iter (fun setup ->
+            setup clone
+        )
+        let clone' = clone :> IContext
+        this.Properties0.ToJson () |> clone'.Properties0.WithJson |> ignore
+        if this.Properties0.Sealed then clone'.Properties0.Seal ()
+        clone
+
+[<AbstractClass>]
+type Context<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<'p> and 'p :> IProperties> (logging', spec' : 's) =
+    let spec : 's = spec'
+    let owner = new Owner (logging', spec.Luid)
+    let properties : 'p = spec.SpawnProperties owner
+    // abstract members
+    abstract member Self : 'c with get
+    abstract member Spawn : ILogging -> 'c
+    // virtual members
+    abstract member OnDisposed : unit -> unit
+    abstract member SetupCloneBefore : 'c -> unit
+    abstract member SetupCloneAfter : 'c -> unit
+    default __.OnDisposed () = ()
+    default __.SetupCloneBefore (_c : 'c) = ()
+    default __.SetupCloneAfter (_c : 'c) = ()
+    member __.Spec = spec
+    member __.Owner = owner
+    member __.Properties = properties
+    member this.AsContext = this :> IContext<'c, 's, 'p>
+    member this.AsContext0 = this :> IContext
     member this.AsOwner = this :> IOwner
-    interface IContext with
+    interface IContext<'c, 's, 'p> with
+        member this.Self = this.Self
         member __.Spec = spec
         member __.Properties = properties
-        member __.Dispose () = owner'.Dispose ()
-        member __.Clone0 logging =
-                Context.Create logging spec
-                :> IContext
+        member this.Clone l =
+            this.Spawn l
+            |> this.SetupClone (Some this.SetupCloneBefore)
+            |> fun clone ->
+                this.SetupCloneAfter clone
+                clone
+    interface IContext with
+        member this.Dispose () =
+            if not owner.Disposed then
+                if owner.Dispose () then
+                    this.OnDisposed ()
+                    true
+                else false
+            else false
+        member __.Spec0 = spec :> IContextSpec
+        member __.Properties0 = properties :> IProperties
+        member this.Clone0 l = this.AsContext.Clone l :> IContext
     interface IJson with
         member this.ToJson () = properties.ToJson ()
     interface IOwner with
