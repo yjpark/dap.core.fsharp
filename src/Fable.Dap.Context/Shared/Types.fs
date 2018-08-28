@@ -266,7 +266,6 @@ and IComboProperty =
     abstract AddList<'p when 'p :> IProperty> : IPropertySpec<'p> -> IListProperty<'p>
     abstract AddCombo : IPropertySpec -> IComboProperty
     abstract AddCustom<'p when 'p :> ICustomProperty> : IPropertySpec<'p> -> 'p
-    abstract AddCustom0 : IPropertySpec<ICustomProperty> -> ICustomProperty
     abstract OnAdded : IBus<IProperty> with get
     abstract SyncTo : IComboProperty -> unit
     abstract Clone : IOwner -> Key -> IComboProperty

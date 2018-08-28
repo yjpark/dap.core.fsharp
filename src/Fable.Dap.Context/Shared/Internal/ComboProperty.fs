@@ -130,11 +130,6 @@ type internal ComboProperty (owner, spec) =
             subSpec.AsSubSpec spec
             |> fun spec -> spec.Spawn owner
             |> this.Add
-        member this.AddCustom0 (subSpec : IPropertySpec<ICustomProperty>) =
-            this.CheckAdd subSpec typeof<ICustomProperty>
-            subSpec.AsSubSpec spec
-            |> fun spec -> spec.Spawn owner
-            |> this.Add
         member __.OnAdded = onAdded.Publish
         member this.SyncTo (other : IComboProperty) =
             this.Value
