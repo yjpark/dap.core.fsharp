@@ -128,7 +128,8 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
         state <- newState
         version <- version.IncMsg (not (newState =? state))
         tryFireEvent msg
-    member __.Handle (req : 'req) =
+    //Fable has issue if use Handle as the name, will cause dead loop
+    member __.Handle' (req : 'req) =
         version <- version.IncReq
         agent.Deliver (spec.WrapReq req)
 #if !FABLE_COMPILER
@@ -139,7 +140,7 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
     member __.Version = version
     member this.AsActor = this :> IActor<'args, 'model, 'req, 'evt>
     interface IActor<'args, 'model, 'req, 'evt> with
-        member this.Handle req = this.Handle req
+        member this.Handle req = this.Handle' req
 #if !FABLE_COMPILER
         member this.HandleAsync getReq = this.HandleAsync getReq
 #endif
