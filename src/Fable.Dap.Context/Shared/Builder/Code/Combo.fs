@@ -63,5 +63,5 @@ type Builder (kind') =
     [<CustomOperation("string")>]
     member __.String (this: string list, key, initValue) =
         addField key
-        sf """    let %s = target.AddString "%s" "%s"\""" key key initValue
+        sf "    let %s = target.AddString \"%s\" \"%s\"" key key initValue
         :: this
