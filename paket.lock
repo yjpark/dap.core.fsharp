@@ -3,8 +3,6 @@ STORAGE: NONE
 RESTRICTION: || (== netcoreapp2.0) (== netstandard2.0)
 NUGET
   remote: https://www.nuget.org/api/v2
-    Ben.Demystifier (0.1.1)
-      System.Reflection.Metadata (>= 1.5)
     Elmish (1.0.3)
       FSharp.Core (>= 4.2.3)
     Fable.Core (1.3.17)
@@ -85,9 +83,6 @@ NUGET
     Serilog (2.7.1)
       NETStandard.Library (>= 1.6.1)
       System.Collections.NonGeneric (>= 4.3)
-    Serilog.Enrichers.Demystify (0.1.0-dev-00016)
-      Ben.Demystifier (>= 0.1)
-      Serilog (>= 2.5)
     Serilog.Enrichers.Thread (3.0)
       Serilog (>= 2.0)
     Serilog.Formatting.Compact (1.0)
@@ -132,7 +127,6 @@ NUGET
       System.Runtime.Extensions (>= 4.3)
       System.Threading (>= 4.3)
       System.Threading.Tasks (>= 4.3)
-    System.Collections.Immutable (1.5)
     System.Collections.NonGeneric (4.3)
       System.Diagnostics.Debug (>= 4.3)
       System.Globalization (>= 4.3)
@@ -282,8 +276,6 @@ NUGET
       Microsoft.NETCore.Targets (>= 1.1)
       System.Reflection (>= 4.3)
       System.Runtime (>= 4.3)
-    System.Reflection.Metadata (1.6)
-      System.Collections.Immutable (>= 1.5)
     System.Reflection.Primitives (4.3)
       Microsoft.NETCore.Platforms (>= 1.1)
       Microsoft.NETCore.Targets (>= 1.1)
@@ -515,7 +507,11 @@ NUGET
     Thoth.Json.Net (1.0)
       FSharp.Core (>= 4.3.4)
       Newtonsoft.Json (>= 11.0.1)
-
+GITHUB
+  remote: fsprojects/FSharp.TypeProviders.StarterPack
+    src/ProvidedTypes.fs (d50b7556cc57c403cd53bd1116027450d60c72db)
+    src/ProvidedTypes.fsi (d50b7556cc57c403cd53bd1116027450d60c72db)
+    src/ProvidedTypesTesting.fs (d50b7556cc57c403cd53bd1116027450d60c72db)
 GROUP Build
 STORAGE: NONE
 RESTRICTION: == netstandard2.0

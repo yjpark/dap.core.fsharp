@@ -31,7 +31,13 @@
     <Compile Include="Shared/ContextSpec.fs" />
     <Compile Include="Shared/Context.fs" />
     <Compile Include="Shared/Unsafe/Context.fs" />
-    <Compile Include="Shared/Builder.fs" />
+    <Compile Include="Shared/Builder/Code/Util.fs" />
+    <Compile Include="Shared/Builder/Code/Combo.fs" />
+    <Compile Include="Shared/Builder/Code/Context.fs" />
+    <Compile Include="Shared/Builder/Code/Dsl.fs" />
+    <Compile Include="Shared/Builder/Value/Combo.fs" />
+    <Compile Include="Shared/Builder/Value/Context.fs" />
+    <Compile Include="Shared/Builder/Value/Dsl.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Prelude\Fable.Dap.Prelude.fsproj" />

@@ -22,6 +22,11 @@ nuget Fable.Websockets.Elmish
 nuget Thoth.Json 1.0.0
 nuget Thoth.Json.Net 1.0.0
 
+# https://github.com/fsprojects/FSharp.TypeProviders.SDK
+github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fsi
+github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fs
+github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypesTesting.fs
+
 group Build
     source https://nuget.yjpark.org/nuget/dap
     source https://www.nuget.org/api/v2

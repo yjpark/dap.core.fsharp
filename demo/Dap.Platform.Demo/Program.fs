@@ -6,8 +6,8 @@ open FSharp.Control.Tasks.V2
 
 open Dap.Prelude
 open Dap.Context
-open Dap.Context.Builder
 open Dap.Context.Unsafe
+open Dap.Context.Builder.Code
 open Dap.Platform
 open Dap.WebSocket.Client
 
@@ -42,7 +42,6 @@ let rec onGetAgent ((agent, isNew) : IAgent * bool) =
 let doSimpleTest (env : IEnv) : unit =
     env |> Env.register "Dummy" noAgent |> ignore
     env.Handle <| DoGetAgent ("Dummy", "test", callback env onGetAgent)
-*)
 
 type Publisher (owner : IOwner, key : Key) =
     inherit WrapProperties<Publisher, IComboProperty> ()
@@ -75,7 +74,7 @@ type PublisherBuilder () =
 
 let publisher = new PublisherBuilder ()
 
-let doContextTest (env : IEnv) : unit =
+let doValueBuilderTest (env : IEnv) : unit =
     let author = combo {
         string "name" "John Doe" None
         int "age" 30 None
@@ -112,12 +111,24 @@ let doContextTest (env : IEnv) : unit =
     let context = pub.ToCustom<Publisher> ()
     logWarn pub "Test" "Publisher_Context" context.Properties.Name.Value
     logWarn pub "Test" "Publisher_Context" (E.encodeJson 4 pub)
+*)
+
+let doCodeBuilderTest (env : IEnv) : unit =
+    let publisher = combo "Publisher" {
+        string "name" "John Doe"
+        int "age" 30
+    }
+    logWarn env "Code_Builder" "Publisher_Type" ()
+    publisher
+    |> List.iter ^<| printf "%s\n"
 
 [<EntryPoint>]
 let main _argv =
     let logging = setupConsole LogLevelWarning
     let env = Env.live MailboxPlatform logging "Demo"
-    doContextTest env
+
+    doCodeBuilderTest env
+    //doValueBuilderTest env
 
     (*
     //doSimpleTest env
@@ -128,6 +139,6 @@ let main _argv =
     |> Async.RunSynchronously
     *)
 
-    printfn "Quit..."
+    //printfn "Quit..."
     0 // return an integer exit code
 
