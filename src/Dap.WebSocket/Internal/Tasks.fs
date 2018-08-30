@@ -11,32 +11,32 @@ open Dap.WebSocket.Types
 let private doReadPktAsync (link : Link<'socket>)
                             : GetTask<Agent<'socket, 'pkt, 'req>, bool> =
     fun runner -> task {
-        let mutable closed = false;
+        let mutable finished = false;
         let mutable offset = 0
         let mutable capacity = link.Buffer.Length
         try
             let time = runner.Clock.Now
             let processTime = time
-            let mutable finished = false
+            let mutable completed = false
             let socket = link.Socket :> WebSocket
-            while not finished do
+            while not completed do
                 if runner.Actor.State.Status = LinkStatus.Closing then
+                    completed <- true
                     finished <- true
-                    closed <- true
                 else
                     //logInfo runner "Dev" "ReceiveAsync" "Begin"
                     let! result = socket.ReceiveAsync(ArraySegment<byte>(link.Buffer, offset, capacity), link.Token)
                     //logInfo runner "Dev" "ReceiveAsync" "End"
                     if result.CloseStatus.HasValue then
                         logInfo runner "Link" "Closed" link
+                        completed <- true
                         finished <- true
-                        closed <- true
                     else
                         offset <- offset + result.Count
                         capacity <- capacity - result.Count
                         if result.EndOfMessage then
                             let length = offset
-                            finished <- true
+                            completed <- true
                             let (time, transferDuration) = runner.Clock.CalcDuration(time)
                             match runner.RunFunc<'pkt> (fun _ -> runner.Actor.Args.Decode (link.Buffer, 0, length)) with
                             | Ok pkt ->
@@ -56,8 +56,8 @@ let private doReadPktAsync (link : Link<'socket>)
         with
         | e ->
             logException runner "Received" "Exception_Raised" link e
-            closed <- true
-        return closed
+            finished <- true
+        return finished
     }
 
 let internal refreshStatusOnFailed : OnFailed<Agent<'socket, 'pkt, 'req>> =
@@ -81,20 +81,31 @@ let private needCloseSocket (socket : WebSocket) =
     | _ ->
         false
 
+let internal tryCloseSocketAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
+    fun runner -> task {
+        match runner.Actor.State.Link with
+        | Some link ->
+            let socket = link.Socket :> WebSocket
+            if needCloseSocket socket then
+                logInfo runner "Link" "Closing" link.Ident
+                try
+                    do! socket.CloseAsync (WebSocketCloseStatus.Empty, "", link.Token)
+                with e ->
+                    logException runner "Link" "Exception_Raised" link.Ident e
+        | None -> ()
+        runner.Deliver <| InternalEvt ^<| DoRefreshStatus None
+    }
+
 let internal doReceiveAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
     fun runner -> task {
         while Option.isNone runner.Actor.State.Link do
             do! Task.Delay 20
         let link = runner.Actor.State.Link |> Option.get
-        let mutable closed = false
-        while not closed do
-            let! closed' = doReadPktAsync link runner
-            closed <- closed'
-        let socket = link.Socket :> WebSocket
-        if needCloseSocket socket then
-            logInfo runner "Link" "Closing" link.Ident
-            do! socket.CloseAsync (WebSocketCloseStatus.Empty, "", link.Token)
-        runner.Deliver <| InternalEvt ^<| DoRefreshStatus None
+        let mutable finished = false
+        while not finished do
+            let! finished' = doReadPktAsync link runner
+            finished <- finished'
+        do! tryCloseSocketAsync runner
     }
 
 let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'socket, 'pkt, 'req>, SendStats> =
@@ -121,9 +132,6 @@ let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Agent<'socket, 'pkt, 'req>,
             runner.Deliver <| WebSocketEvt ^<| OnSent (stats, pkt)
         with e ->
             logException runner "Send" "Exception_Raised" link e
-            if needCloseSocket socket then
-                logInfo runner "Link" "Closing" link.Ident
-                do! socket.CloseAsync (WebSocketCloseStatus.Empty, "", link.Token)
-            runner.Deliver <| InternalEvt ^<| DoRefreshStatus None
+            do! tryCloseSocketAsync runner
     }
 

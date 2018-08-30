@@ -38,7 +38,7 @@ let linkStatusOfSocket (socket : WebSocket) =
     | _ ->
         LinkStatus.Unknown
 
-let internal doSetStatus (status : LinkStatus)  : ActorOperate<'socket, 'pkt, 'req> =
+let private doSetStatus (status : LinkStatus)  : ActorOperate<'socket, 'pkt, 'req> =
     fun runner (model, cmd) ->
         (runner, model, cmd)
         |-|> updateModel (fun m -> {m with Status = status})
@@ -60,6 +60,11 @@ let private doRefreshStatus (err : exn option) : ActorOperate<'socket, 'pkt, 're
             |=|> doSetStatus status
         else
             (model, cmd)
+
+let private tryCloseSocket : ActorOperate<'socket, 'pkt, 'req> =
+    fun runner (model, cmd) ->
+        runner.AddTask refreshStatusOnFailed tryCloseSocketAsync
+        (model, cmd)
 
 let private onLinked (stats : LinkedStats) : ActorOperate<'socket, 'pkt, 'req> =
     fun runner (model, cmd) ->
@@ -104,6 +109,7 @@ let private update : ActorUpdate<Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt,
         | InternalEvt evt ->
             match evt with
             | DoRefreshStatus err -> doRefreshStatus err
+            | TryCloseSocket -> tryCloseSocket
             | OnLinked stats -> onLinked stats
         <| runner <| (model, [])
 

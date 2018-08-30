@@ -32,20 +32,14 @@ let private doConnect req (uri, token, callback) : ActorOperate<'pkt> =
             replyAsync runner req callback doConnectFailed <| doConnectAsync
             (runner, model, cmd)
             |-|> updateModel (fun m -> {m with Link = Some link})
-            |=|> BaseLogic.doSetStatus LinkStatus.Linking
+            |=|> addSubCmd InternalEvt ^<| DoRefreshStatus None
 
 let private doDisconnect req (callback : Callback<unit>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match model.Link with
         | Some link ->
-            match model.Status with
-            | LinkStatus.Linked ->
-                reply runner callback <| ack req ()
-                (runner, model, cmd)
-                |=|> BaseLogic.doSetStatus LinkStatus.Closing
-            | _ ->
-                reply runner callback <| nak req "Not_Linked" (link, model.Status)
-                (model, cmd)
+            (runner, model, cmd)
+            |=|> addSubCmd InternalEvt TryCloseSocket
         | None ->
             reply runner callback <| nak req "Link_Not_Exist" ()
             (model, cmd)

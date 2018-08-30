@@ -74,6 +74,7 @@ with interface IEvt
 
 and InternalEvt =
     | OnLinked of LinkedStats
+    | TryCloseSocket
     | DoRefreshStatus of exn option
 
 and Msg<'pkt, 'req> =
