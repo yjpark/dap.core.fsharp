@@ -13,6 +13,7 @@
     <Compile Include="Shared/Json.fs" />
     <Compile Include="Shared/UnionSpec.fs" />
     <Compile Include="Shared/ED.fs" />
+    <Compile Include="Shared/Const.fs" />
     <Compile Include="Shared/Types.fs" />
     <Compile Include="Shared/Unsafe/Types.fs" />
     <Compile Include="Shared/Bus.fs" />
@@ -31,13 +32,15 @@
     <Compile Include="Shared/ContextSpec.fs" />
     <Compile Include="Shared/Context.fs" />
     <Compile Include="Shared/Unsafe/Context.fs" />
-    <Compile Include="Shared/Builder/Code/Util.fs" />
-    <Compile Include="Shared/Builder/Code/Combo.fs" />
-    <Compile Include="Shared/Builder/Code/Context.fs" />
-    <Compile Include="Shared/Builder/Code/Dsl.fs" />
-    <Compile Include="Shared/Builder/Value/Combo.fs" />
-    <Compile Include="Shared/Builder/Value/Context.fs" />
-    <Compile Include="Shared/Builder/Value/Dsl.fs" />
+    <Compile Include="Shared/Builder/Types.fs" />
+    <Compile Include="Shared/Builder/Combo.fs" />
+    <Compile Include="Shared/Builder/Context.fs" />
+    <Compile Include="Shared/Builder/Dsl.fs" />
+    <Compile Include="Shared/Generator/Types.fs" />
+    <Compile Include="Shared/Generator/Util.fs" />
+    <Compile Include="Shared/Generator/Combo.fs" />
+    <Compile Include="Shared/Generator/Context.fs" />
+    <Compile Include="Shared/Generator/Alias.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Prelude\Fable.Dap.Prelude.fsproj" />

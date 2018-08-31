@@ -1,15 +1,14 @@
 [<RequireQualifiedAccess>]
-module Dap.Context.Builder.Value.Context
+module Dap.Context.Builder.Context
 
 open System.Reflection
 
 open Dap.Prelude
 open Dap.Context
 
-type Builder (kind') =
-    let kind : Kind = kind'
-    member this.Yield (_ : 'a) = this.Zero ()
-    member __.Zero () =
+type Builder (kind : Kind) =
+    inherit ObjBuilder<IContext> ()
+    override __.Zero () =
         IContext.Empty kind
 
     [<CustomOperation("properties")>]

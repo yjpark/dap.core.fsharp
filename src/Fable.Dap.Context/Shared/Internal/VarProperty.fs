@@ -10,10 +10,46 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Internal
 
-type internal VarProperty<'v> private (owner, spec) =
+type internal VarPropertySpec<'v> internal (kind, luid, key, encoder', decoder', initValue', validator') =
+    inherit PropertySpec (kind, luid, key, (encoder' initValue'))
+    let encoder : JsonEncoder<'v> = encoder'
+    let decoder : JsonDecoder<'v> = decoder'
+    let initValue : 'v = initValue'
+    let validator : Validator<'v> option = validator'
+    static member Create kind key encoder decoder initValue validator =
+        new VarPropertySpec<'v> (kind, key, key, encoder, decoder, initValue, validator)
+        :> IVarPropertySpec<'v>
+    interface IVarPropertySpec<'v> with
+        member __.Encoder = encoder
+        member __.Decoder = decoder
+        member __.InitValue = initValue
+        member __.Validator = validator
+    interface IPropertySpec<IVarProperty<'v>> with
+        member this.Spawner : PropertySpawner<IVarProperty<'v>> =
+            fun owner key ->
+                VarProperty<'v>.Create owner <| this.ForClone key
+                :> IVarProperty<'v>
+
+and IVarPropertySpec<'v> with
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
+    member this.GetSubSpec subKey =
+        let luid = AspectSpec.CalcSubLuid this.Luid subKey
+        new VarPropertySpec<'v> (this.Kind, luid, subKey, this.Encoder, this.Decoder, this.InitValue, this.Validator)
+        :> IVarPropertySpec<'v>
+    member this.AsSubSpec (parent : IAspectSpec) =
+        let luid = AspectSpec.CalcSubLuid parent.Luid this.Key
+        new VarPropertySpec<'v> (this.Kind, luid, this.Key, this.Encoder, this.Decoder, this.InitValue, this.Validator)
+        :> IVarPropertySpec<'v>
+    member this.ForClone key =
+        new VarPropertySpec<'v> (this.Kind, key, key, this.Encoder, this.Decoder, this.InitValue, this.Validator)
+        :> IVarPropertySpec<'v>
+
+and internal VarProperty<'v> private (owner, spec) =
     inherit Property<IVarPropertySpec<'v>, 'v> (owner, spec, spec.InitValue)
     let onValueChanged : Bus<VarPropertyChanged<'v>> = new Bus<VarPropertyChanged<'v>> (owner)
-    static member Create o (s : IVarPropertySpec<'v>) = new VarProperty<'v> (o, s)
+    static member Create o s = new VarProperty<'v> (o, s)
     override __.Kind = PropertyKind.VarProperty
     override this.AsVar = this :> IVarProperty
     member this.AsVarProperty = this :> IVarProperty<'v>

@@ -1,5 +1,5 @@
 [<RequireQualifiedAccess>]
-module Dap.Context.Builder.Value.Combo
+module Dap.Context.Builder.Combo
 
 open System.Reflection
 
@@ -7,8 +7,8 @@ open Dap.Prelude
 open Dap.Context
 
 type Builder () =
-    member this.Yield (_ : 'a) = this.Zero ()
-    member __.Zero () =
+    inherit ObjBuilder<IComboProperty> ()
+    override __.Zero () =
         IComboProperty.Empty noOwner
     [<CustomOperation("custom")>]
     member __.Custom (this : IComboProperty, key, prop : ICustomProperty) =

@@ -124,6 +124,7 @@ and IValue<'v> =
 type Validator<'v> = IValue<'v> -> 'v -> bool
 
 type IAspectSpec =
+    abstract Kind : Kind with get
     abstract Luid : Luid with get
     abstract Key : Key with get
 
@@ -159,8 +160,12 @@ and IProperty =
     abstract OnChanged : IBus<PropertyChanged> with get
     abstract Clone0 : IOwner -> Key -> IProperty
 
-and IVarPropertySpec<'v> =
+and IPropertySpec<'p when 'p :> IProperty> =
     inherit IPropertySpec
+    abstract Spawner : PropertySpawner<'p> with get
+
+and IVarPropertySpec<'v> =
+    inherit IPropertySpec<IVarProperty<'v>>
     abstract Encoder : JsonEncoder<'v>
     abstract Decoder : JsonDecoder<'v>
     abstract InitValue : 'v with get
@@ -183,10 +188,6 @@ and IVarProperty<'v> =
     abstract SetValue : 'v -> bool
     abstract OnValueChanged : IBus<VarPropertyChanged<'v>> with get
     abstract Clone : IOwner -> Key -> IVarProperty<'v>
-
-and IPropertySpec<'p when 'p :> IProperty> =
-    inherit IPropertySpec
-    abstract Spawner : PropertySpawner<'p> with get
 
 and IProperties =
     inherit IProperty

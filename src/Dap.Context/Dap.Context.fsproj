@@ -12,6 +12,7 @@
     <Compile Include="../Fable.Dap.Context/Shared/Json.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/UnionSpec.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/ED.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Const.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Types.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Unsafe/Types.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Bus.fs" />
@@ -30,24 +31,15 @@
     <Compile Include="../Fable.Dap.Context/Shared/ContextSpec.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Context.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Unsafe/Context.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Builder/Code/Util.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Builder/Code/Combo.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Builder/Code/Context.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Builder/Code/Dsl.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Builder/Value/Combo.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Builder/Value/Context.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Builder/Value/Dsl.fs" />
-    <!--
-    <Compile Include="..\..\paket-files\fsprojects\FSharp.TypeProviders.StarterPack\src\ProvidedTypes.fsi">
-      <Link>ProvidedTypes.fsi</Link>
-    </Compile>
-    <Compile Include="..\..\paket-files\fsprojects\FSharp.TypeProviders.StarterPack\src\ProvidedTypes.fs">
-      <Link>ProvidedTypes.fs</Link>
-    </Compile>
-    <Compile Include="..\..\paket-files\fsprojects\FSharp.TypeProviders.StarterPack\src\ProvidedTypesTesting.fs">
-      <Link>ProvidedTypesTesting.fs</Link>
-    </Compile>
-    -->
+    <Compile Include="../Fable.Dap.Context/Shared/Builder/Types.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Builder/Combo.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Builder/Context.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Builder/Dsl.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Generator/Types.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Generator/Util.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Generator/Combo.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Generator/Context.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Generator/Alias.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.Prelude\Dap.Prelude.fsproj" />
