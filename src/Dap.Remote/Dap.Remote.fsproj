@@ -32,7 +32,6 @@
     <Compile Include="Des.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Dap.Platform\Dap.Platform.fsproj" />
     <ProjectReference Include="..\Dap.WebSocket\Dap.WebSocket.fsproj" />
   </ItemGroup>
   <ItemGroup>

@@ -8,7 +8,6 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Dap.Platform\Dap.Platform.fsproj" />
     <ProjectReference Include="..\..\src\Dap.WebSocket\Dap.WebSocket.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

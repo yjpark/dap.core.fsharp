@@ -25,7 +25,6 @@
     <Compile Include="WebSocketProxy/Proxy.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Fable.Dap.Platform\Fable.Dap.Platform.fsproj" />
     <ProjectReference Include="..\Fable.Dap.WebSocket\Fable.Dap.WebSocket.fsproj" />
   </ItemGroup>
   <ItemGroup>

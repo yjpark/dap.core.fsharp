@@ -26,7 +26,6 @@
     <Compile Include="Helper.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Dap.Platform\Dap.Platform.fsproj" />
     <ProjectReference Include="..\Dap.Remote\Dap.Remote.fsproj" />
   </ItemGroup>
   <ItemGroup>
