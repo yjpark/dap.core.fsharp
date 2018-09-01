@@ -6,7 +6,6 @@ open System.Reflection
 open Dap.Prelude
 open Dap.Context
 
-type Generator (template : IContext) =
-    interface IGenerator with
-        member __.GenerateClass kind = []
-        member __.GenerateBuilder kind = []
+type ClassGenerator (template : IContext) =
+    interface IClassGenerator with
+        member __.Generate param = []

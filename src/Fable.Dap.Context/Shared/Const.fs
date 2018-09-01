@@ -22,6 +22,12 @@ let PK_Int = "Int"
 let PK_Long = "Long"
 
 [<Literal>]
+let PK_Float = "Float"
+
+[<Literal>]
+let PK_Double = "Double"
+
+[<Literal>]
 let PK_String = "String"
 
 let getCustomKind = sprintf "Custom<%s>"

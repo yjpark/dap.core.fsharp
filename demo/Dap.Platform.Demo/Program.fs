@@ -1,4 +1,4 @@
-﻿module Dap.Platform.Demo
+﻿module Dap.Platform.Demo.Program
 
 open System.Threading
 open System.Threading.Tasks
@@ -44,22 +44,6 @@ let doSimpleTest (env : IEnv) : unit =
     env |> Env.register "Dummy" noAgent |> ignore
     env.Handle <| DoGetAgent ("Dummy", "test", callback env onGetAgent)
 *)
-
-type Publisher (owner : IOwner, key : Key) =
-    inherit WrapProperties<Publisher, IComboProperty> ("Publisher")
-    let target = Properties.combo owner key
-    let name = target.AddString "name" "John Doe" None
-    let year = target.AddInt "year" 1990 None
-    do (
-        target.SealCombo ()
-        base.Setup (target)
-    )
-    static member Empty () = new Publisher (noOwner, NoKey)
-    override this.Self = this
-    override __.Spawn o k = new Publisher (o, k)
-    override __.SyncTo t = target.SyncTo t.Target
-    member __.Name = name
-    member __.Year = year
 
 type PublisherBuilder () =
     inherit ObjBuilder<Publisher> ()
@@ -114,22 +98,12 @@ let doBuilderTest (env : IEnv) : unit =
     logWarn pub "Test" "Publisher_Context" context.Properties.Name.Value
     logWarn pub "Test" "Publisher_Context" (E.encodeJson 4 pub)
 
-let doGeneratorTest (env : IEnv) : unit =
-    logWarn env "Code_Builder" "Publisher_Class" ()
-    combo {
-        string "name" "John Doe" None
-        int "age" 30 None
-    }
-    |> generateClass "Publisher"
-    |> List.iter ^<| printf "%s\n"
-
 [<EntryPoint>]
 let main _argv =
     let logging = setupConsole LogLevelWarning
     let env = Env.live MailboxPlatform logging "Demo"
 
     doBuilderTest env
-    doGeneratorTest env
 
     (*
     //doSimpleTest env

@@ -36,11 +36,14 @@ type IAspectSpec with
 type internal PropertySpec internal (kind, luid, key, initValue') =
     inherit AspectSpec (kind, luid, key)
     let initValue : Json = initValue'
+    abstract ValidatorKind : Kind option with get
+    default __.ValidatorKind = None
     static member Create1 kind key initValue =
         new PropertySpec (kind, key, key, initValue)
         :> IPropertySpec
     interface IPropertySpec with
         member __.InitValue = initValue
+        member this.ValidatorKind = this.ValidatorKind
 
 type IPropertySpec with
     member this.GetSubSpec subKey =

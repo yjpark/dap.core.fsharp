@@ -7,3 +7,6 @@ let iterBack (func : 'a -> unit) (list : 'a list) =
         func elem
         ()
     List.foldBack folder list ()
+
+let extend (list2 : 'a list) (list1 : 'a list) =
+    list1 @ list2

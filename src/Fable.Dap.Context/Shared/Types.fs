@@ -121,7 +121,10 @@ type IAsyncHandler<'req> when 'req :> IReq =
 and IValue<'v> =
     abstract Value : 'v with get
 
-type Validator<'v> = IValue<'v> -> 'v -> bool
+type Validator<'v> = {
+    Kind : Kind
+    Check : IValue<'v> -> 'v -> bool
+}
 
 type IAspectSpec =
     abstract Kind : Kind with get
@@ -131,6 +134,7 @@ type IAspectSpec =
 type IPropertySpec =
     inherit IAspectSpec
     abstract InitValue : Json with get
+    abstract ValidatorKind : Kind option with get
 
 type PropertyChanged = {
     Spec : IPropertySpec

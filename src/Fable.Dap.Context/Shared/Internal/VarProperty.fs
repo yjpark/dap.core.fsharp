@@ -19,6 +19,9 @@ type internal VarPropertySpec<'v> internal (kind, luid, key, encoder', decoder',
     static member Create kind key encoder decoder initValue validator =
         new VarPropertySpec<'v> (kind, key, key, encoder, decoder, initValue, validator)
         :> IVarPropertySpec<'v>
+    override __.ValidatorKind =
+        validator
+        |> Option.map (fun v -> v.Kind)
     interface IVarPropertySpec<'v> with
         member __.Encoder = encoder
         member __.Decoder = decoder
@@ -53,6 +56,7 @@ and internal VarProperty<'v> private (owner, spec) =
     override __.Kind = PropertyKind.VarProperty
     override this.AsVar = this :> IVarProperty
     member this.AsVarProperty = this :> IVarProperty<'v>
+    member this.AsValue = this :> IValue<'v>
     override __.ToJson (v : 'v) =
         spec.Encoder v
     override this.WithJson _value json =
@@ -75,9 +79,9 @@ and internal VarProperty<'v> private (owner, spec) =
     override this.ShouldSetValue (v : 'v) =
         this.Spec.Validator
         |> Option.map (fun validator ->
-            let valid = validator this.AsVarProperty v
+            let valid = validator.Check this.AsValue v
             if not valid then
-                owner.Log <| tplPropertyDebug "Property:Invalid_Value" spec.Luid this.Value v
+                owner.Log <| tplPropertyDebug "Property:Invalid_Value" spec.Luid this.Value (v, validator)
             valid
         )|> Option.defaultValue true
     override this.OnValueChanged (old : 'v) =

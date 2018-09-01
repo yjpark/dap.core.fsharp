@@ -40,7 +40,7 @@
     <Compile Include="Shared/Generator/Util.fs" />
     <Compile Include="Shared/Generator/Combo.fs" />
     <Compile Include="Shared/Generator/Context.fs" />
-    <Compile Include="Shared/Generator/Alias.fs" />
+    <Compile Include="Shared/Generator/Helper.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Prelude\Fable.Dap.Prelude.fsproj" />
