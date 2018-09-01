@@ -16,7 +16,7 @@ let publisher =
 
 G.Module ("Dap.Platform.Demo.Types",
     [
-        G.JsonRecord ("PublisherRecord", publisher)
-        G.FinalClass ("Publisher", publisher)
+        G.LooseJsonRecord ("Publisher", publisher)
+        G.FinalClass ("PublisherProperty", publisher)
     ]
-)|> G.File "Types.fs"
+)|> G.File "Gen/Types.fs"

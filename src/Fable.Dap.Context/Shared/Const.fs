@@ -19,16 +19,16 @@ let PK_Bool = "Bool"
 let PK_Int = "Int"
 
 [<Literal>]
-let PK_Long = "Long"
+let PK_String = "String"
 
 [<Literal>]
 let PK_Float = "Float"
 
 [<Literal>]
-let PK_Double = "Double"
+let PK_Decimal = "Decimal"
 
 [<Literal>]
-let PK_String = "String"
+let PK_Long = "Long"
 
 let getCustomKind = sprintf "Custom<%s>"
 

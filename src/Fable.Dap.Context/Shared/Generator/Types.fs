@@ -14,11 +14,13 @@ type IParam =
 type RecordParam = {
     Name : string
     IsJson : bool
+    IsLoose : bool
 } with
-    static member Create name isJson =
+    static member Create name isJson isLoose =
         {
             Name = name
             IsJson = isJson
+            IsLoose = isLoose
         }
     interface IParam with
         member __.Kind = "Record"
@@ -27,6 +29,8 @@ type RecordParam = {
             [
                 if this.IsJson then
                     yield "IsJson"
+                    if this.IsLoose then
+                        yield "IsLoose"
             ] |> String.concat ", "
 
 type IRecordGenerator =

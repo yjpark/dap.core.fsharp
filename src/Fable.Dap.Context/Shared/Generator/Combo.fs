@@ -8,26 +8,65 @@ open Dap.Context
 open Dap.Context.Internal
 open Dap.Context.Generator.Util
 
-let getValueType (prop : IProperty) =
+let private getValueType (prop : IProperty) =
     match prop with
     | :? IVarProperty as prop ->
         match prop.Spec.Kind with
         | PK_Bool -> "bool"
         | PK_Int -> "int"
-        | PK_Long -> "int64"
-        | PK_Float -> "float"
-        | PK_Double -> "double"
         | PK_String -> "string"
+        | PK_Float -> "float"
+        | PK_Decimal -> "decimal"
+        | PK_Long -> "int64"
         | _ ->
             prop.ValueType.FullName
     | :? IComboProperty ->
         "IComboProperty"
     | _ -> "N/A"
 
+let private getEncoder (prop : IProperty) =
+    match prop with
+    | :? IVarProperty as prop ->
+        match prop.Spec.Kind with
+        | PK_Bool -> "bool"
+        | PK_Int -> "int"
+        | PK_String -> "string"
+        | PK_Float -> "float"
+        | PK_Decimal -> "decimal"
+        | PK_Long -> "long"
+        | _ ->
+            prop.ValueType.FullName
+    | :? IComboProperty ->
+        "object"
+    | _ -> "N/A"
+
+
+let private getInitValue (prop : IProperty) =
+    E.encode 0 prop.Spec.InitValue
+
 type RecordGenerator (template : IComboProperty) =
     let getRecordHeader (param : RecordParam) =
         [
             yield sprintf "type %s = {" param.Name
+        ]
+    let getJsonEncoder (param : RecordParam) (fields : IProperty list) =
+        [
+            yield sprintf "    static member JsonEncoder : JsonEncoder<%s> =" param.Name
+            yield sprintf "        fun (this : %s) ->" param.Name
+            yield sprintf "            E.object ["
+            for prop in fields do
+                yield sprintf "                \"%s\", E.%s this.%s" prop.Spec.Key (getEncoder prop) prop.Spec.Key.AsCamelCase
+            yield sprintf "            ]"
+        ]
+    let getJsonDecoder (param : RecordParam) (fields : IProperty list) =
+        [
+            yield sprintf "    static member JsonDecoder : JsonDecoder<%s> =" param.Name
+            yield sprintf "        D.decode %s.Create" param.Name
+            for prop in fields do
+                if param.IsLoose then
+                    yield sprintf "        |> D.optional \"%s\" D.%s %s" prop.Spec.Key (getEncoder prop) (getInitValue prop)
+                else
+                    yield sprintf "        |> D.required \"%s\" D.%s" prop.Spec.Key (getEncoder prop)
         ]
     let getRecordMiddle (param : RecordParam) (fields : IProperty list) =
         let keys =
@@ -36,7 +75,7 @@ type RecordGenerator (template : IComboProperty) =
             |> String.concat " "
         let initValues =
             fields
-            |> List.map (fun f -> E.encode 0 f.Spec.InitValue)
+            |> List.map getInitValue
             |> String.concat " "
         [
             yield sprintf "} with"
@@ -48,7 +87,17 @@ type RecordGenerator (template : IComboProperty) =
             yield sprintf "        }"
             yield sprintf "    static member Default () ="
             yield sprintf "        %s.Create %s" param.Name initValues
-        ]
+        ] @ (
+            if param.IsJson then
+                getJsonEncoder param fields
+                @ getJsonDecoder param fields
+                @ [
+                    sprintf "    interface IJson with"
+                    sprintf "        member this.ToJson () = %s.JsonEncoder this" param.Name
+                ]
+            else
+                []
+        )
     let getFieldAdder (prop : IProperty) =
         let spec = prop.Spec
         sprintf "    %s : %s" spec.Key.AsCamelCase (getValueType prop)
@@ -93,7 +142,7 @@ type ClassGenerator (template : IComboProperty) =
         ]
     let getFieldAdder (prop : IProperty) =
         let spec = prop.Spec
-        let initValue = E.encode 0 spec.InitValue
+        let initValue = getInitValue prop
         let validator =
             prop.Spec.ValidatorKind
             |> Option.map (fun k -> sprintf "(Some %s)" k)

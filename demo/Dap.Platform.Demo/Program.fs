@@ -46,15 +46,15 @@ let doSimpleTest (env : IEnv) : unit =
 *)
 
 type PublisherBuilder () =
-    inherit ObjBuilder<Publisher> ()
+    inherit ObjBuilder<PublisherProperty> ()
     override __.Zero () =
-        Publisher.Empty ()
+        PublisherProperty.Empty ()
     [<CustomOperation("name")>]
-    member __.Name (this : Publisher, v) =
+    member __.Name (this : PublisherProperty, v) =
         this.Name.SetValue v |> ignore
         this
     [<CustomOperation("year")>]
-    member __.Year (this : Publisher, v) =
+    member __.Year (this : PublisherProperty, v) =
         this.Year.SetValue v |> ignore
         this
 
@@ -70,7 +70,7 @@ let doBuilderTest (env : IEnv) : unit =
             bool "published" false None
             int "copies" 100 None
             combo "author" author
-            custom "publisher1" (Publisher.Empty ())
+            custom "publisher1" (PublisherProperty.Empty ())
             custom "publisher" (publisher {
                 name "test"
                 year 2001
@@ -94,7 +94,7 @@ let doBuilderTest (env : IEnv) : unit =
             year 2010
         })
     }
-    let context = pub.ToCustom<Publisher> ()
+    let context = pub.ToCustom<PublisherProperty> ()
     logWarn pub "Test" "Publisher_Context" context.Properties.Name.Value
     logWarn pub "Test" "Publisher_Context" (E.encodeJson 4 pub)
 

@@ -94,13 +94,15 @@ type G = CodeGeneratorHelper with
         generateModule param sections
     static member Module (name, sections) =
         G.Module (name, true, sections)
-    static member Record (name, isJson, template) =
-        let param = RecordParam.Create name isJson
+    static member Record (name, isJson, isLoose, template) =
+        let param = RecordParam.Create name isJson isLoose
         generateRecord param template
     static member Record (name, template) =
-        G.Record (name, false, template)
+        G.Record (name, false, false, template)
     static member JsonRecord (name, template) =
-        G.Record (name, true, template)
+        G.Record (name, true, false, template)
+    static member LooseJsonRecord (name, template) =
+        G.Record (name, true, true, template)
     static member Class (name, kind, isAbstract, isFinal, template) =
         let param = ClassParam.Create name kind isAbstract isFinal
         generateClass param template
