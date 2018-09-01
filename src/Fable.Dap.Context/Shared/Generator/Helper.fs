@@ -84,11 +84,22 @@ let generateModule param sections =
 let writeCodeFile (path : string) (lines : Lines) =
     let content = lines |> String.concat "\n"
     System.IO.File.WriteAllText (path, content)
-    printfn "Code File Generated: %s -> %d Lines" path lines.Length
+    sprintf "Code File Generated: %s -> %d Lines" path lines.Length
 
 type G = CodeGeneratorHelper with
-    static member File path lines =
+    static member File (path, lines) =
         writeCodeFile path lines
+    static member File (folder, filename, lines) =
+        let path = System.IO.Path.Combine (folder, filename)
+        G.File (path, lines)
+    static member File (folder, subFolder, filename, lines) =
+        let path = System.IO.Path.Combine (folder, subFolder, filename)
+        G.File (path, lines)
+    static member File (segments : string list, lines) =
+        let path = System.IO.Path.Combine (segments |> List.toArray)
+        G.File (path, lines)
+    static member File (segments1 : string list, segments2 : string list, lines) =
+        G.File (segments1 @ segments2, lines)
     static member Module (name, autoOpen, sections) =
         let param = ModuleParam.Create name autoOpen
         generateModule param sections

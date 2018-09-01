@@ -5,7 +5,7 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Gen/Types.fs" />
+    <Compile Include="_Gen/Types.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

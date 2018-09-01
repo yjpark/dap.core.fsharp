@@ -14,9 +14,11 @@ let publisher =
         int "year" 2000 None
     }
 
-G.Module ("Dap.Platform.Demo.Types",
-    [
-        G.LooseJsonRecord ("Publisher", publisher)
-        G.FinalClass ("PublisherProperty", publisher)
-    ]
-)|> G.File "Gen/Types.fs"
+G.File ("_Gen", "Types",
+    G.Module ("Dap.Platform.Demo.Types",
+        [
+            G.LooseJsonRecord ("Publisher", publisher)
+            G.FinalClass ("PublisherProperty", publisher)
+        ]
+    )
+)
