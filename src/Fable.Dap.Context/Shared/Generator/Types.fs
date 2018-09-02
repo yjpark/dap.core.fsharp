@@ -7,9 +7,12 @@ open Dap.Context
 type Lines = string list
 
 type IParam =
-    abstract Kind : string with get
+    abstract Category : string with get
     abstract Name : string with get
     abstract Desc : string with get
+
+type IGenerator<'param when 'param :> IParam> =
+    abstract Generate : 'param -> Lines
 
 type RecordParam = {
     Name : string
@@ -23,7 +26,7 @@ type RecordParam = {
             IsLoose = isLoose
         }
     interface IParam with
-        member __.Kind = "Record"
+        member __.Category = "Record"
         member this.Name = this.Name
         member this.Desc =
             [
@@ -32,9 +35,6 @@ type RecordParam = {
                     if this.IsLoose then
                         yield "IsLoose"
             ] |> String.concat ", "
-
-type IRecordGenerator =
-    abstract Generate : RecordParam -> Lines
 
 type ClassParam = {
     Name : string
@@ -50,7 +50,7 @@ type ClassParam = {
             IsFinal = isFinal
         }
     interface IParam with
-        member __.Kind = "Class"
+        member __.Category = "Class"
         member this.Name = this.Name
         member this.Desc =
             [
@@ -60,25 +60,21 @@ type ClassParam = {
                     yield "IsAbstract"
             ] |> String.concat ", "
 
-type IClassGenerator =
-    abstract Generate : ClassParam -> Lines
-
 type BuilderParam = {
+    Key : Key
     Name : string
     Kind : Kind
 } with
-    static member Create name kind =
+    static member Create key name kind =
         {
+            Key = key
             Name = name
             Kind = kind
         }
     interface IParam with
-        member __.Kind = "Builder"
+        member __.Category = "Builder"
         member this.Name = this.Name
         member this.Desc = ""
-
-type IBuilderGenerator =
-    abstract Generate : BuilderParam -> Lines
 
 type ModuleParam = {
     Name : string
@@ -90,7 +86,7 @@ type ModuleParam = {
             AutoOpen = autoOpen
         }
     interface IParam with
-        member __.Kind = "Module"
+        member __.Category = "Module"
         member this.Name = this.Name
         member this.Desc =
             [

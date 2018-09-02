@@ -19,7 +19,7 @@ let private getHeader (keepCommentMode : bool) (param : IParam) (template : IObj
     |> List.append (
         [
             sprintf "(*"
-            sprintf " * Generated: %s<%s>" param.Kind param.Name
+            sprintf " * Generated: %s<%s>" param.Category param.Name
         ] @ (if param.Desc <> "" then [sprintf " *     %s" param.Desc] else [])
     ) |> List.extend (if keepCommentMode then [] else [" *)"])
 
@@ -30,37 +30,35 @@ let private getFallbackLines (param : IParam) (template : IObj) =
     ]
     |> List.append ^<| getHeader true param template
 
-let getRecordGenerator (template : IObj) : IRecordGenerator option =
+let generate<'param when 'param :> IParam> (template : IObj)(getGenerator : IObj -> IGenerator<'param> option) (param : 'param) =
+    getGenerator template
+    |> Option.map(fun generator ->
+        generator.Generate param
+        |> List.append ^<| getHeader false param template
+    )|> Option.defaultWith (fun () ->
+        getFallbackLines param template
+    )
+
+let getRecordGenerator (template : IObj) =
     match template with
     | :? IComboProperty as combo ->
         new Combo.RecordGenerator (combo)
-        :> IRecordGenerator |> Some
+        :> IGenerator<RecordParam> |> Some
     | _ -> None
 
-let generateRecord param template =
-    getRecordGenerator template
-    |> Option.map(fun generator ->
-        generator.Generate param
-        |> List.append ^<| getHeader false param template
-    )|> Option.defaultWith (fun () ->
-        getFallbackLines param template
-    )
-
-let getClassGenerator (template : IObj) : IClassGenerator option =
+let getClassGenerator (template : IObj) =
     match template with
     | :? IComboProperty as combo ->
         new Combo.ClassGenerator (combo)
-        :> IClassGenerator |> Some
+        :> IGenerator<ClassParam> |> Some
     | _ -> None
 
-let generateClass param template =
-    getClassGenerator template
-    |> Option.map(fun generator ->
-        generator.Generate param
-        |> List.append ^<| getHeader false param template
-    )|> Option.defaultWith (fun () ->
-        getFallbackLines param template
-    )
+let getBuilderGenerator (template : IObj) =
+    match template with
+    | :? IComboProperty as combo ->
+        new Combo.BuilderGenerator (combo)
+        :> IGenerator<BuilderParam> |> Some
+    | _ -> None
 
 type internal ModuleGenerator (sections : Lines list) =
     member __.Generate (param : ModuleParam) : Lines =
@@ -74,11 +72,7 @@ type internal ModuleGenerator (sections : Lines list) =
             yield sprintf "module %s" param.Name
         ]
 
-let generateModule param sections =
-    let sections =
-        [
-            "open Dap.Context"
-        ] :: sections
+let generateModule sections param =
     ModuleGenerator(sections) .Generate param
 
 let writeCodeFile (path : string) (lines : Lines) =
@@ -101,13 +95,25 @@ type G = CodeGeneratorHelper with
     static member File (segments1 : string list, segments2 : string list, lines) =
         G.File (segments1 @ segments2, lines)
     static member Module (name, autoOpen, sections) =
-        let param = ModuleParam.Create name autoOpen
-        generateModule param sections
+        let sections =
+            [
+                "open Dap.Context"
+            ] :: sections
+        ModuleParam.Create name autoOpen
+        |> generateModule sections
     static member Module (name, sections) =
         G.Module (name, true, sections)
+    static member BuilderModule (name, sections) =
+        let sections =
+            [
+                "open Dap.Context"
+                "open Dap.Context.Builder"
+            ] :: sections
+        ModuleParam.Create name false
+        |> generateModule sections
     static member Record (name, isJson, isLoose, template) =
-        let param = RecordParam.Create name isJson isLoose
-        generateRecord param template
+        RecordParam.Create name isJson isLoose
+        |> generate template getRecordGenerator
     static member Record (name, template) =
         G.Record (name, false, false, template)
     static member JsonRecord (name, template) =
@@ -115,8 +121,8 @@ type G = CodeGeneratorHelper with
     static member LooseJsonRecord (name, template) =
         G.Record (name, true, true, template)
     static member Class (name, kind, isAbstract, isFinal, template) =
-        let param = ClassParam.Create name kind isAbstract isFinal
-        generateClass param template
+        ClassParam.Create name kind isAbstract isFinal
+        |> generate template getClassGenerator
     static member AbstractClass (name, kind, template) =
         G.Class (name, kind, true, false, template)
     static member AbstractClass (name, template) =
@@ -129,3 +135,9 @@ type G = CodeGeneratorHelper with
         G.Class (name, kind, false, false, template)
     static member BaseClass (name, template) =
         G.BaseClass (name, name, template)
+    static member Builder (key, name, kind, template) =
+        BuilderParam.Create key name kind
+        |> generate template getBuilderGenerator
+    static member Builder (key : string, kind, template) =
+        let name = sprintf "%sBuilder" key.AsCamelCase
+        G.Builder(key, name, kind, template)

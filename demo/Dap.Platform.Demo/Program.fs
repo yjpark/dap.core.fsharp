@@ -45,21 +45,7 @@ let doSimpleTest (env : IEnv) : unit =
     env.Handle <| DoGetAgent ("Dummy", "test", callback env onGetAgent)
 *)
 
-type PublisherBuilder () =
-    inherit ObjBuilder<PublisherProperty> ()
-    override __.Zero () =
-        PublisherProperty.Empty ()
-    [<CustomOperation("name")>]
-    member __.Name (this : PublisherProperty, v) =
-        this.Name.SetValue v |> ignore
-        this
-    [<CustomOperation("year")>]
-    member __.Year (this : PublisherProperty, v) =
-        this.Year.SetValue v |> ignore
-        this
-
-let publisher = new PublisherBuilder ()
-
+open Dap.Platform.Demo.Builder
 let doBuilderTest (env : IEnv) : unit =
     let author = combo {
         string "name" "John Doe" None
@@ -98,11 +84,18 @@ let doBuilderTest (env : IEnv) : unit =
     logWarn pub "Test" "Publisher_Context" context.Properties.Name.Value
     logWarn pub "Test" "Publisher_Context" (E.encodeJson 4 pub)
 
+let doCompileDsl (env : IEnv) =
+    Dap.Platform.Demo.Dsl.compile []
+    |> List.iter (fun res ->
+        logWarn env "Demo" "Compile_Dsl" res
+    )
+
 [<EntryPoint>]
 let main _argv =
     let logging = setupConsole LogLevelWarning
     let env = Env.live MailboxPlatform logging "Demo"
 
+    //doCompileDsl env
     doBuilderTest env
 
     (*

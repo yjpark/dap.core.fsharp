@@ -4,21 +4,7 @@
 #r @"../../src/Dap.Context/bin/Release/netstandard2.0/Dap.Context.dll"
 
 open Dap.Prelude
-open Dap.Context
-open Dap.Context.Builder
-open Dap.Context.Generator
+#load "Dsl.fs"
 
-let publisher =
-    combo {
-        string "name" "John Doe" None
-        int "year" 2000 None
-    }
-
-G.File ("_Gen", "Types",
-    G.Module ("Dap.Platform.Demo.Types",
-        [
-            G.LooseJsonRecord ("Publisher", publisher)
-            G.FinalClass ("PublisherProperty", publisher)
-        ]
-    )
-)
+Dap.Platform.Demo.Dsl.compile []
+|> List.iter ^<| printfn "%s\n"

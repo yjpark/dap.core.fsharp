@@ -7,5 +7,5 @@ open Dap.Prelude
 open Dap.Context
 
 type ClassGenerator (template : IContext) =
-    interface IClassGenerator with
+    interface IGenerator<ClassParam> with
         member __.Generate param = []

@@ -6,6 +6,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="_Gen/Types.fs" />
+    <Compile Include="_Gen/Builder.fs" />
+    <Compile Include="Dsl.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

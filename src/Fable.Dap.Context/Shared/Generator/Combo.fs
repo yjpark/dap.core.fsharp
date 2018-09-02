@@ -40,7 +40,6 @@ let private getEncoder (prop : IProperty) =
         "object"
     | _ -> "N/A"
 
-
 let private getInitValue (prop : IProperty) =
     E.encode 0 prop.Spec.InitValue
 
@@ -105,7 +104,7 @@ type RecordGenerator (template : IComboProperty) =
         let spec = prop.Spec
         let name = toCamelCase spec.Key
         sprintf "    member this.With%s %s = {this with %s = %s}" name spec.Key name spec.Key
-    interface IRecordGenerator with
+    interface IGenerator<RecordParam> with
         member __.Generate param =
             let fields =
                 template.Value
@@ -151,7 +150,7 @@ type ClassGenerator (template : IComboProperty) =
     let getFieldMember (prop : IProperty) =
         let spec = prop.Spec
         sprintf "    member __.%s = %s" (toCamelCase spec.Key) spec.Key
-    interface IClassGenerator with
+    interface IGenerator<ClassParam> with
         member __.Generate param =
             let fields =
                 template.Value
@@ -163,3 +162,39 @@ type ClassGenerator (template : IComboProperty) =
                 getClassMiddle param
                 fields |> List.map getFieldMember
             ]|> List.reduce (@)
+
+type BuilderGenerator (template : IComboProperty) =
+    let getBuilderHeader (param : BuilderParam) =
+        [
+            yield sprintf "type %s () =" param.Name
+            yield sprintf "    inherit ObjBuilder<%s> ()" param.Kind
+            yield sprintf "    override __.Zero () = %s.Empty ()" param.Kind
+        ]
+    let getBuilderFooter (param : BuilderParam) =
+        [
+            yield sprintf ""
+            yield sprintf "let %s = %s ()" param.Key param.Name
+        ]
+    let getOperation (param : BuilderParam) (prop : IProperty) =
+        let spec = prop.Spec
+        let name = toCamelCase spec.Key
+        [
+            sprintf "    [<CustomOperation(\"%s\")>]" spec.Key
+            sprintf "    member __.%s (this : %s, v) =" spec.Key.AsCamelCase param.Kind
+            sprintf "        this.%s.SetValue v |> ignore" spec.Key.AsCamelCase
+            sprintf "        this"
+        ]
+    interface IGenerator<BuilderParam> with
+        member __.Generate param =
+            let fields =
+                template.Value
+                |> Map.toList
+                |> List.map snd
+            [
+                getBuilderHeader param
+                fields
+                |> List.map ^<| getOperation param
+                |> List.concat
+                getBuilderFooter param
+            ]|> List.reduce (@)
+
