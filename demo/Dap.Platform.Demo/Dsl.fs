@@ -24,9 +24,8 @@ let compile segments =
         G.File (segments, ["_Gen"; "Builder.fs"],
             G.BuilderModule ("Dap.Platform.Demo.Builder",
                 [
-                    [
-                        "open Dap.Platform.Demo.Types"
-                    ]
+                    "open Dap.Platform.Demo.Types"
+                ], [
                     G.Builder("publisher", "PublisherProperty", publisher)
                 ]
             )

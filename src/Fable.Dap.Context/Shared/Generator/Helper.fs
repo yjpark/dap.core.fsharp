@@ -101,8 +101,10 @@ type G = CodeGeneratorHelper with
             ] :: sections
         ModuleParam.Create name autoOpen
         |> generateModule sections
-    static member Module (name, sections) =
+    static member Module (name, sections : Lines list) =
         G.Module (name, true, sections)
+    static member Module (name, section : Lines, sections : Lines list) =
+        G.Module (name, section :: sections)
     static member BuilderModule (name, sections) =
         let sections =
             [
@@ -111,6 +113,8 @@ type G = CodeGeneratorHelper with
             ] :: sections
         ModuleParam.Create name false
         |> generateModule sections
+    static member BuilderModule (name, section : Lines, sections : Lines list) =
+        G.BuilderModule (name, section :: sections)
     static member Record (name, isJson, isLoose, template) =
         RecordParam.Create name isJson isLoose
         |> generate template getRecordGenerator
