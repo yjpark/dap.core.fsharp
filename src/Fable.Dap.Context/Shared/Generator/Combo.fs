@@ -180,9 +180,9 @@ type BuilderGenerator (template : IComboProperty) =
         let name = toCamelCase spec.Key
         [
             sprintf "    [<CustomOperation(\"%s\")>]" spec.Key
-            sprintf "    member __.%s (this : %s, v) =" spec.Key.AsCamelCase param.Kind
-            sprintf "        this.%s.SetValue v |> ignore" spec.Key.AsCamelCase
-            sprintf "        this"
+            sprintf "    member __.%s (target : %s, v) =" spec.Key.AsCamelCase param.Kind
+            sprintf "        target.%s.SetValue v |> ignore" spec.Key.AsCamelCase
+            sprintf "        target"
         ]
     interface IGenerator<BuilderParam> with
         member __.Generate param =

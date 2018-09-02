@@ -7,8 +7,8 @@ open Dap.Context.Generator
 
 let publisher =
     combo {
-        string "name" "John Doe" None
-        int "year" 2000 None
+        string "name" "John Doe"
+        int "year" 2000
     }
 
 let compile segments =

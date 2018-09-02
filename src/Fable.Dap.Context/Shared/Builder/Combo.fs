@@ -11,28 +11,48 @@ type Builder () =
     override __.Zero () =
         IComboProperty.Empty noOwner
     [<CustomOperation("custom")>]
-    member __.Custom (this : IComboProperty, key, prop : ICustomProperty) =
-        this.AddAny key prop.Clone0 |> ignore
-        this
+    member __.Custom (combo : IComboProperty, key, prop : ICustomProperty) =
+        combo.AddAny key prop.Clone0 |> ignore
+        combo
     [<CustomOperation("combo")>]
-    member __.Combo (this : IComboProperty, key, prop : IComboProperty) =
-        this.AddAny key prop.Clone0 |> ignore
-        this
+    member __.Combo (combo : IComboProperty, key, prop : IComboProperty) =
+        combo.AddAny key prop.Clone0 |> ignore
+        combo
+    member __.Bool (combo : IComboProperty, key, initValue, validator) =
+        combo.AddBool key initValue validator |> ignore
+        combo
+    [<CustomOperation("bool'")>]
+    member this.Bool' (combo, key, initValue, validator) =
+        this.Bool (combo, key, initValue, Some validator)
     [<CustomOperation("bool")>]
-    member __.Bool (this : IComboProperty, key, initValue, validator) =
-        this.AddBool key initValue validator |> ignore
-        this
+    member this.Bool (combo, key, initValue) =
+        this.Bool (combo, key, initValue, None)
+    member __.Int (combo : IComboProperty, key, initValue, validator) =
+        combo.AddInt key initValue validator |> ignore
+        combo
+    [<CustomOperation("int'")>]
+    member this.Int' (combo, key, initValue, validator) =
+        this.Int (combo, key, initValue, Some validator)
     [<CustomOperation("int")>]
-    member __.Int (this : IComboProperty, key, initValue, validator) =
-        this.AddInt key initValue validator |> ignore
-        this
+    member this.Int (combo, key, initValue) =
+        this.Int (combo, key, initValue, None)
 #if !FABLE_COMPILER
+    member __.Long (combo : IComboProperty, key, initValue, validator) =
+        combo.AddLong key initValue validator |> ignore
+        combo
+    [<CustomOperation("long'")>]
+    member this.Long' (combo, key, initValue, validator) =
+        this.Long (combo, key, initValue, Some validator)
     [<CustomOperation("long")>]
-    member __.Long (this : IComboProperty, key, initValue, validator) =
-        this.AddLong key initValue validator |> ignore
-        this
+    member this.Long (combo, key, initValue) =
+        this.Long (combo, key, initValue, None)
 #endif
+    member __.String (combo: IComboProperty, key, initValue, validator) =
+        combo.AddString key initValue validator |> ignore
+        combo
+    [<CustomOperation("string'")>]
+    member this.String' (combo, key, initValue, validator) =
+        this.String (combo, key, initValue, Some validator)
     [<CustomOperation("string")>]
-    member __.String (this: IComboProperty, key, initValue, validator) =
-        this.AddString key initValue validator |> ignore
-        this
+    member this.String (combo, key, initValue) =
+        this.String (combo, key, initValue, None)

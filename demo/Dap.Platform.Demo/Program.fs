@@ -48,13 +48,13 @@ let doSimpleTest (env : IEnv) : unit =
 open Dap.Platform.Demo.Builder
 let doBuilderTest (env : IEnv) : unit =
     let author = combo {
-        string "name" "John Doe" None
-        int "age" 30 None
+        string "name" "John Doe"
+        int "age" 30
     }
     let book = context "Book" {
         properties (combo {
-            bool "published" false None
-            int "copies" 100 None
+            bool "published" false
+            int "copies" 100
             combo "author" author
             custom "publisher1" (PublisherProperty.Empty ())
             custom "publisher" (publisher {

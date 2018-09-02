@@ -16,12 +16,12 @@ type PublisherBuilder () =
     inherit ObjBuilder<PublisherProperty> ()
     override __.Zero () = PublisherProperty.Empty ()
     [<CustomOperation("name")>]
-    member __.Name (this : PublisherProperty, v) =
-        this.Name.SetValue v |> ignore
-        this
+    member __.Name (target : PublisherProperty, v) =
+        target.Name.SetValue v |> ignore
+        target
     [<CustomOperation("year")>]
-    member __.Year (this : PublisherProperty, v) =
-        this.Year.SetValue v |> ignore
-        this
+    member __.Year (target : PublisherProperty, v) =
+        target.Year.SetValue v |> ignore
+        target
 
 let publisher = PublisherBuilder ()
