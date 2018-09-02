@@ -141,3 +141,7 @@ type G = CodeGeneratorHelper with
     static member Builder (key : string, kind, template) =
         let name = sprintf "%sBuilder" key.AsCamelCase
         G.Builder(key, name, kind, template)
+    static member Builder (kind : string, template) =
+        let key = kind.AsLowerCamelCase
+        let name = sprintf "%sBuilder" kind
+        G.Builder(key, name, kind, template)
