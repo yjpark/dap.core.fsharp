@@ -93,6 +93,9 @@ type RecordGenerator (template : IComboProperty) =
                 @ [
                     sprintf "    interface IJson with"
                     sprintf "        member this.ToJson () = %s.JsonEncoder this" param.Name
+                    sprintf "    static member FieldSpec ="
+                    sprintf "        FieldSpec.Create<%s>" param.Name
+                    sprintf "            %s.JsonEncoder %s.JsonDecoder" param.Name param.Name
                 ]
             else
                 []

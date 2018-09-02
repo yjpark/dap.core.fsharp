@@ -35,6 +35,9 @@ type Publisher = {
         |> D.optional "year" D.int 2000
     interface IJson with
         member this.ToJson () = Publisher.JsonEncoder this
+    static member FieldSpec =
+        FieldSpec.Create<Publisher>
+            Publisher.JsonEncoder Publisher.JsonDecoder
     member this.WithName name = {this with Name = name}
     member this.WithYear year = {this with Year = year}
 

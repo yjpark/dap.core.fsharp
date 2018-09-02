@@ -95,7 +95,7 @@ let main _argv =
     let logging = setupConsole LogLevelWarning
     let env = Env.live MailboxPlatform logging "Demo"
 
-    //doCompileDsl env
+    doCompileDsl env
     doBuilderTest env
 
     (*
