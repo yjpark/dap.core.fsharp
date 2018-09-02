@@ -56,3 +56,7 @@ type Builder () =
     [<CustomOperation("string")>]
     member this.String (combo, key, initValue) =
         this.String (combo, key, initValue, None)
+
+type ExtendBuilder (target : IComboProperty) =
+    inherit Builder ()
+    override __.Zero () = target.Clone noOwner NoKey

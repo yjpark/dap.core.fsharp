@@ -43,6 +43,48 @@ let private getEncoder (prop : IProperty) =
 let private getInitValue (prop : IProperty) =
     E.encode 0 prop.Spec.InitValue
 
+let private getPropType (prop : IProperty) =
+    match prop with
+    | :? IVarProperty as prop ->
+        sprintf "IVarProperty<%s>" <| getValueType prop
+    | :? IComboProperty ->
+        "IComboProperty"
+    | _ -> "N/A"
+
+type InterfaceGenerator (template : IComboProperty) =
+    let getInterfaceHeader (param : InterfaceParam) =
+        [
+            yield sprintf "type %s =" param.Name
+        ]
+    let getOperation (param : InterfaceParam) (prop : IProperty) =
+        [
+            sprintf "    abstract %s : %s with get" prop.Spec.Key.AsCamelCase <| getPropType prop
+        ]
+    static member GetImplementation (face : Interface) =
+        [
+            yield sprintf "    interface %s with" face.Name
+            match face.Template with
+            | :? IComboProperty as combo ->
+                for prop in combo.ValueAsList do
+                    let name = prop.Spec.Key.AsCamelCase
+                    yield sprintf "        member this.%s = this.%s" name name
+            | _ ->
+                yield sprintf "        //Unsupported interface template: %s" <| (face.Template.GetType()) .FullName
+        ]
+    static member GetImplementations (interfaces : Interface list) =
+        interfaces
+        |> List.map InterfaceGenerator.GetImplementation
+        |> List.concat
+    interface IGenerator<InterfaceParam> with
+        member __.Generate param =
+            let fields = template.ValueAsList
+            [
+                getInterfaceHeader param
+                fields
+                |> List.map ^<| getOperation param
+                |> List.concat
+            ]|> List.concat
+
 type RecordGenerator (template : IComboProperty) =
     let getRecordHeader (param : RecordParam) =
         [
@@ -106,19 +148,17 @@ type RecordGenerator (template : IComboProperty) =
     let getFieldMember (prop : IProperty) =
         let spec = prop.Spec
         let name = toCamelCase spec.Key
-        sprintf "    member this.With%s %s = {this with %s = %s}" name spec.Key name spec.Key
+        sprintf "    member this.With%s (%s : %s) = {this with %s = %s}" name spec.Key (getValueType prop) name spec.Key
     interface IGenerator<RecordParam> with
         member __.Generate param =
-            let fields =
-                template.Value
-                |> Map.toList
-                |> List.map snd
+            let fields = template.ValueAsList
             [
                 getRecordHeader param
                 fields |> List.map getFieldAdder
                 getRecordMiddle param fields
                 fields |> List.map getFieldMember
-            ]|> List.reduce (@)
+                InterfaceGenerator.GetImplementations param.Interfaces
+            ]|> List.concat
 
 type ClassGenerator (template : IComboProperty) =
     let getClassHeader (param : ClassParam) =
@@ -152,7 +192,7 @@ type ClassGenerator (template : IComboProperty) =
         sprintf "    let %s = target.Add%s \"%s\" %s %s" spec.Key spec.Kind spec.Key initValue validator
     let getFieldMember (prop : IProperty) =
         let spec = prop.Spec
-        sprintf "    member __.%s = %s" (toCamelCase spec.Key) spec.Key
+        sprintf "    member __.%s : %s = %s" (toCamelCase spec.Key) (getPropType prop) spec.Key
     interface IGenerator<ClassParam> with
         member __.Generate param =
             let fields =
@@ -164,7 +204,8 @@ type ClassGenerator (template : IComboProperty) =
                 fields |> List.map getFieldAdder
                 getClassMiddle param
                 fields |> List.map getFieldMember
-            ]|> List.reduce (@)
+                InterfaceGenerator.GetImplementations param.Interfaces
+            ]|> List.concat
 
 type BuilderGenerator (template : IComboProperty) =
     let getBuilderHeader (param : BuilderParam) =
@@ -199,5 +240,5 @@ type BuilderGenerator (template : IComboProperty) =
                 |> List.map ^<| getOperation param
                 |> List.concat
                 getBuilderFooter param
-            ]|> List.reduce (@)
+            ]|> List.concat
 

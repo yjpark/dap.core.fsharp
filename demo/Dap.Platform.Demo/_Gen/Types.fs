@@ -4,6 +4,17 @@ module Dap.Platform.Demo.Types
 open Dap.Context
 
 (*
+ * Generated: Interface<IPerson>
+    {
+        "age": 30,
+        "name": "John Doe"
+    }
+ *)
+type IPerson =
+    abstract Age : IVarProperty<int> with get
+    abstract Name : IVarProperty<string> with get
+
+(*
  * Generated: Record<Publisher>
  *     IsJson, IsLoose
     {
@@ -38,8 +49,8 @@ type Publisher = {
     static member FieldSpec =
         FieldSpec.Create<Publisher>
             Publisher.JsonEncoder Publisher.JsonDecoder
-    member this.WithName name = {this with Name = name}
-    member this.WithYear year = {this with Year = year}
+    member this.WithName (name : string) = {this with Name = name}
+    member this.WithYear (year : int) = {this with Year = year}
 
 (*
  * Generated: Class<PublisherProperty>
@@ -63,5 +74,36 @@ type PublisherProperty (owner : IOwner, key : Key) =
     override this.Self = this
     override __.Spawn o k = PublisherProperty.Create o k
     override __.SyncTo t = target.SyncTo t.Target
-    member __.Name = name
-    member __.Year = year
+    member __.Name : IVarProperty<string> = name
+    member __.Year : IVarProperty<int> = year
+
+(*
+ * Generated: Class<Author>
+ *     IsFinal, IPerson
+    {
+        "age": 30,
+        "name": "John Doe",
+        "publisher": "No Publisher"
+    }
+ *)
+type Author (owner : IOwner, key : Key) =
+    inherit WrapProperties<Author, IComboProperty> ("Author")
+    let target = Properties.combo owner key
+    let age = target.AddInt "age" 30 None
+    let name = target.AddString "name" "John Doe" None
+    let publisher = target.AddString "publisher" "No Publisher" None
+    do (
+        target.SealCombo ()
+        base.Setup (target)
+    )
+    static member Create o k = new Author (o, k)
+    static member Empty () = Author.Create noOwner NoKey
+    override this.Self = this
+    override __.Spawn o k = Author.Create o k
+    override __.SyncTo t = target.SyncTo t.Target
+    member __.Age : IVarProperty<int> = age
+    member __.Name : IVarProperty<string> = name
+    member __.Publisher : IVarProperty<string> = publisher
+    interface IPerson with
+        member this.Age = this.Age
+        member this.Name = this.Name

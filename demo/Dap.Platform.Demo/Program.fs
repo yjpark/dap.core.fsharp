@@ -47,9 +47,12 @@ let doSimpleTest (env : IEnv) : unit =
 
 open Dap.Platform.Demo.Builder
 let doBuilderTest (env : IEnv) : unit =
-    let author = combo {
+    let person = combo {
         string "name" "John Doe"
         int "age" 30
+    }
+    let author = extend person {
+        string "publisher" "No Publisher"
     }
     let book = context "Book" {
         properties (combo {

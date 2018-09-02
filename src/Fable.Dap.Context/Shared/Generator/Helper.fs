@@ -39,6 +39,13 @@ let generate<'param when 'param :> IParam> (template : IObj)(getGenerator : IObj
         getFallbackLines param template
     )
 
+let getInterfaceGenerator (template : IObj) =
+    match template with
+    | :? IComboProperty as combo ->
+        new Combo.InterfaceGenerator (combo)
+        :> IGenerator<InterfaceParam> |> Some
+    | _ -> None
+
 let getRecordGenerator (template : IObj) =
     match template with
     | :? IComboProperty as combo ->
@@ -115,30 +122,33 @@ type G = CodeGeneratorHelper with
         |> generateModule sections
     static member BuilderModule (name, section : Lines, sections : Lines list) =
         G.BuilderModule (name, section :: sections)
-    static member Record (name, isJson, isLoose, template) =
-        RecordParam.Create name isJson isLoose
+    static member Interface (face : Interface) =
+        InterfaceParam.Create face.Name
+        |> generate face.Template getInterfaceGenerator
+    static member Record (name, isJson, isLoose, interfaces, template) =
+        RecordParam.Create name isJson isLoose interfaces
         |> generate template getRecordGenerator
-    static member Record (name, template) =
-        G.Record (name, false, false, template)
-    static member JsonRecord (name, template) =
-        G.Record (name, true, false, template)
-    static member LooseJsonRecord (name, template) =
-        G.Record (name, true, true, template)
-    static member Class (name, kind, isAbstract, isFinal, template) =
-        ClassParam.Create name kind isAbstract isFinal
+    static member Record (name, interfaces, template) =
+        G.Record (name, false, false, interfaces, template)
+    static member JsonRecord (name, interfaces, template) =
+        G.Record (name, true, false, interfaces, template)
+    static member LooseJsonRecord (name, interfaces, template) =
+        G.Record (name, true, true, interfaces, template)
+    static member Class (name, kind, isAbstract, isFinal, interfaces, template) =
+        ClassParam.Create name kind isAbstract isFinal interfaces
         |> generate template getClassGenerator
-    static member AbstractClass (name, kind, template) =
-        G.Class (name, kind, true, false, template)
-    static member AbstractClass (name, template) =
-        G.AbstractClass (name, name, template)
-    static member FinalClass (name, kind, template) =
-        G.Class (name, kind, false, true, template)
-    static member FinalClass (name, template) =
-        G.FinalClass (name, name, template)
-    static member BaseClass (name, kind, template) =
-        G.Class (name, kind, false, false, template)
-    static member BaseClass (name, template) =
-        G.BaseClass (name, name, template)
+    static member AbstractClass (name, kind, interfaces, template) =
+        G.Class (name, kind, true, false, interfaces, template)
+    static member AbstractClass (name, interfaces, template) =
+        G.AbstractClass (name, name, interfaces, template)
+    static member FinalClass (name, kind, interfaces, template) =
+        G.Class (name, kind, false, true, interfaces, template)
+    static member FinalClass (name, interfaces, template) =
+        G.FinalClass (name, name, interfaces, template)
+    static member BaseClass (name, kind, interfaces, template) =
+        G.Class (name, kind, false, false, interfaces, template)
+    static member BaseClass (name, interfaces, template) =
+        G.BaseClass (name, name, interfaces, template)
     static member Builder (key, name, kind, template) =
         BuilderParam.Create key name kind
         |> generate template getBuilderGenerator

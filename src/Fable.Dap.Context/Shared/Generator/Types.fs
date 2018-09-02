@@ -14,16 +14,40 @@ type IParam =
 type IGenerator<'param when 'param :> IParam> =
     abstract Generate : 'param -> Lines
 
+type Interface = {
+    Name : string
+    Template : IObj
+} with
+    static member Create name template =
+        {
+            Name = name
+            Template = template
+        }
+
+type InterfaceParam = {
+    Name : string
+} with
+    static member Create name =
+        {
+            Name = name
+        }
+    interface IParam with
+        member __.Category = "Interface"
+        member this.Name = this.Name
+        member this.Desc = ""
+
 type RecordParam = {
     Name : string
     IsJson : bool
     IsLoose : bool
+    Interfaces : Interface list
 } with
-    static member Create name isJson isLoose =
+    static member Create name isJson isLoose interfaces =
         {
             Name = name
             IsJson = isJson
             IsLoose = isLoose
+            Interfaces = interfaces
         }
     interface IParam with
         member __.Category = "Record"
@@ -34,6 +58,8 @@ type RecordParam = {
                     yield "IsJson"
                     if this.IsLoose then
                         yield "IsLoose"
+                for face in this.Interfaces do
+                    yield face.Name
             ] |> String.concat ", "
 
 type ClassParam = {
@@ -41,13 +67,15 @@ type ClassParam = {
     Kind : Kind
     IsAbstract : bool
     IsFinal : bool
+    Interfaces : Interface list
 } with
-    static member Create name kind isAbstract isFinal =
+    static member Create name kind isAbstract isFinal interfaces =
         {
             Name = name
             Kind = kind
             IsAbstract = isAbstract
             IsFinal = isFinal
+            Interfaces = interfaces
         }
     interface IParam with
         member __.Category = "Class"
@@ -58,6 +86,8 @@ type ClassParam = {
                     yield "IsFinal"
                 if this.IsAbstract then
                     yield "IsAbstract"
+                for face in this.Interfaces do
+                    yield face.Name
             ] |> String.concat ", "
 
 type BuilderParam = {

@@ -27,6 +27,8 @@ let custom<'p when 'p :> IProperty> (owner : IOwner) (kind : Kind) (key : Key) (
 
 type IComboProperty with
     static member Empty owner = combo owner NoKey
+    member this.ValueAsList =
+        this.Value |> Map.toList |> List.map snd
     member this.AddCombo key =
         Property.comboSpec key <| E.object []
         |> this.AddCombo
