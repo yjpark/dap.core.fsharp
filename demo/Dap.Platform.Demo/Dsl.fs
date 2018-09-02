@@ -10,13 +10,14 @@ let publisher =
         string "name" "John Doe"
         int "year" 2000
     }
+let IPublisher = Interface.CreateValue "IPublisher" publisher
 
 let person = combo {
     string "name" "John Doe"
     int "age" 30
 }
 
-let IPerson = Interface.Create "IPerson" person
+let IPerson = Interface.CreateCombo "IPerson" person
 
 let author = extend person {
     string "publisher" "No Publisher"
@@ -27,9 +28,9 @@ let compile segments =
         G.File (segments, ["_Gen"; "Types.fs"],
             G.Module ("Dap.Platform.Demo.Types",
                 [
+                    G.Interface (IPublisher)
                     G.Interface (IPerson)
-                    G.LooseJsonRecord ("Publisher", [], publisher)
-                    G.FinalClass ("PublisherProperty", [], publisher)
+                    G.LooseJsonRecord ("Publisher", [IPublisher], publisher)
                     G.FinalClass ("Author", [IPerson], author)
                 ]
             )
@@ -39,7 +40,7 @@ let compile segments =
                 [
                     "open Dap.Platform.Demo.Types"
                 ], [
-                    G.Builder("publisher", "PublisherProperty", publisher)
+                    G.Builder("author", "Author", author)
                 ]
             )
         )

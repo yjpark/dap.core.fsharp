@@ -6,22 +6,27 @@ open Dap.Context.Builder
 open Dap.Platform.Demo.Types
 
 (*
- * Generated: Builder<PublisherBuilder>
+ * Generated: Builder<AuthorBuilder>
     {
+        "age": 30,
         "name": "John Doe",
-        "year": 2000
+        "publisher": "No Publisher"
     }
  *)
-type PublisherBuilder () =
-    inherit ObjBuilder<PublisherProperty> ()
-    override __.Zero () = PublisherProperty.Empty ()
+type AuthorBuilder () =
+    inherit ObjBuilder<Author> ()
+    override __.Zero () = Author.Empty ()
+    [<CustomOperation("age")>]
+    member __.Age (target : Author, v) =
+        target.Age.SetValue v |> ignore
+        target
     [<CustomOperation("name")>]
-    member __.Name (target : PublisherProperty, v) =
+    member __.Name (target : Author, v) =
         target.Name.SetValue v |> ignore
         target
-    [<CustomOperation("year")>]
-    member __.Year (target : PublisherProperty, v) =
-        target.Year.SetValue v |> ignore
+    [<CustomOperation("publisher")>]
+    member __.Publisher (target : Author, v) =
+        target.Publisher.SetValue v |> ignore
         target
 
-let publisher = PublisherBuilder ()
+let author = AuthorBuilder ()

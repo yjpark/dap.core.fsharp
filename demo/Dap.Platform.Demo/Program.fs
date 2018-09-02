@@ -45,6 +45,7 @@ let doSimpleTest (env : IEnv) : unit =
     env.Handle <| DoGetAgent ("Dummy", "test", callback env onGetAgent)
 *)
 
+(*
 open Dap.Platform.Demo.Builder
 let doBuilderTest (env : IEnv) : unit =
     let person = combo {
@@ -86,6 +87,7 @@ let doBuilderTest (env : IEnv) : unit =
     let context = pub.ToCustom<PublisherProperty> ()
     logWarn pub "Test" "Publisher_Context" context.Properties.Name.Value
     logWarn pub "Test" "Publisher_Context" (E.encodeJson 4 pub)
+ *)
 
 let doCompileDsl (env : IEnv) =
     Dap.Platform.Demo.Dsl.compile []
@@ -99,7 +101,7 @@ let main _argv =
     let env = Env.live MailboxPlatform logging "Demo"
 
     doCompileDsl env
-    doBuilderTest env
+    //doBuilderTest env
 
     (*
     //doSimpleTest env

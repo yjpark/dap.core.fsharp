@@ -4,7 +4,18 @@ module Dap.Platform.Demo.Types
 open Dap.Context
 
 (*
- * Generated: Interface<IPerson>
+ * Generated: ValueInterface<IPublisher>
+    {
+        "name": "John Doe",
+        "year": 2000
+    }
+ *)
+type IPublisher =
+    abstract Name : string with get
+    abstract Year : int with get
+
+(*
+ * Generated: ComboInterface<IPerson>
     {
         "age": 30,
         "name": "John Doe"
@@ -16,7 +27,7 @@ type IPerson =
 
 (*
  * Generated: Record<Publisher>
- *     IsJson, IsLoose
+ *     IsJson, IsLoose, IPublisher
     {
         "name": "John Doe",
         "year": 2000
@@ -51,31 +62,9 @@ type Publisher = {
             Publisher.JsonEncoder Publisher.JsonDecoder
     member this.WithName (name : string) = {this with Name = name}
     member this.WithYear (year : int) = {this with Year = year}
-
-(*
- * Generated: Class<PublisherProperty>
- *     IsFinal
-    {
-        "name": "John Doe",
-        "year": 2000
-    }
- *)
-type PublisherProperty (owner : IOwner, key : Key) =
-    inherit WrapProperties<PublisherProperty, IComboProperty> ("PublisherProperty")
-    let target = Properties.combo owner key
-    let name = target.AddString "name" "John Doe" None
-    let year = target.AddInt "year" 2000 None
-    do (
-        target.SealCombo ()
-        base.Setup (target)
-    )
-    static member Create o k = new PublisherProperty (o, k)
-    static member Empty () = PublisherProperty.Create noOwner NoKey
-    override this.Self = this
-    override __.Spawn o k = PublisherProperty.Create o k
-    override __.SyncTo t = target.SyncTo t.Target
-    member __.Name : IVarProperty<string> = name
-    member __.Year : IVarProperty<int> = year
+    interface IPublisher with
+        member this.Name = this.Name
+        member this.Year = this.Year
 
 (*
  * Generated: Class<Author>

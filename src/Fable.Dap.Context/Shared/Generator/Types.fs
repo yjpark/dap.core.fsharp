@@ -14,27 +14,41 @@ type IParam =
 type IGenerator<'param when 'param :> IParam> =
     abstract Generate : 'param -> Lines
 
-type Interface = {
-    Name : string
-    Template : IObj
-} with
-    static member Create name template =
-        {
-            Name = name
-            Template = template
-        }
+type InterfaceType =
+    | ComboInterface
+    | ValueInterface
 
 type InterfaceParam = {
     Name : string
+    Type : InterfaceType
 } with
-    static member Create name =
+    static member Create name type' =
         {
             Name = name
+            Type = type'
         }
     interface IParam with
-        member __.Category = "Interface"
+        member this.Category =
+            match this.Type with
+            | ComboInterface -> "ComboInterface"
+            | ValueInterface -> "ValueInterface"
         member this.Name = this.Name
-        member this.Desc = ""
+        member __.Desc = ""
+
+type Interface = {
+    Param : InterfaceParam
+    Template : IObj
+} with
+    static member CreateCombo name template =
+        {
+            Param = InterfaceParam.Create name ComboInterface
+            Template = template
+        }
+    static member CreateValue name template =
+        {
+            Param = InterfaceParam.Create name ValueInterface
+            Template = template
+        }
 
 type RecordParam = {
     Name : string
@@ -59,7 +73,7 @@ type RecordParam = {
                     if this.IsLoose then
                         yield "IsLoose"
                 for face in this.Interfaces do
-                    yield face.Name
+                    yield face.Param.Name
             ] |> String.concat ", "
 
 type ClassParam = {
@@ -87,7 +101,7 @@ type ClassParam = {
                 if this.IsAbstract then
                     yield "IsAbstract"
                 for face in this.Interfaces do
-                    yield face.Name
+                    yield face.Param.Name
             ] |> String.concat ", "
 
 type BuilderParam = {

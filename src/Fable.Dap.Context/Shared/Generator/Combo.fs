@@ -58,11 +58,14 @@ type InterfaceGenerator (template : IComboProperty) =
         ]
     let getOperation (param : InterfaceParam) (prop : IProperty) =
         [
-            sprintf "    abstract %s : %s with get" prop.Spec.Key.AsCamelCase <| getPropType prop
+            match param.Type with
+            | ComboInterface -> getPropType prop
+            | ValueInterface -> getValueType prop
+            |> sprintf "    abstract %s : %s with get" prop.Spec.Key.AsCamelCase
         ]
     static member GetImplementation (face : Interface) =
         [
-            yield sprintf "    interface %s with" face.Name
+            yield sprintf "    interface %s with" face.Param.Name
             match face.Template with
             | :? IComboProperty as combo ->
                 for prop in combo.ValueAsList do

@@ -123,7 +123,7 @@ type G = CodeGeneratorHelper with
     static member BuilderModule (name, section : Lines, sections : Lines list) =
         G.BuilderModule (name, section :: sections)
     static member Interface (face : Interface) =
-        InterfaceParam.Create face.Name
+        face.Param
         |> generate face.Template getInterfaceGenerator
     static member Record (name, isJson, isLoose, interfaces, template) =
         RecordParam.Create name isJson isLoose interfaces
