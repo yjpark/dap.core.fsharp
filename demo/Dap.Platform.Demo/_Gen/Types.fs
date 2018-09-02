@@ -4,7 +4,7 @@ module Dap.Platform.Demo.Types
 open Dap.Context
 
 (*
- * Generated: ValueInterface<IPublisher>
+ * Generated: [ValueInterface] <IPublisher>
     {
         "name": "John Doe",
         "year": 2000
@@ -15,7 +15,7 @@ type IPublisher =
     abstract Year : int with get
 
 (*
- * Generated: ComboInterface<IPerson>
+ * Generated: [ComboInterface] <IPerson>
     {
         "age": 30,
         "name": "John Doe"
@@ -26,7 +26,7 @@ type IPerson =
     abstract Name : IVarProperty<string> with get
 
 (*
- * Generated: Record<Publisher>
+ * Generated: [Record] <Publisher>
  *     IsJson, IsLoose, IPublisher
     {
         "name": "John Doe",
@@ -67,7 +67,7 @@ type Publisher = {
         member this.Year = this.Year
 
 (*
- * Generated: Class<Author>
+ * Generated: [Class] <Author>
  *     IsFinal, IPerson
     {
         "age": 30,

@@ -6,7 +6,7 @@ open Dap.Context.Builder
 open Dap.Platform.Demo.Types
 
 (*
- * Generated: Builder<AuthorBuilder>
+ * Generated: [Builder] <AuthorBuilder>
     {
         "age": 30,
         "name": "John Doe",

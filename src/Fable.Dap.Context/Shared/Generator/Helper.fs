@@ -19,7 +19,7 @@ let private getHeader (keepCommentMode : bool) (param : IParam) (template : IObj
     |> List.append (
         [
             sprintf "(*"
-            sprintf " * Generated: %s<%s>" param.Category param.Name
+            sprintf " * Generated: [%s] <%s>" param.Category param.Name
         ] @ (if param.Desc <> "" then [sprintf " *     %s" param.Desc] else [])
     ) |> List.extend (if keepCommentMode then [] else [" *)"])
 
