@@ -142,15 +142,15 @@ type Bus<'msg> (owner : IOwner, luid : Luid) =
     member this.Publish : IBus<'msg> =
         { new IBus<'msg> with
             member _x.AddWatcher watcherOwner watcherLuid action =
-                match this.TryFindWatchers watcherOwner (Some luid) with
+                match this.TryFindWatchers watcherOwner (Some watcherLuid) with
                 | [] ->
-                    let watcher = Watcher<'msg>.Create watcherOwner luid action
+                    let watcher = Watcher<'msg>.Create watcherOwner watcherLuid action
                     addWatcher watcher
                 | old ->
                     owner.Log <| tplAddWatcherError "Bus:Watcher_Already_Exist" luid watcherOwner watcherLuid action old
             member _x.SetWatcher watcherOwner watcherLuid action =
-                let watcher = Watcher<'msg>.Create watcherOwner luid action
-                match this.TryFindWatchers watcherOwner (Some luid) with
+                let watcher = Watcher<'msg>.Create watcherOwner watcherLuid action
+                match this.TryFindWatchers watcherOwner (Some watcherLuid) with
                 | [] ->
                     addWatcher watcher
                     true
@@ -165,8 +165,8 @@ type Bus<'msg> (owner : IOwner, luid : Luid) =
                 | old ->
                     removeWatchers old
                     old |> List.map (fun w -> w.Luid)
-            member _x.RemoveWatcher' (watcherOwner, luid) =
-                match this.TryFindWatchers watcherOwner (Some luid) with
+            member _x.RemoveWatcher' (watcherOwner, watcherLuid) =
+                match this.TryFindWatchers watcherOwner (Some watcherLuid) with
                 | [] ->
                     []
                 | old ->
