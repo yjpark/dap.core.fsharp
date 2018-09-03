@@ -51,9 +51,8 @@ type IOwner =
     abstract Luid : Luid with get
     abstract Disposed : bool with get
 
-type Owner (logging' : ILogging, luid') =
-    let logger = logging'.GetLogger luid'
-    let luid : Luid = luid'
+type Owner internal (logging' : ILogging, luid : Luid) =
+    let logger = logging'.GetLogger luid
     let mutable disposed = false
     member __.Dispose () =
         if not disposed then
@@ -320,6 +319,8 @@ module Extensions =
         static member Create (logging, luid) =
             new Owner (logging, luid)
             :> IOwner
+        static member Create (luid) =
+            IOwner.Create (getLogging(), luid)
     type IProperty with
         member this.SyncTo0 (other : IProperty) =
             this.ToJson ()
