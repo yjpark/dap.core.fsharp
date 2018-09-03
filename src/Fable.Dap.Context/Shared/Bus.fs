@@ -10,23 +10,23 @@ open Dap.Prelude
 // - https://www.codeproject.com/Articles/29922/Weak-Events-in-C
 // - https://sachabarbs.wordpress.com/2014/04/23/f-21-events/
 
-let private tplBusError = LogEvent.Template2WithException<string, obj>(LogLevelError, "[{Section}] {Msg} -> Failed")
+let private tplBusError = LogEvent.Template3WithException<string, Luid, obj>(LogLevelError, "[{Section}] {Luid} {Msg} -> Failed")
 
-let private tplDisposedInfo = LogEvent.Template3<string, obj, obj>(LogLevelInformation, "[{Section}] {Owner} {Detail}")
+let private tplDisposedInfo = LogEvent.Template4<string, Luid, obj, obj>(LogLevelInformation, "[{Section}] {Luid} {Owner} {Detail}")
 
-let private tplWatchersInfo = LogEvent.Template3<string, obj, obj>(LogLevelInformation, "[{Section}] {Watchers} {Detail}")
+let private tplWatchersInfo = LogEvent.Template4<string, Luid, obj, obj>(LogLevelInformation, "[{Section}] {Luid} {Watchers} {Detail}")
 
-let private tplWatchersDebug = LogEvent.Template3<string, obj, obj>(LogLevelDebug, "[{Section}] {Watchers} {Detail}")
+let private tplWatchersDebug = LogEvent.Template4<string, Luid, obj, obj>(LogLevelDebug, "[{Section}] {Luid} {Watchers} {Detail}")
 
-let private tplWatcherSucceed = LogEvent.Template3<string, obj, obj>(LogLevelDebug, "[{Section}] {Watcher} {Detail}")
+let private tplWatcherSucceed = LogEvent.Template4<string, Luid, obj, obj>(LogLevelDebug, "[{Section}] {Luid} {Watcher} {Detail}")
 
-let private tplWatcherInfo = LogEvent.Template3<string, obj, obj>(LogLevelInformation, "[{Section}] {Watcher} {Detail}")
+let private tplWatcherInfo = LogEvent.Template4<string, Luid, obj, obj>(LogLevelInformation, "[{Section}] {Luid} {Watcher} {Detail}")
 
-let private tplWatcherDebug = LogEvent.Template3<string, obj, obj>(LogLevelDebug, "[{Section}] {Watcher} {Detail}")
+let private tplWatcherDebug = LogEvent.Template4<string, Luid, obj, obj>(LogLevelDebug, "[{Section}] {Luid} {Watcher} {Detail}")
 
-let private tplWatcherFailed = LogEvent.Template3WithException<string, obj, obj>(LogLevelError, "[{Section}] {Watcher} {Detail} -> Failed")
+let private tplWatcherFailed = LogEvent.Template4WithException<string, Luid, obj, obj>(LogLevelError, "[{Section}] {Luid} {Watcher} {Detail} -> Failed")
 
-let private tplAddWatcherError = LogEvent.Template5<string, IOwner, Luid, obj, obj>(LogLevelError, "[{Section}] {Owner} {Luid} {Action} -> {Old}")
+let private tplAddWatcherError = LogEvent.Template6<string, Luid, IOwner, Luid, obj, obj>(LogLevelError, "[{Section}] {Luid} {WatcherOwner} {WatcherLuid} {Action} -> {Old}")
 
 type Watcher<'msg> = {
     OwnerLuid : Luid
@@ -51,8 +51,7 @@ type Watcher<'msg> = {
         }
 
 [<StructuredFormatDisplay("{AsString}")>]
-type Bus<'msg> (owner') =
-    let owner : IOwner = owner'
+type Bus<'msg> (owner : IOwner, luid : Luid) =
     let mutable logAddRemove = true
     let mutable watchers : Watcher<'msg> list = []
     let setLogAddRemove (v : bool) =
@@ -60,9 +59,9 @@ type Bus<'msg> (owner') =
     let addWatcher watcher =
         watchers <- watchers @ [ watcher ]
         if logAddRemove then
-            owner.Log <| tplWatcherInfo "Bus:Watcher_Added" watcher ()
+            owner.Log <| tplWatcherInfo "Bus:Watcher_Added" luid watcher ()
         else
-            owner.Log <| tplWatcherDebug "Bus:Watcher_Added" watcher ()
+            owner.Log <| tplWatcherDebug "Bus:Watcher_Added" luid watcher ()
     let removeWatchers (toRemove : Watcher<'msg> list) =
         watchers <-
             watchers
@@ -73,9 +72,9 @@ type Bus<'msg> (owner') =
                 not (List.exists check toRemove)
             )
         if logAddRemove then
-            owner.Log <| tplWatcherInfo "Bus:Watchers_Removed" toRemove ()
+            owner.Log <| tplWatcherInfo "Bus:Watchers_Removed" luid toRemove ()
         else
-            owner.Log <| tplWatcherDebug "Bus:Watchers_Removed" toRemove ()
+            owner.Log <| tplWatcherDebug "Bus:Watchers_Removed" luid toRemove ()
     let tryGetTarget (watcher : Watcher<'msg>) =
     #if FABLE_COMPILER
         (true, watcher.OwnerRef)
@@ -84,9 +83,9 @@ type Bus<'msg> (owner') =
     #endif
     override __.ToString () : string =
     #if FABLE_COMPILER
-        let prefixFormat = sprintf "[Bus %s <%i>]" owner.Luid
+        let prefixFormat = sprintf "[Bus %s %s %i]" owner.Luid luid
     #else
-        let prefixFormat = sprintf "[Bus<%s> %s <%i>]" (typeof<'msg>.FullName) owner.Luid
+        let prefixFormat = sprintf "[Bus<%s> %s %s %i]" (typeof<'msg>.FullName) owner.Luid luid
     #endif
         prefixFormat watchers.Length
     member this.AsString =
@@ -94,20 +93,20 @@ type Bus<'msg> (owner') =
     member __.HasWatchers = watchers.Length > 0
     member __.Trigger (evt : 'msg) =
         if owner.Disposed then
-            owner.Log <| tplDisposedInfo "Bus:Owner_Disposed" owner evt
+            owner.Log <| tplDisposedInfo "Bus:Owner_Disposed" luid owner evt
         else
             let folder = fun garbage watcher ->
                 match tryGetTarget watcher with
                 | (true, owner) ->
                     if owner.Disposed then
-                        owner.Log <| tplDisposedInfo "Bus:Watcher_Disposed" owner evt
+                        owner.Log <| tplDisposedInfo "Bus:Watcher_Disposed" luid owner evt
                         true
                     else
                         try
                             watcher.Action evt
-                            owner.Log <| tplWatcherSucceed "Bus:Notify_Succeed" watcher evt
+                            owner.Log <| tplWatcherSucceed "Bus:Notify_Succeed" luid watcher evt
                         with e ->
-                            owner.Log <| tplWatcherFailed "Bus:Notify_Failed" watcher evt e
+                            owner.Log <| tplWatcherFailed "Bus:Notify_Failed" luid watcher evt e
                         false
                 | (false, _) ->
                     true
@@ -124,17 +123,17 @@ type Bus<'msg> (owner') =
                 | None -> ()
                 | Some garbage ->
                     removeWatchers garbage
-    member __.TryFindWatchers (owner : IOwner) (luid : string option) =
+    member __.TryFindWatchers (watcherOwner : IOwner) (watcherLuid : string option) =
         watchers
         |> List.filter (fun watcher ->
-            luid
-            |> Option.map (fun luid -> luid = watcher.Luid)
+            watcherLuid
+            |> Option.map (fun watcherLuid -> watcherLuid = watcher.Luid)
             |> Option.defaultValue true
             |> function
             | true ->
                 match tryGetTarget watcher with
-                | (true, owner') ->
-                    owner.Luid = owner'.Luid
+                | (true, watcherOwner') ->
+                    watcherOwner.Luid = watcherOwner'.Luid
                 | (false, _) ->
                     false
             | false ->
@@ -142,16 +141,16 @@ type Bus<'msg> (owner') =
         )
     member this.Publish : IBus<'msg> =
         { new IBus<'msg> with
-            member _x.AddWatcher owner luid action =
-                match this.TryFindWatchers owner (Some luid) with
+            member _x.AddWatcher watcherOwner watcherLuid action =
+                match this.TryFindWatchers watcherOwner (Some luid) with
                 | [] ->
-                    let watcher = Watcher<'msg>.Create owner luid action
+                    let watcher = Watcher<'msg>.Create watcherOwner luid action
                     addWatcher watcher
                 | old ->
-                    owner.Log <| tplAddWatcherError "Bus:Watcher_Already_Exist" owner luid action old
-            member _x.SetWatcher owner luid action =
-                let watcher = Watcher<'msg>.Create owner luid action
-                match this.TryFindWatchers owner (Some luid) with
+                    owner.Log <| tplAddWatcherError "Bus:Watcher_Already_Exist" luid watcherOwner watcherLuid action old
+            member _x.SetWatcher watcherOwner watcherLuid action =
+                let watcher = Watcher<'msg>.Create watcherOwner luid action
+                match this.TryFindWatchers watcherOwner (Some luid) with
                 | [] ->
                     addWatcher watcher
                     true
@@ -159,22 +158,22 @@ type Bus<'msg> (owner') =
                     removeWatchers old
                     addWatcher watcher
                     false
-            member _x.RemoveWatcher' owner =
-                match this.TryFindWatchers owner None with
+            member _x.RemoveWatcher' watcherOwner =
+                match this.TryFindWatchers watcherOwner None with
                 | [] ->
                     []
                 | old ->
                     removeWatchers old
                     old |> List.map (fun w -> w.Luid)
-            member _x.RemoveWatcher' (owner, luid) =
-                match this.TryFindWatchers owner (Some luid) with
+            member _x.RemoveWatcher' (watcherOwner, luid) =
+                match this.TryFindWatchers watcherOwner (Some luid) with
                 | [] ->
                     []
                 | old ->
                     removeWatchers old
                     old |> List.map (fun w -> w.Luid)
-            member x.RemoveWatcher owner =
-                x.RemoveWatcher' owner |> ignore
-            member x.RemoveWatcher (owner, luid) =
-                x.RemoveWatcher' (owner, luid) |> ignore
+            member x.RemoveWatcher watcherOwner =
+                x.RemoveWatcher' watcherOwner |> ignore
+            member x.RemoveWatcher (watcherOwner, watcherLuid) =
+                x.RemoveWatcher' (watcherOwner, watcherLuid) |> ignore
         }

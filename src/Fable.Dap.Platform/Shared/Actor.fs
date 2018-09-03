@@ -112,7 +112,7 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
         (agent', spec', model') =
     let agent : IAgent<'msg> = agent'
     let spec : IActorSpec<'args, 'msg, 'req, 'evt> = spec'
-    let bus = new Bus<'evt> (agent :> IOwner)
+    let bus = new Bus<'evt> (agent :> IOwner, "OnEvent")
     let mutable state : 'model = model'
     let mutable version : Version = Version.Init
     let tryFireEvent (msg : 'msg) =

@@ -95,7 +95,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
     let mutable value : 'value = value'
     let mutable ver = 0
     let mutable sealed' : bool = false
-    let onChanged : Bus<PropertyChanged> = new Bus<PropertyChanged> (owner)
+    let onChanged : Bus<PropertyChanged> = new Bus<PropertyChanged> (owner, sprintf "%s:OnChanged" spec.Luid)
     // abstract members
     abstract member ToJson : 'value -> Json
     abstract member WithJson : 'value -> Json -> ('value * bool) option

@@ -51,7 +51,7 @@ and IVarPropertySpec<'v> with
 
 and internal VarProperty<'v> private (owner, spec) =
     inherit Property<IVarPropertySpec<'v>, 'v> (owner, spec, spec.InitValue)
-    let onValueChanged : Bus<VarPropertyChanged<'v>> = new Bus<VarPropertyChanged<'v>> (owner)
+    let onValueChanged : Bus<VarPropertyChanged<'v>> = new Bus<VarPropertyChanged<'v>> (owner, sprintf "%s:OnValueChanged" spec.Luid)
     static member Create o s = new VarProperty<'v> (o, s)
     override __.Kind = PropertyKind.VarProperty
     override this.AsVar = this :> IVarProperty

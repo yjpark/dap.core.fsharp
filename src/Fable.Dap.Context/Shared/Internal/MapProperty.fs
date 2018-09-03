@@ -15,10 +15,10 @@ open Dap.Context.Internal.Property
 type internal MapProperty<'p when 'p :> IProperty> private (owner, spec) =
     inherit Property<IPropertySpec<'p>, Map<Key, 'p>> (owner, spec, Map.empty)
     let mutable mapSealed : bool = false
-    let onAdded = new Bus<'p> (owner)
-    let onRemoved = new Bus<'p> (owner)
-    let onAdded0 = new Bus<IProperty> (owner)
-    let onRemoved0 = new Bus<IProperty> (owner)
+    let onAdded = new Bus<'p> (owner, sprintf "%s:OnAdded" spec.Luid)
+    let onRemoved = new Bus<'p> (owner, sprintf "%s:OnRemoved" spec.Luid)
+    let onAdded0 = new Bus<IProperty> (owner, sprintf "%s:OnAdded0" spec.Luid)
+    let onRemoved0 = new Bus<IProperty> (owner, sprintf "%s:OnRemoved0" spec.Luid)
     static member Create o (s : IPropertySpec<'p>) = new MapProperty<'p>(o, s)
     override __.Kind = PropertyKind.MapProperty
     override this.AsMap = this :> IMapProperty

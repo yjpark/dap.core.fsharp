@@ -87,7 +87,7 @@ let noReaction : React<'runner, 'model, 'msg, 'subModel, 'subMsg> =
         (model, [])
 
 let noEvent =
-    let bus = new Bus<NoEvt>(noOwner)
+    let bus = new Bus<NoEvt>(noOwner, "NoEvt")
     bus.Publish
 
 let noCastEvt = fun _ -> None

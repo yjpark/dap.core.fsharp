@@ -14,7 +14,7 @@ open Dap.Context.Internal
 type internal ComboProperty (owner, spec) =
     inherit Property<IPropertySpec, Map<Key, IProperty>> (owner, spec, Map.empty)
     let mutable comboSealed : bool = false
-    let onAdded = new Bus<IProperty> (owner)
+    let onAdded = new Bus<IProperty> (owner, sprintf "%s:OnAdded" spec.Luid)
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif

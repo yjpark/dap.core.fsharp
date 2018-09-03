@@ -17,11 +17,11 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
     inherit Property<IPropertySpec<'p>, 'p list> (owner, spec, [])
     let mutable listSealed : bool = false
     let mutable valueAndIndexes : Map<Luid, 'p * Index> = Map.empty
-    let onMoved = new Bus<PropertyMoved> (owner)
-    let onAdded = new Bus<'p * Index> (owner)
-    let onRemoved = new Bus<'p * Index> (owner)
-    let onAdded0 = new Bus<IProperty * Index> (owner)
-    let onRemoved0 = new Bus<IProperty * Index> (owner)
+    let onMoved = new Bus<PropertyMoved> (owner, sprintf "%s:OnMoved" spec.Luid)
+    let onAdded = new Bus<'p * Index> (owner, sprintf "%s:OnAdded" spec.Luid)
+    let onRemoved = new Bus<'p * Index> (owner, sprintf "%s:OnRemoved" spec.Luid)
+    let onAdded0 = new Bus<IProperty * Index> (owner, sprintf "%s:OnAdded0" spec.Luid)
+    let onRemoved0 = new Bus<IProperty * Index> (owner, sprintf "%s:OnRemoved0" spec.Luid)
     static member Create o (s : IPropertySpec<'p>) = new ListProperty<'p>(o, s)
     override __.Kind = PropertyKind.ListProperty
     override this.AsList = this :> IListProperty

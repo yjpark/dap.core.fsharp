@@ -144,8 +144,8 @@ let private init : ActorInit<Args<'extra, 'sub, 'req, 'res, 'evt>, Model<'extra,
         ({
             Client = None
             SendQueue = []
-            StatusEvent = new Bus<LinkStatus> (runner :> IOwner)
-            ResponseEvent = new Bus<'res> (runner :> IOwner)
+            StatusEvent = new Bus<LinkStatus> (runner :> IOwner, "OnStatus")
+            ResponseEvent = new Bus<'res> (runner :> IOwner, "OnResponse")
             Status = LinkStatus.NoLink
             Extra = args.Sub.NewExtra ()
         }, cmdOfMsg (InternalEvt DoInit))
