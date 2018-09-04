@@ -1,14 +1,12 @@
 [<AutoOpen>]
 [<RequireQualifiedAccess>]
-module Dap.Remote.Des
+module Dap.Context.Des
 
 open System
 open System.Text
 open System.Security.Cryptography
 
 open Dap.Prelude
-open Dap.Platform
-open Dap.Remote
 
 //https://www.c-sharpcorner.com/UploadFile/dhananjaycoder/triple-des-encryption-and-decryption-using-user-provided-key/
 let private createDes (key : string) =
@@ -25,7 +23,7 @@ let encrypt (key : string) (content : string) =
     let output = ct.TransformFinalBlock (input, 0, input.Length)
     Convert.ToBase64String (output)
 
-let decrypt (runner : IRunner) (key : string) (content : string) =
+let decrypt (runner : ILogger) (key : string) (content : string) =
     try
         let des = createDes key
         let ct = des.CreateDecryptor ()
@@ -33,5 +31,5 @@ let decrypt (runner : IRunner) (key : string) (content : string) =
         let output = ct.TransformFinalBlock (input, 0, input.Length)
         Encoding.UTF8.GetString (output, 0, output.Length)
     with e ->
-        logException runner "Crypto" "Decrypt_Failed" (key, content) e
+        logException runner "Des" "Decrypt_Failed" (key, content) e
         content

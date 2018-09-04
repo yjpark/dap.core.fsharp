@@ -29,7 +29,6 @@
     <Compile Include="WebSocketProxy/Tasks.fs" />
     <Compile Include="WebSocketProxy/Logic.fs" />
     <Compile Include="WebSocketProxy/Proxy.fs" />
-    <Compile Include="Des.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.WebSocket\Dap.WebSocket.fsproj" />
