@@ -32,11 +32,9 @@ type IComboProperty with
     member this.AddCombo key =
         Property.comboSpec key <| E.object []
         |> this.AddCombo
-
     member this.AddVar<'v> (kind, encoder, decoder, key, initValue, validator) =
         Property.varSpec<'v> kind encoder decoder key initValue validator
         |> this.AddVar<'v>
-
     member this.AddVar<'v> (kind, encoder, decoder, key, initValue) =
         this.AddVar<'v> (kind, encoder, decoder, key, initValue, None)
     member this.AddBool (key, initValue, validator) =
