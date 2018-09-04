@@ -29,7 +29,7 @@ let decrypt (runner : ILogger) (key : string) (content : string) =
         let ct = des.CreateDecryptor ()
         let input = Convert.FromBase64String (content)
         let output = ct.TransformFinalBlock (input, 0, input.Length)
-        Encoding.UTF8.GetString (output, 0, output.Length)
+        Some <| Encoding.UTF8.GetString (output, 0, output.Length)
     with e ->
         logException runner "Des" "Decrypt_Failed" (key, content) e
-        content
+        None
