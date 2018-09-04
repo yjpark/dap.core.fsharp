@@ -19,7 +19,7 @@ type Builder () =
         combo.AddAny key prop.Clone0 |> ignore
         combo
     member __.Bool (combo : IComboProperty, key, initValue, validator) =
-        combo.AddBool key initValue validator |> ignore
+        combo.AddBool (key, initValue, validator) |> ignore
         combo
     [<CustomOperation("bool'")>]
     member this.Bool' (combo, key, initValue, validator) =
@@ -28,7 +28,7 @@ type Builder () =
     member this.Bool (combo, key, initValue) =
         this.Bool (combo, key, initValue, None)
     member __.Int (combo : IComboProperty, key, initValue, validator) =
-        combo.AddInt key initValue validator |> ignore
+        combo.AddInt (key, initValue, validator) |> ignore
         combo
     [<CustomOperation("int'")>]
     member this.Int' (combo, key, initValue, validator) =
@@ -38,7 +38,7 @@ type Builder () =
         this.Int (combo, key, initValue, None)
 #if !FABLE_COMPILER
     member __.Long (combo : IComboProperty, key, initValue, validator) =
-        combo.AddLong key initValue validator |> ignore
+        combo.AddLong (key, initValue, validator) |> ignore
         combo
     [<CustomOperation("long'")>]
     member this.Long' (combo, key, initValue, validator) =
@@ -48,7 +48,7 @@ type Builder () =
         this.Long (combo, key, initValue, None)
 #endif
     member __.String (combo: IComboProperty, key, initValue, validator) =
-        combo.AddString key initValue validator |> ignore
+        combo.AddString (key, initValue, validator) |> ignore
         combo
     [<CustomOperation("string'")>]
     member this.String' (combo, key, initValue, validator) =

@@ -192,7 +192,7 @@ type ClassGenerator (template : IComboProperty) =
             prop.Spec.ValidatorKind
             |> Option.map (fun k -> sprintf "(Some %s)" k)
             |> Option.defaultValue "None"
-        sprintf "    let %s = target.Add%s \"%s\" %s %s" spec.Key spec.Kind spec.Key initValue validator
+        sprintf "    let %s = target.Add%s (\"%s\", %s, %s)" spec.Key spec.Kind spec.Key initValue validator
     let getFieldMember (prop : IProperty) =
         let spec = prop.Spec
         sprintf "    member __.%s : %s = %s" (toCamelCase spec.Key) (getPropType prop) spec.Key

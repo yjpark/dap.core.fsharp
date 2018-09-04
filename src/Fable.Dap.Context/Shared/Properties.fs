@@ -32,17 +32,32 @@ type IComboProperty with
     member this.AddCombo key =
         Property.comboSpec key <| E.object []
         |> this.AddCombo
-    member this.AddBool key initValue validator =
+
+    member this.AddVar<'v> (kind, encoder, decoder, key, initValue, validator) =
+        Property.varSpec<'v> kind encoder decoder key initValue validator
+        |> this.AddVar<'v>
+
+    member this.AddVar<'v> (kind, encoder, decoder, key, initValue) =
+        this.AddVar<'v> (kind, encoder, decoder, key, initValue, None)
+    member this.AddBool (key, initValue, validator) =
         Property.boolSpec key initValue validator
         |> this.AddVar<bool>
-    member this.AddInt key initValue validator =
+    member this.AddBool (key, initValue) =
+        this.AddBool (key, initValue, None)
+    member this.AddInt (key, initValue, validator) =
         Property.intSpec key initValue validator
         |> this.AddVar<int>
+    member this.AddInt (key, initValue) =
+        this.AddInt (key, initValue, None)
 #if !FABLE_COMPILER
-    member this.AddLong key initValue validator =
+    member this.AddLong (key, initValue, validator) =
         Property.longSpec key initValue validator
         |> this.AddVar<int64>
+    member this.AddLong (key, initValue) =
+        this.AddLong (key, initValue, None)
 #endif
-    member this.AddString key initValue validator =
+    member this.AddString (key, initValue, validator) =
         Property.stringSpec key initValue validator
         |> this.AddVar<string>
+    member this.AddString (key, initValue) =
+        this.AddString (key, initValue, None)

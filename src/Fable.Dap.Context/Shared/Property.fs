@@ -17,6 +17,9 @@ let comboSpec key initValue =
 let customSpec<'p when 'p :> IProperty> kind key initValue spawner =
     PropertySpec<'p>.Create2 kind key initValue spawner
 
+let varSpec<'v> kind encoder decoder key initValue validator =
+    VarPropertySpec<'v>.Create kind key encoder decoder initValue validator
+
 let boolSpec key initValue validator =
     VarPropertySpec<bool>.Create PK_Bool key E.bool D.bool initValue validator
 

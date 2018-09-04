@@ -78,9 +78,9 @@ type Publisher = {
 type Author (owner : IOwner, key : Key) =
     inherit WrapProperties<Author, IComboProperty> ("Author")
     let target = Properties.combo owner key
-    let age = target.AddInt "age" 30 None
-    let name = target.AddString "name" "John Doe" None
-    let publisher = target.AddString "publisher" "No Publisher" None
+    let age = target.AddInt ("age", 30, None)
+    let name = target.AddString ("name", "John Doe", None)
+    let publisher = target.AddString ("publisher", "No Publisher", None)
     do (
         target.SealCombo ()
         base.Setup (target)
