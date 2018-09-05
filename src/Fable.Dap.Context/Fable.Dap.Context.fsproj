@@ -16,6 +16,8 @@
     <Compile Include="Shared/Const.fs" />
     <Compile Include="Shared/Types.fs" />
     <Compile Include="Shared/Unsafe/Types.fs" />
+    <Compile Include="Shared/Reply.fs" />
+    <Compile Include="Shared/Callback.fs" />
     <Compile Include="Shared/Bus.fs" />
     <Compile Include="Shared/Internal/Spec.fs" />
     <Compile Include="Shared/Internal/Channel.fs" />

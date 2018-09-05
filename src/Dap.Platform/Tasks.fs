@@ -141,6 +141,11 @@ type internal TaskManager () =
             List.foldBack cancelTask tasks 0
 
 type System.Threading.Tasks.Task with
+    static member Delay (delay : Duration) =
+        if delay.TotalMilliseconds > 0.0 then
+            Task.Delay (int delay.TotalMilliseconds)
+        else
+            Task.CompletedTask
     static member Delay (delay : float<second>) =
         if delay > 0.0<second> then
             Task.Delay (int (System.Math.Round (1000.0 * float delay)))
