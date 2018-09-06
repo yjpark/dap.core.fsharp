@@ -28,14 +28,9 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
     member this.AsListProperty = this :> IListProperty<'p>
     member this.AsProperties = this :> IProperties
     override __.ToJson (props : 'p list) =
-        E.nil
-        (* todo
         props
-        |> Map.toList
-        |> List.map (fun (k, prop) ->
-            k, prop.ToJson ()
-        )|> E.object
-        *)
+        |> List.map (fun p -> p.ToJson ())
+        |> E.list
     override __.WithJson value json =
         let mutable ok = true
         (* TODO
@@ -162,10 +157,13 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
                     failWith "Clear_Failed" <| sprintf "[%s] <%s> [%d]" spec.Luid typeof<'p>.FullName this.Value.Length
         member __.OnAdded = onAdded.Publish
         member __.OnRemoved = onRemoved.Publish
+        member this.SyncTo other =
+            //TODO
+            ()
         member this.Clone o k =
             spec.ForClone k
             |> ListProperty<'p>.Create o
-            |> this.SetupClone None
+            |> this.SetupClone (Some this.AsListProperty.SyncTo)
             |> fun clone ->
                 if listSealed then clone.AsListProperty.SealList ()
                 clone

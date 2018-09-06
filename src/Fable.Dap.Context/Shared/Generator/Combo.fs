@@ -8,7 +8,7 @@ open Dap.Context
 open Dap.Context.Internal
 open Dap.Context.Generator.Util
 
-let private getValueType (prop : IProperty) =
+let internal getValueType (prop : IProperty) =
     match prop with
     | :? IVarProperty as prop ->
         match prop.Spec.Kind with
@@ -22,28 +22,62 @@ let private getValueType (prop : IProperty) =
             prop.ValueType.FullName
     | :? IComboProperty ->
         "IComboProperty"
-    | _ -> "N/A"
+    | _ ->
+        prop.Spec.Kind
 
-let private getEncoder (prop : IProperty) =
+let internal getEncoder (prop : IProperty) =
     match prop with
     | :? IVarProperty as prop ->
         match prop.Spec.Kind with
-        | PK_Bool -> "bool"
-        | PK_Int -> "int"
-        | PK_String -> "string"
-        | PK_Float -> "float"
-        | PK_Decimal -> "decimal"
-        | PK_Long -> "long"
+        | PK_Bool -> "E.bool"
+        | PK_Int -> "E.int"
+        | PK_String -> "E.string"
+        | PK_Float -> "E.float"
+        | PK_Decimal -> "E.decimal"
+        | PK_Long -> "E.long"
         | _ ->
             prop.ValueType.FullName
     | :? IComboProperty ->
-        "object"
-    | _ -> "N/A"
+        "E.object"
+    | _ ->
+        sprintf "%s.JsonEncoder" prop.Spec.Kind
 
-let private getInitValue (prop : IProperty) =
+let internal getDecoder (prop : IProperty) =
+    match prop with
+    | :? IVarProperty as prop ->
+        match prop.Spec.Kind with
+        | PK_Bool -> "D.bool"
+        | PK_Int -> "D.int"
+        | PK_String -> "D.string"
+        | PK_Float -> "D.float"
+        | PK_Decimal -> "D.decimal"
+        | PK_Long -> "D.long"
+        | _ ->
+            prop.ValueType.FullName
+    | :? IComboProperty ->
+        "D.object"
+    | _ ->
+        sprintf "%s.JsonDecoder" prop.Spec.Kind
+
+let internal getSpec (prop : IProperty) =
+    match prop with
+    | :? IVarProperty as prop ->
+        match prop.Spec.Kind with
+        | PK_Bool -> "S.bool"
+        | PK_Int -> "S.int"
+        | PK_String -> "S.string"
+        | PK_Float -> "S.float"
+        | PK_Decimal -> "S.decimal"
+        | PK_Long -> "S.long"
+        | _ ->
+            prop.ValueType.FullName
+    | _ ->
+        sprintf "%s.JsonSpec" prop.Spec.Kind
+
+let internal getInitValue (prop : IProperty) =
     E.encode 0 prop.Spec.InitValue
 
-let private getPropType (prop : IProperty) =
+let internal getPropType (prop : IProperty) =
     match prop with
     | :? IVarProperty as prop ->
         sprintf "IVarProperty<%s>" <| getValueType prop
@@ -99,7 +133,7 @@ type RecordGenerator (template : IComboProperty) =
             yield sprintf "        fun (this : %s) ->" param.Name
             yield sprintf "            E.object ["
             for prop in fields do
-                yield sprintf "                \"%s\", E.%s this.%s" prop.Spec.Key (getEncoder prop) prop.Spec.Key.AsCamelCase
+                yield sprintf "                \"%s\", %s this.%s" prop.Spec.Key (getEncoder prop) prop.Spec.Key.AsCamelCase
             yield sprintf "            ]"
         ]
     let getJsonDecoder (param : RecordParam) (fields : IProperty list) =
@@ -108,9 +142,9 @@ type RecordGenerator (template : IComboProperty) =
             yield sprintf "        D.decode %s.Create" param.Name
             for prop in fields do
                 if param.IsLoose then
-                    yield sprintf "        |> D.optional \"%s\" D.%s %s" prop.Spec.Key (getEncoder prop) (getInitValue prop)
+                    yield sprintf "        |> D.optional \"%s\" %s %s" prop.Spec.Key (getDecoder prop) (getInitValue prop)
                 else
-                    yield sprintf "        |> D.required \"%s\" D.%s" prop.Spec.Key (getEncoder prop)
+                    yield sprintf "        |> D.required \"%s\" %s" prop.Spec.Key (getDecoder prop)
         ]
     let getRecordMiddle (param : RecordParam) (fields : IProperty list) =
         let keys =
@@ -133,14 +167,15 @@ type RecordGenerator (template : IComboProperty) =
             yield sprintf "        %s.Create %s" param.Name initValues
         ] @ (
             if param.IsJson then
-                getJsonEncoder param fields
+                [
+                    sprintf "    static member JsonSpec ="
+                    sprintf "        FieldSpec.Create<%s>" param.Name
+                    sprintf "            %s.JsonEncoder %s.JsonDecoder" param.Name param.Name
+                ] @ getJsonEncoder param fields
                 @ getJsonDecoder param fields
                 @ [
                     sprintf "    interface IJson with"
                     sprintf "        member this.ToJson () = %s.JsonEncoder this" param.Name
-                    sprintf "    static member FieldSpec ="
-                    sprintf "        FieldSpec.Create<%s>" param.Name
-                    sprintf "            %s.JsonEncoder %s.JsonDecoder" param.Name param.Name
                 ]
             else
                 []

@@ -190,6 +190,7 @@ and IVarProperty<'v> =
     abstract Spec : IVarPropertySpec<'v> with get
     abstract SetValue : 'v -> bool
     abstract OnValueChanged : IBus<VarPropertyChanged<'v>> with get
+    abstract SyncTo : IVarProperty<'v> -> unit
     abstract Clone : IOwner -> Key -> IVarProperty<'v>
 
 and IProperties =
@@ -217,6 +218,7 @@ and IMapProperty<'p when 'p :> IProperty> =
     abstract Clear : unit -> Map<Luid, 'p>
     abstract OnAdded : IBus<'p> with get
     abstract OnRemoved : IBus<'p> with get
+    abstract SyncTo : IMapProperty<'p> -> unit
     abstract Clone : IOwner -> Key -> IMapProperty<'p>
 
 and PropertyMoved = {
@@ -254,6 +256,7 @@ and IListProperty<'p when 'p :> IProperty> =
     abstract Clear : unit -> 'p list
     abstract OnAdded : IBus<'p * Index> with get
     abstract OnRemoved : IBus<'p * Index> with get
+    abstract SyncTo : IListProperty<'p> -> unit
     abstract Clone : IOwner -> Key -> IListProperty<'p>
 
 and IComboProperty =
@@ -326,3 +329,20 @@ module Extensions =
             this.ToJson ()
             |> other.WithJson
             |> ignore
+        member this.SyncWith0 (other : IProperty) =
+            other.SyncTo0 this
+    type IComboProperty with
+        member this.SyncWith (other : IComboProperty) =
+            other.SyncTo this
+    type IVarProperty<'v> with
+        member this.SyncWith (other : IVarProperty<'v>) =
+            other.SyncTo this
+    type IMapProperty<'p when 'p :> IProperty> with
+        member this.SyncWith (other : IMapProperty<'p>) =
+            other.SyncTo this
+    type IListProperty<'p when 'p :> IProperty> with
+        member this.SyncWith (other : IListProperty<'p>) =
+            other.SyncTo this
+    type ICustomProperty<'p when 'p :> ICustomProperty> with
+        member this.SyncWith (other : ICustomProperty<'p>) =
+            other.SyncTo this.Self

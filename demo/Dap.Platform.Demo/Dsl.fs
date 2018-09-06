@@ -5,23 +5,35 @@ open Dap.Context
 open Dap.Context.Builder
 open Dap.Context.Generator
 
-let publisher =
+let Publisher =
     combo {
-        string "name" "John Doe"
-        int "year" 2000
+        string "name"
+        int "year"
     }
-let IPublisher = Interface.CreateValue "IPublisher" publisher
+let IPublisher = Interface.CreateValue "IPublisher" Publisher
 
-let person = combo {
-    string "name" "John Doe"
-    int "age" 30
+let Person = combo {
+    string "name"
+    int "age"
 }
 
-let IPerson = Interface.CreateCombo "IPerson" person
+let IPerson = Interface.CreateCombo "IPerson" Person
 
-let author = extend person {
-    string "publisher" "No Publisher"
+let Author = extend Person {
+    string "publisher"
 }
+
+let Status =
+    union {
+        kind "Unknown"
+        case "Written" (fields {
+            string "author"
+        })
+        case "Published" (fields {
+            string "publisher"
+            int "year"
+        })
+    }
 
 let compile segments =
     [
@@ -30,8 +42,9 @@ let compile segments =
                 [
                     G.Interface (IPublisher)
                     G.Interface (IPerson)
-                    G.LooseJsonRecord ("Publisher", [IPublisher], publisher)
-                    G.FinalClass ("Author", [IPerson], author)
+                    G.LooseJsonRecord ("Publisher", [IPublisher], Publisher)
+                    G.FinalClass ("Author", [IPerson], Author)
+                    G.JsonUnion ("Status", Status)
                 ]
             )
         )
@@ -40,7 +53,7 @@ let compile segments =
                 [
                     "open Dap.Platform.Demo.Types"
                 ], [
-                    G.Builder("author", "Author", author)
+                    G.Builder("author", "Author", Author)
                 ]
             )
         )

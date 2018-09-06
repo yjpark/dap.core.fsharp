@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Context.ED
+module Dap.Context.EDS
 
 open System
 open Microsoft.FSharp.Reflection
@@ -178,3 +178,11 @@ type D with
     static member optionalDecoder pathDecoder valDecoder fallback = TD.optionalDecoder pathDecoder valDecoder fallback
     static member optional key valDecoder fallback decoder = TD.optional key valDecoder fallback decoder
     static member optionalAt path valDecoder fallback decoder = TD.optionalAt path valDecoder fallback decoder
+
+type S = JsonSpecHelper with
+    static member bool = FieldSpec.Create<bool> E.bool D.bool
+    static member int = FieldSpec.Create<int> E.int D.int
+#if !FABLE_COMPILER
+    static member long = FieldSpec.Create<int64> E.long D.long
+#endif
+    static member string = FieldSpec.Create<string> E.string D.string

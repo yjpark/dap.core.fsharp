@@ -4,6 +4,7 @@ module Dap.Context.Generator.Helper
 open Dap.Prelude
 open Dap.Context
 open Dap.Context.Generator.Util
+module UnionBuilder = Dap.Context.Builder.Union
 
 let private getHeader (keepCommentMode : bool) (param : IParam) (template : IObj) =
     match template with
@@ -52,6 +53,14 @@ let getRecordGenerator (template : IObj) =
         new Combo.RecordGenerator (combo)
         :> IGenerator<RecordParam> |> Some
     | _ -> None
+
+let getUnionGenerator (template : IObj) =
+    try
+        let cases = template :?> IListProperty<UnionBuilder.CaseProperty>
+        new Union.UnionGenerator (cases)
+        :> IGenerator<UnionParam> |> Some
+    with e ->
+        None
 
 let getClassGenerator (template : IObj) =
     match template with
@@ -134,6 +143,13 @@ type G = CodeGeneratorHelper with
         G.Record (name, true, false, interfaces, template)
     static member LooseJsonRecord (name, interfaces, template) =
         G.Record (name, true, true, interfaces, template)
+    static member Union (name, isJson, template) =
+        UnionParam.Create name isJson
+        |> generate template getUnionGenerator
+    static member Union (name, template) =
+        G.Union (name, false, template)
+    static member JsonUnion (name, template) =
+        G.Union (name, true, template)
     static member Class (name, kind, isAbstract, isFinal, interfaces, template) =
         ClassParam.Create name kind isAbstract isFinal interfaces
         |> generate template getClassGenerator

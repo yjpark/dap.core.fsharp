@@ -11,7 +11,7 @@
   <ItemGroup>
     <Compile Include="../Fable.Dap.Context/Shared/Json.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/UnionSpec.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/ED.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/EDS.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Const.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Types.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Unsafe/Types.fs" />
@@ -35,12 +35,15 @@
     <Compile Include="../Fable.Dap.Context/Shared/Unsafe/Context.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Builder/Types.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Builder/Combo.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Builder/List.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Builder/Context.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Builder/Union.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Builder/Dsl.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Generator/Types.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Generator/Util.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Generator/Combo.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Generator/Context.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Generator/Union.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Generator/Helper.fs" />
     <Compile Include="Des.fs" />
   </ItemGroup>

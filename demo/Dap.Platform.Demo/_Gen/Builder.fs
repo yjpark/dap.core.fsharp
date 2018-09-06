@@ -8,9 +8,9 @@ open Dap.Platform.Demo.Types
 (*
  * Generated: [Builder] <AuthorBuilder>
     {
-        "age": 30,
-        "name": "John Doe",
-        "publisher": "No Publisher"
+        "age": 0,
+        "name": "",
+        "publisher": ""
     }
  *)
 type AuthorBuilder () =

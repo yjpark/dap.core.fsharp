@@ -130,10 +130,13 @@ type internal MapProperty<'p when 'p :> IProperty> private (owner, spec) =
                     failWith "Clear_Failed" <| sprintf "[%s] <%s> [%d]" spec.Luid typeof<'p>.FullName oldValue.Count
         member __.OnAdded = onAdded.Publish
         member __.OnRemoved = onRemoved.Publish
+        member this.SyncTo other =
+            //TODO
+            ()
         member this.Clone o k =
             spec.ForClone k
             |> MapProperty<'p>.Create o
-            |> this.SetupClone None
+            |> this.SetupClone (Some this.AsMapProperty.SyncTo)
             |> fun clone ->
                 if mapSealed then clone.AsMapProperty.SealMap ()
                 clone

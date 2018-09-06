@@ -52,6 +52,7 @@
 		"cSpell.words": [
 			"Guid",
 			"Luid",
+			"concat",
 			"printfn",
 			"sprintf",
 			"typeof"

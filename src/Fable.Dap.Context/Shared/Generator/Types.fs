@@ -76,6 +76,24 @@ type RecordParam = {
                     yield face.Param.Name
             ] |> String.concat ", "
 
+type UnionParam = {
+    Name : string
+    IsJson : bool
+} with
+    static member Create name isJson =
+        {
+            Name = name
+            IsJson = isJson
+        }
+    interface IParam with
+        member __.Category = "Union"
+        member this.Name = this.Name
+        member this.Desc =
+            [
+                if this.IsJson then
+                    yield "IsJson"
+            ] |> String.concat ", "
+
 type ClassParam = {
     Name : string
     Kind : Kind

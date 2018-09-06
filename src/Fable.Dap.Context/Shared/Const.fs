@@ -4,12 +4,6 @@ module Dap.Context.Const
 //PK = PropertyKind
 
 [<Literal>]
-let PK_Map = "Map"
-
-[<Literal>]
-let PK_List = "List"
-
-[<Literal>]
 let PK_Combo = "Combo"
 
 [<Literal>]
@@ -30,5 +24,8 @@ let PK_Decimal = "Decimal"
 [<Literal>]
 let PK_Long = "Long"
 
-let getCustomKind = sprintf "Custom<%s>"
+let getMapKind = sprintf "Map<%s>"
 
+let getListKind = sprintf "List<%s>"
+
+let getCustomKind = sprintf "Custom<%s>"

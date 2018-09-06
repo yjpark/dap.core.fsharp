@@ -97,10 +97,12 @@ and internal VarProperty<'v> private (owner, spec) =
         member this.Value = this.Value
         member this.SetValue v = this.SetValue v
         member __.OnValueChanged = onValueChanged.Publish
+        member this.SyncTo (other : IVarProperty<'v>) =
+            other.SetValue this.Value |> ignore
         member this.Clone o k =
             spec.ForClone k
             |> VarProperty<'v>.Create o
-            |> this.SetupClone None
+            |> this.SetupClone (Some this.AsVarProperty.SyncTo)
             :> IVarProperty<'v>
     interface IVarProperty with
         member __.ValueType = typeof<'v>
