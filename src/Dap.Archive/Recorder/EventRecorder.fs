@@ -25,9 +25,8 @@ type Extra = {
         |> D.required "events" (D.dict D.int)
     interface IJson with
         member this.ToJson () =
-            let events = this.Events |> Map.map (fun k v -> E.int v)
             E.object [
-                "events", E.dict events
+                "events", (E.dict E.int) this.Events
             ]
 
 type Meta = Meta<Extra>

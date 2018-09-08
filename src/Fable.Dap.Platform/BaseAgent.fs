@@ -2,6 +2,7 @@
 module Dap.Platform.BaseAgent
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform
 
 let private tplAgentErr = LogEvent.Template3<string, obj, obj>(LogLevelFatal, "[{Section}] {Err}: {Detail}")
@@ -110,3 +111,5 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member __.Ident = ident
     interface ILogger with
         member this.Log m = logger.Log m
+    interface IAspect with
+        member this.Owner = this :> IOwner

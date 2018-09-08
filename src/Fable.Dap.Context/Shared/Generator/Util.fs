@@ -5,21 +5,18 @@ open System.Globalization
 
 open Dap.Prelude
 open Dap.Context
+open Dap.Context.Meta.Util
 
 let private textInfo = (new CultureInfo("en-US", false)) .TextInfo
 
-let private TIMESTAMP_FORMAT = "yyyy-MM-ddTHH:mm:ss";
-
-let getTimestamp () =
-    System.DateTime.UtcNow.ToString TIMESTAMP_FORMAT
-
-let toCamelCase (key : string) =
+let private toKind (key : string) =
     key.Split('_')
     |> Array.map textInfo.ToTitleCase
     |> String.concat ""
+    |> fun s -> s.Replace ("'", "")
 
-let toLowerCamelCase (key : string) =
-    key.Split('_')
+let private toKey (kind : string) =
+    kind.Split('_')
     |> Array.map textInfo.ToTitleCase
     |> String.concat ""
     |> fun v ->
@@ -29,7 +26,8 @@ let toLowerCamelCase (key : string) =
             let head = v.Substring (0, 1)
             let head = head.ToLower ()
             sprintf "%s%s" head <| v.Substring (1, v.Length - 1)
+    |> escapeKeyword
 
 type System.String with
-    member this.AsCamelCase = toCamelCase this
-    member this.AsLowerCamelCase = toLowerCamelCase this
+    member this.AsCodeMemberName = toKind this
+    member this.AsCodeVariableName = toKey this

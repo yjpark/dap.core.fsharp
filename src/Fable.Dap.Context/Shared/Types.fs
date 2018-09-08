@@ -80,8 +80,12 @@ let NoKey = ""
 
 let noOwner = new Owner (getLogging (), "<noOwner>") :> IOwner
 
-type IBus<'msg> =
+type IAspect =
     inherit IObj
+    abstract Owner : IOwner with get
+
+type IBus<'msg> =
+    inherit IAspect
     abstract AddWatcher : IOwner -> Luid -> ('msg -> unit) -> unit
     abstract SetWatcher : IOwner -> Luid -> ('msg -> unit) -> bool    // -> isNew
     abstract RemoveWatcher' : IOwner -> Luid list                      // -> luid list
@@ -92,11 +96,13 @@ type IBus<'msg> =
 type IEvt = interface end
 
 and IChannel<'evt> when 'evt :> IEvt =
+    inherit IAspect
     abstract OnEvent : IBus<'evt> with get
 
 type IReq = interface end
 
 type IHandler<'req> when 'req :> IReq =
+    inherit IAspect
     abstract Handle : 'req -> unit
 
 //Note that can NOT add 'req into it, since it's used
@@ -121,19 +127,16 @@ and IValue<'v> =
     abstract Value : 'v with get
 
 type Validator<'v> = {
-    Kind : Kind
     Check : IValue<'v> -> 'v -> bool
 }
 
 type IAspectSpec =
-    abstract Kind : Kind with get
     abstract Luid : Luid with get
     abstract Key : Key with get
 
 type IPropertySpec =
     inherit IAspectSpec
     abstract InitValue : Json with get
-    abstract ValidatorKind : Kind option with get
 
 type PropertyChanged = {
     Spec : IPropertySpec
@@ -152,7 +155,7 @@ and PropertySpawner = IOwner -> Key -> IProperty
 and PropertySpawner<'p when 'p :> IProperty> = IOwner -> Key -> 'p
 
 and IProperty =
-    inherit IObj
+    inherit IAspect
     inherit IJson
     abstract Kind : PropertyKind with get
     abstract Ver : int with get
@@ -188,7 +191,7 @@ and IVarProperty<'v> =
     inherit IVarProperty
     inherit IValue<'v>
     abstract Spec : IVarPropertySpec<'v> with get
-    abstract SetValue : 'v -> bool
+    abstract SetValue' : 'v -> bool
     abstract OnValueChanged : IBus<VarPropertyChanged<'v>> with get
     abstract SyncTo : IVarProperty<'v> -> unit
     abstract Clone : IOwner -> Key -> IVarProperty<'v>
@@ -335,6 +338,12 @@ module Extensions =
         member this.SyncWith (other : IComboProperty) =
             other.SyncTo this
     type IVarProperty<'v> with
+        member this.SetValue (v : 'v) =
+            this.SetValue' v
+            |> function
+                | true -> ()
+                | false ->
+                    logError this.Owner (this.GetType ()).Name "SetValue_Failed" (this.Value, v)
         member this.SyncWith (other : IVarProperty<'v>) =
             other.SyncTo this
     type IMapProperty<'p when 'p :> IProperty> with

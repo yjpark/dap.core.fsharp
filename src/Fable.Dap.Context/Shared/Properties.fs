@@ -6,12 +6,12 @@ open Dap.Prelude
 open Dap.Context.Internal
 
 let map<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
-    Property.mapSpec<'p> key (E.object []) spawner
+    Property.mapSpec<'p> key E.emptyObject spawner
     |> MapProperty<'p>.Create owner
     :> IMapProperty<'p>
 
 let list<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
-    Property.listSpec<'p> key (E.list []) spawner
+    Property.listSpec<'p> key E.emptyList spawner
     |> ListProperty<'p>.Create owner
     :> IListProperty<'p>
 
@@ -20,33 +20,34 @@ let combo (owner : IOwner) (key : Key) =
     |> ComboProperty.Create owner
     :> IComboProperty
 
-let custom<'p when 'p :> IProperty> (owner : IOwner) (kind : Kind) (key : Key) (spawner : PropertySpawner<'p>) =
-    Property.customSpec<'p> kind key (E.object []) spawner
-    |> ComboProperty.Create owner
-    :> IComboProperty
+let custom<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
+    spawner owner key
 
 type IComboProperty with
     static member Empty () = combo noOwner NoKey
     member this.ValueAsList =
         this.Value |> Map.toList |> List.map snd
-    member this.AddMap<'p when 'p :> IProperty> (key, spawner) =
-        Property.mapSpec<'p> key (E.object []) spawner
+    member this.AddMap<'p when 'p :> IProperty> (spawner, key) =
+        Property.mapSpec<'p> key E.emptyObject spawner
         |> this.AddMap<'p>
-    member this.AddList<'p when 'p :> IProperty> (key, spawner) =
-        Property.listSpec<'p> key (E.list []) spawner
+    member this.AddList<'p when 'p :> IProperty> (spawner, key) =
+        Property.listSpec<'p> key E.emptyList spawner
         |> this.AddList<'p>
+    member this.AddCustom<'p when 'p :> ICustomProperty> (spawner, key) =
+        Property.customSpec<'p> key E.emptyObject spawner
+        |> this.AddCustom<'p>
     member this.AddCombo key =
         Property.comboSpec key <| E.object []
         |> this.AddCombo
     member this.AddComboMap key =
-        this.AddMap<IComboProperty> (key, combo)
+        this.AddMap<IComboProperty> (combo, key)
     member this.AddComboList key =
-        this.AddList<IComboProperty> (key, combo)
-    member this.AddVar<'v> (kind, encoder, decoder, key, initValue, validator) =
-        Property.varSpec<'v> kind encoder decoder key initValue validator
+        this.AddList<IComboProperty> (combo, key)
+    member this.AddVar<'v> (encoder, decoder, key, initValue, validator) =
+        Property.varSpec<'v> encoder decoder key initValue validator
         |> this.AddVar<'v>
-    member this.AddVar<'v> (kind, encoder, decoder, key, initValue) =
-        this.AddVar<'v> (kind, encoder, decoder, key, initValue, None)
+    member this.AddVar<'v> (encoder, decoder, key, initValue) =
+        this.AddVar<'v> (encoder, decoder, key, initValue, None)
     member this.AddBool (key, initValue, validator) =
         Property.boolSpec key initValue validator
         |> this.AddVar<bool>

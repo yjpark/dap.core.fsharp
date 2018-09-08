@@ -149,6 +149,8 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.RunFunc1 func = runFunc' this func
         member this.AddTask1 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask1 onFailed getTask = runTask' this onFailed getTask
+    interface IAspect with
+        member this.Owner = this.Agent :> IOwner
 
 let create<'actorRunner, 'actorModel, 'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
             when 'actorRunner :> IAgent<'actorMsg> and 'actorMsg :> IMsg

@@ -4,34 +4,22 @@ module Dap.Platform.Demo.Types
 open Dap.Context
 
 (*
- * Generated: [ValueInterface] <IPublisher>
-    {
-        "name": "",
-        "year": 0
-    }
+ * Generated: <ValueInterface>
  *)
 type IPublisher =
     abstract Name : string with get
     abstract Year : int with get
 
 (*
- * Generated: [ComboInterface] <IPerson>
-    {
-        "age": 0,
-        "name": ""
-    }
+ * Generated: <ComboInterface>
  *)
 type IPerson =
-    abstract Age : IVarProperty<int> with get
     abstract Name : IVarProperty<string> with get
+    abstract Age : IVarProperty<int> with get
 
 (*
- * Generated: [Record] <Publisher>
+ * Generated: <Record>
  *     IsJson, IsLoose, IPublisher
-    {
-        "name": "",
-        "year": 0
-    }
  *)
 type Publisher = {
     Name : string
@@ -45,9 +33,6 @@ type Publisher = {
         }
     static member Default () =
         Publisher.Create "" 0
-    static member JsonSpec =
-        FieldSpec.Create<Publisher>
-            Publisher.JsonEncoder Publisher.JsonDecoder
     static member JsonEncoder : JsonEncoder<Publisher> =
         fun (this : Publisher) ->
             E.object [
@@ -58,6 +43,9 @@ type Publisher = {
         D.decode Publisher.Create
         |> D.optional "name" D.string ""
         |> D.optional "year" D.int 0
+    static member JsonSpec =
+        FieldSpec.Create<Publisher>
+            Publisher.JsonEncoder Publisher.JsonDecoder
     interface IJson with
         member this.ToJson () = Publisher.JsonEncoder this
     member this.WithName (name : string) = {this with Name = name}
@@ -67,74 +55,62 @@ type Publisher = {
         member this.Year = this.Year
 
 (*
- * Generated: [Class] <Author>
+ * Generated: <Class>
  *     IsFinal, IPerson
-    {
-        "age": 0,
-        "name": "",
-        "publisher": ""
-    }
  *)
 type Author (owner : IOwner, key : Key) =
-    inherit WrapProperties<Author, IComboProperty> ("Author")
+    inherit WrapProperties<Author, IComboProperty> ()
     let target = Properties.combo owner key
-    let age = target.AddInt ("age", 0, None)
-    let name = target.AddString ("name", "", None)
-    let publisher = target.AddString ("publisher", "", None)
+    let name = target.AddVar<string> (E.string, D.string, "name", "", None)
+    let age = target.AddVar<int> (E.int, D.int, "age", 0, None)
+    let publisher = target.AddVar<string> (E.string, D.string, "publisher", "", None)
     do (
         target.SealCombo ()
         base.Setup (target)
     )
     static member Create o k = new Author (o, k)
     static member Empty () = Author.Create noOwner NoKey
+    static member AddToCombo key (combo : IComboProperty) =
+        combo.AddCustom<Author>(Author.Create, key)
     override this.Self = this
     override __.Spawn o k = Author.Create o k
     override __.SyncTo t = target.SyncTo t.Target
-    member __.Age : IVarProperty<int> = age
     member __.Name : IVarProperty<string> = name
+    member __.Age : IVarProperty<int> = age
     member __.Publisher : IVarProperty<string> = publisher
     interface IPerson with
-        member this.Age = this.Age
         member this.Name = this.Name
+        member this.Age = this.Age
 
 (*
- * Generated: [Union] <Status>
+ * Generated: <Union>
  *     IsJson
-    [
-        {
-            "fields": {},
-            "kind": "Unknown"
-        },
-        {
-            "fields": {
-                "author": ""
-            },
-            "kind": "Written"
-        },
-        {
-            "fields": {
-                "publisher": "",
-                "year": 0
-            },
-            "kind": "Published"
-        }
-    ]
  *)
 type Status =
     | Unknown
     | Written of author : string
-    | Published of publisher : string * year : int
-    static member JsonSpec : CaseSpec<Status> list =
+    | Published of publisher : string * year : int * copies : int option
+with
+    static member CreateUnknown () : Status =
+        Unknown
+    static member CreateWritten author : Status =
+        Written (author)
+    static member CreatePublished publisher year copies : Status =
+        Published (publisher, year, copies)
+    static member JsonSpec =
+        FieldSpec.Create<Status>
+            Status.JsonEncoder Status.JsonDecoder
+    static member JsonSpec' : CaseSpec<Status> list =
         [
             CaseSpec<Status>.Create "Unknown" []
             CaseSpec<Status>.Create "Written" [
                 S.string
             ]
             CaseSpec<Status>.Create "Published" [
-                S.string ; S.int
+                S.string ; S.int ; S.option E.int D.int
             ]
         ]
-    static member JsonEncoder = E.union Status.JsonSpec
-    static member JsonDecoder = D.union Status.JsonSpec
+    static member JsonEncoder = E.union Status.JsonSpec'
+    static member JsonDecoder = D.union Status.JsonSpec'
     interface IJson with
         member this.ToJson () = Status.JsonEncoder this

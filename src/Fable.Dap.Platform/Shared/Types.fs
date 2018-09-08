@@ -61,13 +61,35 @@ type Ident = {
     Key : Key
     Ver : int
 } with
-    static member Create scope kind key =
+    static member Create' scope kind key ver =
         {
             Scope = scope
             Kind = kind
             Key = key
-            Ver = calVersion scope kind key
+            Ver = ver
         }
+    static member Create scope kind key =
+        calVersion scope kind key
+        |> Ident.Create' scope kind key
+    static member JsonEncoder : JsonEncoder<Ident> =
+        fun (this : Ident) ->
+            E.object [
+                "scope", E.string this.Scope
+                "kind", E.string this.Kind
+                "key", E.string this.Key
+                "ver", E.int this.Ver
+            ]
+    static member JsonDecoder : JsonDecoder<Ident> =
+        D.decode Ident.Create'
+        |> D.required "scope" D.string
+        |> D.required "kind" D.string
+        |> D.required "key" D.string
+        |> D.optional "ver" D.int -1
+    static member JsonSpec =
+        FieldSpec.Create<Ident>
+            Ident.JsonEncoder Ident.JsonDecoder
+    interface IJson with
+        member this.ToJson () = Ident.JsonEncoder this
     member this.ToLuid () = sprintf "[%s:%s:%s]<%i>" this.Scope this.Kind this.Key this.Ver
 
 let noIdent =

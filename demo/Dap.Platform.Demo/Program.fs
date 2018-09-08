@@ -95,12 +95,22 @@ let doCompileDsl (env : IEnv) =
         logWarn env "Demo" "Compile_Dsl" res
     )
 
+let doJsonTest (env : IEnv) =
+    let s = Dap.Platform.Demo.Types.Status.CreatePublished "Test" 2001 (Some 100)
+    let s = E.encodeJson 0 s
+    logWarn env "Test" "Encode_Status" s
+    let s = decodeJson Dap.Platform.Demo.Types.Status.JsonDecoder s
+    logWarn env "Test" "Decode_Status" s
+    let s = E.encodeJson 0 s
+    logWarn env "Test" "Decode_Status" s
+
 [<EntryPoint>]
 let main _argv =
     let logging = setupConsole LogLevelWarning
     let env = Env.live MailboxPlatform logging "Demo"
 
     doCompileDsl env
+    //doJsonTest env
     //doBuilderTest env
 
     (*

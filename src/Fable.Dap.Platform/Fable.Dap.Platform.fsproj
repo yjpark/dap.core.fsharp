@@ -19,7 +19,7 @@
     <Compile Include="Shared/Operator.fs" />
     <Compile Include="Shared/Util.fs" />
     <Compile Include="Shared/Clock.fs" />
-    <Compile Include="Shared/ED.fs" />
+    <Compile Include="Shared/EDSMB.fs" />
     <Compile Include="Const.fs" />
     <Compile Include="Runner.fs" />
     <Compile Include="Types.fs" />

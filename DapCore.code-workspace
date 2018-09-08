@@ -47,7 +47,8 @@
             "*.log": true,
             "log" : true,
             ".vs": true,
-            ".vscode": true
+            ".vscode": true,
+            ".fake": true
 		},
 		"cSpell.words": [
 			"Guid",

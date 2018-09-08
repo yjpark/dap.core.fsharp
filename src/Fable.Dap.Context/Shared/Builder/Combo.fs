@@ -1,15 +1,26 @@
 [<RequireQualifiedAccess>]
-module Dap.Context.Builder.Combo
+module Dap.Context.Meta.Combo
 
-open System.Reflection
+open Microsoft.FSharp.Quotations
 
 open Dap.Prelude
 open Dap.Context
+open Dap.Context.Meta.Util
 
 type Builder () =
     inherit ObjBuilder<IComboProperty> ()
     override __.Zero () =
         IComboProperty.Empty ()
+    [<CustomOperation("option")>]
+    member __.Option (combo : IComboProperty, prop : IVarProperty) =
+        combo
+    [<CustomOperation("union")>]
+    member __.Union (combo : IComboProperty, key, expr : Expr<IListProperty<Union.CaseProperty>>) =
+        let (kind, cases) = unquoteTemplate expr
+        let prop = combo |> Union.UnionProperty.AddToCombo key
+        prop.Kind.SetValue kind
+        prop.Cases.SyncWith cases
+        combo
     [<CustomOperation("custom")>]
     member __.Custom (combo : IComboProperty, key, prop : ICustomProperty) =
         combo.AddAny key prop.Clone0 |> ignore

@@ -37,17 +37,17 @@ type InterfaceParam = {
 
 type Interface = {
     Param : InterfaceParam
-    Template : IObj
+    Meta : obj
 } with
-    static member CreateCombo name template =
+    static member CreateCombo name meta =
         {
             Param = InterfaceParam.Create name ComboInterface
-            Template = template
+            Meta = meta
         }
-    static member CreateValue name template =
+    static member CreateValue name meta =
         {
             Param = InterfaceParam.Create name ValueInterface
-            Template = template
+            Meta = meta
         }
 
 type RecordParam = {

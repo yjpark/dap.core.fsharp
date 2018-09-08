@@ -6,27 +6,22 @@ open Dap.Context.Builder
 open Dap.Platform.Demo.Types
 
 (*
- * Generated: [Builder] <AuthorBuilder>
-    {
-        "age": 0,
-        "name": "",
-        "publisher": ""
-    }
+ * Generated: <Builder>
  *)
 type AuthorBuilder () =
     inherit ObjBuilder<Author> ()
     override __.Zero () = Author.Empty ()
-    [<CustomOperation("age")>]
-    member __.Age (target : Author, v) =
-        target.Age.SetValue v |> ignore
-        target
     [<CustomOperation("name")>]
     member __.Name (target : Author, v) =
-        target.Name.SetValue v |> ignore
+        target.Name.SetValue v
+        target
+    [<CustomOperation("age")>]
+    member __.Age (target : Author, v) =
+        target.Age.SetValue v
         target
     [<CustomOperation("publisher")>]
     member __.Publisher (target : Author, v) =
-        target.Publisher.SetValue v |> ignore
+        target.Publisher.SetValue v
         target
 
 let author = AuthorBuilder ()

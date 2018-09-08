@@ -10,7 +10,7 @@ open Dap.Context.Unsafe
 open Dap.Context.Internal
 
 [<AbstractClass>]
-type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> (kind) =
+type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
     let mutable spec : IPropertySpec option = None
     let mutable target : 't option = None
     member __.Setup target' =
@@ -19,7 +19,7 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> (kind) 
         target <- Some target'
         spec <-
             let initValue = target'.ToJson ()
-            new PropertySpec (kind, target'.Spec.Luid, target'.Spec.Key, initValue)
+            new PropertySpec (target'.Spec.Luid, target'.Spec.Key, initValue)
             :> IPropertySpec
             |> Some
     abstract member Self : 'p with get
@@ -49,6 +49,8 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> (kind) 
         member this.WithJson json = this.Target.WithJson json
         member this.OnChanged = this.Target.OnChanged
         member this.Clone0 o k = this.AsCustomProperty.Clone o k :> IProperty
+    interface IAspect with
+        member this.Owner = this.Target.Owner
     interface IJson with
         member this.ToJson () = this.Target.ToJson ()
     interface IUnsafeProperty with
@@ -75,8 +77,8 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> (kind) 
         member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = this.UnsafeTarget.ToCustom<'p1> ()
 
 [<AbstractClass>]
-type WrapProperties<'p, 't when 'p :> ICustomProperty and 't :> IProperties> (kind) =
-    inherit WrapProperty<'p, 't> (kind)
+type WrapProperties<'p, 't when 'p :> ICustomProperty and 't :> IProperties> () =
+    inherit WrapProperty<'p, 't> ()
     interface ICustomProperties with
         member this.Count = this.Target.Count
 

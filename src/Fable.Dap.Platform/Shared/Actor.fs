@@ -150,6 +150,8 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
         member __.Args = spec.Args
         member __.State = state
         member __.Version = version
+    interface IAspect with
+        member __.Owner = agent :> IOwner
 
 let internal createActor'
         (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)

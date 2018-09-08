@@ -91,9 +91,16 @@ type E with
     static member nil = TE.nil
     static member bool = TE.bool
     static member object = TE.object
-    static member array = TE.array
-    static member list = TE.list
-    static member dict = TE.dict
+    static member array (encoder : JsonEncoder<'a>) (v : 'a []) =
+        v |> Array.map encoder |> TE.array
+    static member list (encoder : JsonEncoder<'a>) (v : 'a list) =
+        v |> List.map encoder |> TE.list
+    static member jsonList (v : Json list) = TE.list v
+    static member emptyList = TE.list []
+    static member emptyObject = TE.object []
+    static member dict (encoder : JsonEncoder<'a>) (v : Map<string, 'a>) =
+        v |> Map.map (fun _k v -> encoder v) |> TE.dict
+    static member jsonDict (v : Map<string, Json>) = TE.dict v
     static member encode = TE.encode
     static member option (encoder : JsonEncoder<'a>) = TE.option encoder
 
@@ -180,9 +187,18 @@ type D with
     static member optionalAt path valDecoder fallback decoder = TD.optionalAt path valDecoder fallback decoder
 
 type S = JsonSpecHelper with
+    static member option<'v> (encoder : JsonEncoder<'v>) (decoder : JsonDecoder<'v>) =
+        FieldSpec.Create<'v option> (E.option encoder) (D.option decoder)
+    static member json =
+#if FABLE_COMPILER
+        FieldSpec.Create<Json> id (D.value << fableObjToJson)
+#else
+        FieldSpec.Create<Json> id D.value
+#endif
     static member bool = FieldSpec.Create<bool> E.bool D.bool
     static member int = FieldSpec.Create<int> E.int D.int
 #if !FABLE_COMPILER
     static member long = FieldSpec.Create<int64> E.long D.long
 #endif
     static member string = FieldSpec.Create<string> E.string D.string
+    static member decimal = FieldSpec.Create<decimal> E.decimal D.decimal

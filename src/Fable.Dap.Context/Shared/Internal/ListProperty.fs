@@ -30,7 +30,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
     override __.ToJson (props : 'p list) =
         props
         |> List.map (fun p -> p.ToJson ())
-        |> E.list
+        |> E.jsonList
     override __.WithJson value json =
         let mutable ok = true
         (* TODO

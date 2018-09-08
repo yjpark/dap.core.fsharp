@@ -153,5 +153,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
                 )|> Option.defaultValue false
         member __.OnChanged = onChanged.Publish
         member this.Clone0 o k = this.Clone0 o k
+    interface IAspect with
+        member __.Owner = owner
     interface IJson with
         member this.ToJson () = this.ToJson value

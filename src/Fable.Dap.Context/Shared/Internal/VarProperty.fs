@@ -10,18 +10,15 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Internal
 
-type internal VarPropertySpec<'v> internal (kind, luid, key, encoder', decoder', initValue', validator') =
-    inherit PropertySpec (kind, luid, key, (encoder' initValue'))
+type internal VarPropertySpec<'v> internal (luid, key, encoder', decoder', initValue', validator') =
+    inherit PropertySpec (luid, key, (encoder' initValue'))
     let encoder : JsonEncoder<'v> = encoder'
     let decoder : JsonDecoder<'v> = decoder'
     let initValue : 'v = initValue'
     let validator : Validator<'v> option = validator'
-    static member Create kind key encoder decoder initValue validator =
-        new VarPropertySpec<'v> (kind, key, key, encoder, decoder, initValue, validator)
+    static member Create key encoder decoder initValue validator =
+        new VarPropertySpec<'v> (key, key, encoder, decoder, initValue, validator)
         :> IVarPropertySpec<'v>
-    override __.ValidatorKind =
-        validator
-        |> Option.map (fun v -> v.Kind)
     interface IVarPropertySpec<'v> with
         member __.Encoder = encoder
         member __.Decoder = decoder
@@ -39,14 +36,14 @@ and IVarPropertySpec<'v> with
 #endif
     member this.GetSubSpec subKey =
         let luid = AspectSpec.CalcSubLuid this.Luid subKey
-        new VarPropertySpec<'v> (this.Kind, luid, subKey, this.Encoder, this.Decoder, this.InitValue, this.Validator)
+        new VarPropertySpec<'v> (luid, subKey, this.Encoder, this.Decoder, this.InitValue, this.Validator)
         :> IVarPropertySpec<'v>
     member this.AsSubSpec (parent : IAspectSpec) =
         let luid = AspectSpec.CalcSubLuid parent.Luid this.Key
-        new VarPropertySpec<'v> (this.Kind, luid, this.Key, this.Encoder, this.Decoder, this.InitValue, this.Validator)
+        new VarPropertySpec<'v> (luid, this.Key, this.Encoder, this.Decoder, this.InitValue, this.Validator)
         :> IVarPropertySpec<'v>
     member this.ForClone key =
-        new VarPropertySpec<'v> (this.Kind, key, key, this.Encoder, this.Decoder, this.InitValue, this.Validator)
+        new VarPropertySpec<'v> (key, key, this.Encoder, this.Decoder, this.InitValue, this.Validator)
         :> IVarPropertySpec<'v>
 
 and internal VarProperty<'v> private (owner, spec) =
@@ -95,10 +92,10 @@ and internal VarProperty<'v> private (owner, spec) =
     interface IVarProperty<'v> with
         member __.Spec = spec
         member this.Value = this.Value
-        member this.SetValue v = this.SetValue v
+        member this.SetValue' v = this.SetValue v
         member __.OnValueChanged = onValueChanged.Publish
         member this.SyncTo (other : IVarProperty<'v>) =
-            other.SetValue this.Value |> ignore
+            other.SetValue' this.Value |> ignore
         member this.Clone o k =
             spec.ForClone k
             |> VarProperty<'v>.Create o

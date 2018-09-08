@@ -176,4 +176,5 @@ type Bus<'msg> (owner : IOwner, luid : Luid) =
                 x.RemoveWatcher' watcherOwner |> ignore
             member x.RemoveWatcher (watcherOwner, watcherLuid) =
                 x.RemoveWatcher' (watcherOwner, watcherLuid) |> ignore
+            member x.Owner = owner
         }
