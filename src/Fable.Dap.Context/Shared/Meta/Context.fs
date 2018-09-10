@@ -31,7 +31,7 @@ type Builder (kind : Kind) =
         | :? IComboProperty as properties ->
             Context.combo kind
             |> syncProperties properties.SyncTo
-        | :? IMapProperty as properties ->
+        | :? IDictProperty as properties ->
             newContext "map0" properties.ElementType properties.ElementSpawner
         | :? IListProperty as properties ->
             newContext "list0" properties.ElementType properties.ElementSpawner

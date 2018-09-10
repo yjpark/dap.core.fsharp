@@ -20,12 +20,12 @@ type UnsafeProperty internal (owner') =
     member __.Owner = owner
     abstract member Kind : PropertyKind with get
     abstract member AsVar : IVarProperty with get
-    abstract member AsMap : IMapProperty with get
+    abstract member AsMap : IDictProperty with get
     abstract member AsList : IListProperty with get
     abstract member AsCombo : IComboProperty with get
     abstract member AsCustom : ICustomProperty with get
     abstract member ToVar<'v1> : unit -> IVarProperty<'v1>
-    abstract member ToMap<'p1 when 'p1 :> IProperty> : unit -> IMapProperty<'p1>
+    abstract member ToMap<'p1 when 'p1 :> IProperty> : unit -> IDictProperty<'p1>
     abstract member ToList<'p1 when 'p1 :> IProperty> : unit -> IListProperty<'p1>
     abstract member ToCustom<'p1 when 'p1 :> ICustomProperty> : unit -> ICustomProperty<'p1>
 #if FABLE_COMPILER
@@ -33,7 +33,7 @@ type UnsafeProperty internal (owner') =
 #endif
     member this.CastFailed<'p> () : 'p = failWith (this.GetType().FullName) ("Cast_Failed: " + typeof<'p>.Name)
     default this.AsVar = this.CastFailed<IVarProperty> ()
-    default this.AsMap = this.CastFailed<IMapProperty> ()
+    default this.AsMap = this.CastFailed<IDictProperty> ()
     default this.AsList = this.CastFailed<IListProperty> ()
     default this.AsCombo = this.CastFailed<IComboProperty> ()
     default this.AsCustom = this.CastFailed<ICustomProperty> ()
@@ -44,7 +44,7 @@ type UnsafeProperty internal (owner') =
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
-    default this.ToMap<'p1 when 'p1 :> IProperty> () = this.CastFailed<IMapProperty<'p1>> ()
+    default this.ToMap<'p1 when 'p1 :> IProperty> () = this.CastFailed<IDictProperty<'p1>> ()
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif

@@ -9,12 +9,12 @@ open Dap.Context
 
 type IUnsafeProperty =
     abstract AsVar : IVarProperty with get
-    abstract AsMap : IMapProperty with get
+    abstract AsMap : IDictProperty with get
     abstract AsList : IListProperty with get
     abstract AsCombo : IComboProperty with get
     abstract AsCustom : ICustomProperty with get
     abstract ToVar<'v1> : unit -> IVarProperty<'v1>
-    abstract ToMap<'p1 when 'p1 :> IProperty> : unit -> IMapProperty<'p1>
+    abstract ToMap<'p1 when 'p1 :> IProperty> : unit -> IDictProperty<'p1>
     abstract ToList<'p1 when 'p1 :> IProperty> : unit -> IListProperty<'p1>
     abstract ToCustom<'p1 when 'p1 :> ICustomProperty> : unit -> ICustomProperty<'p1>
 

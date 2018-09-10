@@ -104,9 +104,9 @@ type internal ComboProperty (owner, spec) =
         member this.AddMap<'p when 'p :> IProperty> (subSpec : IPropertySpec<'p>) =
             this.CheckAdd subSpec typeof<'p>
             subSpec.AsSubSpec spec
-            |> MapProperty<'p>.Create owner
+            |> DictProperty<'p>.Create owner
             |> this.Add
-            |> fun prop -> prop.AsMapProperty
+            |> fun prop -> prop.AsDictProperty
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]
 #endif

@@ -7,8 +7,8 @@ open Dap.Context.Internal
 open Dap.Context.ContextSpec
 
 [<AbstractClass>]
-type MapContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<IMapProperty<'p>> and 'p :> IProperty> (logging, spec) =
-    inherit Context<'c, 's, IMapProperty<'p>> (logging, spec)
+type MapContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<IDictProperty<'p>> and 'p :> IProperty> (logging, spec) =
+    inherit Context<'c, 's, IDictProperty<'p>> (logging, spec)
 
 [<AbstractClass>]
 type ListContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<IListProperty<'p>> and 'p :> IProperty> (logging, spec) =

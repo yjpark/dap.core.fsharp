@@ -22,7 +22,7 @@
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Handler.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Property.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/VarProperty.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Internal/MapProperty.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Internal/DictProperty.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/ListProperty.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/ComboProperty.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Context.fs" />

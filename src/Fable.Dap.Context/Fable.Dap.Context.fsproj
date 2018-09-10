@@ -23,7 +23,7 @@
     <Compile Include="Shared/Internal/Handler.fs" />
     <Compile Include="Shared/Internal/Property.fs" />
     <Compile Include="Shared/Internal/VarProperty.fs" />
-    <Compile Include="Shared/Internal/MapProperty.fs" />
+    <Compile Include="Shared/Internal/DictProperty.fs" />
     <Compile Include="Shared/Internal/ListProperty.fs" />
     <Compile Include="Shared/Internal/ComboProperty.fs" />
     <Compile Include="Shared/Internal/Context.fs" />

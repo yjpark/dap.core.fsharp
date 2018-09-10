@@ -44,8 +44,9 @@ type UnionGenerator (meta : CaseMeta list) =
                 |> List.map (fun f -> f.Key)
                 |> String.concat ", "
                 |> sprintf " (%s)"
+        let createKind = if meta.Length = 1 then "" else case.Kind
         [
-            sprintf "    static member Create%s %s : %s =" case.Kind names param.Name
+            sprintf "    static member Create%s %s : %s =" createKind names param.Name
             sprintf "        %s%s" case.Kind values
         ]
     let getUnionMiddle (param : UnionParam) =

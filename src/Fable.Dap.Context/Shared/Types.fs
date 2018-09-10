@@ -146,7 +146,7 @@ type PropertyChanged = {
 
 type PropertyKind =
     | VarProperty
-    | MapProperty
+    | DictProperty
     | ListProperty
     | ComboProperty
     | CustomProperty
@@ -200,7 +200,7 @@ and IProperties =
     inherit IProperty
     abstract Count : int with get
 
-and IMapProperty =
+and IDictProperty =
     inherit IProperties
     abstract ElementType : Type with get
     abstract ElementSpawner : IOwner -> Key -> IProperty
@@ -210,8 +210,8 @@ and IMapProperty =
     abstract OnAdded0 : IBus<IProperty> with get
     abstract OnRemoved0 : IBus<IProperty> with get
 
-and IMapProperty<'p when 'p :> IProperty> =
-    inherit IMapProperty
+and IDictProperty<'p when 'p :> IProperty> =
+    inherit IDictProperty
     inherit IValue<Map<Luid, 'p>>
     abstract Spec : IPropertySpec<'p> with get
     abstract TryGet : Key -> 'p option
@@ -221,8 +221,8 @@ and IMapProperty<'p when 'p :> IProperty> =
     abstract Clear : unit -> Map<Luid, 'p>
     abstract OnAdded : IBus<'p> with get
     abstract OnRemoved : IBus<'p> with get
-    abstract SyncTo : IMapProperty<'p> -> unit
-    abstract Clone : IOwner -> Key -> IMapProperty<'p>
+    abstract SyncTo : IDictProperty<'p> -> unit
+    abstract Clone : IOwner -> Key -> IDictProperty<'p>
 
 and PropertyMoved = {
     Luid : Luid
@@ -272,7 +272,7 @@ and IComboProperty =
     abstract Get : Key -> IProperty
     abstract AddAny : Key -> PropertySpawner -> IProperty
     abstract AddVar<'v> : IVarPropertySpec<'v> -> IVarProperty<'v>
-    abstract AddMap<'p when 'p :> IProperty> : IPropertySpec<'p> -> IMapProperty<'p>
+    abstract AddMap<'p when 'p :> IProperty> : IPropertySpec<'p> -> IDictProperty<'p>
     abstract AddList<'p when 'p :> IProperty> : IPropertySpec<'p> -> IListProperty<'p>
     abstract AddCombo : IPropertySpec -> IComboProperty
     abstract AddCustom<'p when 'p :> ICustomProperty> : IPropertySpec<'p> -> 'p
@@ -346,8 +346,8 @@ module Extensions =
                     logError this.Owner (this.GetType ()).Name "SetValue_Failed" (this.Value, v)
         member this.SyncWith (other : IVarProperty<'v>) =
             other.SyncTo this
-    type IMapProperty<'p when 'p :> IProperty> with
-        member this.SyncWith (other : IMapProperty<'p>) =
+    type IDictProperty<'p when 'p :> IProperty> with
+        member this.SyncWith (other : IDictProperty<'p>) =
             other.SyncTo this
     type IListProperty<'p when 'p :> IProperty> with
         member this.SyncWith (other : IListProperty<'p>) =

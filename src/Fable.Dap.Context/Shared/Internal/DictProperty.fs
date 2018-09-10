@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Context.Internal.MapProperty
+module Dap.Context.Internal.DictProperty
 
 open System
 #if FABLE_COMPILER
@@ -12,17 +12,17 @@ open Dap.Context.Unsafe
 open Dap.Context.Internal
 open Dap.Context.Internal.Property
 
-type internal MapProperty<'p when 'p :> IProperty> private (owner, spec) =
+type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
     inherit Property<IPropertySpec<'p>, Map<Key, 'p>> (owner, spec, Map.empty)
     let mutable mapSealed : bool = false
     let onAdded = new Bus<'p> (owner, sprintf "%s:OnAdded" spec.Luid)
     let onRemoved = new Bus<'p> (owner, sprintf "%s:OnRemoved" spec.Luid)
     let onAdded0 = new Bus<IProperty> (owner, sprintf "%s:OnAdded0" spec.Luid)
     let onRemoved0 = new Bus<IProperty> (owner, sprintf "%s:OnRemoved0" spec.Luid)
-    static member Create o (s : IPropertySpec<'p>) = new MapProperty<'p>(o, s)
-    override __.Kind = PropertyKind.MapProperty
-    override this.AsMap = this :> IMapProperty
-    member this.AsMapProperty = this :> IMapProperty<'p>
+    static member Create o (s : IPropertySpec<'p>) = new DictProperty<'p>(o, s)
+    override __.Kind = PropertyKind.DictProperty
+    override this.AsMap = this :> IDictProperty
+    member this.AsDictProperty = this :> IDictProperty<'p>
     member this.AsProperties = this :> IProperties
     override this.ToJson (props : Map<string, 'p>) =
         props
@@ -49,15 +49,15 @@ type internal MapProperty<'p when 'p :> IProperty> private (owner, spec) =
             logError owner "Properties:WithJson" "Decode_Has_Error" (E.encode 4 json)
         *)
         Some (value, ok)
-    override this.Clone0 o k = this.AsMapProperty.Clone o k :> IProperty
+    override this.Clone0 o k = this.AsDictProperty.Clone o k :> IProperty
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
     override this.ToMap<'p1 when 'p1 :> IProperty> () =
         if typeof<'p> = typeof<'p1> then
-            this.AsMap :?> IMapProperty<'p1>
+            this.AsMap :?> IDictProperty<'p1>
         else
-            this.CastFailed<IMapProperty<'p1>> ()
+            this.CastFailed<IDictProperty<'p1>> ()
     override this.OnSealed () =
         mapSealed <- true
         this.Value
@@ -92,20 +92,20 @@ type internal MapProperty<'p when 'p :> IProperty> private (owner, spec) =
             else
                 failWith "Remove_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Count prop.Spec.Key
         )
-    interface IMapProperty<'p> with
+    interface IDictProperty<'p> with
         member this.Value = this.Value
         member __.Spec = spec
         member this.TryGet k =
             this.Value
             |> Map.tryFind k
         member this.Get k =
-            this.AsMapProperty.TryGet k
+            this.AsDictProperty.TryGet k
             |> function
                 | Some prop -> prop
                 | None -> failWith "Not_Found" k
         member this.Add k =
             this.CheckChange <| sprintf "Add: %s" k
-            this.AsMapProperty.TryGet k
+            this.AsDictProperty.TryGet k
             |> Option.iter (fun prop ->
                 failWith "Already_Exist" <| sprintf "[%s] <%s> [%s] -> %A" spec.Luid typeof<'p>.FullName k prop
             )
@@ -135,13 +135,13 @@ type internal MapProperty<'p when 'p :> IProperty> private (owner, spec) =
             ()
         member this.Clone o k =
             spec.ForClone k
-            |> MapProperty<'p>.Create o
-            |> this.SetupClone (Some this.AsMapProperty.SyncTo)
+            |> DictProperty<'p>.Create o
+            |> this.SetupClone (Some this.AsDictProperty.SyncTo)
             |> fun clone ->
-                if mapSealed then clone.AsMapProperty.SealMap ()
+                if mapSealed then clone.AsDictProperty.SealMap ()
                 clone
-            :> IMapProperty<'p>
-    interface IMapProperty with
+            :> IDictProperty<'p>
+    interface IDictProperty with
         member __.ElementType = typeof<'p>
         member __.ElementSpawner o k = spec.Spawner o k :> IProperty
         member __.SealMap () =
@@ -149,7 +149,7 @@ type internal MapProperty<'p when 'p :> IProperty> private (owner, spec) =
                 mapSealed <- true
         member __.MapSealed = mapSealed
         member this.Has k =
-            (this.AsMapProperty.TryGet k).IsSome
+            (this.AsDictProperty.TryGet k).IsSome
         member __.OnAdded0 = onAdded0.Publish
         member __.OnRemoved0 = onRemoved0.Publish
     interface IProperties with

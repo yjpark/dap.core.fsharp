@@ -7,8 +7,8 @@ open Dap.Context.Internal
 
 let map<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
     Property.mapSpec<'p> key E.emptyObject spawner
-    |> MapProperty<'p>.Create owner
-    :> IMapProperty<'p>
+    |> DictProperty<'p>.Create owner
+    :> IDictProperty<'p>
 
 let list<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
     Property.listSpec<'p> key E.emptyList spawner
@@ -76,7 +76,7 @@ type IComboProperty with
     member this.AddDecimal (key, initValue) =
         this.AddDecimal (key, initValue, None)
 
-type IMapProperty<'p when 'p :> IProperty> with
+type IDictProperty<'p when 'p :> IProperty> with
     static member Empty spawner = map<'p> spawner noOwner NoKey
 
 type IListProperty<'p when 'p :> IProperty> with
