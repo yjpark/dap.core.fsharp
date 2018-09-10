@@ -79,6 +79,8 @@ type internal ModuleGenerator (sections : Lines list) =
         |> List.append [
             if param.AutoOpen then
                 yield sprintf "[<AutoOpen>]"
+            if param.RequireQualifiedAccess then
+                yield sprintf "[<RequireQualifiedAccess>]"
             yield sprintf "module %s" param.Name
         ]
 
@@ -104,24 +106,32 @@ type G = CodeGeneratorHelper with
         G.File (path, lines)
     static member File (segments1 : string list, segments2 : string list, lines) =
         G.File (segments1 @ segments2, lines)
-    static member Module (name, autoOpen, sections) =
+    static member Module (name, autoOpen, requireQualifiedAccess, sections) =
         let sections =
             [
                 "open Dap.Context"
             ] :: sections
-        ModuleParam.Create name autoOpen
+        ModuleParam.Create name autoOpen requireQualifiedAccess
         |> generateModule sections
     static member Module (name, sections : Lines list) =
-        G.Module (name, true, sections)
+        G.Module (name, true, false, sections)
     static member Module (name, section : Lines, sections : Lines list) =
         G.Module (name, section :: sections)
+    static member QualifiedModule (name, autoOpen : bool, sections : Lines list) =
+        G.Module (name, autoOpen, true, sections)
+    static member QualifiedModule (name, sections : Lines list) =
+        G.QualifiedModule (name, true, sections)
+    static member QualifiedModule (name, autoOpen : bool, section : Lines, sections : Lines list) =
+        G.QualifiedModule (name, autoOpen, section :: sections)
+    static member QualifiedModule (name, section : Lines, sections : Lines list) =
+        G.QualifiedModule (name, section :: sections)
     static member BuilderModule (name, sections) =
         let sections =
             [
                 "open Dap.Context"
                 "open Dap.Context.Builder"
             ] :: sections
-        ModuleParam.Create name false
+        ModuleParam.Create name false false
         |> generateModule sections
     static member BuilderModule (name, section : Lines, sections : Lines list) =
         G.BuilderModule (name, section :: sections)

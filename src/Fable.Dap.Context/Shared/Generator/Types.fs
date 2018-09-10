@@ -141,11 +141,13 @@ type BuilderParam = {
 type ModuleParam = {
     Name : string
     AutoOpen : bool
+    RequireQualifiedAccess : bool
 } with
-    static member Create name autoOpen =
+    static member Create name autoOpen requireQualifiedAccess =
         {
             Name = name
             AutoOpen = autoOpen
+            RequireQualifiedAccess = requireQualifiedAccess
         }
     interface IParam with
         member __.Category = "Module"
@@ -154,4 +156,6 @@ type ModuleParam = {
             [
                 if this.AutoOpen then
                     yield "AutoOpen"
+                if this.RequireQualifiedAccess then
+                    yield "RequireQualifiedAccess"
             ] |> String.concat ", "

@@ -54,7 +54,7 @@ let private calVersion scope kind key =
     sprintf "%s:%s:%s" scope kind key
     |> newLuid'
 
-[<StructuredFormatDisplay("{Ident}")>]
+[<StructuredFormatDisplay("{AsDisplay}")>]
 type Ident = {
     Scope : Scope
     Kind : Kind
@@ -91,6 +91,8 @@ type Ident = {
     interface IJson with
         member this.ToJson () = Ident.JsonEncoder this
     member this.ToLuid () = sprintf "[%s:%s:%s]<%i>" this.Scope this.Kind this.Key this.Ver
+    override this.ToString () = this.ToLuid ()
+    member this.AsDisplay = this.ToString ()
 
 let noIdent =
     {

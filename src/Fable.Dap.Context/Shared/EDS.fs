@@ -122,7 +122,11 @@ type D with
     static member option (decoder : JsonDecoder<'a>) = TD.option decoder
     static member oneOf (decoders : JsonDecoder<'a> list) = TD.oneOf decoders
     static member nil (output : 'a) = TD.nil output
-    static member value v = TD.value v
+    static member value v =
+#if FABLE_COMPILER
+        let v = fableObjToJson v
+#endif
+        TD.value v
     static member succeed (output : 'a) = TD.succeed output
     static member fail (msg : string) = TD.fail msg
     static member andThen (cb : 'a -> JsonDecoder<'b>) (decoder : JsonDecoder<'a>) = TD.andThen cb decoder
@@ -187,14 +191,18 @@ type D with
     static member optionalAt path valDecoder fallback decoder = TD.optionalAt path valDecoder fallback decoder
 
 type S = JsonSpecHelper with
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
     static member option<'v> (encoder : JsonEncoder<'v>) (decoder : JsonDecoder<'v>) =
         FieldSpec.Create<'v option> (E.option encoder) (D.option decoder)
-    static member json =
 #if FABLE_COMPILER
-        FieldSpec.Create<Json> id (D.value << fableObjToJson)
-#else
-        FieldSpec.Create<Json> id D.value
+    [<PassGenericsAttribute>]
 #endif
+    static member list<'v> (encoder : JsonEncoder<'v>) (decoder : JsonDecoder<'v>) =
+        FieldSpec.Create<'v list> (E.list encoder) (D.list decoder)
+    static member json =
+        FieldSpec.Create<Json> id D.value
     static member bool = FieldSpec.Create<bool> E.bool D.bool
     static member int = FieldSpec.Create<int> E.int D.int
 #if !FABLE_COMPILER

@@ -65,6 +65,13 @@ type M = MetaBuilderHelper with
         M.guid (key, initValue, "")
     static member guid (key) =
         M.guid (key, "(System.Guid.NewGuid().ToString())")
+    static member luid (key, initValue, validator) =
+        PropMeta.Create "Luid" "E.string" "D.string" "S.string" VarProperty
+            key initValue validator
+    static member luid (key, initValue) =
+        M.luid (key, initValue, "")
+    static member luid (key) =
+        M.luid (key, "(System.Guid.NewGuid().ToString())")
     static member bool (key, initValue, validator) =
         PropMeta.Create "bool" "E.bool" "D.bool" "S.bool" VarProperty
             key initValue validator

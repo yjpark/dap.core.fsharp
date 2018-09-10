@@ -343,7 +343,7 @@ module Extensions =
             |> function
                 | true -> ()
                 | false ->
-                    logError this.Owner (this.GetType ()).Name "SetValue_Failed" (this.Value, v)
+                    logError this.Owner "IVarProperty<_>" "SetValue_Failed" (this.Value, v)
         member this.SyncWith (other : IVarProperty<'v>) =
             other.SyncTo this
     type IDictProperty<'p when 'p :> IProperty> with

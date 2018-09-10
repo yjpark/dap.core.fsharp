@@ -41,7 +41,7 @@ type UnionGenerator (meta : CaseMeta list) =
                 ""
             else
                 case.Fields
-                |> List.map (fun f -> f.Key)
+                |> List.map (fun f -> f.Key.AsCodeVariableName)
                 |> String.concat ", "
                 |> sprintf " (%s)"
         let createKind = if meta.Length = 1 then "" else case.Kind
@@ -76,7 +76,7 @@ type UnionGenerator (meta : CaseMeta list) =
                 []
         )
     let getFieldDefinition (field : IFieldMeta) =
-        sprintf "%s : %s" field.Key field.Type
+        sprintf "%s : %s" field.Key.AsCodeVariableName field.Type
     let getCaseDefinition (case : CaseMeta) =
         let fields =
             if case.Fields.Length = 0 then
