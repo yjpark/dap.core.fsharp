@@ -10,7 +10,7 @@ open Dap.Context
 type Builder (kind : Kind) =
     inherit ObjBuilder<IContext> ()
     override __.Zero () =
-        IContext.Empty kind
+        IContext.Default kind
 
     [<CustomOperation("properties")>]
     member __.Properties (context: IContext, properties : IProperties) =

@@ -54,6 +54,8 @@
 			"Guid",
 			"Luid",
 			"concat",
+			"hardcoded",
+			"inited",
 			"printfn",
 			"sprintf",
 			"typeof"

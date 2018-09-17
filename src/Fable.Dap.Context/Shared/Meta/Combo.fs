@@ -7,11 +7,13 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Meta.Util
 
-type Builder (parents' : Expr<ComboMeta> list) =
+type Builder (parents : (string * ComboMeta) list) =
     inherit Union.FieldsBuilder<ComboMeta, IPropMeta> ()
-    let parents =
-        parents'
-        |> List.map unquoteTemplate
+    new (parents' : Expr<ComboMeta> list) =
+        let parents' =
+            parents'
+            |> List.map unquotePropertyGetExpr
+        Builder (parents')
     override __.Zero () = ComboMeta.Create parents []
     override __.AddField field fields =
         fields.AddField field

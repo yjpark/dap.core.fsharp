@@ -10,7 +10,7 @@ open Fable.Core
 #if FABLE_COMPILER
 [<PassGenericsAttribute>]
 #endif
-let getKind<'a> (x : obj) =
+let getKind<'a> (x : 'a) =
     match FSharpValue.GetUnionFields(x, typeof<'a>) with
     | kind, _ -> kind.Name
 

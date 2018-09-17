@@ -90,6 +90,8 @@ let noEvent =
     let bus = new Bus<NoEvt>(noOwner, "NoEvt")
     bus.Publish
 
+let noWrapReq = fun _ -> NoMsg
+
 let noCastEvt = fun _ -> None
 
 // Note: Use this form to force the caller to provide proper type

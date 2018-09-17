@@ -5,9 +5,10 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Dsl.fs" />
     <Compile Include="_Gen/Types.fs" />
     <Compile Include="_Gen/Builder.fs" />
-    <Compile Include="Dsl.fs" />
+    <Compile Include="_Gen/App.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

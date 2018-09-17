@@ -60,7 +60,7 @@ let doBuilderTest (env : IEnv) : unit =
             bool "published" false
             int "copies" 100
             combo "author" author
-            custom "publisher1" (PublisherProperty.Empty ())
+            custom "publisher1" (PublisherProperty.Default ())
             custom "publisher" (publisher {
                 name "test"
                 year 2001
@@ -89,12 +89,6 @@ let doBuilderTest (env : IEnv) : unit =
     logWarn pub "Test" "Publisher_Context" (E.encodeJson 4 pub)
  *)
 
-let doCompileDsl (env : IEnv) =
-    Dap.Platform.Demo.Dsl.compile []
-    |> List.iter (fun res ->
-        logWarn env "Demo" "Compile_Dsl" res
-    )
-
 let doJsonTest (env : IEnv) =
     let s = Dap.Platform.Demo.Types.Status.CreatePublished "Test" 2001 (Some 100)
     let s = E.encodeJson 0 s
@@ -107,9 +101,24 @@ let doJsonTest (env : IEnv) =
 [<EntryPoint>]
 let main _argv =
     let logging = setupConsole LogLevelWarning
-    let env = Env.live MailboxPlatform logging "Demo"
 
-    doCompileDsl env
+    let logger = getLogger "Prepare"
+
+    Dap.Platform.Demo.Dsl.compile []
+    |> List.iter (fun l -> logWarn logger "Dsl" l ())
+
+    (*
+    let app = App.Create logging "Demo"
+    app.SetupAsync (AppArgs.Default ())
+    |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+    app.Ticker.Actor.OnEvent.AddWatcher app.Env "Test" (fun evt ->
+        logWarn app.Env "Ticker" "OnEvent" evt
+    )
+    Task.Delay 1.0<second>
+    |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+    *)
+
+
     //doJsonTest env
     //doBuilderTest env
 

@@ -2,4 +2,4 @@
 * Use Thoth for json encode and decode
 * Type definition for remote access
 * Generic Client and Service implementation
-* WebSocketService implementation
+* WebSocketGateway implementation

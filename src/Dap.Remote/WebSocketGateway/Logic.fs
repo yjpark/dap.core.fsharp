@@ -1,46 +1,42 @@
 [<RequireQualifiedAccess>]
-module Dap.Remote.WebSocketService.Logic
+module Dap.Remote.WebSocketGateway.Logic
 
 open Dap.Prelude
 open Dap.Context
 open Dap.Platform
 open Dap.Remote
 open Dap.Remote.Internal
-open Dap.Remote.WebSocketService.Types
-open Dap.Remote.WebSocketService.Tasks
+open Dap.Remote.WebSocketGateway.Types
+open Dap.Remote.WebSocketGateway.Tasks
 module WebSocket = Dap.WebSocket.Types
 module WebSocketConn = Dap.WebSocket.Conn.Types
 
 type ActorOperate<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     ActorOperate<Agent<'req, 'evt>, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
 
-let private handleService (msg : Service.Msg) : ActorOperate<'req, 'evt> =
+let private handleGateway (msg : Gateway.Msg) : ActorOperate<'req, 'evt> =
     fun _runner (model, cmd) ->
-        let service = model.Service |> Option.get
-        let service = Service.handle msg service
-        ({model with Service = Some service}, cmd)
+        let service = model.Gateway |> Option.get
+        let service = Gateway.handle msg service
+        ({model with Gateway = Some service}, cmd)
 
 let private handlerSocketEvt (evt : WebSocket.Evt<Packet>) : ActorOperate<'req, 'evt> =
     match evt with
     | WebSocket.OnReceived (_stats, pkt) ->
-        handleService <| Service.OnReceived pkt
+        handleGateway <| Gateway.OnReceived pkt
     | WebSocket.OnSent (_stats, pkt) ->
-        handleService <| Service.OnSent pkt
+        handleGateway <| Gateway.OnSent pkt
     | WebSocket.OnStatusChanged status ->
         fun _runner (model, msg) ->
-            model.Hub
-            |> Option.map (fun hub ->
-                hub.OnStatusChanged status
-            )
-            |> ignore
+            model.StatusEvent.Trigger status
             (model, msg)
 
 let private handleHubEvt (evt : 'evt) : ActorOperate<'req, 'evt> =
-    handleService <| Service.DoSendEvent evt
+    handleGateway <| Gateway.DoSendEvent evt
 
 let private doInit : ActorOperate<'req, 'evt> =
     fun runner (model, cmd) ->
-        runner.Actor.Args.HubSpec.GetHub runner.Ident.Key (runner.Deliver << InternalEvt << SetHub)
+        runner.Actor.Args.HubSpec.GetHub runner.AsGateway (runner.Deliver << InternalEvt << SetHub)
         (model, cmd)
 
 let private setHub (hub : Hub<'req, 'evt>) : ActorOperate<'req, 'evt> =
@@ -51,7 +47,7 @@ let private setHub (hub : Hub<'req, 'evt>) : ActorOperate<'req, 'evt> =
             hub.OnEvent.AddWatcher runner "HubEvt" (runner.Deliver << InternalEvt << HubEvt)
             ({model with Hub = Some hub}, noCmd)
         | Some hub' ->
-            logError runner "WebSocketService" "Hub_Exist" (hub', hub)
+            logError runner "WebSocketGateway" "Hub_Exist" (hub', hub)
             (model, cmd)
 
 let private onRequest (runner : Agent<'req, 'evt>) ((id, payload) : PacketId * Json) : unit =
@@ -78,22 +74,22 @@ let private setSocket (socket : PacketConn.Agent) : ActorOperate<'req, 'evt> =
         match model.Socket with
         | None ->
             socket.Actor.OnEvent.AddWatcher runner "SocketEvt" (runner.Deliver << InternalEvt << SocketEvt)
-            let link : Service.Link = {
+            let link : Gateway.Link = {
                 Send = doSend runner
             }
-            let hub' : Service.Hub = {
+            let hub' : Gateway.Hub = {
                 OnRequest = onRequest runner
             }
-            let serviceArgs : Service.Args = {
+            let gatewayArgs : Gateway.Args = {
                 Link = link
                 Hub = hub'
                 Logger = runner
                 LogTraffic = runner.Actor.Args.LogTraffic
             }
-            let service = Service.create serviceArgs
-            ({model with Socket = Some socket ; Service = Some service}, noCmd)
+            let gateway = Gateway.create gatewayArgs
+            ({model with Socket = Some socket ; Gateway = Some gateway}, noCmd)
         | Some socket' ->
-            logError runner "WebSocketService" "Socket_Exist" (socket', socket)
+            logError runner "WebSocketGateway" "Socket_Exist" (socket', socket)
             (model, cmd)
 
 let private handleInternalEvt (evt : InternalEvt<'req, 'evt>) : ActorOperate<'req, 'evt> =
@@ -109,7 +105,7 @@ let private handleInternalEvt (evt : InternalEvt<'req, 'evt>) : ActorOperate<'re
     | SocketEvt evt ->
         handlerSocketEvt evt
     | OnHandled (packetId, res) ->
-        handleService <| Service.DoSendResponse (packetId, res)
+        handleGateway <| Gateway.DoSendResponse (packetId, res)
 
 let private handleReq (req : Req) : ActorOperate<'req, 'evt> =
     fun runner (model, cmd) ->
@@ -123,15 +119,16 @@ let private update : ActorUpdate<Agent<'req, 'evt>, Args<'req, 'evt>, Model<'req
     fun runner msg model ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt
-        | ServiceReq req -> handleReq req
+        | GatewayReq req -> handleReq req
         )<| runner <| (model, noCmd)
 
 let private init : ActorInit<Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>> =
-    fun _runner _args ->
+    fun runner _args ->
         ({
             Hub = None
             Socket = None
-            Service = None
+            Gateway = None
+            StatusEvent = new Bus<LinkStatus> (runner :> IOwner, "OnStatus")
         }, cmdOfMsg (InternalEvt DoInit))
 
 let logic =
@@ -143,4 +140,4 @@ let logic =
 
 let spec (args : Args<'req, 'evt>) =
     new ActorSpec<Agent<'req, 'evt>, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
-        (Agent<'req, 'evt>.Spawn, args, ServiceReq, noCastEvt, init, update)
+        (Agent<'req, 'evt>.Spawn, args, GatewayReq, noCastEvt, init, update)

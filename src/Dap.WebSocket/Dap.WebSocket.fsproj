@@ -22,6 +22,7 @@
     <Compile Include="Conn/Types.fs" />
     <Compile Include="Conn/Logic.fs" />
     <Compile Include="Conn/TextConn.fs" />
+    <Compile Include="Meta.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.Platform\Dap.Platform.fsproj" />

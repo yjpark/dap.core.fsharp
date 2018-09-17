@@ -1,4 +1,4 @@
-module Dap.Remote.WebSocketService.Tasks
+module Dap.Remote.WebSocketGateway.Tasks
 
 open System.Threading
 open System.Threading.Tasks
@@ -6,7 +6,7 @@ open System.Net.WebSockets
 open FSharp.Control.Tasks.V2
 open Dap.Prelude
 open Dap.Platform
-open Dap.Remote.WebSocketService.Types
+open Dap.Remote.WebSocketGateway.Types
 module WebSocket = Dap.WebSocket.Conn.Types
 
 let internal setSocketAsync : GetTask<Agent<'req, 'evt>, unit> =

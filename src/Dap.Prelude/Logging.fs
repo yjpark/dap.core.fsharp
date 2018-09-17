@@ -138,29 +138,35 @@ let private checkDirectory (path : string) =
     let dirInfo = (new FileInfo (path)).Directory;
     if not dirInfo.Exists then
         dirInfo.Create();
-let addFileSink (path : string) : AddSink =
+
+let addFileSink (path : string) (minimumLevel : LogLevel) : AddSink =
     checkDirectory path
     fun config ->
         Serilog.FileLoggerConfigurationExtensions.File(config.WriteTo,
             Serilog.Formatting.Compact.CompactJsonFormatter(),
-            path)
+            path,
+            restrictedToMinimumLevel = minimumLevel.ToSerilogLevel)
 
-let addRollingFileSink (rollingInterval : RollingInterval) (path : string) : AddSink =
+let addRollingFileSink (rollingInterval : RollingInterval) (path : string) (minimumLevel : LogLevel) : AddSink =
     checkDirectory path
     fun config ->
         Serilog.FileLoggerConfigurationExtensions.File(config.WriteTo,
             Serilog.Formatting.Compact.CompactJsonFormatter(),
-            path, rollingInterval = rollingInterval)
+            path,
+            restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
+            rollingInterval = rollingInterval)
 
-let addDailyFileSink : string -> AddSink =
+let addDailyFileSink : string -> LogLevel -> AddSink =
     addRollingFileSink RollingInterval.Day
 
-let addHourlyFileSink : string -> AddSink =
+let addHourlyFileSink : string -> LogLevel -> AddSink =
     addRollingFileSink RollingInterval.Hour
 
-let addSeqSink (uri : string) : AddSink =
+let addSeqSink (uri : string) (minimumLevel : LogLevel) : AddSink =
     fun config ->
-        Serilog.SeqLoggerConfigurationExtensions.Seq(config.WriteTo, uri)
+        Serilog.SeqLoggerConfigurationExtensions.Seq(config.WriteTo,
+            uri,
+            restrictedToMinimumLevel = minimumLevel.ToSerilogLevel)
 
 let setupConsole (minimumLevel : LogLevel) =
     setupSerilog [ addConsoleSink minimumLevel ]

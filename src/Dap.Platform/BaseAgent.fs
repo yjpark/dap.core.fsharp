@@ -131,6 +131,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.RunFunc3 func = runFunc' this func
         member this.AddTask3 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask3 onFailed getTask = runTask' this onFailed getTask
+        member this.AsAgent3 = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
     //IAgent<'req, 'evt>
     member this.Post (subReq : 'req) = this.Actor.Handle subReq
     member this.PostAsync (getSubReq : Callback<'res> -> 'req) = this.Actor.HandleAsync getSubReq
@@ -141,12 +142,14 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.RunFunc2 func = runFunc' this func
         member this.AddTask2 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask2 onFailed getTask = runTask' this onFailed getTask
+        member this.AsAgent2 = this :> IAgent<'req, 'evt>
     //IAgent<'msg>
     member this.Deliver (msg : 'msg) = dispatch' this (ActorMsg msg)
     member this.DeliverAsync (getMsg : Callback<'res> -> 'msg) = dispatchAsync' this (ActorMsg << getMsg)
     interface IAgent<'msg> with
         member this.Deliver msg = this.Deliver msg
         member this.DeliverAsync getMsg = this.DeliverAsync getMsg
+        member this.AsAgent2' = this :> IAgent<'msg>
     //IAgent
     member __.Env = env
     member __.Ident = ident
@@ -164,5 +167,17 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.RunFunc1 func = runFunc' this func
         member this.AddTask1 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask1 onFailed getTask = runTask' this onFailed getTask
+        member this.AsAgent1 = this :> IAgent
     interface IAspect with
         member this.Owner = this :> IOwner
+
+[<AbstractClass>]
+type PackAgent<'pack, 'runner, 'args, 'model, 'msg, 'req, 'evt
+            when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
+                    and 'model : not struct and 'msg :> IMsg
+                    and 'req :> IReq and 'evt :> IEvt>
+        (pack : 'pack, param) =
+    inherit BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt> (param)
+    member __.Pack = pack
+    interface IPackAgent<'pack> with
+        member this.Pack = this.Pack

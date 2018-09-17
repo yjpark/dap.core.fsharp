@@ -15,7 +15,7 @@ let private doStartTimer req (callback : Callback<Instant>) : ActorOperate =
     fun runner (model, cmd) ->
         match model.Timer with
         | None ->
-            let interval = 1000.0 / runner.Actor.Args.FrameRate
+            let interval = 1000.0 / (double runner.Actor.Args.FrameRate)
             if (interval > 0.0) then
                 let timer = new System.Timers.Timer(Interval = interval, Enabled = true, AutoReset = true)
                 timer.Elapsed.AddHandler(new System.Timers.ElapsedEventHandler(fun _src _evt ->

@@ -20,11 +20,16 @@ type HubReason =
 type Hub<'req, 'evt> = {
     PostReq : 'req -> unit
     OnEvent : IBus<'evt>
-    OnStatusChanged : LinkStatus -> unit
 }
 
 type OnHandled = Result<IResult, HubReason> -> unit
-type GetHub<'req, 'evt> = string -> (Hub<'req, 'evt> -> unit) -> unit
+
+type IGateway =
+    inherit IAgent
+    abstract Status : LinkStatus with get
+    abstract OnStatus : IBus<LinkStatus>
+
+type GetHub<'req, 'evt> = IGateway -> (Hub<'req, 'evt> -> unit) -> unit
 
 type RequestSpec<'req> = {
     Case : UnionCaseInfo
@@ -90,15 +95,20 @@ let getCallback<'res, 'err when 'res :> IResult and 'err :> IError> (runner : IR
     :> obj
 
 #if !FABLE_COMPILER
-let getHub<'agent, 'req, 'evt when 'agent :> IAgent<'req, 'evt>> (env : IEnv) (kind : Kind) (onStatusChanged : 'agent -> LinkStatus -> unit) : GetHub<'req, 'evt> =
-    fun key setHub ->
-        let setHub' = fun ((agent, _isNew) : IAgent * bool) ->
+let getHubSpec<'agent, 'req, 'evt when 'agent :> IAgent<'req, 'evt>> (kind : Kind) requestSpec (setGateway : IGateway -> 'agent -> unit) : HubSpec<'req, 'evt> =
+    let getHub : GetHub<'req, 'evt> = fun gateway setHub ->
+        gateway.Env.Handle <| DoGetAgent kind gateway.Ident.Key ^<| callback gateway (fun ((agent, isNew) : IAgent * bool) ->
             let agent = agent :?> 'agent
+            if isNew then
+                agent |> setGateway gateway
             let hub : Hub<'req, 'evt> = {
                 PostReq = agent.Post
                 OnEvent = agent.Actor.OnEvent
-                OnStatusChanged = onStatusChanged agent
             }
             setHub hub
-        env.Handle <| DoGetAgent kind key ^<| callback env setHub'
+        )
+    {
+        Request = requestSpec
+        GetHub = getHub
+    }
 #endif

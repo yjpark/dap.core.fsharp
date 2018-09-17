@@ -8,19 +8,9 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Archive
 
-module TickerService = Dap.Platform.Ticker.Service
+module TickerTypes = Dap.Platform.Ticker.Types
 
-type Args = {
-    Ticker : TickerService.Service
-    FlushInterval : Duration
-} with
-    static member Create ticker flushInterval =
-        {
-            Ticker = ticker
-            FlushInterval = flushInterval
-        }
-    static member Default ticker =
-        Args.Create ticker <| Duration.FromSeconds 30L
+type Args = RecorderArgs
 
 and Model<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame = {
     Bundle : Bundle'<'extra, 'frame> option

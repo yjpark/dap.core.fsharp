@@ -3,6 +3,7 @@ module Dap.Platform.Helper
 
 open System.IO
 open Dap.Prelude
+open Serilog
 
 let inline addFutureCmd (delay : float<second>) (msg : 'msg) (runner : ^runner) ((model, cmd) : 'model * Cmd<'msg>) : 'model * Cmd<'msg> =
     let interval = 1000.0 * (float delay)
@@ -39,3 +40,37 @@ let calcSha256Sum2 (content : string) : string =
 let calcSha256Sum2WithSalt (salt : string) (content : string) : string =
     calcSha256Sum2 <| content + salt
 
+type ConsoleSinkArgs with
+    member this.ToAddSink () =
+        addConsoleSink this.MinLevel
+
+type FileSinkArgs with
+    member this.ToAddSink () =
+        match this.Rolling with
+        | None ->
+            addFileSink this.Path this.MinLevel
+        | Some RollingInterval.Daily ->
+            addDailyFileSink this.Path this.MinLevel
+        | Some RollingInterval.Hourly ->
+            addHourlyFileSink this.Path this.MinLevel
+
+type LoggingArgs with
+    member this.CreateLogging () : SerilogLogging =
+        [
+            if this.Console.IsSome then
+                yield this.Console.Value.ToAddSink ()
+            if this.File.IsSome then
+                yield this.File.Value.ToAddSink ()
+        ]|> (fun sinks ->
+            if sinks.Length = 0 then
+                failWith "LoggingArgs" "No_Sinks"
+            sinks
+        )|> setupSerilog
+    member this.WithConsoleMinLevel minLevel =
+        this.Console
+        |> Option.map (fun x -> x.WithMinLevel minLevel)
+        |> this.WithConsole
+    member this.WithFileMinLevel minLevel =
+        this.File
+        |> Option.map (fun x -> x.WithMinLevel minLevel)
+        |> this.WithFile

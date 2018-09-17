@@ -63,7 +63,8 @@ type RecordGenerator (meta : ComboMeta) =
             yield sprintf "        fun (this : %s) ->" param.Name
             yield sprintf "            E.object ["
             for prop in meta.Fields do
-                yield sprintf "                \"%s\", %sthis.%s" prop.Key prop.EncoderCall prop.Key.AsCodeMemberName
+                if prop.Encoder <> "" then
+                    yield sprintf "                \"%s\", %sthis.%s" prop.Key prop.EncoderCall prop.Key.AsCodeMemberName
             yield sprintf "            ]"
         ]
     let getJsonDecoder (param : RecordParam) =
@@ -71,7 +72,9 @@ type RecordGenerator (meta : ComboMeta) =
             yield sprintf "    static member JsonDecoder : JsonDecoder<%s> =" param.Name
             yield sprintf "        D.decode %s.Create" param.Name
             for prop in meta.Fields do
-                if param.IsLoose then
+                if prop.Decoder = "" then
+                    yield sprintf "        |> D.hardcoded %s" prop.InitValue
+                elif param.IsLoose then
                     yield sprintf "        |> D.optional \"%s\" %s %s" prop.Key prop.Decoder prop.InitValue
                 else
                     yield sprintf "        |> D.required \"%s\" %s" prop.Key prop.Decoder
@@ -93,12 +96,10 @@ type RecordGenerator (meta : ComboMeta) =
                 yield sprintf "            %s = %s" field.Key.AsCodeMemberName field.Key.AsCodeVariableName
             yield sprintf "        }"
             if not noDefault then
-                let initValues =
-                    meta.Fields
-                    |> List.map (fun f -> f.InitValue)
-                    |> String.concat " "
                 yield sprintf "    static member Default () ="
-                yield sprintf "        %s.Create %s" param.Name initValues
+                yield sprintf "        %s.Create" param.Name
+                for f in meta.Fields do
+                    yield sprintf "            %s" f.InitValue
         ] @ (
             if param.IsJson then
                 getJsonEncoder param
@@ -109,23 +110,27 @@ type RecordGenerator (meta : ComboMeta) =
                     sprintf "            %s.JsonEncoder %s.JsonDecoder" param.Name param.Name
                     sprintf "    interface IJson with"
                     sprintf "        member this.ToJson () = %s.JsonEncoder this" param.Name
+                    sprintf "    interface IObj"
                 ]
             else
                 []
         )
     let getFieldAdder (prop : IPropMeta) =
-        sprintf "    %s : %s" prop.Key.AsCodeMemberName prop.Type
+        sprintf "    %s : %s%s" prop.Key.AsCodeMemberName prop.CommentCode prop.Type
     let getFieldMember (prop : IPropMeta) =
-        let memberName = prop.Key.AsCodeMemberName
-        let varName = prop.Key.AsCodeVariableName
-        sprintf "    member this.With%s (%s : %s) = {this with %s = %s}" memberName varName prop.Type memberName varName
+        [
+            if prop.Decoder <> "" then
+                let memberName = prop.Key.AsCodeMemberName
+                let varName = prop.Key.AsCodeVariableName
+                yield sprintf "    member this.With%s (%s%s : %s) = {this with %s = %s}" memberName prop.CommentCode varName prop.Type memberName varName
+        ]
     interface IGenerator<RecordParam> with
         member __.Generate param =
             [
                 getRecordHeader param
                 meta.AllFields |> List.map getFieldAdder
                 getRecordMiddle param
-                meta.AllFields |> List.map getFieldMember
+                meta.AllFields |> List.map getFieldMember |> List.concat
                 InterfaceGenerator.GetImplementations param.Interfaces
             ]|> List.concat
 
@@ -146,7 +151,7 @@ type ClassGenerator (meta : ComboMeta) =
             yield sprintf "        base.Setup (target)"
             yield sprintf "    )"
             yield sprintf "    static member Create o k = new %s (o, k)" param.Name
-            yield sprintf "    static member Empty () = %s.Create noOwner NoKey" param.Name
+            yield sprintf "    static member Default () = %s.Create noOwner NoKey" param.Name
             yield sprintf "    static member AddToCombo key (combo : IComboProperty) ="
             yield sprintf "        combo.AddCustom<%s>(%s.Create, key)" param.Name param.Name
             yield sprintf "    override this.Self = this"
@@ -161,12 +166,14 @@ type ClassGenerator (meta : ComboMeta) =
                 sprintf "Some %s" prop.Validator
         match prop.Kind with
         | VarProperty ->
-            sprintf "    let %s = target.AddVar<%s> (%s, %s, \"%s\", %s, %s)" prop.Key prop.Type prop.Encoder prop.Decoder prop.Key prop.InitValue validator
+            sprintf "    let %s = target.AddVar<%s%s> (%s, %s, \"%s\", %s, %s)"
+                prop.Key prop.CommentCode prop.Type prop.Encoder prop.Decoder prop.Key prop.InitValue validator
         | _ ->
             failWith "Unsupported" <| sprintf "%A<%s>" prop.Kind prop.Type
 
     let getFieldMember (prop : IPropMeta) =
-        sprintf "    member __.%s : %s = %s" prop.Key.AsCodeMemberName prop.PropType prop.Key
+        sprintf "    member __.%s : %s%s = %s"
+            prop.Key.AsCodeMemberName prop.CommentCode prop.PropType prop.Key
     interface IGenerator<ClassParam> with
         member __.Generate param =
             [
@@ -182,7 +189,7 @@ type BuilderGenerator (meta : ComboMeta) =
         [
             yield sprintf "type %s () =" param.Name
             yield sprintf "    inherit ObjBuilder<%s> ()" param.Kind
-            yield sprintf "    override __.Zero () = %s.Empty ()" param.Kind
+            yield sprintf "    override __.Zero () = %s.Default ()" param.Kind
         ]
     let getBuilderFooter (param : BuilderParam) =
         [
@@ -190,12 +197,18 @@ type BuilderGenerator (meta : ComboMeta) =
             yield sprintf "let %s = %s ()" param.Key param.Name
         ]
     let getOperation (param : BuilderParam) (prop : IPropMeta) =
-        let name = prop.Key.AsCodeMemberName
         [
-            sprintf "    [<CustomOperation(\"%s\")>]" prop.Key
-            sprintf "    member __.%s (target : %s, v) ="  name param.Kind
-            sprintf "        target.%s.SetValue v" name
-            sprintf "        target"
+            if prop.Decoder <> "" then
+                let memberName = prop.Key.AsCodeMemberName
+                let varName = prop.Key.AsCodeVariableName
+                yield sprintf "    [<CustomOperation(\"%s\")>]" prop.Key
+                yield sprintf "    member __.%s (target : %s, %s%s : %s) =" memberName param.Kind prop.CommentCode varName prop.Type
+                match param.Type with
+                | ComboBuilder ->
+                    yield sprintf "        target.%s.SetValue %s" memberName varName
+                    yield sprintf "        target"
+                | ValueBuilder ->
+                    yield sprintf "        target.With%s %s" memberName varName
         ]
     interface IGenerator<BuilderParam> with
         member __.Generate param =

@@ -9,23 +9,19 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Remote.Internal
 open Dap.WebSocket
-open Dap.WebSocket.Client.Types
+module BaseTypes = Dap.WebSocket.Types
+module ClientTypes = Dap.WebSocket.Client.Types
 
 [<Literal>]
-let Kind = "WebSocketPacketClient"
+let Kind = "PacketClient"
 
-type Agent = IAgent<Req<Packet>, Evt<Packet>>
+type Req = ClientTypes.Req<Packet>
+type Evt = BaseTypes.Evt<Packet>
+type Args = BaseTypes.Args<ClientWebSocket, Packet, Req>
+type Agent = ClientTypes.Agent<Packet>
 
-type Evt = Evt<Packet>
+let encode = Dap.Remote.WebSocketGateway.PacketConn.encode
+let decode = Dap.Remote.WebSocketGateway.PacketConn.decode
 
-let encode = Dap.Remote.WebSocketService.PacketConn.encode
-let decode = Dap.Remote.WebSocketService.PacketConn.decode
-
-let spec logTraffic bufferSize =
-    Dap.WebSocket.Client.Logic.spec WebSocketMessageType.Text encode decode logTraffic bufferSize
-
-let registerAsync' kind logTraffic bufferSize env =
-    let spec = spec logTraffic bufferSize
-    env |> Env.registerAsync spec kind
-
-let registerAsync a b = registerAsync' Kind a b
+let args logTraffic bufferSize =
+    Args.Create logTraffic WebSocketMessageType.Text bufferSize encode decode Dap.WebSocket.Client.Logic.handleReq

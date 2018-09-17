@@ -19,13 +19,13 @@ type InterfaceType =
     | ValueInterface
 
 type InterfaceParam = {
-    Name : string
     Type : InterfaceType
+    Name : string
 } with
-    static member Create name type' =
+    static member Create type' name =
         {
-            Name = name
             Type = type'
+            Name = name
         }
     interface IParam with
         member this.Category =
@@ -41,12 +41,12 @@ type Interface = {
 } with
     static member CreateCombo name meta =
         {
-            Param = InterfaceParam.Create name ComboInterface
+            Param = InterfaceParam.Create ComboInterface name
             Meta = meta
         }
     static member CreateValue name meta =
         {
-            Param = InterfaceParam.Create name ValueInterface
+            Param = InterfaceParam.Create ValueInterface name
             Meta = meta
         }
 
@@ -96,15 +96,13 @@ type UnionParam = {
 
 type ClassParam = {
     Name : string
-    Kind : Kind
     IsAbstract : bool
     IsFinal : bool
     Interfaces : Interface list
 } with
-    static member Create name kind isAbstract isFinal interfaces =
+    static member Create name isAbstract isFinal interfaces =
         {
             Name = name
-            Kind = kind
             IsAbstract = isAbstract
             IsFinal = isFinal
             Interfaces = interfaces
@@ -122,19 +120,28 @@ type ClassParam = {
                     yield face.Param.Name
             ] |> String.concat ", "
 
+type BuilderType =
+    | ComboBuilder
+    | ValueBuilder
+
 type BuilderParam = {
-    Key : Key
+    Type : BuilderType
     Name : string
     Kind : Kind
+    Key : Key
 } with
-    static member Create key name kind =
+    static member Create type' name kind key =
         {
-            Key = key
+            Type = type'
             Name = name
             Kind = kind
+            Key = key
         }
     interface IParam with
-        member __.Category = "Builder"
+        member this.Category =
+            match this.Type with
+            | ComboBuilder -> "ComboBuilder"
+            | ValueBuilder -> "ValueBuilder"
         member this.Name = this.Name
         member this.Desc = ""
 

@@ -60,6 +60,7 @@ let fableObjToJson : obj -> E.Value = jsNative
 [<Import("parseJson", "../Native/Util.js")>]
 let parseJson : string -> E.Value = jsNative
 #else
+
 let parseJson (pkt : string) =
     Newtonsoft.Json.Linq.JValue.Parse pkt
 #endif
@@ -143,3 +144,33 @@ type Int64 with
         JValue(this) :> JToken
 
 #endif
+
+type LogLevel with
+    static member JsonEncoder : JsonEncoder<LogLevel> =
+        function
+        | LogLevelFatal -> "fatal"
+        | LogLevelError -> "error"
+        | LogLevelWarning -> "warning"
+        | LogLevelInformation -> "information"
+        | LogLevelDebug -> "debug"
+        | LogLevelVerbose -> "verbose"
+        >> E.string
+    static member JsonDecoder : JsonDecoder<LogLevel> =
+        D.string
+        |> D.map (fun level' ->
+            let level = level'.ToLower ()
+            if level = "fatal" then
+                LogLevelFatal
+            elif level = "error" then
+                LogLevelError
+            elif level = "warning" then
+                LogLevelWarning
+            elif level = "information" then
+                LogLevelInformation
+            elif level = "debug" then
+                LogLevelDebug
+            elif level = "verbose" then
+                LogLevelVerbose
+            else
+                failWith "Invalid_LogLevel" level'
+        )

@@ -24,7 +24,7 @@ let custom<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOw
     spawner owner key
 
 type IComboProperty with
-    static member Empty () = combo noOwner NoKey
+    static member Default () = combo noOwner NoKey
     member this.ValueAsList =
         this.Value |> Map.toList |> List.map snd
     member this.AddMap<'p when 'p :> IProperty> (spawner, key) =
@@ -77,7 +77,7 @@ type IComboProperty with
         this.AddDecimal (key, initValue, None)
 
 type IDictProperty<'p when 'p :> IProperty> with
-    static member Empty spawner = map<'p> spawner noOwner NoKey
+    static member Default spawner = map<'p> spawner noOwner NoKey
 
 type IListProperty<'p when 'p :> IProperty> with
-    static member Empty spawner = list<'p> spawner noOwner NoKey
+    static member Default spawner = list<'p> spawner noOwner NoKey

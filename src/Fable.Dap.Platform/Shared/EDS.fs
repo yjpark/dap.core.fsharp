@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Platform.EDSMB
+module Dap.Platform.EDS
 
 open System
 
@@ -48,23 +48,16 @@ type DateTime with
 
 #if !FABLE_COMPILER
 type NodaTime.Instant with
-    static member JsonEncoder : JsonEncoder<NodaTime.Instant> =
-        E.string << instantToText
-    static member JsonDecoder : JsonDecoder<Instant> =
-        fun token ->
-            if token.Type = JTokenType.Date then
-                Ok <| Instant.FromDateTimeUtc (token.Value<DateTime> ())
-            elif token.Type <> JTokenType.String then
-                Error <| TD.BadPrimitive("a string of Instant", token)
-            else
-                instantOfText (token.Value<string> ())
-                |> Result.mapError (fun e ->
-                    TD.BadPrimitiveExtra ("a string of Instant", token, e.Message)
-                )
-    static member JsonSpec =
-        FieldSpec.Create<NodaTime.Instant>
-            NodaTime.Instant.JsonEncoder NodaTime.Instant.JsonDecoder
+    static member JsonEncoder : JsonEncoder<NodaTime.Instant> = InstantFormat.General.JsonEncoder
+    static member JsonDecoder : JsonDecoder<Instant> = InstantFormat.General.JsonDecoder
+    static member JsonSpec = InstantFormat.General.JsonDecoder
     member this.ToJson () = NodaTime.Instant.JsonEncoder this
+
+type NodaTime.Duration with
+    static member JsonEncoder : JsonEncoder<NodaTime.Duration> = DurationFormat.RoundTrip.JsonEncoder
+    static member JsonDecoder : JsonDecoder<Duration> = DurationFormat.RoundTrip.JsonDecoder
+    static member JsonSpec = DurationFormat.RoundTrip.JsonSpec
+    member this.ToJson () = NodaTime.Duration.JsonEncoder this
 #endif
 
 type E with
@@ -72,6 +65,7 @@ type E with
     static member dateTime = DateTime.JsonEncoder
 #if !FABLE_COMPILER
     static member instant = Instant.JsonEncoder
+    static member duration = Duration.JsonEncoder
 #endif
 
 type D with
@@ -79,6 +73,7 @@ type D with
     static member dateTime = DateTime.JsonDecoder
 #if !FABLE_COMPILER
     static member instant = Instant.JsonDecoder
+    static member duration = Duration.JsonDecoder
 #endif
 
 type S with
@@ -86,29 +81,5 @@ type S with
     static member dateTime = DateTime.JsonSpec
 #if !FABLE_COMPILER
     static member instant = Instant.JsonSpec
-#endif
-
-type M with
-    static member ident (key, initValue, validator) =
-        PropMeta.Create "Ident" "E.ident" "D.ident" "S.ident" VarProperty
-            key initValue validator
-    static member ident (key, initValue) =
-        M.ident (key, initValue, "")
-    static member ident (key) =
-        M.ident (key, "noIdent")
-    static member dateTime (key, initValue, validator) =
-        PropMeta.Create "System.DateTime" "E.dateTime" "D.dateTime" "S.dateTime" VarProperty
-            key initValue validator
-    static member dateTime (key, initValue) =
-        M.dateTime (key, initValue, "")
-    static member dateTime (key) =
-        M.dateTime (key, "System.DateTime.UtcNow")
-#if !FABLE_COMPILER
-    static member instant (key, initValue, validator) =
-        PropMeta.Create "Instant" "E.instant" "D.instant" "S.instant" VarProperty
-            key initValue validator
-    static member instant (key, initValue) =
-        M.instant (key, initValue, "")
-    static member instant (key) =
-        M.instant (key, "(getNow' ())")
+    static member duration = Duration.JsonSpec
 #endif

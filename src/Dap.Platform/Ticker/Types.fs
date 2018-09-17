@@ -4,6 +4,9 @@ open NodaTime
 open Dap.Prelude
 open Dap.Platform
 
+[<Literal>]
+let Kind = "Ticker"
+
 type TickStats = {
     Time' : Instant
     Time : Instant
@@ -11,16 +14,7 @@ type TickStats = {
     Duration : Duration
 }
 
-and Args = {
-    FrameRate : double
-    AutoStart : bool
-} with
-    static member New (frameRate, autoStart) =
-        {
-            FrameRate = frameRate
-            AutoStart = autoStart
-        }
-    static member New (frameRate) = Args.New (frameRate, true)
+and Args = TickerArgs
 
 and Model = {
     BeginTime : Instant option
@@ -69,7 +63,16 @@ let noTickStats = {
     Duration = Duration.FromSeconds 0L
 }
 
+let watchOnTick (owner : IOwner) (ident : string) onTick (this : IAgent<Req, Evt>) =
+    this.Actor.OnEvent.AddWatcher owner ident (fun evt ->
+        match evt with
+        | OnTick (a, b) -> onTick (a, b)
+        | _ -> ()
+    )
+
 type Agent (param) =
     inherit BaseAgent<Agent, Args, Model, Msg, Req, Evt> (param)
     override this.Runner = this
     static member Spawn (param) = new Agent (param)
+    member this.WatchOnTick (owner : IOwner) (ident : string) onTick =
+        this |> watchOnTick owner ident onTick

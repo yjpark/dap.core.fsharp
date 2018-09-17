@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Dap.Platform.Demo.Types
 
+open Dap.Prelude
 open Dap.Context
 
 (*
@@ -32,7 +33,9 @@ type Publisher = {
             Year = year
         }
     static member Default () =
-        Publisher.Create "" 0
+        Publisher.Create
+            ""
+            0
     static member JsonEncoder : JsonEncoder<Publisher> =
         fun (this : Publisher) ->
             E.object [
@@ -48,6 +51,7 @@ type Publisher = {
             Publisher.JsonEncoder Publisher.JsonDecoder
     interface IJson with
         member this.ToJson () = Publisher.JsonEncoder this
+    interface IObj
     member this.WithName (name : string) = {this with Name = name}
     member this.WithYear (year : int) = {this with Year = year}
     interface IPublisher with
@@ -69,7 +73,7 @@ type Author (owner : IOwner, key : Key) =
         base.Setup (target)
     )
     static member Create o k = new Author (o, k)
-    static member Empty () = Author.Create noOwner NoKey
+    static member Default () = Author.Create noOwner NoKey
     static member AddToCombo key (combo : IComboProperty) =
         combo.AddCustom<Author>(Author.Create, key)
     override this.Self = this
@@ -97,9 +101,6 @@ with
         Written (author)
     static member CreatePublished publisher year copies : Status =
         Published (publisher, year, copies)
-    static member JsonSpec =
-        FieldSpec.Create<Status>
-            Status.JsonEncoder Status.JsonDecoder
     static member JsonSpec' : CaseSpec<Status> list =
         [
             CaseSpec<Status>.Create "Unknown" []
@@ -107,10 +108,13 @@ with
                 S.string
             ]
             CaseSpec<Status>.Create "Published" [
-                S.string ; S.int ; S.option E.int D.int
+                S.string ; S.int ; (S.option E.int D.int)
             ]
         ]
     static member JsonEncoder = E.union Status.JsonSpec'
     static member JsonDecoder = D.union Status.JsonSpec'
+    static member JsonSpec =
+        FieldSpec.Create<Status>
+            Status.JsonEncoder Status.JsonDecoder
     interface IJson with
         member this.ToJson () = Status.JsonEncoder this

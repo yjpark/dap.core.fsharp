@@ -26,13 +26,13 @@ type E = JsonEncodeHelper with
     [<PassGenericsAttribute>]
 #endif
     static member kindStr<'a> (a : 'a) =
-        Union.getKind<'a> (a :> obj)
+        Union.getKind (a)
         |> TE.string
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
     static member kind<'a> (a : 'a) =
-        Union.getKind<'a> (a :> obj)
+        Union.getKind (a)
         |> JsonKind |> JsonKind.JsonEncoder
     static member decimal = Decimal.JsonEncoder
 

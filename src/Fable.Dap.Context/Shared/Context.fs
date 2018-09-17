@@ -67,4 +67,4 @@ let custom0<'p when 'p :> ICustomProperties> kind (spawner : PropertySpawner) =
     |> custom<'p> kind
 
 type IContext with
-    static member Empty kind = combo kind :> IContext
+    static member Default kind = combo kind :> IContext

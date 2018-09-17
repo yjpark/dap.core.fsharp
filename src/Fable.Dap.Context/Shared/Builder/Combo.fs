@@ -10,13 +10,13 @@ open Dap.Context.Meta.Util
 type Builder () =
     inherit ObjBuilder<IComboProperty> ()
     override __.Zero () =
-        IComboProperty.Empty ()
+        IComboProperty.Default ()
     [<CustomOperation("option")>]
     member __.Option (combo : IComboProperty, prop : IVarProperty) =
         combo
     [<CustomOperation("union")>]
     member __.Union (combo : IComboProperty, key, expr : Expr<IListProperty<Union.CaseProperty>>) =
-        let (kind, cases) = unquoteTemplate expr
+        let (kind, cases) = unquotePropertyGetExpr expr
         let prop = combo |> Union.UnionProperty.AddToCombo key
         prop.Kind.SetValue kind
         prop.Cases.SyncWith cases

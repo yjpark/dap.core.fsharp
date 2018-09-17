@@ -109,6 +109,9 @@ let private logRunResult (runner : IRunner) (section : string)
 let ignoreOnFailed : OnFailed<'runner> =
     fun _runner _e -> ()
 
+let raiseOnFailed : OnFailed<'runner> =
+    fun _runner e -> raise e
+
 let runFunc' (runner : 'runner when 'runner :> IRunner) (func : Func<'runner, 'res>) : Result<'res, exn> =
     let time = runner.Clock.Now'
     runner.Stats.Func.IncStartedCount ()

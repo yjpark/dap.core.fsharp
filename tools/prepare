@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+cd `dirname $0`
+cd ..
+
+fake build -t Dap.Platform:build -s && \
+echo "" && \
+fsharpi prepare.fsx
+

@@ -2,6 +2,9 @@ module Dap.Platform.Registry.Types
 
 open Dap.Platform
 
+[<Literal>]
+let Kind = "Registry"
+
 type Registry<'k, 'v when 'k : comparison> = IActor<Req<'k, 'v>, Evt<'k, 'v>>
 
 and Args = NoArgs

@@ -102,8 +102,8 @@ let private init : ActorInit<Args, Model<'k, 'v>, Msg<'k, 'v>> =
             Entries = Map.empty
         }, noCmd)
 
-let spec<'k, 'v when 'k : comparison> =
+let spec<'k, 'v when 'k : comparison> args =
     new ActorSpec<Agent<'k, 'v>, Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
-        (Agent<'k, 'v>.Spawn, NoArgs, RegistryReq, castEvt<'k, 'v>, init, update)
+        (Agent<'k, 'v>.Spawn, args, RegistryReq, castEvt<'k, 'v>, init, update)
 
 

@@ -7,7 +7,7 @@ open Dap.Prelude
 open Dap.Context
 
 //http://www.fssnip.net/h1/title/Eval-Quotations
-let unquoteTemplate<'obj> (expr : Expr<'obj>) : string * 'obj =
+let unquotePropertyGetExpr<'obj> (expr : Expr<'obj>) : string * 'obj =
     match expr with
     | QP.PropertyGet (None, p, []) ->
         (p.Name, p.GetValue(null, [| |]) :?> 'obj)

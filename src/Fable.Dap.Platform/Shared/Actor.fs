@@ -150,6 +150,9 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
         member __.Args = spec.Args
         member __.State = state
         member __.Version = version
+        member this.AsActor1 = this :> IActor
+        member this.AsActor2 = this :> IActor<'req, 'evt>
+        member this.AsActor3 = this :> IActor<'args, 'model, 'req, 'evt>
     interface IAspect with
         member __.Owner = agent :> IOwner
 

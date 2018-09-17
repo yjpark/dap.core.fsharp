@@ -4,6 +4,10 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Meta
 open Dap.Context.Generator
+open Dap.Platform
+open Dap.Platform.ArgsBuilder
+open Dap.Platform.Meta
+open Dap.Platform.Generator
 
 let Publisher =
     combo {
@@ -37,10 +41,36 @@ let Status =
         })
     }
 
+let IServicesPack =
+    pack [] {
+        add (M.tickerService ())
+    }
+
+let backupTickerArgs =
+    tickerArgs {
+        frame_rate 1
+    }
+
+let IBackupPack =
+    pack [] {
+        add (M.tickerService (backupTickerArgs, "Backup"))
+    }
+
+let IAppPack =
+    pack [ <@ IServicesPack @> ] {
+        //register (M.spawner ("TestArgs", "TestAgent", "Test", "test"))
+        extra (M.codeArgs ("int", "100", "test"))
+    }
+
+let App =
+    live {
+        has <@ IAppPack @>
+        has <@ IBackupPack @>
+    }
 let compile segments =
     [
         G.File (segments, ["_Gen"; "Types.fs"],
-            G.Module ("Dap.Platform.Demo.Types",
+            G.AutoOpenModule ("Dap.Platform.Demo.Types",
                 [
                     G.Interface IPublisher
                     G.Interface IPerson
@@ -53,9 +83,22 @@ let compile segments =
         G.File (segments, ["_Gen"; "Builder.fs"],
             G.BuilderModule ("Dap.Platform.Demo.Builder",
                 [
-                    "open Dap.Platform.Demo.Types"
-                ], [
-                    G.Builder <@ Author @>
+                    [
+                        "open Dap.Platform.Demo.Types"
+                    ]
+                    G.ComboBuilder <@ Author @>
+                ]
+            )
+        )
+        G.File (segments, ["_Gen"; "App.fs"],
+            G.AutoOpenModule ("Dap.Platform.Demo.App",
+                [
+                    G.AppOpens
+                    G.PackInterface <@ IServicesPack @>
+                    G.PackInterface <@ IAppPack @>
+                    G.PackInterface <@ IBackupPack @>
+                    G.AppInterface <@ App @>
+                    G.AppClass <@ App @>
                 ]
             )
         )

@@ -10,7 +10,7 @@ open Dap.Context
 type Builder<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) =
     inherit ObjBuilder<IListProperty<'p>> ()
     override __.Zero () =
-        IListProperty<'p>.Empty spawner
+        IListProperty<'p>.Default spawner
 
     [<CustomOperation("add")>]
     member __.Properties (list: IListProperty<'p>, prop : 'p) =

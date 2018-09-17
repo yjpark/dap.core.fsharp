@@ -47,19 +47,9 @@ let private doSend req ((pkt, callback) : 'pkt * Callback<SendStats>) : ActorOpe
         BaseLogic.doSend runner req (pkt, callback)
         (model, cmd)
 
-let private handleReq req : ActorOperate<'pkt> =
+let handleReq req : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         match req with
         | DoAttach (a, b, c, d) -> doAttach req (a, b, c, d)
         | DoSend (a, b) -> doSend req (a, b)
         <| runner <| (model, cmd)
-
-let spec sendType (encode : Encode<'pkt>) (decode : Decode<'pkt>) (logTraffic : bool) (bufferSize : int option) =
-    {
-        LogTraffic = logTraffic
-        SendType = sendType
-        BufferSize = defaultArg bufferSize DefaultBufferSize
-        Encode = encode
-        Decode = decode
-        HandleReq = handleReq
-    }|> BaseLogic.spec

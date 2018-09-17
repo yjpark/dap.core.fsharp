@@ -26,7 +26,7 @@ let watch (agent : EventRecorder.Agent) (onEvent : IBus<WebSocketTypes.Evt<strin
             EventRecorder.appendEvent' agent "OnStatusChanged" <| sprintf "%A" status
     )
 
-let createForClientAsync (profile : Profile) (param : EventRecorder.BundleParam') (client : TextClient.Agent) = task {
+let createForClientAsync (profile : Profile) (param : EventRecorder.BundleParam') (client : IAgent<TextClient.Req, TextClient.Evt>) = task {
     let recorderKey = sprintf "%s_%s" client.Ident.Kind client.Ident.Key
     let! (recorder, _) = client.Env.HandleAsync <| DoGetAgent EventRecorder.Kind recorderKey
     let recorder = recorder :?> EventRecorder.Agent

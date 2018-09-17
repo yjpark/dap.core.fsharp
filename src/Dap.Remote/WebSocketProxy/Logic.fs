@@ -64,7 +64,7 @@ let private setSocket (socket : WebSocketClientTypes.Agent<Packet>) : ActorOpera
             updateModel (fun m -> m.WithExtra {m.Extra with Socket = Some socket})
             |-|- addFutureCmd 1.0<second> ^<| SubEvt DoReconnect
         | Some socket' ->
-            logError runner "WebSocketService" "Socket_Exist" (socket', socket)
+            logError runner "WebSocketGateway" "Socket_Exist" (socket', socket)
             noOperation
         <| runner <| (model, cmd)
 

@@ -10,6 +10,9 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Dsl.fs" />
+    <Compile Include="_Gen/Args.fs" />
+    <Compile Include="_Gen/ArgsBuilder.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Volume.fs" />
     <Compile Include="Bundle.fs" />
@@ -23,6 +26,7 @@
     <Compile Include="WebSocket/Accessor/Tasks.fs" />
     <Compile Include="WebSocket/Accessor/Logic.fs" />
     <Compile Include="WebSocket/Accessor/TextAccessor.fs" />
+    <Compile Include="Meta.fs" />
     <Compile Include="Helper.fs" />
   </ItemGroup>
   <ItemGroup>

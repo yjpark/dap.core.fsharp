@@ -49,6 +49,7 @@ type IFieldMeta =
     abstract Spec : string with get
     abstract Key : string with get
     abstract ToVariant : FieldVariation -> IFieldMeta
+    abstract Comment : string option with get
 
 type IPropMeta =
     inherit IFieldMeta
@@ -66,6 +67,7 @@ type PropMeta = {
     InitValue : string
     Validator : string
     Variation : FieldVariation
+    Comment : string option
 } with
     static member Create type' encoder decoder spec kind key initValue validator =
         {
@@ -78,6 +80,7 @@ type PropMeta = {
             InitValue = initValue
             Validator = validator
             Variation = Nothing
+            Comment = None
         }
     member this.ToAlias alias =
         {this with Type = alias}
@@ -94,6 +97,7 @@ type PropMeta = {
                 :> IFieldMeta
             | _ ->
                 failWith "Unsupported" <| sprintf "%A<%s>" this.Kind this.Type
+        member this.Comment = this.Comment
     interface IPropMeta with
         member this.Kind = this.Kind
         member this.InitValue = this.Variation.DecorateInitValue this.InitValue
@@ -150,6 +154,7 @@ type UnionFieldMeta = {
         member this.ToVariant variation =
             {this with Variation = variation}
             :> IFieldMeta
+        member this.Comment = None
 
 type UnionPropMeta = {
     Kind : string
@@ -184,6 +189,7 @@ type UnionPropMeta = {
         member this.ToVariant variation =
             {this with Variation = variation}
             :> IFieldMeta
+        member this.Comment = None
     interface IPropMeta with
         member __.Kind = VarProperty
         member this.InitValue = this.Variation.DecorateInitValue this.InitValue
@@ -203,6 +209,10 @@ module Extensions =
                 sprintf "IVarProperty<%s>" this.Type
             | _ ->
                 failWith "Unsupported" <| sprintf "%A<%s>" this.Kind this.Type
+        member this.CommentCode =
+            this.Comment
+            |> Option.map (fun comment -> sprintf "(* %s *) " comment)
+            |> Option.defaultValue ""
     type ComboMeta with
         member this.AllFields =
             [

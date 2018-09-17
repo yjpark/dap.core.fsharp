@@ -3,31 +3,19 @@ module Dap.Remote.WebSocketProxy.Proxy
 
 open Dap.Platform
 open Dap.Remote
-open Dap.Remote.Proxy.Types
 open Dap.Remote.WebSocketProxy.Types
-
+module BaseTypes = Dap.Remote.Proxy.Types
 module Logic = Dap.Remote.WebSocketProxy.Logic
 module BaseLogic = Dap.Remote.Proxy.Logic
 
-[<Literal>]
-let Kind = "WebSocketProxy"
+type Args<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> = BaseTypes.Args<Extra, SubEvt, 'req, 'res, 'evt>
+type Proxy<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> = BaseTypes.Proxy<Extra, SubEvt, 'req, 'res, 'evt>
 
-let spec (stubSpec : StubSpec<'req, 'res, 'evt>) uri retryDelay logTraffic =
-    let subSpec : SubSpec<Extra, SubEvt, 'req, 'res, 'evt> = {
+let args (stubSpec : Stub.StubSpec<'req, 'res, 'evt>) uri retryDelay logTraffic =
+    let subSpec : BaseTypes.SubSpec<Extra, SubEvt, 'req, 'res, 'evt> = {
         NewExtra = Extra.New
         DoInit = Logic.doInit
         HandleSub = Logic.handleSub
         DoSend = Logic.doSend
     }
-    Args<Extra, SubEvt, 'req, 'res, 'evt>.Create subSpec stubSpec uri retryDelay logTraffic
-    |> BaseLogic.spec<Extra, SubEvt, 'req, 'res, 'evt>
-
-let addAsync' kind key stubSpec uri retryDelay logTraffic =
-    let spec = spec stubSpec uri retryDelay logTraffic
-    Env.addServiceAsync spec kind key
-
-let get'<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> kind key env =
-    env |> Env.getService kind key :?> IProxy<'req, 'res, 'evt>
-
-let addAsync key = addAsync' Kind key
-let get<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> key = get' Kind key
+    Args<'req, 'res, 'evt>.Create subSpec stubSpec uri retryDelay logTraffic

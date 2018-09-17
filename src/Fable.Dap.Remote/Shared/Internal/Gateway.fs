@@ -1,6 +1,6 @@
 [<AutoOpen>]
 [<RequireQualifiedAccess>]
-module Dap.Remote.Internal.Service
+module Dap.Remote.Internal.Gateway
 
 open System
 open Dap.Prelude

@@ -9,7 +9,7 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Archive
 open Dap.Archive.Recorder.Types
-module TickerService = Dap.Platform.Ticker.Service
+module TickerTypes = Dap.Platform.Ticker.Types
 
 type ActorOperate<'extra, 'frame when 'extra :> IJson and 'frame :> IFrame> =
     ActorOperate<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
@@ -112,7 +112,9 @@ let private update : ActorUpdate<Agent<'extra, 'frame>, Args, Model<'extra, 'fra
 
 let private init : ActorInit<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
     fun runner args ->
-        args.Ticker |> TickerService.watchOnTick runner "OnTick" (runner.Deliver << OnTick)
+        let ticker = runner.Env |> Env.getService args.TickerIdent.Kind args.TickerIdent.Key
+        let ticker = ticker :?> TickerTypes.Agent
+        ticker.WatchOnTick runner "OnTick" (runner.Deliver << OnTick)
         ({
             Bundle = None
             NextFlushTime = runner.Clock.Now + args.FlushInterval

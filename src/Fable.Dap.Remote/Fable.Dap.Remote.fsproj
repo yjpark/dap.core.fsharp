@@ -17,7 +17,7 @@
     <Compile Include="Shared/Hub.fs" />
     <Compile Include="Shared/Stub.fs" />
     <Compile Include="Shared/Internal/Client.fs" />
-    <Compile Include="Shared/Internal/Service.fs" />
+    <Compile Include="Shared/Internal/Gateway.fs" />
     <Compile Include="Shared/Proxy/Types.fs" />
     <Compile Include="Shared/Proxy/Logic.fs" />
     <Compile Include="WebSocketProxy/Types.fs" />

@@ -64,7 +64,16 @@ and Args<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq = {
     Encode : Encode<'pkt>
     Decode : Decode<'pkt>
     HandleReq : 'req -> ActorOperate<'socket, 'pkt, 'req>
-}
+} with
+    static member Create logTraffic sendType bufferSize encode decode handleReq =
+        {
+            LogTraffic = logTraffic
+            SendType = sendType
+            BufferSize = bufferSize
+            Encode = encode
+            Decode = decode
+            HandleReq = handleReq
+        }
 
 and Evt<'pkt> =
     | OnSent of SendStats * 'pkt

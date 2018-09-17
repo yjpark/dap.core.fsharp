@@ -93,23 +93,39 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     member __.Actor = actor |> Option.get |> fun a -> a.AsActor
     interface IAgent<'args, 'model, 'msg, 'req, 'evt> with
         member this.Actor = this.Actor
+        member this.AsAgent3 = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
     //IAgent<'req, 'evt>
     member this.Post (subReq : 'req) =
         this.Actor.Handle subReq
     interface IAgent<'req, 'evt> with
         member this.Post req = this.Post req
         member this.Actor = this.Actor :> IActor<'req, 'evt>
+        member this.AsAgent2 = this :> IAgent<'req, 'evt>
     //IAgent<'msg>
     member this.Deliver (msg : 'msg) = this.Deliver' <| cmdOfMsg msg
     interface IAgent<'msg> with
         member this.Deliver msg = this.Deliver msg
+        member this.AsAgent2' = this :> IAgent<'msg>
     //IAgent
     member __.Env = env
     member __.Ident = ident
     interface IAgent with
         member this.Env = env
         member __.Ident = ident
+        member this.AsAgent1 = this :> IAgent
     interface ILogger with
         member this.Log m = logger.Log m
     interface IAspect with
         member this.Owner = this :> IOwner
+
+[<AbstractClass>]
+type PackAgent<'pack, 'runner, 'args, 'model, 'msg, 'req, 'evt
+            when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
+                    and 'model : not struct and 'msg :> IMsg
+                    and 'req :> IReq and 'evt :> IEvt>
+        (pack : 'pack, param) =
+    inherit BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt> (param)
+    member __.Pack = pack
+    interface IPackAgent<'pack> with
+        member this.Pack = this.Pack
+

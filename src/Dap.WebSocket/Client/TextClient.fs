@@ -7,24 +7,18 @@ open System.Net.WebSockets
 
 open Dap.Platform
 open Dap.WebSocket
-open Dap.WebSocket.Client.Types
+module BaseTypes = Dap.WebSocket.Types
+module ClientTypes = Dap.WebSocket.Client.Types
 
 [<Literal>]
-let Kind = "WebSocketTextClient"
+let Utf8Kind = "Utf8TextClient"
 
-type Agent =  IAgent<Req<string>, Evt<string>>
+type Req = ClientTypes.Req<string>
+type Evt = BaseTypes.Evt<string>
+type Args = BaseTypes.Args<ClientWebSocket, string, Req>
+type Agent = ClientTypes.Agent<string>
 
-type Evt = Evt<string>
-
-let spec encoding logTraffic bufferSize =
+let args encoding logTraffic bufferSize =
     let encode = Dap.WebSocket.Internal.Text.encode encoding
     let decode = Dap.WebSocket.Internal.Text.decode encoding
-    Logic.spec WebSocketMessageType.Text encode decode logTraffic bufferSize
-
-let registerAsync' kind encoding logTraffic bufferSize env =
-    let spec = spec encoding logTraffic bufferSize
-    env |> Env.registerAsync spec kind
-
-let registerAsync a b c = registerAsync' Kind a b c
-
-let registerUtf8Async a b c = registerAsync Encoding.UTF8 a b c
+    Args.Create logTraffic WebSocketMessageType.Text bufferSize encode decode Dap.WebSocket.Client.Logic.handleReq

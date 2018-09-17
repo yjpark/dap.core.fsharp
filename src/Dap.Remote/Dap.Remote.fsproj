@@ -16,19 +16,20 @@
     <Compile Include="../Fable.Dap.Remote/Shared/Hub.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Stub.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Internal/Client.fs" />
-    <Compile Include="../Fable.Dap.Remote/Shared/Internal/Service.fs" />
+    <Compile Include="../Fable.Dap.Remote/Shared/Internal/Gateway.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Proxy/Types.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Proxy/Logic.fs" />
-    <Compile Include="WebSocketService/PacketConn.fs" />
-    <Compile Include="WebSocketService/Types.fs" />
-    <Compile Include="WebSocketService/Tasks.fs" />
-    <Compile Include="WebSocketService/Logic.fs" />
-    <Compile Include="WebSocketService/Agent.fs" />
+    <Compile Include="WebSocketGateway/PacketConn.fs" />
+    <Compile Include="WebSocketGateway/Types.fs" />
+    <Compile Include="WebSocketGateway/Tasks.fs" />
+    <Compile Include="WebSocketGateway/Logic.fs" />
+    <Compile Include="WebSocketGateway/Gateway.fs" />
     <Compile Include="WebSocketProxy/PacketClient.fs" />
     <Compile Include="WebSocketProxy/Types.fs" />
     <Compile Include="WebSocketProxy/Tasks.fs" />
     <Compile Include="WebSocketProxy/Logic.fs" />
     <Compile Include="WebSocketProxy/Proxy.fs" />
+    <Compile Include="Meta.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.WebSocket\Dap.WebSocket.fsproj" />

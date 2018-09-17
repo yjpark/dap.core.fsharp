@@ -13,6 +13,17 @@ type Instant = NodaTime.Instant
 type Duration = NodaTime.Duration
 #endif
 
+#if FABLE_COMPILER
+module TE = Thoth.Json.Encode
+module TD = Thoth.Json.Decode
+#else
+module TE = Thoth.Json.Net.Encode
+module TD = Thoth.Json.Net.Decode
+#endif
+
+open Dap.Prelude
+open Dap.Context
+
 type IClock =
     abstract Now : Instant with get
     abstract CalcDuration : Instant -> Instant * Duration
@@ -54,7 +65,7 @@ type FakeClock () =
         member this.Now' = getNow' ()
         member __.CalcDuration' fromTime = calcDuration fromTime
 
-let private TIMESTAMP_FORMAT = "yyyy-MM-ddTHH:mm:ss";
+let private TIMESTAMP_FORMAT = "yyyy-MM-ddTHH:mm:ss"
 
 let dateTimeToText (time : DateTime) =
     time.ToString TIMESTAMP_FORMAT
@@ -75,23 +86,12 @@ let dateTimeOfText (text : string) : Result<DateTime, exn> =
         |> Ok
     with e ->
         Error e
-let instantToText (instant : Instant) =
-    InstantPattern.General.Format (instant)
 
-let instantOfText (text : string) : Result<Instant, exn> =
-    let result = InstantPattern.General.Parse text
-    if result.Success then
-        Ok result.Value
-    else
-        Error result.Exception
-
-let instantToString (format : string) =
-    let pattern = InstantPattern.CreateWithInvariantCulture (format)
-    fun (time : Instant) -> pattern.Format (time)
-
-// https://nodatime.org/2.0.x/api/NodaTime.Text.InstantPattern.html
-
+// https://nodatime.org/2.4.x/api/NodaTime.Text.InstantPattern.html
+// https://nodatime.org/2.4.x/userguide/instant-patterns
+[<RequireQualifiedAccess>]
 type InstantFormat =
+    | General
     | Date
     | DateHour
     | DateHourMinute
@@ -101,16 +101,91 @@ type InstantFormat =
     | DateHourMinuteSecondSub'
     | Custom of string
 with
-    member this.Format =
+    member this.Pattern =
         match this with
-        | Date -> instantToString "uuuu-MM-dd"
-        | DateHour -> instantToString "uuuu-MM-ddTHH"
-        | DateHourMinute -> instantToString "uuuu-MM-ddTHH:mm"
-        | DateHourMinuteSecond -> instantToString "uuuu-MM-ddTHH:mm:ss"
-        | DateHourMinuteSecond' -> instantToString "uuuu-MM-ddTHH_mm_ss"
-        | DateHourMinuteSecondSub -> instantToString "uuuu-MM-ddTHH:mm:ss;FFFFFFFFF"
-        | DateHourMinuteSecondSub' -> instantToString "uuuu-MM-ddTHH_mm_ss_FFFFFFFFF"
-        | Custom format -> instantToString format
+        | General -> InstantPattern.General
+        | Date -> InstantPattern.CreateWithInvariantCulture "uuuu-MM-dd"
+        | DateHour -> InstantPattern.CreateWithInvariantCulture "uuuu-MM-ddTHH"
+        | DateHourMinute -> InstantPattern.CreateWithInvariantCulture "uuuu-MM-ddTHH:mm"
+        | DateHourMinuteSecond -> InstantPattern.CreateWithInvariantCulture "uuuu-MM-ddTHH:mm:ss"
+        | DateHourMinuteSecond' -> InstantPattern.CreateWithInvariantCulture "uuuu-MM-ddTHH_mm_ss"
+        | DateHourMinuteSecondSub -> InstantPattern.CreateWithInvariantCulture "uuuu-MM-ddTHH:mm:ss;FFFFFFFFF"
+        | DateHourMinuteSecondSub' -> InstantPattern.CreateWithInvariantCulture "uuuu-MM-ddTHH_mm_ss_FFFFFFFFF"
+        | Custom format -> InstantPattern.CreateWithInvariantCulture format
+    member this.Format instant = this.Pattern.Format instant
+    member this.Parse text =
+        let result = this.Pattern.Parse text
+        if result.Success then
+            Ok result.Value
+        else
+            Error result.Exception
+    member this.JsonEncoder : JsonEncoder<Instant> =
+        fun instant -> E.string <| this.Format instant
+    member this.JsonDecoder : JsonDecoder<Instant> =
+        fun token ->
+            if token.IsDate then
+                Ok <| Instant.FromDateTimeUtc (token.Value<DateTime> ())
+            elif token.IsString then
+                this.Parse (token.Value<string> ())
+                |> Result.mapError (fun e ->
+                    TD.BadPrimitiveExtra ("parse Instant failed", token, e.Message)
+                )
+            else
+                Error <| TD.BadPrimitive("a string of Instant", token)
+    member this.JsonSpec =
+        FieldSpec.Create<Instant> this.JsonEncoder this.JsonDecoder
+
+let instantToText (instant : Instant) =
+    InstantFormat.General.Format instant
+
+let instantOfText (text : string) : Result<Instant, exn> =
+    InstantFormat.General.Parse text
 
 let noDuration = Duration.Zero
+
+// https://nodatime.org/2.4.x/api/NodaTime.Text.DurationPattern.html
+// https://nodatime.org/2.4.x/userguide/duration-patterns
+[<RequireQualifiedAccess>]
+type DurationFormat =
+    | RoundTrip
+    | HourMinuteSecond
+    | MinuteSecond
+    | Second
+    | Custom of string
+with
+    member this.Pattern =
+        match this with
+        | RoundTrip -> DurationPattern.Roundtrip
+        | HourMinuteSecond -> DurationPattern.CreateWithInvariantCulture "-H:mm:ss.FFFFFFFFF"
+        | MinuteSecond -> DurationPattern.CreateWithInvariantCulture "-M:ss.FFFFFFFFF"
+        | Second -> DurationPattern.CreateWithInvariantCulture "-D:hh:mm:ss.FFFFFFFFF"
+        | Custom format -> DurationPattern.CreateWithInvariantCulture format
+    member this.Format instant = this.Pattern.Format instant
+    member this.Parse text =
+        let result = this.Pattern.Parse text
+        if result.Success then
+            Ok result.Value
+        else
+            Error result.Exception
+    member this.JsonEncoder : JsonEncoder<Duration> =
+        fun duration -> E.string <| this.Format duration
+    member this.JsonDecoder : JsonDecoder<Duration> =
+        fun token ->
+            if token.IsTimeSpan then
+                Ok <| Duration.FromTimeSpan (token.Value<TimeSpan> ())
+            elif token.IsString then
+                this.Parse (token.Value<string> ())
+                |> Result.mapError (fun e ->
+                    TD.BadPrimitiveExtra ("parse Duration failed", token, e.Message)
+                )
+            else
+                Error <| TD.BadPrimitive("a string of Duration", token)
+    member this.JsonSpec =
+        FieldSpec.Create<Duration> this.JsonEncoder this.JsonDecoder
+
+let durationToText (duration : Duration) =
+    DurationFormat.RoundTrip.Format duration
+
+let durationOfText (text : string) : Result<Duration, exn> =
+    DurationFormat.RoundTrip.Parse text
 #endif

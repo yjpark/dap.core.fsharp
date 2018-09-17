@@ -1,5 +1,5 @@
 [<RequireQualifiedAccess>]
-module Dap.Remote.WebSocketService.PacketConn
+module Dap.Remote.WebSocketGateway.PacketConn
 
 open System.Text
 open System.Net.WebSockets
@@ -10,14 +10,16 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Remote.Internal
 open Dap.WebSocket
-open Dap.WebSocket.Conn.Types
+module BaseTypes = Dap.WebSocket.Types
+module ConnTypes = Dap.WebSocket.Conn.Types
 
 [<Literal>]
-let Kind = "WebSocketPacketConn"
+let Kind = "PacketConn"
 
-type Agent = IAgent<Req<Packet>, Evt<Packet>>
-
-type Evt = Evt<Packet>
+type Req = ConnTypes.Req<Packet>
+type Evt = BaseTypes.Evt<Packet>
+type Args = BaseTypes.Args<WebSocket, Packet, Req>
+type Agent = ConnTypes.Agent<Packet>
 
 let encode : Encode<Packet> =
     fun pkt ->
@@ -28,11 +30,5 @@ let decode : Decode<Packet> =
         Dap.WebSocket.Internal.Text.decode Encoding.UTF8 (buffer, index, count)
         |> decodeJson Packet.JsonDecoder
 
-let spec logTraffic bufferSize =
-    Dap.WebSocket.Conn.Logic.spec WebSocketMessageType.Text encode decode logTraffic bufferSize
-
-let registerAsync' kind logTraffic bufferSize env =
-    let spec = spec logTraffic bufferSize
-    env |> Env.registerAsync spec kind
-
-let registerAsync a b = registerAsync' Kind a b
+let args logTraffic bufferSize =
+    Args.Create logTraffic WebSocketMessageType.Text bufferSize encode decode Dap.WebSocket.Conn.Logic.handleReq

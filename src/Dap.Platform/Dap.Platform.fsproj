@@ -18,7 +18,8 @@
     <Compile Include="../Fable.Dap.Platform/Shared/Operator.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Util.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Clock.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/EDSMB.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/EDS.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/MBG.fs" />
     <Compile Include="Stats.fs" />
     <Compile Include="Const.fs" />
     <Compile Include="Runner.fs" />
@@ -37,14 +38,26 @@
     <Compile Include="Play/Types.fs" />
     <Compile Include="Replay/Types.fs" />
     <Compile Include="Env.fs" />
-    <Compile Include="Helper.fs" />
     <Compile Include="MailboxPlatform.fs" />
+    <Compile Include="Dsl.fs" />
+    <Compile Include="_Gen/Args.fs" />
+    <Compile Include="_Gen/ArgsBuilder.fs" />
+    <Compile Include="Helper.fs" />
     <Compile Include="Ticker/Types.fs" />
     <Compile Include="Ticker/Logic.fs" />
-    <Compile Include="Ticker/Service.fs" />
     <Compile Include="Registry/Types.fs" />
     <Compile Include="Registry/Logic.fs" />
-    <Compile Include="Registry/Service.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/State.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Context.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Meta/Types.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Meta/Pack.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Meta/App.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Meta/Helper.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Generator/Types.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Generator/Pack.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Generator/App.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Generator/Helper.fs" />
+    <Compile Include="Meta/Helper.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.Context\Dap.Context.fsproj" />
