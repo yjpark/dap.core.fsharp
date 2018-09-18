@@ -45,6 +45,15 @@ let getAsPackName (packName : string) =
         packName
     |> sprintf "As%s"
 
+let mutable private processedPacks : Set<string> = Set.empty
+let clearProcessedPacks () =
+    processedPacks <- Set.empty
+let markPackProcessed (pack : string) =
+    processedPacks <- processedPacks |> Set.add pack
+let didPackProcessed (pack : string) =
+    processedPacks |> Set.contains pack
+
+
 type InterfaceGenerator (meta : PackMeta) =
     let getArgsInterfaceHeader (param : PackParam) =
         [

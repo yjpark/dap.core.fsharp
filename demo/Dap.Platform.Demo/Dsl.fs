@@ -51,13 +51,17 @@ let backupTickerArgs =
         frame_rate 1
     }
 
+let ICommonPack =
+    pack [ <@ IServicesPack @> ] {
+        extra (M.codeArgs ([], "int", "100", "common"))
+    }
 let IBackupPack =
-    pack [] {
+    pack [ <@ ICommonPack @> ] {
         add (M.tickerService (backupTickerArgs, "Backup"))
     }
 
 let IAppPack =
-    pack [ <@ IServicesPack @> ] {
+    pack [ <@ ICommonPack @> ; <@ IServicesPack @> ] {
         //register (M.spawner ("TestArgs", "TestAgent", "Test", "test"))
         extra (M.codeArgs ([], "int", "100", "test"))
     }
@@ -95,6 +99,7 @@ let compile segments =
                 [
                     G.AppOpens
                     G.PackInterface <@ IServicesPack @>
+                    G.PackInterface <@ ICommonPack @>
                     G.PackInterface <@ IAppPack @>
                     G.PackInterface <@ IBackupPack @>
                     G.AppInterface <@ App @>

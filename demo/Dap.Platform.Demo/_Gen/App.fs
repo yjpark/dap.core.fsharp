@@ -18,20 +18,33 @@ type IServicesPack =
     abstract Args : IServicesPackArgs with get
     abstract Ticker : TickerTypes.Agent with get
 
+type ICommonPackArgs =
+    inherit IServicesPackArgs
+    abstract Common : int with get
+
+type ICommonPack =
+    inherit IPack
+    inherit IServicesPack
+    abstract Args : ICommonPackArgs with get
+
 type IAppPackArgs =
+    inherit ICommonPackArgs
     inherit IServicesPackArgs
     abstract Test : int with get
 
 type IAppPack =
     inherit IPack
+    inherit ICommonPack
     inherit IServicesPack
     abstract Args : IAppPackArgs with get
 
 type IBackupPackArgs =
+    inherit ICommonPackArgs
     abstract BackupTicker : TickerTypes.Args with get
 
 type IBackupPack =
     inherit IPack
+    inherit ICommonPack
     abstract Args : IBackupPackArgs with get
     abstract BackupTicker : TickerTypes.Agent with get
 
@@ -41,19 +54,22 @@ type IBackupPack =
  *)
 type AppArgs = {
     Ticker : (* IServicesPack *) TickerTypes.Args
+    Common : (* ICommonPack *) int
     Test : (* IAppPack *) int
     BackupTicker : (* IBackupPack *) TickerTypes.Args
 } with
-    static member Create ticker test backupTicker
+    static member Create ticker common test backupTicker
             : AppArgs =
         {
             Ticker = ticker
+            Common = common
             Test = test
             BackupTicker = backupTicker
         }
     static member Default () =
         AppArgs.Create
             (TickerTypes.Args.Default ())
+            100
             100
             (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1,"auto_start":true}""")
     static member JsonEncoder : JsonEncoder<AppArgs> =
@@ -65,6 +81,7 @@ type AppArgs = {
         D.decode AppArgs.Create
         |> D.optional "ticker" TickerTypes.Args.JsonDecoder (TickerTypes.Args.Default ())
         |> D.hardcoded 100
+        |> D.hardcoded 100
         |> D.hardcoded (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1,"auto_start":true}""")
     static member JsonSpec =
         FieldSpec.Create<AppArgs>
@@ -75,9 +92,12 @@ type AppArgs = {
     member this.WithTicker ((* IServicesPack *) ticker : TickerTypes.Args) = {this with Ticker = ticker}
     interface IAppPackArgs with
         member this.Test (* IAppPack *) : int = this.Test
+    interface ICommonPackArgs with
+        member this.Common (* ICommonPack *) : int = this.Common
     interface IServicesPackArgs with
         member this.Ticker (* IServicesPack *) : TickerTypes.Args = this.Ticker
     member this.AsServicesPackArgs = this :> IServicesPackArgs
+    member this.AsCommonPackArgs = this :> ICommonPackArgs
     member this.AsAppPackArgs = this :> IAppPackArgs
     interface IBackupPackArgs with
         member this.BackupTicker (* IBackupPack *) : TickerTypes.Args = this.BackupTicker
@@ -106,10 +126,16 @@ type App (loggingArgs : LoggingArgs, scope : Scope) =
     let mutable args : AppArgs option = None
     let mutable setupError : exn option = None
     let mutable (* IServicesPack *) ticker : TickerTypes.Agent option = None
+    let mutable (* IServicesPack *) ticker : TickerTypes.Agent option = None
+    let mutable (* IServicesPack *) ticker : TickerTypes.Agent option = None
     let mutable (* IBackupPack *) backupTicker : TickerTypes.Agent option = None
     let setupAsync (this : App) : Task<unit> = task {
         let args' = args |> Option.get
         try
+            let! (* IServicesPack *) ticker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.Ticker) "Ticker" ""
+            ticker <- Some ticker'
+            let! (* IServicesPack *) ticker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.Ticker) "Ticker" ""
+            ticker <- Some ticker'
             let! (* IServicesPack *) ticker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.Ticker) "Ticker" ""
             ticker <- Some ticker'
             let! (* IBackupPack *) backupTicker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.BackupTicker) "Ticker" "Backup"
@@ -157,10 +183,13 @@ type App (loggingArgs : LoggingArgs, scope : Scope) =
         member this.Args : AppArgs = this.Args
     interface IAppPack with
         member this.Args = this.Args.AsAppPackArgs
+    interface ICommonPack with
+        member this.Args = this.Args.AsCommonPackArgs
     interface IServicesPack with
         member this.Args = this.Args.AsServicesPackArgs
         member __.Ticker (* IServicesPack *) : TickerTypes.Agent = ticker |> Option.get
     member this.AsServicesPack = this :> IServicesPack
+    member this.AsCommonPack = this :> ICommonPack
     member this.AsAppPack = this :> IAppPack
     interface IBackupPack with
         member this.Args = this.Args.AsBackupPackArgs

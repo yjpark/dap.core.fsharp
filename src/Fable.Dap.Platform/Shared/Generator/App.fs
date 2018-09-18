@@ -39,23 +39,27 @@ type InterfaceGenerator (meta : AppMeta) =
     let getExtraArgsMeta packName (args : ExtraArgsMeta) =
         getArgsMeta packName args.Args args.Key
     let rec getPackArgsMeta ((name, package) : string * PackMeta) =
-        (
-            package.Parents
-            |> List.map ^<| getPackArgsMeta
-            |> List.concat
-        ) @ (
-            package.Services
-            |> List.map ^<| getServiceArgsMeta name
-            |> List.concat
-        ) @ (
-            package.Spawners
-            |> List.map ^<| getSpawnerArgsMeta name
-            |> List.concat
-        ) @ (
-            package.ExtraArgs
-            |> List.map ^<| getExtraArgsMeta name
-            |> List.concat
-        )
+        if didPackProcessed name then
+            []
+        else
+            markPackProcessed name
+            (
+                package.Parents
+                |> List.map ^<| getPackArgsMeta
+                |> List.concat
+            ) @ (
+                package.Services
+                |> List.map ^<| getServiceArgsMeta name
+                |> List.concat
+            ) @ (
+                package.Spawners
+                |> List.map ^<| getSpawnerArgsMeta name
+                |> List.concat
+            ) @ (
+                package.ExtraArgs
+                |> List.map ^<| getExtraArgsMeta name
+                |> List.concat
+            )
     let getServiceArgsMember (packName : string) (service : ServiceMeta) =
         let name = sprintf "%s%s" service.Key service.Kind
         let name = name.AsCodeMemberName
@@ -73,30 +77,36 @@ type InterfaceGenerator (meta : AppMeta) =
             sprintf "        member this.%s (* %s *) : %s = this.%s" name packName args.Args.Type name
         ]
     let rec getPackArgsMembers (names : string list) ((name, package) : string * PackMeta) =
-        let isEmpty = package.Services.Length = 0 && package.Spawners.Length = 0 && package.ExtraArgs.Length = 0
-        [
-            sprintf "    interface %sArgs%s" name (if isEmpty then "" else " with")
-        ] @ (
-            package.Services
-            |> List.map ^<| getServiceArgsMember name
-            |> List.concat
-        ) @ (
-            package.Spawners
-            |> List.map ^<| getSpawnerArgsMember name
-            |> List.concat
-        ) @ (
-            package.ExtraArgs
-            |> List.map ^<| getExtraArgsMember name
-            |> List.concat
-        ) @ (
-            package.Parents
-            |> List.map ^<| getPackArgsMembers ^<| names @ [name]
-            |> List.concat
-        ) @ [
-            sprintf "    member this.%sArgs = this :> %sArgs" (getAsPackName name) name
-        ]
+        if didPackProcessed name then
+            []
+        else
+            markPackProcessed name
+            let names = names @ [name]
+            let isEmpty = package.Services.Length = 0 && package.Spawners.Length = 0 && package.ExtraArgs.Length = 0
+            [
+                sprintf "    interface %sArgs%s" name (if isEmpty then "" else " with")
+            ] @ (
+                package.Services
+                |> List.map ^<| getServiceArgsMember name
+                |> List.concat
+            ) @ (
+                package.Spawners
+                |> List.map ^<| getSpawnerArgsMember name
+                |> List.concat
+            ) @ (
+                package.ExtraArgs
+                |> List.map ^<| getExtraArgsMember name
+                |> List.concat
+            ) @ (
+                package.Parents
+                |> List.map ^<| getPackArgsMembers names
+                |> List.concat
+            ) @ [
+                sprintf "    member this.%sArgs = this :> %sArgs" (getAsPackName name) name
+            ]
     let getArgsClassAndBuilder (param : AppParam) =
         let kind = sprintf "%sArgs" param.Name
+        clearProcessedPacks ()
         [
             meta.Packs |> List.map getPackArgsMeta |> List.concat
         ]|> List.concat
@@ -105,6 +115,7 @@ type InterfaceGenerator (meta : AppMeta) =
                 fields
                 |> List.map (fun f -> f :> IPropMeta)
                 |> ComboMeta.Create []
+            clearProcessedPacks ()
             [
                 G.LooseJsonRecord (kind, [], argsMeta)
                 meta.Packs |> List.map (getPackArgsMembers []) |> List.concat
@@ -178,24 +189,29 @@ type ClassGenerator (meta : AppMeta) =
         getAsPackName packName
         |> sprintf "this.%s"
     let rec getPackMembers (names : string list) ((name, package) : string * PackMeta) =
-        [
-            sprintf "    interface %s with" name
-            sprintf "        member this.Args = this.Args.%sArgs" <| getAsPackName name
-        ] @ (
-            package.Services
-            |> List.map ^<| getServiceMember name
-            |> List.concat
-        ) @ (
-            package.Spawners
-            |> List.map ^<| getSpawnerMember name
-            |> List.concat
-        ) @ (
-            package.Parents
-            |> List.map ^<| getPackMembers ^<| names @ [name]
-            |> List.concat
-        ) @ [
-            sprintf "    member %s = this :> %s" (getAsPackCode name) name
-        ]
+        if didPackProcessed name then
+            []
+        else
+            markPackProcessed name
+            let names = names @ [name]
+            [
+                sprintf "    interface %s with" name
+                sprintf "        member this.Args = this.Args.%sArgs" <| getAsPackName name
+            ] @ (
+                package.Services
+                |> List.map ^<| getServiceMember name
+                |> List.concat
+            ) @ (
+                package.Spawners
+                |> List.map ^<| getSpawnerMember name
+                |> List.concat
+            ) @ (
+                package.Parents
+                |> List.map ^<| getPackMembers names
+                |> List.concat
+            ) @ [
+                sprintf "    member %s = this :> %s" (getAsPackCode name) name
+            ]
     let getClassMiddle (param : AppParam) =
         [
             sprintf "    abstract member SetupAsync' : unit -> Task<unit>"
@@ -299,6 +315,7 @@ type ClassGenerator (meta : AppMeta) =
         ]
     interface IGenerator<AppParam> with
         member this.Generate param =
+            clearProcessedPacks ()
             [
                 getAliases meta
                 getClassHeader param
