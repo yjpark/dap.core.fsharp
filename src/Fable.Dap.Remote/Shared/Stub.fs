@@ -169,9 +169,6 @@ type StubSpec<'req, 'res, 'evt> when 'evt :> IEvent = {
 #endif
     member this.DecodeEvent (runner : IRunner) (json : Json) : 'evt =
         try
-#if FABLE_COMPILER
-            let json = json :> obj
-#endif
             castJson (D.union this.Event) json
         with e ->
             logException runner "Stub.DecodeEvent" typeof<'evt>.FullName json e

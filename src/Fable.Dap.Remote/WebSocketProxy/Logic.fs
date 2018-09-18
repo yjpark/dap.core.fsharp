@@ -77,6 +77,7 @@ let internal doInit : ActorOperate<'req, 'res, 'evt> =
             | :? string as pkt ->
                 decodeJson Packet.JsonDecoder pkt
             | _ ->
+                let json = fableObjToJson json
                 castJson Packet.JsonDecoder json
         let args = WebSocketAgent.Args<Packet>.Create encode decode runner.Actor.Args.Uri false
         let socket = runner.Env |> WebSocketAgent.spawn runner.Ident.Key args :?> WebSocketTypes.Agent<Packet>
