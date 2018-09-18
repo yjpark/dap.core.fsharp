@@ -141,6 +141,23 @@ let getJsonInitValue (type' : string) (args : Json) =
     |> sprintf "(decodeJson %s.JsonDecoder \"\"\"%s\"\"\")" type'
 
 type M with
+    static member float (key, initValue : string, validator) =
+        PropMeta.Create "float" "E.float" "D.float" "S.float" VarProperty
+            key initValue validator
+    static member float (key, initValue : float, validator) =
+        let initValue = sprintf "%s" (initValue.ToString ())
+        let initValue =
+            if initValue.IndexOf (".") >= 0 then
+                initValue
+            else
+                initValue + ".0"
+        M.float (key, initValue, validator)
+    static member float (key, initValue : float) =
+        M.float (key, initValue, "")
+    static member float (key) =
+        M.float (key, 0.0)
+
+type M with
     static member decimal (key, initValue : string, validator) =
         PropMeta.Create "decimal" "E.decimal" "D.decimal" "S.decimal" VarProperty
             key initValue validator

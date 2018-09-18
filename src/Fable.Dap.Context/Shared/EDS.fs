@@ -209,4 +209,5 @@ type S = JsonSpecHelper with
     static member long = FieldSpec.Create<int64> E.long D.long
 #endif
     static member string = FieldSpec.Create<string> E.string D.string
+    static member float = FieldSpec.Create<float> E.float D.float
     static member decimal = FieldSpec.Create<decimal> E.decimal D.decimal

@@ -22,7 +22,7 @@ type RecorderArgs = {
     static member Default () =
         RecorderArgs.Create
             noIdent
-            (decodeJson Duration.JsonDecoder "0:00:00:30")
+            (decodeJsonString Duration.JsonDecoder """0:00:00:30""")
     static member JsonEncoder : JsonEncoder<RecorderArgs> =
         fun (this : RecorderArgs) ->
             E.object [
@@ -32,7 +32,7 @@ type RecorderArgs = {
     static member JsonDecoder : JsonDecoder<RecorderArgs> =
         D.decode RecorderArgs.Create
         |> D.optional "ticker_ident" D.ident noIdent
-        |> D.optional "flush_interval" D.duration (decodeJson Duration.JsonDecoder "0:00:00:30")
+        |> D.optional "flush_interval" D.duration (decodeJsonString Duration.JsonDecoder """0:00:00:30""")
     static member JsonSpec =
         FieldSpec.Create<RecorderArgs>
             RecorderArgs.JsonEncoder RecorderArgs.JsonDecoder

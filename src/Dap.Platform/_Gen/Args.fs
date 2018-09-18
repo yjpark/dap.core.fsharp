@@ -145,7 +145,7 @@ type LoggingArgs = {
  *     IsJson, IsLoose
  *)
 type TickerArgs = {
-    FrameRate : int
+    FrameRate : float
     AutoStart : bool
 } with
     static member Create frameRate autoStart
@@ -156,17 +156,17 @@ type TickerArgs = {
         }
     static member Default () =
         TickerArgs.Create
-            10
+            10.0
             true
     static member JsonEncoder : JsonEncoder<TickerArgs> =
         fun (this : TickerArgs) ->
             E.object [
-                "frame_rate", E.int this.FrameRate
+                "frame_rate", E.float this.FrameRate
                 "auto_start", E.bool this.AutoStart
             ]
     static member JsonDecoder : JsonDecoder<TickerArgs> =
         D.decode TickerArgs.Create
-        |> D.optional "frame_rate" D.int 10
+        |> D.optional "frame_rate" D.float 10.0
         |> D.optional "auto_start" D.bool true
     static member JsonSpec =
         FieldSpec.Create<TickerArgs>
@@ -174,5 +174,5 @@ type TickerArgs = {
     interface IJson with
         member this.ToJson () = TickerArgs.JsonEncoder this
     interface IObj
-    member this.WithFrameRate (frameRate : int) = {this with FrameRate = frameRate}
+    member this.WithFrameRate (frameRate : float) = {this with FrameRate = frameRate}
     member this.WithAutoStart (autoStart : bool) = {this with AutoStart = autoStart}

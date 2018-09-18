@@ -153,6 +153,11 @@ type JToken with
     member this.EncodeJson (indent : int) =
         E.encode indent this
 
+type Double with
+    static member JsonDecoder : JsonDecoder<float> = D.float
+    static member JsonEncoder : JsonEncoder<float> = E.float
+    member this.ToJson () = E.float this
+
 type Decimal with
     static member JsonDecoder : JsonDecoder<Decimal> =
         D.string |> D.map (fun s -> Decimal.Parse s)

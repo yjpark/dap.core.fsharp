@@ -31,7 +31,7 @@ let LoggingArgs =
 
 let TickerArgs =
     combo {
-        var (M.int ("frame_rate", 10))
+        var (M.float ("frame_rate", 10.0))
         var (M.bool ("auto_start", true))
     }
 

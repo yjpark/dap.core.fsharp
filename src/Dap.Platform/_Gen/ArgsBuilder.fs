@@ -56,7 +56,7 @@ type TickerArgsBuilder () =
     inherit ObjBuilder<TickerArgs> ()
     override __.Zero () = TickerArgs.Default ()
     [<CustomOperation("frame_rate")>]
-    member __.FrameRate (target : TickerArgs, frameRate : int) =
+    member __.FrameRate (target : TickerArgs, frameRate : float) =
         target.WithFrameRate frameRate
     [<CustomOperation("auto_start")>]
     member __.AutoStart (target : TickerArgs, autoStart : bool) =
