@@ -1,4 +1,3 @@
-[<AutoOpen>]
 [<RequireQualifiedAccess>]
 module Dap.Platform.Context
 

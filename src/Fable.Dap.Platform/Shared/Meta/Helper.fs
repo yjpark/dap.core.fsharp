@@ -51,10 +51,11 @@ type M with
 
 type M with
     static member stateSpawner (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind) =
+        let alias = "State", "Dap.Platform.State"
         let args = CodeArgs (sprintf "State.Args<%s>" name) spawner
         let type' = sprintf "State.Agent<%s>" name
         let spec = "Dap.Platform.State.spec"
-        M.spawner (aliases, args, type', spec, kind)
+        M.spawner (alias :: aliases, args, type', spec, kind)
     static member stateSpawner (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind) =
         let (name, spawner) = unquotePropertyGetExpr expr
         M.stateSpawner (aliases, name, spawner, kind)
@@ -71,10 +72,11 @@ type M with
 
 type M with
     static member contextSpawner (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind) =
+        let alias = "Context", "Dap.Platform.Context"
         let args = CodeArgs (sprintf "Context.Args<%s>" name) spawner
         let type' = sprintf "Context.Agent<%s>" name
         let spec = "Dap.Platform.Context.spec"
-        M.spawner (aliases, args, type', spec, kind)
+        M.spawner (alias :: aliases, args, type', spec, kind)
     static member contextSpawner (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind) =
         let (name, spawner) = unquotePropertyGetExpr expr
         M.contextSpawner (aliases, name, spawner, kind)
