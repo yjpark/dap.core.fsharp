@@ -78,3 +78,4 @@ type LoggingArgs with
     member this.LogFolder =
         this.File
         |> Option.map (fun x -> x.LogFolder)
+        |> Option.defaultValue ""

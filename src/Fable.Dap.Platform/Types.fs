@@ -45,8 +45,12 @@ and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq a
     abstract AsAgent2 : IAgent<'req, 'evt> with get
     abstract AsAgent2' : IAgent<'msg> with get
 
-and IPackAgent<'pack> =
+type AgentEvt = NoEvt
+
+type IPack =
+    inherit ILogger
+    abstract Env : IEnv with get
+
+and IPackAgent<'pack when 'pack :> IPack> =
     inherit IAgent
     abstract Pack : 'pack with get
-
-type AgentEvt = NoEvt

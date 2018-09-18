@@ -64,11 +64,10 @@ type InterfaceGenerator (meta : PackMeta) =
     let getInterfaceHeader (param : PackParam) =
         [
             sprintf "type %s =" param.Name
-            sprintf "    inherit ILogger"
+            sprintf "    inherit IPack"
         ]
     let getInterfaceMiddle (param : PackParam) =
         [
-            sprintf "    abstract Env : IEnv with get"
             sprintf "    abstract Args : %sArgs with get" param.Name
         ]
     let getServiceMember (service : ServiceMeta) =

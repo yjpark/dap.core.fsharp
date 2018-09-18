@@ -114,10 +114,6 @@ and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq a
     abstract AsAgent2 : IAgent<'req, 'evt> with get
     abstract AsAgent2' : IAgent<'msg> with get
 
-and IPackAgent<'pack> =
-    inherit IAgent
-    abstract Pack : 'pack with get
-
 and AgentReq =
     | DoStop of bool * Callback<StopStats>           // forceStop
 with interface IReq
@@ -126,6 +122,15 @@ and AgentEvt =
     | OnWillStop of Callback<unit>
     | OnDidStop of StopStats
 with interface IEvt
+
+type IPack =
+    inherit ILogger
+    abstract LoggingArgs : LoggingArgs with get
+    abstract Env : IEnv with get
+
+and IPackAgent<'pack when 'pack :> IPack> =
+    inherit IAgent
+    abstract Pack : 'pack with get
 
 let DoQuit (forceQuit : bool) callback =
     DoQuit (forceQuit, callback)

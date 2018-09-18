@@ -114,11 +114,10 @@ type InterfaceGenerator (meta : AppMeta) =
     let getInterfaceHeader (param : AppParam) =
         [
             sprintf "type I%s =" param.Name
-            sprintf "    inherit ILogger"
-        #if !FABLE_COMPILER
-            sprintf "    abstract LoggingArgs : LoggingArgs with get"
-        #endif
-            sprintf "    abstract Env : IEnv with get"
+            sprintf "    inherit IPack"
+        ]
+    let getInterfaceFooter (param : AppParam) =
+        [
             sprintf "    abstract Args : %sArgs with get" param.Name
         ]
     let getPackInherit ((name, _package) : string * PackMeta) =
@@ -131,6 +130,7 @@ type InterfaceGenerator (meta : AppMeta) =
                 [""]
                 getInterfaceHeader param
                 meta.Packs |> List.map getPackInherit
+                getInterfaceFooter param
             ]|> List.concat
 
 type ClassGenerator (meta : AppMeta) =
@@ -180,7 +180,6 @@ type ClassGenerator (meta : AppMeta) =
     let rec getPackMembers (names : string list) ((name, package) : string * PackMeta) =
         [
             sprintf "    interface %s with" name
-            sprintf "        member __.Env : IEnv = env"
             sprintf "        member this.Args = this.Args.%sArgs" <| getAsPackName name
         ] @ (
             package.Services
@@ -205,10 +204,6 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "    }"
             sprintf "    member __.Args : %sArgs = args |> Option.get" param.Name
             sprintf "    interface I%s with" param.Name
-        #if !FABLE_COMPILER
-            sprintf "        member __.LoggingArgs : LoggingArgs = loggingArgs"
-        #endif
-            sprintf "        member __.Env : IEnv = env"
             sprintf "        member this.Args : %sArgs = this.Args" param.Name
         ]
     let getPackArgs (pack : string option) =
@@ -293,6 +288,11 @@ type ClassGenerator (meta : AppMeta) =
         ]|> List.concat
     let getClassFooter (param : AppParam) =
         [
+            sprintf "    interface IPack with"
+        #if !FABLE_COMPILER
+            sprintf "        member __.LoggingArgs : LoggingArgs = loggingArgs"
+        #endif
+            sprintf "        member __.Env : IEnv = env"
             sprintf "    interface ILogger with"
             sprintf "        member __.Log m = env.Log m"
             sprintf "    member this.As%s = this :> I%s" param.Name param.Name

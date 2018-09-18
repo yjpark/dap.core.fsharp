@@ -10,6 +10,9 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Dsl.fs" />
+    <Compile Include="_Gen/Args.fs" />
+    <Compile Include="_Gen/ArgsBuilder.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Logic.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Cmd.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Types.fs" />
@@ -39,9 +42,6 @@
     <Compile Include="Replay/Types.fs" />
     <Compile Include="Env.fs" />
     <Compile Include="MailboxPlatform.fs" />
-    <Compile Include="Dsl.fs" />
-    <Compile Include="_Gen/Args.fs" />
-    <Compile Include="_Gen/ArgsBuilder.fs" />
     <Compile Include="Helper.fs" />
     <Compile Include="Ticker/Types.fs" />
     <Compile Include="Ticker/Logic.fs" />

@@ -122,7 +122,8 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
 
 [<AbstractClass>]
 type PackAgent<'pack, 'runner, 'args, 'model, 'msg, 'req, 'evt
-            when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
+            when 'pack :> IPack
+                    and 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
                     and 'model : not struct and 'msg :> IMsg
                     and 'req :> IReq and 'evt :> IEvt>
         (pack : 'pack, param) =
