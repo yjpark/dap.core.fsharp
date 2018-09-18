@@ -139,7 +139,8 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
         agent.DeliverAsync (spec.WrapReq << getReq)
 #endif
     member __.Version = version
-    member this.AsActor = this :> IActor<'args, 'model, 'req, 'evt>
+    member this.AsActor3 = this :> IActor<'args, 'model, 'req, 'evt>
+    member this.AsActor = this.AsActor3
     interface IActor<'args, 'model, 'req, 'evt> with
         member this.Handle req = this.Handle' req
 #if !FABLE_COMPILER
@@ -152,7 +153,6 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
         member __.Version = version
         member this.AsActor1 = this :> IActor
         member this.AsActor2 = this :> IActor<'req, 'evt>
-        member this.AsActor3 = this :> IActor<'args, 'model, 'req, 'evt>
     interface IAspect with
         member __.Owner = agent :> IOwner
 

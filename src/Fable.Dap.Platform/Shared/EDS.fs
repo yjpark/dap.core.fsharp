@@ -30,10 +30,10 @@ type DateTime with
         )
 #else
         fun token ->
-            if token.Type = JTokenType.Date then
+            if token.IsDate then
                 Ok <| token.Value<DateTime> ()
-            elif token.Type = JTokenType.String then
-                let s = token.Value<string> ()
+            elif token.IsString then
+                let s = token.ToStringValue ()
                 dateTimeOfText s
                 |> Result.mapError (fun e ->
                     TD.FailMessage ^<| sprintf "parse failed: %s -> %s" s e.Message

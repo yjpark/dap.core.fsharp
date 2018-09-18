@@ -38,6 +38,13 @@ let rec getAliases (includeParents : bool) (meta : PackMeta) =
         meta.ExtraArgs |> List.map getExtraArgsAliases |> List.concat
     ]|> List.concat
 
+let getAsPackName (packName : string) =
+    if packName.StartsWith ("I") then
+        packName.Substring (1, packName.Length - 1)
+    else
+        packName
+    |> sprintf "As%s"
+
 type InterfaceGenerator (meta : PackMeta) =
     let getArgsInterfaceHeader (param : PackParam) =
         [
@@ -57,9 +64,11 @@ type InterfaceGenerator (meta : PackMeta) =
     let getInterfaceHeader (param : PackParam) =
         [
             sprintf "type %s =" param.Name
+            sprintf "    inherit ILogger"
         ]
     let getInterfaceMiddle (param : PackParam) =
         [
+            sprintf "    abstract Env : IEnv with get"
             sprintf "    abstract Args : %sArgs with get" param.Name
         ]
     let getServiceMember (service : ServiceMeta) =

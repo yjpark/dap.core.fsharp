@@ -59,7 +59,7 @@ let IBackupPack =
 let IAppPack =
     pack [ <@ IServicesPack @> ] {
         //register (M.spawner ("TestArgs", "TestAgent", "Test", "test"))
-        extra (M.codeArgs ("int", "100", "test"))
+        extra (M.codeArgs ([], "int", "100", "test"))
     }
 
 let App =

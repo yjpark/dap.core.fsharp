@@ -107,6 +107,19 @@ let main _argv =
     Dap.Platform.Demo.Dsl.compile []
     |> List.iter (fun l -> logWarn logger "Dsl" l ())
 
+    let d = Duration.FromSeconds 1.0
+    let json = E.encode 0 <| d.ToJson ()
+    logWarn logger "Test" "Encode" (d, json)
+    logWarn logger "Test" "Hack" ("{\"v\":" + json + "}")
+    let printResult = fun result ->
+        match result with
+        | Ok d ->
+            logWarn logger "Test" "Encode_Succeed" <| sprintf "%A" d
+        | Error e ->
+            logWarn logger "Test" "Encode_Failed" <| sprintf "%A" e
+    printResult <| tryDecodeJsonString Duration.JsonDecoder json
+    printResult <| tryDecodeJsonValue Duration.JsonDecoder json
+    printResult <| tryDecodeJson Duration.JsonDecoder json
     (*
     let app = App.Create logging "Demo"
     app.SetupAsync (AppArgs.Default ())

@@ -18,8 +18,11 @@ let list0 spawner = new List.Builder<IProperty> (spawner)
 *)
 
 let jsonInitValue (type' : string) (encoder : JsonEncoder<'args>) (args : 'args) =
-    E.encode 0 <| encoder args
-    |> sprintf "(decodeJson %s.JsonDecoder %s)" type'
+    let json = E.encode 0 <| encoder args
+    if json.StartsWith "\"" then
+        sprintf "(decodeJsonString %s.JsonDecoder \"\"%s\"\")" type' json
+    else
+        sprintf "(decodeJsonValue %s.JsonDecoder \"\"\"%s\"\"\")" type' json
 
 let union = Union.CasesBuilder ()
 let fields = new Union.FieldsBuilder ()

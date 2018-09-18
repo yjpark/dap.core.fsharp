@@ -126,7 +126,7 @@ with
             if token.IsDate then
                 Ok <| Instant.FromDateTimeUtc (token.Value<DateTime> ())
             elif token.IsString then
-                this.Parse (token.Value<string> ())
+                this.Parse (token.ToStringValue ())
                 |> Result.mapError (fun e ->
                     TD.BadPrimitiveExtra ("parse Instant failed", token, e.Message)
                 )
@@ -174,7 +174,7 @@ with
             if token.IsTimeSpan then
                 Ok <| Duration.FromTimeSpan (token.Value<TimeSpan> ())
             elif token.IsString then
-                this.Parse (token.Value<string> ())
+                this.Parse (token.ToStringValue ())
                 |> Result.mapError (fun e ->
                     TD.BadPrimitiveExtra ("parse Duration failed", token, e.Message)
                 )

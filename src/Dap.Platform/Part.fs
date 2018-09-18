@@ -44,8 +44,12 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
     let mutable logger : ILogger option = None
     let mutable dispatch : DispatchMsg<'msg> option = None
     member __.AsDisplay = (ident, partMsg, actor)
+    member this.AsAgent1 = this :> IAgent
+    member this.AsAgent2 = this :> IAgent<'req, 'evt>
+    member this.AsAgent2' = this :> IAgent<'msg>
+    member this.AsAgent3 = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
+    member this.AsAgent = this.AsAgent3
     member this.AsPart = this :> IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
-    member this.AsAgent = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
     //IRunner<'runner>
     abstract member Runner : 'runner with get
     member this.RunFunc (func : Func<'runner, 'res>) = runFunc' this.Runner func
@@ -120,7 +124,8 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.RunFunc3 func = runFunc' this func
         member this.AddTask3 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask3 onFailed getTask = runTask' this onFailed getTask
-        member this.AsAgent3 = this :> IAgent<'args, 'model, 'msg, 'req, 'evt>
+        member this.AsAgent2 = this.AsAgent2
+        member this.AsAgent2' = this.AsAgent2'
     //IAgent<'req, 'evt>
     member this.Post (req : 'req) = this.Part.Handle req
     member this.PostAsync (getReq : Callback<'res> -> 'req) = this.Part.HandleAsync getReq
@@ -131,14 +136,13 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.RunFunc2 func = runFunc' this func
         member this.AddTask2 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask2 onFailed getTask = runTask' this onFailed getTask
-        member this.AsAgent2 = this :> IAgent<'req, 'evt>
+        member this.AsAgent1 = this.AsAgent1
     //IAgent<'msg>
     member this.Deliver (msg : 'msg) = dispatch' this msg
     member this.DeliverAsync (getMsg : Callback<'res> -> 'msg) = dispatchAsync' this getMsg
     interface IAgent<'msg> with
         member this.Deliver msg = this.Deliver msg
         member this.DeliverAsync getMsg = this.DeliverAsync getMsg
-        member this.AsAgent2' = this :> IAgent<'msg>
     //IAgent
     member __.Env = env
     member __.Ident = ident
@@ -152,7 +156,6 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.RunFunc1 func = runFunc' this func
         member this.AddTask1 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask1 onFailed getTask = runTask' this onFailed getTask
-        member this.AsAgent1 = this :> IAgent
     interface IAspect with
         member this.Owner = this.Agent :> IOwner
 

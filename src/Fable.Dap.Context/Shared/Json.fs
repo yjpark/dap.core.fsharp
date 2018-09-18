@@ -32,17 +32,17 @@ module Extensions =
         member this.EncodeJson (indent : int) =
             E.encode indent <| this.ToJson ()
 
-let tryDecodeJson (decoder : JsonDecoder<'res>) pkt =
+let tryDecodeJson (decoder : JsonDecoder<'res>) (pkt : string) =
     D.decodeString decoder pkt
 
-let decodeJson (decoder : JsonDecoder<'res>) pkt =
+let decodeJson (decoder : JsonDecoder<'res>) (pkt : string) =
     tryDecodeJson decoder pkt
     |> Result.get
 
-let tryCastJson (decoder : JsonDecoder<'res>) json =
+let tryCastJson (decoder : JsonDecoder<'res>) (json : Json) =
     D.decodeValue decoder json
 
-let castJson (decoder : JsonDecoder<'res>) json =
+let castJson (decoder : JsonDecoder<'res>) (json : Json) =
     tryCastJson decoder json
     |> Result.get
 
@@ -52,6 +52,32 @@ let returnJson (wrapper : 'a -> 'b) (result : Result<'a, string>) : 'b =
         wrapper v
     | Error err ->
         failwith err
+
+// Currently single json value is no considered as valid json text anymore
+// Actually Newtonsoft works fine, though not sure about the fable
+// So use some wrapping here to decode the properly
+// https://stackoverflow.com/questions/13318420/is-a-single-string-value-considered-valid-json
+let tryDecodeJsonValue (decoder : JsonDecoder<'res>) (pkt : string) =
+    if pkt.StartsWith ("{") || pkt.StartsWith ("[") then
+        tryDecodeJson decoder pkt
+    else
+        let decoder = (D.field "v" decoder)
+        tryDecodeJson decoder ("{\"v\":" + pkt + "}")
+
+let decodeJsonValue (decoder : JsonDecoder<'res>) (pkt : string) =
+    tryDecodeJsonValue decoder pkt
+    |> Result.get
+
+let tryDecodeJsonString (decoder : JsonDecoder<'res>) (pkt : string) =
+    if pkt.StartsWith ("\"") then
+        pkt
+    else
+        "\"" + pkt + "\""
+    |> tryDecodeJsonValue decoder
+
+let decodeJsonString (decoder : JsonDecoder<'res>) (pkt : string) =
+    tryDecodeJsonString decoder pkt
+    |> Result.get
 
 #if FABLE_COMPILER
 [<Import("identity", "../Native/Util.js")>]
@@ -111,11 +137,18 @@ type JToken with
     member this.IsNull = (this.Type = JTokenType.Null)
     member this.IsDate = (this.Type = JTokenType.Date)
     member this.IsTimeSpan = (this.Type = JTokenType.TimeSpan)
-    member this.ToArray () =
-        if this.Type = JTokenType.Array then
+    member this.ToArrayValue () =
+        if this.IsArray then
             this.Value<JArray>().Values()
         else
             Seq.empty
+    member this.ToStringValue () =
+        if this.IsString then
+            //If use this.Value<string>(), some time got exception
+            //"Cannot access child value on Newtonsoft.Json.Linq.JValue."
+            this.ToString ()
+        else
+            ""
 #endif
     member this.EncodeJson (indent : int) =
         E.encode indent this

@@ -137,7 +137,6 @@ type IAsyncPoster<'req> when 'req :> IReq =
 
 and IActor =
     abstract Ident : Ident with get
-    abstract AsActor1 : IActor with get
 
 and IActor<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IActor
@@ -146,14 +145,14 @@ and IActor<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
 #if !FABLE_COMPILER
     inherit IAsyncHandler<'req>
 #endif
-    abstract AsActor2 : IActor<'req, 'evt> with get
+    abstract AsActor1 : IActor with get
 
 and IActor<'args, 'model, 'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IActor<'req, 'evt>
     abstract Args : 'args with get
     abstract State : 'model with get
     abstract Version : Version with get
-    abstract AsActor3 : IActor<'args, 'model, 'req, 'evt> with get
+    abstract AsActor2 : IActor<'req, 'evt> with get
 
 and CastEvt<'msg, 'evt> = 'msg -> 'evt option
 
