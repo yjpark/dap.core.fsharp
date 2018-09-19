@@ -79,13 +79,12 @@ type InterfaceGenerator (meta : AppMeta) =
         else
             markPackProcessed name
             let names = names @ [name]
-            let isEmpty = package.Services.Length = 0 && package.Spawners.Length = 0 && package.ExtraArgs.Length = 0
             (
                 package.Parents
                 |> List.map ^<| getPackArgsMembers names
                 |> List.concat
             ) @ [
-                sprintf "    interface %sArgs%s" name (if isEmpty then "" else " with")
+                sprintf "    interface %sArgs with" name
             ] @ (
                 package.Services
                 |> List.map ^<| getServiceArgsMember name
