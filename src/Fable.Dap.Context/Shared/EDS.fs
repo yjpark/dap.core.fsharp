@@ -176,10 +176,11 @@ type D with
         (d8 : JsonDecoder<'h>) = TD.map8 ctor d1 d2 d3 d4 d5 d6 d7 d8
     static member dict (decoder : JsonDecoder<'a>) = TD.dict decoder
     static member custom d1 d2 = TD.custom d1 d2
-    static member hardcoded<'a, 'b> (a : 'a) (decoder : JsonDecoder<'a -> 'b>) (json : Json) =
 #if FABLE_COMPILER
-        TD.hardcoded<'a, 'b, Json> a decoder json
+    static member hardcoded<'a, 'b, 'c> (a : 'a) (decoder : JsonDecoder<'a -> 'b>) (json : 'c) =
+        TD.hardcoded<'a, 'b, 'c> a decoder json
 #else
+    static member hardcoded<'a, 'b> (a : 'a) (decoder : JsonDecoder<'a -> 'b>) (json : Json) =
         TD.hardcoded<'a, 'b> a decoder json
 #endif
     static member required (key : string) (valDecoder : JsonDecoder<'a>) (decoder : JsonDecoder<'a -> 'b>) = TD.required key valDecoder decoder
