@@ -48,7 +48,7 @@ let IServicesPack =
 
 let backupTickerArgs =
     tickerArgs {
-        frame_rate 1
+        frame_rate 1.0
     }
 
 let ICommonPack =

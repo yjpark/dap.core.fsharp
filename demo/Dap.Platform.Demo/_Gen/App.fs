@@ -21,32 +21,40 @@ type IServicesPack =
 type ICommonPackArgs =
     inherit IServicesPackArgs
     abstract Common : int with get
+    abstract AsServicesPackArgs : IServicesPackArgs with get
 
 type ICommonPack =
     inherit IPack
     inherit IServicesPack
     abstract Args : ICommonPackArgs with get
+    abstract AsServicesPack : IServicesPack with get
 
 type IAppPackArgs =
     inherit ICommonPackArgs
     inherit IServicesPackArgs
     abstract Test : int with get
+    abstract AsCommonPackArgs : ICommonPackArgs with get
+    abstract AsServicesPackArgs : IServicesPackArgs with get
 
 type IAppPack =
     inherit IPack
     inherit ICommonPack
     inherit IServicesPack
     abstract Args : IAppPackArgs with get
+    abstract AsCommonPack : ICommonPack with get
+    abstract AsServicesPack : IServicesPack with get
 
 type IBackupPackArgs =
     inherit ICommonPackArgs
     abstract BackupTicker : TickerTypes.Args with get
+    abstract AsCommonPackArgs : ICommonPackArgs with get
 
 type IBackupPack =
     inherit IPack
     inherit ICommonPack
     abstract Args : IBackupPackArgs with get
     abstract BackupTicker : TickerTypes.Agent with get
+    abstract AsCommonPack : ICommonPack with get
 
 (*
  * Generated: <Record>
@@ -71,7 +79,7 @@ type AppArgs = {
             (TickerTypes.Args.Default ())
             100
             100
-            (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1,"auto_start":true}""")
+            (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
     static member JsonEncoder : JsonEncoder<AppArgs> =
         fun (this : AppArgs) ->
             E.object [
@@ -82,7 +90,7 @@ type AppArgs = {
         |> D.optional "ticker" TickerTypes.Args.JsonDecoder (TickerTypes.Args.Default ())
         |> D.hardcoded 100
         |> D.hardcoded 100
-        |> D.hardcoded (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1,"auto_start":true}""")
+        |> D.hardcoded (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
     static member JsonSpec =
         FieldSpec.Create<AppArgs>
             AppArgs.JsonEncoder AppArgs.JsonDecoder
@@ -90,17 +98,21 @@ type AppArgs = {
         member this.ToJson () = AppArgs.JsonEncoder this
     interface IObj
     member this.WithTicker ((* IServicesPack *) ticker : TickerTypes.Args) = {this with Ticker = ticker}
-    interface IAppPackArgs with
-        member this.Test (* IAppPack *) : int = this.Test
-    interface ICommonPackArgs with
-        member this.Common (* ICommonPack *) : int = this.Common
     interface IServicesPackArgs with
         member this.Ticker (* IServicesPack *) : TickerTypes.Args = this.Ticker
     member this.AsServicesPackArgs = this :> IServicesPackArgs
+    interface ICommonPackArgs with
+        member this.Common (* ICommonPack *) : int = this.Common
+        member this.AsServicesPackArgs = this.AsServicesPackArgs
     member this.AsCommonPackArgs = this :> ICommonPackArgs
+    interface IAppPackArgs with
+        member this.Test (* IAppPack *) : int = this.Test
+        member this.AsCommonPackArgs = this.AsCommonPackArgs
+        member this.AsServicesPackArgs = this.AsServicesPackArgs
     member this.AsAppPackArgs = this :> IAppPackArgs
     interface IBackupPackArgs with
         member this.BackupTicker (* IBackupPack *) : TickerTypes.Args = this.BackupTicker
+        member this.AsCommonPackArgs = this.AsCommonPackArgs
     member this.AsBackupPackArgs = this :> IBackupPackArgs
 
 (*
@@ -120,6 +132,8 @@ type IApp =
     inherit IAppPack
     inherit IBackupPack
     abstract Args : AppArgs with get
+    abstract AsAppPack : IAppPack with get
+    abstract AsBackupPack : IBackupPack with get
 
 type App (loggingArgs : LoggingArgs, scope : Scope) =
     let env = Env.live MailboxPlatform (loggingArgs.CreateLogging ()) scope
@@ -179,25 +193,31 @@ type App (loggingArgs : LoggingArgs, scope : Scope) =
         return ()
     }
     member __.Args : AppArgs = args |> Option.get
-    interface IApp with
-        member this.Args : AppArgs = this.Args
-    interface IAppPack with
-        member this.Args = this.Args.AsAppPackArgs
-    interface ICommonPack with
-        member this.Args = this.Args.AsCommonPackArgs
+    interface ILogger with
+        member __.Log m = env.Log m
+    interface IPack with
+        member __.LoggingArgs : LoggingArgs = loggingArgs
+        member __.Env : IEnv = env
     interface IServicesPack with
         member this.Args = this.Args.AsServicesPackArgs
         member __.Ticker (* IServicesPack *) : TickerTypes.Agent = ticker |> Option.get
     member this.AsServicesPack = this :> IServicesPack
+    interface ICommonPack with
+        member this.Args = this.Args.AsCommonPackArgs
+        member this.AsServicesPack = this.AsServicesPack
     member this.AsCommonPack = this :> ICommonPack
+    interface IAppPack with
+        member this.Args = this.Args.AsAppPackArgs
+        member this.AsCommonPack = this.AsCommonPack
+        member this.AsServicesPack = this.AsServicesPack
     member this.AsAppPack = this :> IAppPack
     interface IBackupPack with
         member this.Args = this.Args.AsBackupPackArgs
         member __.BackupTicker (* IBackupPack *) : TickerTypes.Agent = backupTicker |> Option.get
+        member this.AsCommonPack = this.AsCommonPack
     member this.AsBackupPack = this :> IBackupPack
-    interface IPack with
-        member __.LoggingArgs : LoggingArgs = loggingArgs
-        member __.Env : IEnv = env
-    interface ILogger with
-        member __.Log m = env.Log m
+    interface IApp with
+        member this.Args : AppArgs = this.Args
+        member this.AsAppPack = this.AsAppPack
+        member this.AsBackupPack = this.AsBackupPack
     member this.AsApp = this :> IApp

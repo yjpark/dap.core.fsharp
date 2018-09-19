@@ -13,6 +13,9 @@ type Builder (parents : (string * PackMeta) list) =
             |> List.map unquotePropertyGetExpr
         Builder (parents')
     override __.Zero () = PackMeta.Create parents [] [] []
+    [<CustomOperation("nothing")>]
+    member __.Nothing (meta : PackMeta, ()) =
+        meta
     [<CustomOperation("add")>]
     member __.Add (meta : PackMeta, service : ServiceMeta) =
         {meta with Services = meta.Services @ [service]}

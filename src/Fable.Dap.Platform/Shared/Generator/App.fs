@@ -63,19 +63,16 @@ type InterfaceGenerator (meta : AppMeta) =
     let getServiceArgsMember (packName : string) (service : ServiceMeta) =
         let name = sprintf "%s%s" service.Key service.Kind
         let name = name.AsCodeMemberName
-        [
-            sprintf "        member this.%s (* %s *) : %s = this.%s" name packName service.Args.Type name
-        ]
+        sprintf "        member this.%s (* %s *) : %s = this.%s" name packName service.Args.Type name
     let getSpawnerArgsMember (packName : string) (spawner : SpawnerMeta) =
         let name = spawner.Kind.AsCodeMemberName
-        [
-            sprintf "        member this.%s (* %s *) : %s = this.%s" name packName spawner.Args.Type name
-        ]
+        sprintf "        member this.%s (* %s *) : %s = this.%s" name packName spawner.Args.Type name
     let getExtraArgsMember (packName : string) (args : ExtraArgsMeta) =
         let name = args.Key.AsCodeMemberName
-        [
-            sprintf "        member this.%s (* %s *) : %s = this.%s" name packName args.Args.Type name
-        ]
+        sprintf "        member this.%s (* %s *) : %s = this.%s" name packName args.Args.Type name
+    let getPackArgsAs (names : string list) ((name, package) : string * PackMeta) =
+        let asName = getAsPackName name
+        sprintf "        member this.%sArgs = this.%sArgs" asName asName
     let rec getPackArgsMembers (names : string list) ((name, package) : string * PackMeta) =
         if didPackProcessed name then
             []
@@ -83,24 +80,24 @@ type InterfaceGenerator (meta : AppMeta) =
             markPackProcessed name
             let names = names @ [name]
             let isEmpty = package.Services.Length = 0 && package.Spawners.Length = 0 && package.ExtraArgs.Length = 0
-            [
+            (
+                package.Parents
+                |> List.map ^<| getPackArgsMembers names
+                |> List.concat
+            ) @ [
                 sprintf "    interface %sArgs%s" name (if isEmpty then "" else " with")
             ] @ (
                 package.Services
                 |> List.map ^<| getServiceArgsMember name
-                |> List.concat
             ) @ (
                 package.Spawners
                 |> List.map ^<| getSpawnerArgsMember name
-                |> List.concat
             ) @ (
                 package.ExtraArgs
                 |> List.map ^<| getExtraArgsMember name
-                |> List.concat
             ) @ (
                 package.Parents
-                |> List.map ^<| getPackArgsMembers names
-                |> List.concat
+                |> List.map ^<| getPackArgsAs names
             ) @ [
                 sprintf "    member this.%sArgs = this :> %sArgs" (getAsPackName name) name
             ]
@@ -133,6 +130,8 @@ type InterfaceGenerator (meta : AppMeta) =
         ]
     let getPackInherit ((name, _package) : string * PackMeta) =
         sprintf "    inherit %s" name
+    let getPackAs ((name, _package) : string * PackMeta) =
+        sprintf "    abstract %s : %s with get" (getAsPackName name) name
     interface IGenerator<AppParam> with
         member this.Generate param =
             [
@@ -142,6 +141,7 @@ type InterfaceGenerator (meta : AppMeta) =
                 getInterfaceHeader param
                 meta.Packs |> List.map getPackInherit
                 getInterfaceFooter param
+                meta.Packs |> List.map getPackAs
             ]|> List.concat
 
 type ClassGenerator (meta : AppMeta) =
@@ -174,9 +174,7 @@ type ClassGenerator (meta : AppMeta) =
         )
     let getServiceMember (packName : string) (service : ServiceMeta) =
         let name = sprintf "%s%s" service.Key service.Kind
-        [
-            sprintf "        member __.%s (* %s *) : %s = %s |> Option.get" name.AsCodeMemberName packName service.Type name.AsCodeVariableName
-        ]
+        sprintf "        member __.%s (* %s *) : %s = %s |> Option.get" name.AsCodeMemberName packName service.Type name.AsCodeVariableName
     let getSpawnerMember (packName : string) (spawner : SpawnerMeta) =
         let kind = spawner.Kind.AsCodeMemberName
         [
@@ -188,27 +186,32 @@ type ClassGenerator (meta : AppMeta) =
     let getAsPackCode (packName : string) =
         getAsPackName packName
         |> sprintf "this.%s"
+    let getPackAs ((name, package) : string * PackMeta) =
+        let asPackCode = getAsPackCode name
+        sprintf "        member %s = %s" asPackCode asPackCode
     let rec getPackMembers (names : string list) ((name, package) : string * PackMeta) =
         if didPackProcessed name then
             []
         else
             markPackProcessed name
             let names = names @ [name]
-            [
+            (
+                package.Parents
+                |> List.map ^<| getPackMembers names
+                |> List.concat
+            ) @ [
                 sprintf "    interface %s with" name
                 sprintf "        member this.Args = this.Args.%sArgs" <| getAsPackName name
             ] @ (
                 package.Services
                 |> List.map ^<| getServiceMember name
-                |> List.concat
             ) @ (
                 package.Spawners
                 |> List.map ^<| getSpawnerMember name
                 |> List.concat
             ) @ (
                 package.Parents
-                |> List.map ^<| getPackMembers names
-                |> List.concat
+                |> List.map getPackAs
             ) @ [
                 sprintf "    member %s = this :> %s" (getAsPackCode name) name
             ]
@@ -219,8 +222,13 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "        return ()"
             sprintf "    }"
             sprintf "    member __.Args : %sArgs = args |> Option.get" param.Name
-            sprintf "    interface I%s with" param.Name
-            sprintf "        member this.Args : %sArgs = this.Args" param.Name
+            sprintf "    interface ILogger with"
+            sprintf "        member __.Log m = env.Log m"
+            sprintf "    interface IPack with"
+        #if !FABLE_COMPILER
+            sprintf "        member __.LoggingArgs : LoggingArgs = loggingArgs"
+        #endif
+            sprintf "        member __.Env : IEnv = env"
         ]
     let getPackArgs (pack : string option) =
         pack
@@ -304,13 +312,11 @@ type ClassGenerator (meta : AppMeta) =
         ]|> List.concat
     let getClassFooter (param : AppParam) =
         [
-            sprintf "    interface IPack with"
-        #if !FABLE_COMPILER
-            sprintf "        member __.LoggingArgs : LoggingArgs = loggingArgs"
-        #endif
-            sprintf "        member __.Env : IEnv = env"
-            sprintf "    interface ILogger with"
-            sprintf "        member __.Log m = env.Log m"
+            sprintf "    interface I%s with" param.Name
+            sprintf "        member this.Args : %sArgs = this.Args" param.Name
+        ]
+    let getClassEnd (param : AppParam) =
+        [
             sprintf "    member this.As%s = this :> I%s" param.Name param.Name
         ]
     interface IGenerator<AppParam> with
@@ -324,5 +330,7 @@ type ClassGenerator (meta : AppMeta) =
                 getClassMiddle param
                 meta.Packs |> List.map (getPackMembers []) |> List.concat
                 getClassFooter param
+                meta.Packs |> List.map getPackAs
+                getClassEnd param
             ]|> List.concat
 

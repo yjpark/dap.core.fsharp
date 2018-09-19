@@ -70,6 +70,8 @@ type InterfaceGenerator (meta : PackMeta) =
         sprintf "    abstract %s : %s with get" name args.Args.Type
     let getArgsParentInherit ((name, _package) : string * PackMeta) =
         sprintf "    inherit %sArgs" name
+    let getArgsParentAs ((name, _package) : string * PackMeta) =
+        sprintf "    abstract %sArgs : %sArgs with get" (getAsPackName name) name
     let getInterfaceHeader (param : PackParam) =
         [
             sprintf "type %s =" param.Name
@@ -87,22 +89,8 @@ type InterfaceGenerator (meta : PackMeta) =
         sprintf "    abstract Get%sAsync : Key -> Task<%s * bool>" kind spawner.Type
     let getParentInherit ((name, _package) : string * PackMeta) =
         sprintf "    inherit %s" name
-    let rec isEmptyInterface (pack : PackMeta) (includeExtraArgs : bool) =
-        let mutable isEmpty = true
-        if pack.Services.Length > 0 then
-            isEmpty <- false
-        elif pack.Spawners.Length > 0 then
-            isEmpty <- false
-        elif includeExtraArgs && pack.ExtraArgs.Length > 0 then
-            isEmpty <- false
-        else
-            for (_name, parent) in pack.Parents do
-                if isEmpty then
-                    if isEmptyInterface parent includeExtraArgs then
-                        ()
-                    else
-                        isEmpty <- false
-        isEmpty
+    let getParentAs ((name, _package) : string * PackMeta) =
+        sprintf "    abstract %s : %s with get" (getAsPackName name) name
     interface IGenerator<PackParam> with
         member this.Generate param =
             [
@@ -112,14 +100,12 @@ type InterfaceGenerator (meta : PackMeta) =
                 meta.Services |> List.map getArgsServiceMember
                 meta.Spawners |> List.map getArgsSpawnerMember
                 meta.ExtraArgs |> List.map getArgsExtraMember
-                (if isEmptyInterface meta true then
-                    ["    end"]
-                else
-                    [])
+                meta.Parents |> List.map getArgsParentAs
                 [""]
                 getInterfaceHeader param
                 meta.Parents |> List.map getParentInherit
                 getInterfaceMiddle param
                 meta.Services |> List.map getServiceMember
                 meta.Spawners |> List.map getSpawnerMember
+                meta.Parents |> List.map getParentAs
             ]|> List.concat
