@@ -4,9 +4,13 @@ module Dap.Remote.WebSocketProxy.Proxy
 open Dap.Platform
 open Dap.Remote
 open Dap.Remote.WebSocketProxy.Types
+
 module BaseTypes = Dap.Remote.Proxy.Types
-module Logic = Dap.Remote.WebSocketProxy.Logic
 module BaseLogic = Dap.Remote.Proxy.Logic
+module Logic = Dap.Remote.WebSocketProxy.Logic
+
+[<Literal>]
+let Kind = "WebSocketProxy"
 
 type Args<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> = BaseTypes.Args<Extra, SubEvt, 'req, 'res, 'evt>
 type Proxy<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> = BaseTypes.Proxy<Extra, SubEvt, 'req, 'res, 'evt>

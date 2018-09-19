@@ -9,6 +9,9 @@ open Dap.Remote.Proxy.Types
 
 module WebSocketTypes = Dap.WebSocket.Client.Types
 
+[<Literal>]
+let PacketClientKind = "PacketClient"
+
 type Extra = {
     Socket : WebSocketTypes.Agent<Packet> option
 } with

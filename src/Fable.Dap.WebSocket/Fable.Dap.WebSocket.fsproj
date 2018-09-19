@@ -13,7 +13,8 @@
   <ItemGroup>
     <Compile Include="Client/Types.fs" />
     <Compile Include="Client/Logic.fs" />
-    <Compile Include="Client/Agent.fs" />
+    <Compile Include="Client/TextClient.fs" />
+    <Compile Include="Meta.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Platform\Fable.Dap.Platform.fsproj" />

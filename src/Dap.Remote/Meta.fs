@@ -7,7 +7,7 @@ open Dap.Platform
 open Dap.Platform.Meta
 
 type M with
-    static member packetClientSpawner (logTraffic : bool, bufferSize : int, kind : Kind) =
+    static member packetClientSpawner (logTraffic : bool, bufferSize : int) =
         let alias = "PacketClient", "Dap.Remote.WebSocketProxy.PacketClient"
         let args = "PacketClient.Args"
         let args =
@@ -15,14 +15,13 @@ type M with
             |> CodeArgs args
         let type' = "PacketClient.Agent"
         let spec = "Dap.WebSocket.Internal.Logic.spec"
+        let kind = Dap.Remote.WebSocketProxy.PacketClient.Kind
         M.spawner ([alias], args, type', spec, kind)
-    static member packetClientSpawner (logTraffic : bool, kind : Kind) =
-        M.packetClientSpawner(logTraffic, Dap.WebSocket.Const.DefaultBufferSize, kind)
     static member packetClientSpawner (logTraffic : bool) =
-        M.packetClientSpawner(logTraffic, Dap.Remote.WebSocketProxy.PacketClient.Kind)
+        M.packetClientSpawner(logTraffic, Dap.WebSocket.Const.DefaultBufferSize)
 
 type M with
-    static member packetConnSpawner (logTraffic : bool, bufferSize : int, kind : Kind) =
+    static member packetConnSpawner (logTraffic : bool, bufferSize : int) =
         let alias = "PacketConn", "Dap.Remote.WebSocketGateway.PacketConn"
         let args = "PacketConn.Args"
         let args =
@@ -30,11 +29,10 @@ type M with
             |> CodeArgs args
         let type' = "PacketConn.Agent"
         let spec = "Dap.WebSocket.Internal.Logic.spec"
+        let kind = Dap.Remote.WebSocketGateway.PacketConn.Kind
         M.spawner ([alias], args, type', spec, kind)
-    static member packetConnSpawner (logTraffic : bool, kind : Kind) =
-        M.packetConnSpawner(logTraffic, Dap.WebSocket.Const.DefaultBufferSize, kind)
     static member packetConnSpawner (logTraffic : bool) =
-        M.packetConnSpawner(logTraffic, Dap.Remote.WebSocketGateway.PacketConn.Kind)
+        M.packetConnSpawner(logTraffic, Dap.WebSocket.Const.DefaultBufferSize)
 
 type M with
     static member proxySpawner (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool, kind : Kind) =
@@ -50,11 +48,17 @@ type M with
         let type' = sprintf "Proxy.Proxy<%s>" reqResEvt
         let spec = "Dap.Remote.Proxy.Logic.spec"
         M.spawner (alias :: aliases, args, type', spec, kind)
+    static member proxySpawner (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool) =
+        let kind = Dap.Remote.WebSocketProxy.Proxy.Kind
+        M.proxySpawner (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, kind)
     static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool, kind : Kind, key : Key) =
         M.proxySpawner (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, kind)
         |> fun s -> s.ToService key
-    static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool, kind : Kind) =
-        M.proxyService (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, kind, NoKey)
+    static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool, key : Key) =
+        let kind = Dap.Remote.WebSocketProxy.Proxy.Kind
+        M.proxyService (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, kind, key)
+    static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool) =
+        M.proxyService (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, NoKey)
 
 type M with
     static member gatewaySpawner (aliases : ModuleAlias list, reqEvt : string, hubSpec : string, logTraffic : bool, kind : Kind) =
@@ -66,3 +70,6 @@ type M with
         let type' = "Gateway.Gateway"
         let spec = "Dap.Remote.WebSocketGateway.Logic.spec"
         M.spawner (alias :: aliases, args, type', spec, kind)
+    static member gatewaySpawner (aliases : ModuleAlias list, reqEvt : string, hubSpec : string, logTraffic : bool) =
+        let kind = Dap.Remote.WebSocketGateway.Gateway.Kind
+        M.gatewaySpawner (aliases, reqEvt, hubSpec, logTraffic, kind)

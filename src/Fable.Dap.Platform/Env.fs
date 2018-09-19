@@ -27,9 +27,8 @@ type internal Env (logging', scope', clock') =
         member __.Luid = scope
         member __.Disposed = false
 
-let spawn spec kind key (env : IEnv) : IAgent =
-    (Agent.spawn spec <| AgentParam.Create env kind key)
-    :> IAgent
+let spawn (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>) kind key (env : IEnv) =
+    Agent.spawn spec <| AgentParam.Create env kind key
 
 let live logging scope =
     new Env (logging, scope, RealClock()) :> IEnv

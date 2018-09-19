@@ -15,7 +15,7 @@ open Dap.Remote.WebSocketProxy.Types
 module BaseLogic = Dap.Remote.Proxy.Logic
 
 module WebSocketTypes = Dap.WebSocket.Client.Types
-module WebSocketAgent = Dap.WebSocket.Client.Agent
+module WebSocketLogic = Dap.WebSocket.Client.Logic
 
 let private doReconnect : ActorOperate<'req, 'res, 'evt> =
     fun _runner (model, cmd) ->
@@ -79,7 +79,11 @@ let internal doInit : ActorOperate<'req, 'res, 'evt> =
             | _ ->
                 let json = fableObjToJson json
                 castJson Packet.JsonDecoder json
-        let args = WebSocketAgent.Args<Packet>.Create encode decode runner.Actor.Args.Uri false
-        let socket = runner.Env |> WebSocketAgent.spawn runner.Ident.Key args :?> WebSocketTypes.Agent<Packet>
+        let args = WebSocketTypes.Args<Packet>.Create encode decode runner.Actor.Args.Uri false
+        let spec = WebSocketLogic.spec args
+        let socket =
+            runner.Env
+            |> Env.spawn spec PacketClientKind runner.Ident.Key
+            :?> WebSocketTypes.Agent<Packet>
         (runner, model, cmd)
         |=|> addSubCmd SubEvt ^<| SetSocket socket

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+cd `dirname $0`
+cd ..
+
+fake build -t Fable.Dap.Prelude:build -s && \
+fake build -t Fable.Dap.Context:build -s && \
+fake build -t Fable.Dap.Platform:build -s && \
+echo "" && \
+fsharpi prepare-demo.fable.fsx
+

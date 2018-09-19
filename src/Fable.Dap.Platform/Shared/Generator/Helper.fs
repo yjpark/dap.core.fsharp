@@ -55,7 +55,9 @@ type G with
         ]
     static member PackOpens =
         [
+#if !FABLE_COMPILER
             "open System.Threading.Tasks"
             "open FSharp.Control.Tasks.V2"
+#endif
         ] @ G.PlatformBuilderOpens
     static member AppOpens = G.PackOpens
