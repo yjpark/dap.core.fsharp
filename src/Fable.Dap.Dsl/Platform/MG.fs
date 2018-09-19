@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Platform.MBG
+module Dap.Platform.MG
 
 open Dap.Prelude
 open Dap.Context

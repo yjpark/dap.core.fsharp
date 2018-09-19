@@ -152,7 +152,7 @@ type App (logging : ILogging, scope : Scope) =
     let mutable (* IServicesPack *) fake : FakeService option = None
     let mutable (* IAppPack *) view : FakeView option = None
     let mutable (* IBackupPack *) anotherFake : FakeService option = None
-    let setup (this : App) : unit
+    let setup (this : App) : unit =
         let args' = args |> Option.get
         try
             let (* IServicesPack *) fake' = env |> Env.spawn (FakeService.spec args'.Fake) "Fake" ""
@@ -166,7 +166,6 @@ type App (logging : ILogging, scope : Scope) =
         with e ->
             setupError <- Some e
             logException env "App.setup" "Setup_Failed" (E.encodeJson 4 args') e
-    }
     new (scope : Scope) =
         App (getLogging (), scope)
     member this.Setup (callback : IApp -> unit) (getArgs : unit -> AppArgs) : IApp =
@@ -196,12 +195,31 @@ type App (logging : ILogging, scope : Scope) =
         |> this.SetupJson callback
     member __.SetupError : exn option = setupError
     abstract member Setup' : unit -> unit
-    default __.Setup' = ignore
+    default __.Setup' () = ()
     member __.Args : AppArgs = args |> Option.get
     interface ILogger with
         member __.Log m = env.Log m
     interface IPack with
         member __.Env : IEnv = env
+    interface IServicesPack with
+        member this.Args = this.Args.AsServicesPackArgs
+        member __.Fake (* IServicesPack *) : FakeService = fake |> Option.get
+    member this.AsServicesPack = this :> IServicesPack
+    interface ICommonPack with
+        member this.Args = this.Args.AsCommonPackArgs
+        member this.AsServicesPack = this.AsServicesPack
+    member this.AsCommonPack = this :> ICommonPack
+    interface IAppPack with
+        member this.Args = this.Args.AsAppPackArgs
+        member __.View (* IAppPack *) : FakeView = view |> Option.get
+        member this.AsCommonPack = this.AsCommonPack
+        member this.AsServicesPack = this.AsServicesPack
+    member this.AsAppPack = this :> IAppPack
+    interface IBackupPack with
+        member this.Args = this.Args.AsBackupPackArgs
+        member __.AnotherFake (* IBackupPack *) : FakeService = anotherFake |> Option.get
+        member this.AsCommonPack = this.AsCommonPack
+    member this.AsBackupPack = this :> IBackupPack
     interface IApp with
         member this.Args : AppArgs = this.Args
         member this.AsAppPack = this.AsAppPack

@@ -15,7 +15,6 @@ module TD = Thoth.Json.Net.Decode
 
 open Dap.Prelude
 open Dap.Context
-open Dap.Context.Meta
 
 type DateTime with
     static member JsonEncoder : JsonEncoder<DateTime> =

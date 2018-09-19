@@ -23,7 +23,6 @@
     <Compile Include="WebSocketProxy/Types.fs" />
     <Compile Include="WebSocketProxy/Logic.fs" />
     <Compile Include="WebSocketProxy/Proxy.fs" />
-    <Compile Include="Meta.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.WebSocket\Fable.Dap.WebSocket.fsproj" />

@@ -20,7 +20,6 @@
     <Compile Include="Shared/Util.fs" />
     <Compile Include="Shared/Clock.fs" />
     <Compile Include="Shared/EDS.fs" />
-    <Compile Include="Shared/MBG.fs" />
     <Compile Include="Const.fs" />
     <Compile Include="Runner.fs" />
     <Compile Include="Types.fs" />
@@ -29,17 +28,9 @@
     <Compile Include="Logging.fs" />
     <Compile Include="BaseAgent.fs" />
     <Compile Include="Agent.fs" />
-    <Compile Include="Env.fs" />
     <Compile Include="Shared/State.fs" />
     <Compile Include="Shared/Context.fs" />
-    <Compile Include="Shared/Meta/Types.fs" />
-    <Compile Include="Shared/Meta/Pack.fs" />
-    <Compile Include="Shared/Meta/App.fs" />
-    <Compile Include="Shared/Meta/Helper.fs" />
-    <Compile Include="Shared/Generator/Types.fs" />
-    <Compile Include="Shared/Generator/Pack.fs" />
-    <Compile Include="Shared/Generator/App.fs" />
-    <Compile Include="Shared/Generator/Helper.fs" />
+    <Compile Include="Env.fs" />
     <Compile Include="Helper.fs" />
   </ItemGroup>
   <ItemGroup>

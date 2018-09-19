@@ -22,6 +22,7 @@ let projects =
     ++ "src/Dap.WebSocket/*.fsproj"
     ++ "src/Fable.Dap.Remote/*.fsproj"
     ++ "src/Dap.Remote/*.fsproj"
+    ++ "src/Fable.Dap.Dsl/*.fsproj"
     ++ "src/Dap.Archive/*.fsproj"
 
 NuGet.createAndRun NuGet.release feed projects

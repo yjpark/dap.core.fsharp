@@ -1,11 +1,10 @@
 [<RequireQualifiedAccess>]
-module Dap.Context.Meta.Combo
+module Dap.Context.Builder.Combo
 
 open Microsoft.FSharp.Quotations
 
 open Dap.Prelude
 open Dap.Context
-open Dap.Context.Meta.Util
 
 type Builder () =
     inherit ObjBuilder<IComboProperty> ()
@@ -13,13 +12,6 @@ type Builder () =
         IComboProperty.Default ()
     [<CustomOperation("option")>]
     member __.Option (combo : IComboProperty, prop : IVarProperty) =
-        combo
-    [<CustomOperation("union")>]
-    member __.Union (combo : IComboProperty, key, expr : Expr<IListProperty<Union.CaseProperty>>) =
-        let (kind, cases) = unquotePropertyGetExpr expr
-        let prop = combo |> Union.UnionProperty.AddToCombo key
-        prop.Kind.SetValue kind
-        prop.Cases.SyncWith cases
         combo
     [<CustomOperation("custom")>]
     member __.Custom (combo : IComboProperty, key, prop : ICustomProperty) =
@@ -91,6 +83,7 @@ type Builder () =
     [<CustomOperation("decimal")>]
     member this.Decimal (combo, key) =
         this.Decimal (combo, key, 0M, None)
+
 type ExtendBuilder (parent : IComboProperty) =
     inherit Builder ()
     override __.Zero () = parent.Clone noOwner NoKey

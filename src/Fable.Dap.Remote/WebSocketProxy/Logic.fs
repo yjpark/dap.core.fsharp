@@ -84,6 +84,5 @@ let internal doInit : ActorOperate<'req, 'res, 'evt> =
         let socket =
             runner.Env
             |> Env.spawn spec PacketClientKind runner.Ident.Key
-            :?> WebSocketTypes.Agent<Packet>
         (runner, model, cmd)
         |=|> addSubCmd SubEvt ^<| SetSocket socket

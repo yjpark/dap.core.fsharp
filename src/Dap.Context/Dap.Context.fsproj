@@ -33,19 +33,21 @@
     <Compile Include="../Fable.Dap.Context/Shared/Context.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Unsafe/Context.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Builder/Types.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Meta/Util.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Meta/Types.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Meta/Union.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Meta/Combo.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Meta/List.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Meta/Context.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Meta/Helper.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Generator/Util.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Generator/Types.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Generator/Combo.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Generator/Context.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Generator/Union.fs" />
-    <Compile Include="../Fable.Dap.Context/Shared/Generator/Helper.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Builder/Combo.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Builder/Context.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Meta/Util.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Meta/Types.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Meta/Union.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Meta/Combo.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Meta/List.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Meta/Context.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Meta/Helper.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Generator/Util.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Generator/Types.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Generator/Combo.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Generator/Context.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Generator/Union.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Context/Generator/Helper.fs" />
     <Compile Include="Des.fs" />
   </ItemGroup>
   <ItemGroup>

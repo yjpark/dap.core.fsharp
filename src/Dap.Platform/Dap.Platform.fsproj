@@ -22,7 +22,6 @@
     <Compile Include="../Fable.Dap.Platform/Shared/Util.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Clock.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/EDS.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/MBG.fs" />
     <Compile Include="Stats.fs" />
     <Compile Include="Const.fs" />
     <Compile Include="Runner.fs" />
@@ -38,6 +37,8 @@
     <Compile Include="BaseAgent.fs" />
     <Compile Include="Internal/Agent.fs" />
     <Compile Include="Agent.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/State.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Context.fs" />
     <Compile Include="Play/Types.fs" />
     <Compile Include="Replay/Types.fs" />
     <Compile Include="Env.fs" />
@@ -47,16 +48,15 @@
     <Compile Include="Ticker/Logic.fs" />
     <Compile Include="Registry/Types.fs" />
     <Compile Include="Registry/Logic.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/State.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/Context.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/Meta/Types.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/Meta/Pack.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/Meta/App.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/Meta/Helper.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/Generator/Types.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/Generator/Pack.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/Generator/App.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/Generator/Helper.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Platform/MG.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Platform/Meta/Types.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Platform/Meta/Pack.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Platform/Meta/App.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Platform/Meta/Helper.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Types.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Pack.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Platform/Generator/App.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Helper.fs" />
     <Compile Include="Meta/Helper.fs" />
   </ItemGroup>
   <ItemGroup>
