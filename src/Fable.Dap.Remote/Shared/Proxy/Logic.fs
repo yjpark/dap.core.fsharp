@@ -54,6 +54,15 @@ let private doSend (runner : Proxy<'extra, 'sub, 'req, 'res, 'evt>)
         doEnqueue' runner (req, pkt)
     None
 
+(*
+ * Have a really weird issue with Fable here, if use these private functions, fable complier will
+ * throw a exception when parsing project that uses this file, It's event weirder since the same
+ * code works before, and Demo.Fable can use this with no issue.
+ * Also it's really strange that onResponse is ok, but if adding onEvent (even without any code after it),
+ * the issue is there.
+ * Wasted much time to track this done, current hacky fix is to put the logic inside doInit, maybe
+ * later will try with fable 2.0
+
 #if FABLE_COMPILER
 [<PassGenericsAttribute>]
 #endif
@@ -67,6 +76,7 @@ let private onResponse (runner : Proxy<'extra, 'sub, 'req, 'res, 'evt>) ((req, r
 let private onEvent (runner : Proxy<'extra, 'sub, 'req, 'res, 'evt>) ((_id, evt) : PacketId * Json) : unit =
     runner.Actor.Args.Spec.DecodeEvent runner evt
     |> (runner.Deliver << ProxyEvt)
+*)
 
 #if FABLE_COMPILER
 [<PassGenericsAttribute>]
@@ -77,8 +87,16 @@ let private doInit : ActorOperate<'extra, 'sub, 'req, 'res, 'evt> =
             Send = doSend runner
         }
         let stub : Client.Stub = {
-            OnResponse = onResponse runner
-            OnEvent = onEvent runner
+            //OnResponse = onResponse runner
+            OnResponse = (fun (req, res) ->
+                let res = runner.Actor.Args.Spec.DecodeResponse runner req res
+                runner.Deliver <| ProxyRes res
+            )
+            //OnEvent = onEvent runner
+            OnEvent = (fun (_id, evt) ->
+                let evt = runner.Actor.Args.Spec.DecodeEvent runner evt
+                runner.Deliver <| ProxyEvt evt
+            )
         }
         let args = runner.Actor.Args
         let clientArgs : Client.Args = {

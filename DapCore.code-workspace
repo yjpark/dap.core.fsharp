@@ -37,6 +37,9 @@
 			"path": "src/Dap.Archive"
 		},
 		{
+			"path": "demo/Demo.Fable"
+		},
+		{
 			"path": "demo/Dap.Platform.Demo"
 		},
 		{

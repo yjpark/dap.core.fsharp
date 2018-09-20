@@ -22,6 +22,8 @@ nuget Fable.Websockets.Elmish
 nuget Thoth.Json 1.0.0
 nuget Thoth.Json.Net 1.0.0
 
+clitool dotnet-fable
+
 # https://github.com/fsprojects/FSharp.TypeProviders.SDK
 github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fs

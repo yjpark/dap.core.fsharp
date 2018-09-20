@@ -30,8 +30,10 @@ type UnsafeProperty internal (owner') =
     abstract member ToCustom<'p1 when 'p1 :> ICustomProperty> : unit -> ICustomProperty<'p1>
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
-#endif
+    member this.CastFailed<'p> () : 'p = failWith "UnsafeProperty" ("Cast_Failed: " + typeof<'p>.Name)
+#else
     member this.CastFailed<'p> () : 'p = failWith (this.GetType().FullName) ("Cast_Failed: " + typeof<'p>.Name)
+#endif
     default this.AsVar = this.CastFailed<IVarProperty> ()
     default this.AsMap = this.CastFailed<IDictProperty> ()
     default this.AsList = this.CastFailed<IListProperty> ()

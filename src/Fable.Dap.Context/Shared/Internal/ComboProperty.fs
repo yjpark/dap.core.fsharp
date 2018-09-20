@@ -62,7 +62,10 @@ type internal ComboProperty (owner, spec) =
         |> Option.iter (fun prop ->
             failWith "Key_Exist" <| sprintf "[%s] <%s> [%s] %A -> %A" spec.Luid subType.FullName subSpec.Luid prop subSpec
         )
-    member private this.Add (prop : 'prop when 'prop :> IProperty) =
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
+    member private this.Add<'prop when 'prop :> IProperty> (prop : 'prop) =
         let k = (prop :> IProperty) .Spec.Key
         if (this.Value
             |> Map.add k (prop :> IProperty)
@@ -70,7 +73,7 @@ type internal ComboProperty (owner, spec) =
             onAdded.Trigger prop
             prop
         else
-            failWith "Add_Failed" <| sprintf "[%s] <%s> [%s]" spec.Luid (prop.GetType()).FullName prop.Spec.Key
+            failWith "Add_Failed" <| sprintf "[%s] <%s> [%s]" spec.Luid (typeof<'prop>).FullName prop.Spec.Key
     interface IComboProperty with
         member __.SealCombo () =
             if not comboSealed then

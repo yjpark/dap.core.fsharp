@@ -185,7 +185,9 @@ and VarPropertyChanged<'v> = {
 
 and IVarProperty =
     inherit IProperty
+#if !FABLE_COMPILER
     abstract ValueType : Type with get
+#endif
 
 and IVarProperty<'v> =
     inherit IVarProperty
@@ -202,7 +204,9 @@ and IProperties =
 
 and IDictProperty =
     inherit IProperties
+#if !FABLE_COMPILER
     abstract ElementType : Type with get
+#endif
     abstract ElementSpawner : IOwner -> Key -> IProperty
     abstract SealMap : unit -> unit
     abstract MapSealed : bool with get
@@ -235,7 +239,9 @@ and IndexOffset = int
 
 and IListProperty =
     inherit IProperties
+#if !FABLE_COMPILER
     abstract ElementType : Type with get
+#endif
     abstract ElementSpawner : IOwner -> Key -> IProperty
     abstract SealList : unit -> unit
     abstract ListSealed : bool with get

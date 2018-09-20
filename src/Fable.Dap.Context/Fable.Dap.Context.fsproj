@@ -19,6 +19,7 @@
     <Compile Include="Shared/Callback.fs" />
     <Compile Include="Shared/Bus.fs" />
     <Compile Include="Shared/Internal/Spec.fs" />
+    <Compile Include="Shared/Internal/GenericSpec.fs" />
     <Compile Include="Shared/Internal/Channel.fs" />
     <Compile Include="Shared/Internal/Handler.fs" />
     <Compile Include="Shared/Internal/Property.fs" />

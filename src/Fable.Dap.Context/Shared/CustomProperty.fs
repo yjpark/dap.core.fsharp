@@ -90,9 +90,21 @@ type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IP
     abstract member Spawn : IOwner -> Key -> 'p
     abstract member SyncTo : 'p -> unit
     // virtual members
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
     abstract member SetupCloneBefore : 'p -> unit
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
     abstract member SetupCloneAfter : 'p -> unit
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
     default __.SetupCloneBefore (_p : 'p) = ()
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
     default __.SetupCloneAfter (_p : 'p) = ()
     override __.Kind = PropertyKind.CustomProperty
     override this.AsCustom = this.Self :> ICustomProperty
@@ -100,6 +112,9 @@ type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IP
     interface ICustomProperty<'p> with
         member this.Self = this.Self
         member this.SyncTo other = this.SyncTo other
+#if FABLE_COMPILER
+        [<PassGenericsAttribute>]
+#endif
         member this.Clone o k =
             this.Spawn o k
             |> this.SetupClone (Some this.SetupCloneBefore)

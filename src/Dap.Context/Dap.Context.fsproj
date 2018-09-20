@@ -18,6 +18,7 @@
     <Compile Include="../Fable.Dap.Context/Shared/Callback.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Bus.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Spec.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Internal/GenericSpec.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Channel.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Handler.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Property.fs" />

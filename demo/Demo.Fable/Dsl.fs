@@ -1,4 +1,4 @@
-module Dap.Platform.Demo.Dsl
+module Demo.Dsl
 
 open Dap.Prelude
 open Dap.Context
@@ -7,6 +7,7 @@ open Dap.Context.Generator
 open Dap.Platform
 open Dap.Platform.Meta
 open Dap.Platform.Generator
+open Dap.Remote.Meta
 
 let Publisher =
     combo {
@@ -40,38 +41,30 @@ let Status =
         })
     }
 
-let IServicesPack =
+let IClientPack =
     pack [] {
-        extra (M.codeArgs ([], "int", "2", "service"))
-        add (M.service ([], M.noArgs, "FakeService", "FakeService.spec", "Fake"))
-    }
-
-let ICommonPack =
-    pack [ <@ IServicesPack @> ] {
-        extra (M.codeArgs ([], "int", "100", "common"))
-    }
-let IBackupPack =
-    pack [ <@ ICommonPack @> ] {
-        extra (M.codeArgs ([], "int", "200", "backup"))
-        add (M.service ([], M.noArgs, "FakeService", "FakeService.spec", "Fake", "Another"))
+        add (M.proxyService (
+                [("UserHubTypes", "Demo.UserHub.Types")],
+                "UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt", "UserHubTypes.StubSpec",
+                "(getWebSocketUri \"ws_user\")", Some 5.0<second>, true,
+                "UserStub", NoKey
+            ))
     }
 
 let IAppPack =
-    pack [ <@ ICommonPack @> ; <@ IServicesPack @> ] {
-        //register (M.spawner ("TestArgs", "TestAgent", "Test", "test"))
-        extra (M.codeArgs ([], "int", "100", "test"))
-        add_pack <@ IBackupPack @> (M.service ([], M.noArgs, "FakeView", "FakeView.spec", "View"))
+    pack [ <@ IClientPack @> ] {
+        nothing ()
     }
 
 let App =
     live {
         has <@ IAppPack @>
-        has <@ IBackupPack @>
     }
+
 let compile segments =
     [
-        G.File (segments, ["_Gen.Fable"; "Types.fs"],
-            G.AutoOpenModule ("Dap.Platform.Demo.Types",
+        G.File (segments, ["_Gen"; "Types.fs"],
+            G.AutoOpenModule ("Demo.Types",
                 [
                     G.Interface IPublisher
                     G.Interface IPerson
@@ -81,24 +74,19 @@ let compile segments =
                 ]
             )
         )
-        G.File (segments, ["_Gen.Fable"; "Builder.fs"],
-            G.BuilderModule ("Dap.Platform.Demo.Builder",
+        G.File (segments, ["_Gen"; "Builder.fs"],
+            G.BuilderModule ("Demo.Builder",
                 [
-                    [
-                        "open Dap.Platform.Demo.Types"
-                    ]
                     G.ComboBuilder <@ Author @>
                 ]
             )
         )
-        G.File (segments, ["_Gen.Fable"; "App.fs"],
-            G.AutoOpenModule ("Dap.Platform.Demo.App",
+        G.File (segments, ["_Gen"; "App.fs"],
+            G.AutoOpenModule ("Demo.App",
                 [
                     G.AppOpens
-                    G.PackInterface <@ IServicesPack @>
-                    G.PackInterface <@ ICommonPack @>
+                    G.PackInterface <@ IClientPack @>
                     G.PackInterface <@ IAppPack @>
-                    G.PackInterface <@ IBackupPack @>
                     G.AppInterface <@ App @>
                     G.AppClass <@ App @>
                 ]

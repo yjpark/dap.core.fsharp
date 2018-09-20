@@ -1,9 +1,8 @@
-module Dap.Platform.Demo.Builder
+module Demo.Builder
 
 open Dap.Prelude
 open Dap.Context
 open Dap.Context.Builder
-open Dap.Platform.Demo.Types
 
 (*
  * Generated: <ComboBuilder>

@@ -10,7 +10,7 @@
 #r @"src/Fable.Dap.Dsl/bin/Release/netstandard2.0/Fable.Dap.Dsl.dll"
 
 open Dap.Prelude
-#load "demo/Dap.Platform.Demo/Dsl.fable.fs"
+#load "demo/Demo.Fable/Dsl.fs"
 
-Dap.Platform.Demo.Dsl.compile ["demo" ; "Dap.Platform.Demo"]
+Demo.Dsl.compile ["demo" ; "Demo.Fable"]
 |> List.iter ^<| printfn "%s\n"

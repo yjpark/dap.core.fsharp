@@ -96,10 +96,17 @@ and internal VarProperty<'v> private (owner, spec) =
         member __.OnValueChanged = onValueChanged.Publish
         member this.SyncTo (other : IVarProperty<'v>) =
             other.SetValue' this.Value |> ignore
+#if FABLE_COMPILER
+        [<PassGenericsAttribute>]
+#endif
         member this.Clone o k =
             spec.ForClone k
             |> VarProperty<'v>.Create o
             |> this.SetupClone (Some this.AsVarProperty.SyncTo)
             :> IVarProperty<'v>
+#if FABLE_COMPILER
+    interface IVarProperty
+#else
     interface IVarProperty with
         member __.ValueType = typeof<'v>
+#endif
