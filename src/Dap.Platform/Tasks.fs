@@ -152,7 +152,6 @@ type System.Threading.Tasks.Task with
         else
             Task.CompletedTask
 
-type System.Threading.Tasks.Task<'res> with
-    member this.Run () =
-        Async.AwaitTask this
-        |> Async.RunSynchronously
+let runTask (task : System.Threading.Tasks.Task<'res>) =
+    Async.AwaitTask task
+    |> Async.RunSynchronously
