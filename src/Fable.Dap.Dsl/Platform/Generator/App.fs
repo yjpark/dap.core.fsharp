@@ -146,12 +146,11 @@ type InterfaceGenerator (meta : AppMeta) =
 type ClassGenerator (meta : AppMeta) =
     let getClassHeader (param : AppParam) =
         [
-    #if FABLE_COMPILER
             yield sprintf "type %s (logging : ILogging, scope : Scope) =" param.Name
+    #if FABLE_COMPILER
             yield sprintf "    let env = %s logging scope" meta.Kind
     #else
-            yield sprintf "type %s (loggingArgs : LoggingArgs, scope : Scope) =" param.Name
-            yield sprintf "    let env = %s %s (loggingArgs.CreateLogging ()) scope" meta.Kind meta.Platform
+            yield sprintf "    let env = %s %s logging scope" meta.Kind meta.Platform
     #endif
             yield sprintf "    let mutable args : %sArgs option = None" param.Name
             yield sprintf "    let mutable setupError : exn option = None"
@@ -293,12 +292,10 @@ type ClassGenerator (meta : AppMeta) =
             )
     let getExtraNews (param : AppParam) =
         [
-    #if FABLE_COMPILER
             yield sprintf "    new (scope : Scope) ="
             yield sprintf "        %s (getLogging (), scope)" param.Name
-    #endif
         ]
-    let getFablePrivateSetupAsync (param : AppParam) =
+    let getFablePrivateSetup (param : AppParam) =
         [
             [
                 sprintf "    let setup (this : %s) : unit =" param.Name
@@ -314,7 +311,35 @@ type ClassGenerator (meta : AppMeta) =
                 sprintf "            logException env \"%s.setup\" \"Setup_Failed\" (E.encodeJson 4 args') e" param.Name
             ]
         ]|> List.concat
-    let getPrivateSetupAsync (param : AppParam) =
+    let getFablePublicSetup (param : AppParam) =
+        [
+            sprintf "    member this.Setup (getArgs : unit -> %sArgs) : I%s =" param.Name param.Name
+            sprintf "        if args.IsSome then"
+            sprintf "            failWith \"Already_Setup\" <| E.encodeJson 4 args.Value"
+            sprintf "        else"
+            sprintf "            let args' = getArgs ()"
+            sprintf "            args <- Some args'"
+            sprintf "            setup this"
+            sprintf "            match setupError with"
+            sprintf "            | None -> this.As%s" param.Name
+            sprintf "            | Some e -> raise e"
+            sprintf "    member this.Setup (args' : %sArgs) : I%s =" param.Name param.Name
+            sprintf "        fun () -> args'"
+            sprintf "        |> this.Setup"
+            sprintf "    member this.Setup (args' : Json) : I%s =" param.Name
+            sprintf "        fun () ->"
+            sprintf "            try"
+            sprintf "                castJson %sArgs.JsonDecoder args'" param.Name
+            sprintf "            with e ->"
+            sprintf "                logException env \"%s.Setup\" \"Decode_Failed\" args e" param.Name
+            sprintf "                raise e"
+            sprintf "        |> this.Setup"
+            sprintf "    member this.Setup (args' : string) : I%s =" param.Name
+            sprintf "        let json : Json = parseJson args'"
+            sprintf "        this.Setup json"
+            sprintf "    member __.SetupError : exn option = setupError"
+        ]
+    let getPrivateSetup (param : AppParam) =
         [
             [
                 sprintf "    let setupAsync (this : %s) : Task<unit> = task {" param.Name
@@ -331,42 +356,34 @@ type ClassGenerator (meta : AppMeta) =
                 sprintf "    }"
             ]
         ]|> List.concat
-    let getPublicSetupAsync (param : AppParam) =
+    let getPublicSetup (param : AppParam) =
         [
-            sprintf "    member this.Setup (callback : I%s -> unit) (getArgs : unit -> %sArgs) : I%s =" param.Name param.Name param.Name
+            sprintf "    member this.SetupAsync (getArgs : unit -> %sArgs) : Task<I%s> = task {" param.Name param.Name
             sprintf "        if args.IsSome then"
             sprintf "            failWith \"Already_Setup\" <| E.encodeJson 4 args.Value"
             sprintf "        else"
             sprintf "            let args' = getArgs ()"
             sprintf "            args <- Some args'"
-        #if FABLE_COMPILER
-            sprintf "            setup this"
+            sprintf "            do! setupAsync this"
             sprintf "            match setupError with"
-            sprintf "            | None -> callback this.As%s" param.Name
+            sprintf "            | None -> ()"
             sprintf "            | Some e -> raise e"
-        #else
-            sprintf "            env.RunTask0 raiseOnFailed (fun _ -> task {"
-            sprintf "                do! setupAsync this"
-            sprintf "                match setupError with"
-            sprintf "                | None -> callback this.As%s" param.Name
-            sprintf "                | Some e -> raise e"
-            sprintf "            })"
-        #endif
-            sprintf "        this.As%s" param.Name
-            sprintf "    member this.SetupArgs (callback : I%s -> unit) (args' : %sArgs) : I%s =" param.Name param.Name param.Name
+            sprintf "        return this.As%s" param.Name
+            sprintf "        }"
+            sprintf "    member this.SetupAsync (args' : %sArgs) : Task<I%s> =" param.Name param.Name
             sprintf "        fun () -> args'"
-            sprintf "        |> this.Setup callback"
-            sprintf "    member this.SetupJson (callback : I%s -> unit) (args' : Json) : I%s =" param.Name param.Name
+            sprintf "        |> this.SetupAsync"
+            sprintf "    member this.SetupAsync (args' : Json) : Task<I%s> =" param.Name
             sprintf "        fun () ->"
             sprintf "            try"
             sprintf "                castJson %sArgs.JsonDecoder args'" param.Name
             sprintf "            with e ->"
-            sprintf "                logException env \"%s.Setup\" \"Decode_Failed\" args e" param.Name
+            sprintf "                logException env \"%s.SetupAsync\" \"Decode_Failed\" args e" param.Name
             sprintf "                raise e"
-            sprintf "        |> this.Setup callback"
-            sprintf "    member this.SetupText (callback : I%s -> unit) (args' : string) : I%s =" param.Name param.Name
-            sprintf "        parseJson args'"
-            sprintf "        |> this.SetupJson callback"
+            sprintf "        |> this.SetupAsync"
+            sprintf "    member this.SetupAsync (args' : string) : Task<I%s> =" param.Name
+            sprintf "        let json : Json = parseJson args'"
+            sprintf "        this.SetupAsync json"
             sprintf "    member __.SetupError : exn option = setupError"
         ]
     let getClassMiddle (param : AppParam) =
@@ -384,9 +401,6 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "    interface ILogger with"
             sprintf "        member __.Log m = env.Log m"
             sprintf "    interface IPack with"
-    #if !FABLE_COMPILER
-            sprintf "        member __.LoggingArgs : LoggingArgs = loggingArgs"
-    #endif
             sprintf "        member __.Env : IEnv = env"
         ]
     let getClassFooter (param : AppParam) =
@@ -407,12 +421,16 @@ type ClassGenerator (meta : AppMeta) =
                 yield meta.Packs |> List.map getPackFields |> List.concat
                 clearProcessedPacks ()
             #if FABLE_COMPILER
-                yield getFablePrivateSetupAsync param
+                yield getFablePrivateSetup param
             #else
-                yield getPrivateSetupAsync param
+                yield getPrivateSetup param
             #endif
                 yield getExtraNews param
-                yield getPublicSetupAsync param
+            #if FABLE_COMPILER
+                yield getFablePublicSetup param
+            #else
+                yield getPublicSetup param
+            #endif
                 yield getClassMiddle param
                 clearProcessedPacks ()
                 yield meta.Packs |> List.map (getPackMembers []) |> List.concat

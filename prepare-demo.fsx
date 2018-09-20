@@ -5,7 +5,7 @@
 #r @"src/Dap.Platform/bin/Release/netstandard2.0/Dap.Platform.dll"
 
 open Dap.Prelude
-#load "demo/Dap.Platform.Demo/Dsl.fs"
+#load "demo/Demo/Dsl.fs"
 
-Dap.Platform.Demo.Dsl.compile ["demo" ; "Dap.Platform.Demo"]
+Demo.Dsl.compile ["demo" ; "Demo"]
 |> List.iter ^<| printfn "%s\n"

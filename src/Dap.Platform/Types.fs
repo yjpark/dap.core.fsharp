@@ -125,7 +125,6 @@ with interface IEvt
 
 type IPack =
     inherit ILogger
-    abstract LoggingArgs : LoggingArgs with get
     abstract Env : IEnv with get
 
 and IPackAgent<'pack when 'pack :> IPack> =

@@ -94,7 +94,7 @@ type App (logging : ILogging, scope : Scope) =
             logException env "App.setup" "Setup_Failed" (E.encodeJson 4 args') e
     new (scope : Scope) =
         App (getLogging (), scope)
-    member this.Setup (callback : IApp -> unit) (getArgs : unit -> AppArgs) : IApp =
+    member this.Setup (getArgs : unit -> AppArgs) : IApp =
         if args.IsSome then
             failWith "Already_Setup" <| E.encodeJson 4 args.Value
         else
@@ -102,23 +102,22 @@ type App (logging : ILogging, scope : Scope) =
             args <- Some args'
             setup this
             match setupError with
-            | None -> callback this.AsApp
+            | None -> this.AsApp
             | Some e -> raise e
-        this.AsApp
-    member this.SetupArgs (callback : IApp -> unit) (args' : AppArgs) : IApp =
+    member this.Setup (args' : AppArgs) : IApp =
         fun () -> args'
-        |> this.Setup callback
-    member this.SetupJson (callback : IApp -> unit) (args' : Json) : IApp =
+        |> this.Setup
+    member this.Setup (args' : Json) : IApp =
         fun () ->
             try
                 castJson AppArgs.JsonDecoder args'
             with e ->
                 logException env "App.Setup" "Decode_Failed" args e
                 raise e
-        |> this.Setup callback
-    member this.SetupText (callback : IApp -> unit) (args' : string) : IApp =
-        parseJson args'
-        |> this.SetupJson callback
+        |> this.Setup
+    member this.Setup (args' : string) : IApp =
+        let json : Json = parseJson args'
+        this.Setup json
     member __.SetupError : exn option = setupError
     abstract member Setup' : unit -> unit
     default __.Setup' () = ()

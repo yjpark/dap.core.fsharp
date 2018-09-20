@@ -10,7 +10,7 @@ type App with
     static member Create (consoleLogLevel : LogLevel) =
         let logging = setupConsole consoleLogLevel
         let app = new App (logging, Scope)
-        app.SetupArgs ignore <| AppArgs.Default ()
+        app.Setup AppArgs.Default
     static member Create () =
         App.Create (LogLevelInformation)
 

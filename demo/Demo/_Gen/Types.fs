@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Platform.Demo.Types
+module Demo.Types
 
 open Dap.Prelude
 open Dap.Context

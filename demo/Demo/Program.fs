@@ -1,4 +1,4 @@
-﻿module Dap.Platform.Demo.Program
+﻿module Demo.Program
 
 open System.Threading
 open System.Threading.Tasks
@@ -90,10 +90,10 @@ let doBuilderTest (env : IEnv) : unit =
  *)
 
 let doJsonTest (env : IEnv) =
-    let s = Dap.Platform.Demo.Types.Status.CreatePublished "Test" 2001 (Some 100)
+    let s = Demo.Types.Status.CreatePublished "Test" 2001 (Some 100)
     let s = E.encodeJson 0 s
     logWarn env "Test" "Encode_Status" s
-    let s = decodeJson Dap.Platform.Demo.Types.Status.JsonDecoder s
+    let s = decodeJson Demo.Types.Status.JsonDecoder s
     logWarn env "Test" "Decode_Status" s
     let s = E.encodeJson 0 s
     logWarn env "Test" "Decode_Status" s
@@ -104,7 +104,7 @@ let main _argv =
 
     let logger = getLogger "Prepare"
 
-    Dap.Platform.Demo.Dsl.compile []
+    Demo.Dsl.compile []
     |> List.iter (fun l -> logWarn logger "Dsl" l ())
 
     (*

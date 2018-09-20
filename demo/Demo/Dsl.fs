@@ -1,4 +1,4 @@
-module Dap.Platform.Demo.Dsl
+module Demo.Dsl
 
 open Dap.Prelude
 open Dap.Context
@@ -74,7 +74,7 @@ let App =
 let compile segments =
     [
         G.File (segments, ["_Gen"; "Types.fs"],
-            G.AutoOpenModule ("Dap.Platform.Demo.Types",
+            G.AutoOpenModule ("Demo.Types",
                 [
                     G.Interface IPublisher
                     G.Interface IPerson
@@ -85,17 +85,14 @@ let compile segments =
             )
         )
         G.File (segments, ["_Gen"; "Builder.fs"],
-            G.BuilderModule ("Dap.Platform.Demo.Builder",
+            G.BuilderModule ("Demo.Builder",
                 [
-                    [
-                        "open Dap.Platform.Demo.Types"
-                    ]
                     G.ComboBuilder <@ Author @>
                 ]
             )
         )
         G.File (segments, ["_Gen"; "App.fs"],
-            G.AutoOpenModule ("Dap.Platform.Demo.App",
+            G.AutoOpenModule ("Demo.App",
                 [
                     G.AppOpens
                     G.PackInterface <@ IServicesPack @>

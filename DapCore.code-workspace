@@ -40,7 +40,7 @@
 			"path": "demo/Demo.Fable"
 		},
 		{
-			"path": "demo/Dap.Platform.Demo"
+			"path": "demo/Demo"
 		},
 		{
 			"path": "demo/Dap.Platform.Fsx"
