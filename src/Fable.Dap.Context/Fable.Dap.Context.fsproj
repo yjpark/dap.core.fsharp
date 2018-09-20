@@ -28,11 +28,12 @@
     <Compile Include="Shared/Internal/ListProperty.fs" />
     <Compile Include="Shared/Internal/ComboProperty.fs" />
     <Compile Include="Shared/Internal/Context.fs" />
-    <Compile Include="Shared/Property.fs" />
-    <Compile Include="Shared/Properties.fs" />
+    <Compile Include="Shared/Helper/Property.fs" />
+    <Compile Include="Shared/Helper/Properties.fs" />
     <Compile Include="Shared/CustomProperty.fs" />
     <Compile Include="Shared/ContextSpec.fs" />
     <Compile Include="Shared/Context.fs" />
+    <Compile Include="Shared/Helper/Context.fs" />
     <Compile Include="Shared/Unsafe/Context.fs" />
     <Compile Include="Shared/Builder/Types.fs" />
     <Compile Include="Shared/Builder/Combo.fs" />

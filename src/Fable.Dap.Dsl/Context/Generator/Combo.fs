@@ -58,14 +58,20 @@ type RecordGenerator (meta : ComboMeta) =
             yield sprintf "type %s = {" param.Name
         ]
     let getJsonEncoder (param : RecordParam) =
+        let isEmpty =
+            meta.Fields
+            |> List.exists (fun prop -> prop.Encoder <> "")
         [
             yield sprintf "    static member JsonEncoder : JsonEncoder<%s> =" param.Name
             yield sprintf "        fun (this : %s) ->" param.Name
-            yield sprintf "            E.object ["
-            for prop in meta.Fields do
-                if prop.Encoder <> "" then
-                    yield sprintf "                \"%s\", %sthis.%s" prop.Key prop.EncoderCall prop.Key.AsCodeMemberName
-            yield sprintf "            ]"
+            if isEmpty then
+                yield sprintf "            E.object []"
+            else
+                yield sprintf "            E.object ["
+                for prop in meta.Fields do
+                    if prop.Encoder <> "" then
+                        yield sprintf "                \"%s\", %sthis.%s" prop.Key prop.EncoderCall prop.Key.AsCodeMemberName
+                yield sprintf "            ]"
         ]
     let getJsonDecoder (param : RecordParam) =
         [

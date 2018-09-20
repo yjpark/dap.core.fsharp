@@ -24,7 +24,7 @@ type IContext with
         clone
 
 [<AbstractClass>]
-type Context<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<'p> and 'p :> IProperties> (logging', spec' : 's) =
+type BaseContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<'p> and 'p :> IProperties> (logging', spec' : 's) =
     let spec : 's = spec'
     let owner = new Owner (logging', spec.Luid)
     let properties : 'p = spec.SpawnProperties owner

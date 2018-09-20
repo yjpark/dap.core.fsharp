@@ -3,7 +3,9 @@
 module Dap.Context.Properties
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Context.Internal
+open Dap.Context.Helper
 
 let map<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
     Property.mapSpec<'p> key E.emptyObject spawner

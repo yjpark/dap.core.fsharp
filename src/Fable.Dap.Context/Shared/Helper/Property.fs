@@ -1,8 +1,9 @@
 [<AutoOpen>]
 [<RequireQualifiedAccess>]
-module Dap.Context.Property
+module Dap.Context.Helper.Property
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Context.Internal
 
 let mapSpec<'p when 'p :> IProperty> key initValue spawner =

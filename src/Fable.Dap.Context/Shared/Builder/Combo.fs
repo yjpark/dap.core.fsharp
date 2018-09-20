@@ -5,6 +5,7 @@ open Microsoft.FSharp.Quotations
 
 open Dap.Prelude
 open Dap.Context
+open Dap.Context.Helper
 
 type Builder () =
     inherit ObjBuilder<IComboProperty> ()

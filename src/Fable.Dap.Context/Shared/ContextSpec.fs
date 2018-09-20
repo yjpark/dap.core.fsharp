@@ -7,6 +7,7 @@ open Fable.Core
 
 open Dap.Prelude
 open Dap.Context
+open Dap.Context.Helper
 
 [<AbstractClass>]
 type ContextSpec (kind') =
