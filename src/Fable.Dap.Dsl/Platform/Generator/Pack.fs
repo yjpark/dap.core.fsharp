@@ -45,6 +45,14 @@ let getAsPackName (packName : string) =
         packName
     |> sprintf "As%s"
 
+let getArgsMemberName (name : string) =
+    let name = name.AsCodeMemberName
+#if FABLE_COMPILER
+    //Fable records not allow same name for field and member
+    let name = sprintf "%s'" name
+#endif
+    name
+
 let mutable private processedPacks : Set<string> = Set.empty
 let clearProcessedPacks () =
     processedPacks <- Set.empty
@@ -53,7 +61,6 @@ let markPackProcessed (pack : string) =
 let didPackProcessed (pack : string) =
     processedPacks |> Set.contains pack
 
-
 type InterfaceGenerator (meta : PackMeta) =
     let getArgsInterfaceHeader (param : PackParam) =
         [
@@ -61,13 +68,11 @@ type InterfaceGenerator (meta : PackMeta) =
         ]
     let getArgsServiceMember (service : ServiceMeta) =
         let name = sprintf "%s%s" service.Key service.Kind
-        sprintf "    abstract %s : %s with get" name.AsCodeMemberName service.Args.Type
+        sprintf "    abstract %s : %s with get" (getArgsMemberName name) service.Args.Type
     let getArgsSpawnerMember (spawner : SpawnerMeta) =
-        let name = spawner.Kind.AsCodeMemberName
-        sprintf "    abstract %s : %s with get" name spawner.Args.Type
+        sprintf "    abstract %s : %s with get" (getArgsMemberName spawner.Kind) spawner.Args.Type
     let getArgsExtraMember (args : ExtraArgsMeta) =
-        let name = args.Key.AsCodeMemberName
-        sprintf "    abstract %s : %s with get" name args.Args.Type
+        sprintf "    abstract %s : %s with get" (getArgsMemberName args.Key) args.Args.Type
     let getArgsParentInherit ((name, _package) : string * PackMeta) =
         sprintf "    inherit %sArgs" name
     let getArgsParentAs ((name, _package) : string * PackMeta) =
