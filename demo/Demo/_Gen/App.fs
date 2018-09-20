@@ -82,7 +82,9 @@ type AppArgs = {
             (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
     static member JsonEncoder : JsonEncoder<AppArgs> =
         fun (this : AppArgs) ->
-            E.object []
+            E.object [
+                "ticker", TickerTypes.Args.JsonEncoder this.Ticker
+            ]
     static member JsonDecoder : JsonDecoder<AppArgs> =
         D.decode AppArgs.Create
         |> D.optional "ticker" TickerTypes.Args.JsonDecoder (TickerTypes.Args.Default ())
@@ -152,6 +154,8 @@ type App (logging : ILogging, scope : Scope) =
             setupError <- Some e
             logException env "App.setupAsync" "Setup_Failed" (E.encodeJson 4 args') e
     }
+    new (loggingArgs : LoggingArgs, scope : Scope) =
+        App (loggingArgs.CreateLogging (), scope)
     new (scope : Scope) =
         App (getLogging (), scope)
     member this.SetupAsync (getArgs : unit -> AppArgs) : Task<IApp> = task {

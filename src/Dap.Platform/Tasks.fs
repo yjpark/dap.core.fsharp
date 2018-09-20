@@ -151,3 +151,8 @@ type System.Threading.Tasks.Task with
             Task.Delay (int (System.Math.Round (1000.0 * float delay)))
         else
             Task.CompletedTask
+
+type System.Threading.Tasks.Task<'res> with
+    member this.Run () =
+        Async.AwaitTask this
+        |> Async.RunSynchronously
