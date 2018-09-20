@@ -44,8 +44,7 @@ type AppArgs = {
             (Proxy.args UserHubTypes.StubSpec (getWebSocketUri "ws_user") (Some 5.000000<second>) true)
     static member JsonEncoder : JsonEncoder<AppArgs> =
         fun (this : AppArgs) ->
-            E.object [
-            ]
+            E.object []
     static member JsonDecoder : JsonDecoder<AppArgs> =
         D.decode AppArgs.Create
         |> D.hardcoded (Proxy.args UserHubTypes.StubSpec (getWebSocketUri "ws_user") (Some 5.000000<second>) true)
@@ -94,7 +93,7 @@ type App (logging : ILogging, scope : Scope) =
             logException env "App.setup" "Setup_Failed" (E.encodeJson 4 args') e
     new (scope : Scope) =
         App (getLogging (), scope)
-    member this.Setup (getArgs : unit -> AppArgs) : IApp =
+    member this.Setup (getArgs : unit -> AppArgs) : unit =
         if args.IsSome then
             failWith "Already_Setup" <| E.encodeJson 4 args.Value
         else
@@ -102,12 +101,12 @@ type App (logging : ILogging, scope : Scope) =
             args <- Some args'
             setup this
             match setupError with
-            | None -> this.AsApp
+            | None -> ()
             | Some e -> raise e
-    member this.Setup (args' : AppArgs) : IApp =
+    member this.Setup (args' : AppArgs) : unit =
         fun () -> args'
         |> this.Setup
-    member this.Setup (args' : Json) : IApp =
+    member this.Setup (args' : Json) : unit =
         fun () ->
             try
                 castJson AppArgs.JsonDecoder args'
@@ -115,7 +114,7 @@ type App (logging : ILogging, scope : Scope) =
                 logException env "App.Setup" "Decode_Failed" args e
                 raise e
         |> this.Setup
-    member this.Setup (args' : string) : IApp =
+    member this.Setup (args' : string) : unit =
         let json : Json = parseJson args'
         this.Setup json
     member __.SetupError : exn option = setupError

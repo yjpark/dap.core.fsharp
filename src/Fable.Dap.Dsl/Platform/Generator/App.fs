@@ -317,7 +317,7 @@ type ClassGenerator (meta : AppMeta) =
         ]|> List.concat
     let getFablePublicSetup (param : AppParam) =
         [
-            sprintf "    member this.Setup (getArgs : unit -> %sArgs) : I%s =" param.Name param.Name
+            sprintf "    member this.Setup (getArgs : unit -> %sArgs) : unit =" param.Name
             sprintf "        if args.IsSome then"
             sprintf "            failWith \"Already_Setup\" <| E.encodeJson 4 args.Value"
             sprintf "        else"
@@ -325,12 +325,12 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "            args <- Some args'"
             sprintf "            setup this"
             sprintf "            match setupError with"
-            sprintf "            | None -> this.As%s" param.Name
+            sprintf "            | None -> ()"
             sprintf "            | Some e -> raise e"
-            sprintf "    member this.Setup (args' : %sArgs) : I%s =" param.Name param.Name
+            sprintf "    member this.Setup (args' : %sArgs) : unit =" param.Name
             sprintf "        fun () -> args'"
             sprintf "        |> this.Setup"
-            sprintf "    member this.Setup (args' : Json) : I%s =" param.Name
+            sprintf "    member this.Setup (args' : Json) : unit ="
             sprintf "        fun () ->"
             sprintf "            try"
             sprintf "                castJson %sArgs.JsonDecoder args'" param.Name
@@ -338,7 +338,7 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "                logException env \"%s.Setup\" \"Decode_Failed\" args e" param.Name
             sprintf "                raise e"
             sprintf "        |> this.Setup"
-            sprintf "    member this.Setup (args' : string) : I%s =" param.Name
+            sprintf "    member this.Setup (args' : string) : unit ="
             sprintf "        let json : Json = parseJson args'"
             sprintf "        this.Setup json"
             sprintf "    member __.SetupError : exn option = setupError"
@@ -362,7 +362,7 @@ type ClassGenerator (meta : AppMeta) =
         ]|> List.concat
     let getPublicSetup (param : AppParam) =
         [
-            sprintf "    member this.SetupAsync (getArgs : unit -> %sArgs) : Task<I%s> = task {" param.Name param.Name
+            sprintf "    member this.SetupAsync (getArgs : unit -> %sArgs) : Task<unit> = task {" param.Name
             sprintf "        if args.IsSome then"
             sprintf "            failWith \"Already_Setup\" <| E.encodeJson 4 args.Value"
             sprintf "        else"
@@ -372,12 +372,12 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "            match setupError with"
             sprintf "            | None -> ()"
             sprintf "            | Some e -> raise e"
-            sprintf "        return this.As%s" param.Name
+            sprintf "        return ()"
             sprintf "        }"
-            sprintf "    member this.SetupAsync (args' : %sArgs) : Task<I%s> =" param.Name param.Name
+            sprintf "    member this.SetupAsync (args' : %sArgs) : Task<unit> =" param.Name
             sprintf "        fun () -> args'"
             sprintf "        |> this.SetupAsync"
-            sprintf "    member this.SetupAsync (args' : Json) : Task<I%s> =" param.Name
+            sprintf "    member this.SetupAsync (args' : Json) : Task<unit> ="
             sprintf "        fun () ->"
             sprintf "            try"
             sprintf "                castJson %sArgs.JsonDecoder args'" param.Name
@@ -385,7 +385,7 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "                logException env \"%s.SetupAsync\" \"Decode_Failed\" args e" param.Name
             sprintf "                raise e"
             sprintf "        |> this.SetupAsync"
-            sprintf "    member this.SetupAsync (args' : string) : Task<I%s> =" param.Name
+            sprintf "    member this.SetupAsync (args' : string) : Task<unit> ="
             sprintf "        let json : Json = parseJson args'"
             sprintf "        this.SetupAsync json"
             sprintf "    member __.SetupError : exn option = setupError"

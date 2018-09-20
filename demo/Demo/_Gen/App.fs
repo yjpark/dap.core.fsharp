@@ -158,7 +158,7 @@ type App (logging : ILogging, scope : Scope) =
         App (loggingArgs.CreateLogging (), scope)
     new (scope : Scope) =
         App (getLogging (), scope)
-    member this.SetupAsync (getArgs : unit -> AppArgs) : Task<IApp> = task {
+    member this.SetupAsync (getArgs : unit -> AppArgs) : Task<unit> = task {
         if args.IsSome then
             failWith "Already_Setup" <| E.encodeJson 4 args.Value
         else
@@ -168,12 +168,12 @@ type App (logging : ILogging, scope : Scope) =
             match setupError with
             | None -> ()
             | Some e -> raise e
-        return this.AsApp
+        return ()
         }
-    member this.SetupAsync (args' : AppArgs) : Task<IApp> =
+    member this.SetupAsync (args' : AppArgs) : Task<unit> =
         fun () -> args'
         |> this.SetupAsync
-    member this.SetupAsync (args' : Json) : Task<IApp> =
+    member this.SetupAsync (args' : Json) : Task<unit> =
         fun () ->
             try
                 castJson AppArgs.JsonDecoder args'
@@ -181,7 +181,7 @@ type App (logging : ILogging, scope : Scope) =
                 logException env "App.SetupAsync" "Decode_Failed" args e
                 raise e
         |> this.SetupAsync
-    member this.SetupAsync (args' : string) : Task<IApp> =
+    member this.SetupAsync (args' : string) : Task<unit> =
         let json : Json = parseJson args'
         this.SetupAsync json
     member __.SetupError : exn option = setupError
