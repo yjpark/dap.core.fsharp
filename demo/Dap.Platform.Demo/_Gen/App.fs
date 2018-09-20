@@ -82,9 +82,7 @@ type AppArgs = {
             (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
     static member JsonEncoder : JsonEncoder<AppArgs> =
         fun (this : AppArgs) ->
-            E.object [
-                "ticker", TickerTypes.Args.JsonEncoder this.Ticker
-            ]
+            E.object []
     static member JsonDecoder : JsonDecoder<AppArgs> =
         D.decode AppArgs.Create
         |> D.optional "ticker" TickerTypes.Args.JsonDecoder (TickerTypes.Args.Default ())
@@ -140,16 +138,10 @@ type App (loggingArgs : LoggingArgs, scope : Scope) =
     let mutable args : AppArgs option = None
     let mutable setupError : exn option = None
     let mutable (* IServicesPack *) ticker : TickerTypes.Agent option = None
-    let mutable (* IServicesPack *) ticker : TickerTypes.Agent option = None
-    let mutable (* IServicesPack *) ticker : TickerTypes.Agent option = None
     let mutable (* IBackupPack *) backupTicker : TickerTypes.Agent option = None
     let setupAsync (this : App) : Task<unit> = task {
         let args' = args |> Option.get
         try
-            let! (* IServicesPack *) ticker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.Ticker) "Ticker" ""
-            ticker <- Some ticker'
-            let! (* IServicesPack *) ticker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.Ticker) "Ticker" ""
-            ticker <- Some ticker'
             let! (* IServicesPack *) ticker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.Ticker) "Ticker" ""
             ticker <- Some ticker'
             let! (* IBackupPack *) backupTicker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.BackupTicker) "Ticker" "Backup"

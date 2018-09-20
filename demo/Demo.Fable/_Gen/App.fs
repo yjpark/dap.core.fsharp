@@ -10,7 +10,7 @@ module Proxy = Dap.Remote.WebSocketProxy.Proxy
 module UserHubTypes = Demo.UserHub.Types
 
 type IClientPackArgs =
-    abstract UserStub : Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt> with get
+    abstract UserStub' : Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt> with get
 
 type IClientPack =
     inherit IPack
@@ -56,7 +56,7 @@ type AppArgs = {
         member this.ToJson () = AppArgs.JsonEncoder this
     interface IObj
     interface IClientPackArgs with
-        member this.UserStub (* IClientPack *) : Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt> = this.UserStub
+        member this.UserStub' (* IClientPack *) : Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt> = this.UserStub
     member this.AsClientPackArgs = this :> IClientPackArgs
     interface IAppPackArgs with
         member this.AsClientPackArgs = this.AsClientPackArgs

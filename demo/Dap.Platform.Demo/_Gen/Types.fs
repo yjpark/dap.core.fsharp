@@ -38,10 +38,7 @@ type Publisher = {
             0
     static member JsonEncoder : JsonEncoder<Publisher> =
         fun (this : Publisher) ->
-            E.object [
-                "name", E.string this.Name
-                "year", E.int this.Year
-            ]
+            E.object []
     static member JsonDecoder : JsonDecoder<Publisher> =
         D.decode Publisher.Create
         |> D.optional "name" D.string ""
