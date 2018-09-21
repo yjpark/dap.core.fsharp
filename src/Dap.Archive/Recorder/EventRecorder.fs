@@ -7,7 +7,7 @@ open Dap.Platform
 open Dap.Remote
 open Dap.Archive
 
-open Dap.Archive.Recorder.Types
+module RecorderTypes = Dap.Archive.Recorder.Types
 
 [<Literal>]
 let Kind = "EventRecorder"
@@ -31,10 +31,10 @@ type Extra = {
 
 type Meta = Meta<Extra>
 type Frame = PacketFrame
-type Model = Model<Extra, Frame>
-type Req = Req<Extra, Frame>
-type Evt = Evt<Extra, Frame>
-type Msg = Msg<Extra, Frame>
+type Model = RecorderTypes.Model<Extra, Frame>
+type Req = RecorderTypes.Req<Extra, Frame>
+type Evt = RecorderTypes.Evt<Extra, Frame>
+type Msg = RecorderTypes.Msg<Extra, Frame>
 
 type IStorage' = IStorage'<Extra>
 
@@ -44,8 +44,8 @@ type BundleSpec' = Bundle.Spec'<Extra, Frame>
 type BundleParam' = Bundle.Param'<Extra, Frame>
 type Bundle' = Bundle'<Extra, Frame>
 
-type Args = Dap.Archive.Recorder.Types.Args
-type Agent = Agent<Extra, Frame>
+type Args = RecorderTypes.Args
+type Agent = RecorderTypes.Agent<Extra, Frame>
 
 let newExtra () =
     {
@@ -71,7 +71,7 @@ let registerAsync a = registerAsync' Kind a
 
 let appendEvent' (agent : Agent) (kind : string) (payload : string) : unit =
     let frame = PacketFrame.Create agent.Env.Clock.Now "" kind payload
-    agent.Post <| DoAppendFrame frame None
+    agent.Post <| RecorderTypes.DoAppendFrame frame None
 
 let appendEvent (agent : Agent) (evt : IEvent) : unit =
     appendEvent' agent evt.Kind <| evt.EncodeJson 4
