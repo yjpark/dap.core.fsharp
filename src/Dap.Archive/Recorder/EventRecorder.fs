@@ -45,7 +45,7 @@ type BundleParam' = Bundle.Param'<Extra, Frame>
 type Bundle' = Bundle'<Extra, Frame>
 
 type Args = Dap.Archive.Recorder.Types.Args
-type Agent = IAgent<Req<Extra, Frame>, Evt<Extra, Frame>>
+type Agent = Agent<Extra, Frame>
 
 let newExtra () =
     {
