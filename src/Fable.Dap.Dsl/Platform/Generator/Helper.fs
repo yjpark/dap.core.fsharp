@@ -19,6 +19,20 @@ type G with
     static member PackInterface (expr : Expr<PackMeta>) =
         let (name, meta) = unquotePropertyGetExpr expr
         G.PackInterface (name, meta)
+
+type G with
+    static member AppArgs (param : AppParam, meta : AppMeta) =
+        new App.ArgsGenerator (meta)
+        :> IGenerator<AppParam>
+        |> fun g -> g.Generate param
+    static member AppArgs (name, meta) =
+        let param = AppParam.Create name
+        G.AppArgs (param, meta)
+    static member AppArgs (expr : Expr<AppMeta>) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        G.AppArgs (name, meta)
+
+type G with
     static member AppInterface (param : AppParam, meta : AppMeta) =
         new App.InterfaceGenerator (meta)
         :> IGenerator<AppParam>
@@ -29,6 +43,8 @@ type G with
     static member AppInterface (expr : Expr<AppMeta>) =
         let (name, meta) = unquotePropertyGetExpr expr
         G.AppInterface (name, meta)
+
+type G with
     static member AppClass (param : AppParam, meta : AppMeta) =
         new App.ClassGenerator (meta)
         :> IGenerator<AppParam>
@@ -39,6 +55,24 @@ type G with
     static member AppClass (expr : Expr<AppMeta>) =
         let (name, meta) = unquotePropertyGetExpr expr
         G.AppClass (name, meta)
+
+type G with
+    static member App (param : AppParam, meta : AppMeta) =
+        [
+            G.AppArgs (param, meta)
+            [""]
+            G.AppInterface (param, meta)
+            [""]
+            G.AppClass (param, meta)
+        ]|> List.concat
+    static member App (name, meta : AppMeta) =
+        let param = AppParam.Create name
+        G.App (param, meta)
+    static member App (expr : Expr<AppMeta>) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        G.App (name, meta)
+
+type G with
     static member PlatformOpens =
         [
             "open Dap.Prelude"

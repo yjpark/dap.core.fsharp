@@ -6,6 +6,14 @@ open Dap.Context
 open Dap.Context.Meta
 
 type M with
+    static member kind (key, initValue) =
+        M.string (key, initValue, "")
+
+type M with
+    static member key (key, initValue) =
+        M.string (key, initValue, "")
+
+type M with
     static member ident (key, initValue : string, validator) =
         PropMeta.Create "Ident" "E.ident" "D.ident" "S.ident" VarProperty
             key initValue validator
@@ -13,6 +21,8 @@ type M with
         M.ident (key, initValue, "")
     static member ident (key) =
         M.ident (key, "noIdent")
+
+type M with
     static member dateTime (key, initValue : string, validator) =
         PropMeta.Create "System.DateTime" "E.dateTime" "D.dateTime" "S.dateTime" VarProperty
             key initValue validator
@@ -20,7 +30,9 @@ type M with
         M.dateTime (key, initValue, "")
     static member dateTime (key) =
         M.dateTime (key, "System.DateTime.UtcNow")
+
 #if !FABLE_COMPILER
+type M with
     static member instant (key, initValue : string, validator) =
         PropMeta.Create "Instant" "E.instant" "D.instant" "S.instant" VarProperty
             key initValue validator
@@ -50,6 +62,8 @@ type M with
         M.instant (format, key, initValue, "")
     static member instant (format : InstantFormat, key) =
         M.instant (format, key, "(getNow' ())")
+
+type M with
     static member duration (key, initValue : string, validator) =
         PropMeta.Create "Duration" "E.duration" "D.duration" "S.duration" VarProperty
             key initValue validator

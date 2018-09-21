@@ -7,13 +7,14 @@ open Dap.Context.Generator
 open Dap.Platform
 open Dap.Platform.Meta
 open Dap.Platform.Generator
+module TickerTypes = Dap.Platform.Ticker.Types
 
 let RecorderArgs =
     combo {
-        var (M.ident ("ticker_ident"))
+        var (M.kind ("ticker_kind", TickerTypes.Kind))
+        var (M.key ("ticker_key", NoKey))
         var (M.duration ("flush_interval", Duration.FromSeconds 30L))
     }
-
 
 let compile segments =
     [

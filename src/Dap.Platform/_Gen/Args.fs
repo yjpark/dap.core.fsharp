@@ -19,6 +19,10 @@ type ConsoleSinkArgs = {
     static member Default () =
         ConsoleSinkArgs.Create
             LogLevelWarning
+    static member SetMinLevel (minLevel : LogLevel) (this : ConsoleSinkArgs) =
+        {this with MinLevel = minLevel}
+    static member UpdateMinLevel (update : LogLevel -> LogLevel) (this : ConsoleSinkArgs) =
+        this |> ConsoleSinkArgs.SetMinLevel (update this.MinLevel)
     static member JsonEncoder : JsonEncoder<ConsoleSinkArgs> =
         fun (this : ConsoleSinkArgs) ->
             E.object [
@@ -33,7 +37,8 @@ type ConsoleSinkArgs = {
     interface IJson with
         member this.ToJson () = ConsoleSinkArgs.JsonEncoder this
     interface IObj
-    member this.WithMinLevel (minLevel : LogLevel) = {this with MinLevel = minLevel}
+    member this.WithMinLevel (minLevel : LogLevel) =
+        this |> ConsoleSinkArgs.SetMinLevel minLevel
 
 (*
  * Generated: <Union>
@@ -81,6 +86,18 @@ type FileSinkArgs = {
             LogLevelInformation
             ""
             None
+    static member SetMinLevel (minLevel : LogLevel) (this : FileSinkArgs) =
+        {this with MinLevel = minLevel}
+    static member SetPath (path : string) (this : FileSinkArgs) =
+        {this with Path = path}
+    static member SetRolling (rolling : RollingInterval option) (this : FileSinkArgs) =
+        {this with Rolling = rolling}
+    static member UpdateMinLevel (update : LogLevel -> LogLevel) (this : FileSinkArgs) =
+        this |> FileSinkArgs.SetMinLevel (update this.MinLevel)
+    static member UpdatePath (update : string -> string) (this : FileSinkArgs) =
+        this |> FileSinkArgs.SetPath (update this.Path)
+    static member UpdateRolling (update : RollingInterval option -> RollingInterval option) (this : FileSinkArgs) =
+        this |> FileSinkArgs.SetRolling (update this.Rolling)
     static member JsonEncoder : JsonEncoder<FileSinkArgs> =
         fun (this : FileSinkArgs) ->
             E.object [
@@ -99,9 +116,12 @@ type FileSinkArgs = {
     interface IJson with
         member this.ToJson () = FileSinkArgs.JsonEncoder this
     interface IObj
-    member this.WithMinLevel (minLevel : LogLevel) = {this with MinLevel = minLevel}
-    member this.WithPath (path : string) = {this with Path = path}
-    member this.WithRolling (rolling : RollingInterval option) = {this with Rolling = rolling}
+    member this.WithMinLevel (minLevel : LogLevel) =
+        this |> FileSinkArgs.SetMinLevel minLevel
+    member this.WithPath (path : string) =
+        this |> FileSinkArgs.SetPath path
+    member this.WithRolling (rolling : RollingInterval option) =
+        this |> FileSinkArgs.SetRolling rolling
 
 (*
  * Generated: <Record>
@@ -121,6 +141,14 @@ type LoggingArgs = {
         LoggingArgs.Create
             None
             None
+    static member SetConsole (console : ConsoleSinkArgs option) (this : LoggingArgs) =
+        {this with Console = console}
+    static member SetFile (file : FileSinkArgs option) (this : LoggingArgs) =
+        {this with File = file}
+    static member UpdateConsole (update : ConsoleSinkArgs option -> ConsoleSinkArgs option) (this : LoggingArgs) =
+        this |> LoggingArgs.SetConsole (update this.Console)
+    static member UpdateFile (update : FileSinkArgs option -> FileSinkArgs option) (this : LoggingArgs) =
+        this |> LoggingArgs.SetFile (update this.File)
     static member JsonEncoder : JsonEncoder<LoggingArgs> =
         fun (this : LoggingArgs) ->
             E.object [
@@ -137,8 +165,10 @@ type LoggingArgs = {
     interface IJson with
         member this.ToJson () = LoggingArgs.JsonEncoder this
     interface IObj
-    member this.WithConsole (console : ConsoleSinkArgs option) = {this with Console = console}
-    member this.WithFile (file : FileSinkArgs option) = {this with File = file}
+    member this.WithConsole (console : ConsoleSinkArgs option) =
+        this |> LoggingArgs.SetConsole console
+    member this.WithFile (file : FileSinkArgs option) =
+        this |> LoggingArgs.SetFile file
 
 (*
  * Generated: <Record>
@@ -158,6 +188,14 @@ type TickerArgs = {
         TickerArgs.Create
             10.0
             true
+    static member SetFrameRate (frameRate : float) (this : TickerArgs) =
+        {this with FrameRate = frameRate}
+    static member SetAutoStart (autoStart : bool) (this : TickerArgs) =
+        {this with AutoStart = autoStart}
+    static member UpdateFrameRate (update : float -> float) (this : TickerArgs) =
+        this |> TickerArgs.SetFrameRate (update this.FrameRate)
+    static member UpdateAutoStart (update : bool -> bool) (this : TickerArgs) =
+        this |> TickerArgs.SetAutoStart (update this.AutoStart)
     static member JsonEncoder : JsonEncoder<TickerArgs> =
         fun (this : TickerArgs) ->
             E.object [
@@ -174,5 +212,7 @@ type TickerArgs = {
     interface IJson with
         member this.ToJson () = TickerArgs.JsonEncoder this
     interface IObj
-    member this.WithFrameRate (frameRate : float) = {this with FrameRate = frameRate}
-    member this.WithAutoStart (autoStart : bool) = {this with AutoStart = autoStart}
+    member this.WithFrameRate (frameRate : float) =
+        this |> TickerArgs.SetFrameRate frameRate
+    member this.WithAutoStart (autoStart : bool) =
+        this |> TickerArgs.SetAutoStart autoStart

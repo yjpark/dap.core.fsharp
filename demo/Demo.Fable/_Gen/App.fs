@@ -82,6 +82,12 @@ type IApp =
     abstract Args : AppArgs with get
     abstract AsAppPack : IAppPack with get
 
+type AppKinds () =
+    static member UserStub (* IClientPack *) = "UserStub"
+
+type AppKeys () =
+    static member UserStub (* IClientPack *) = ""
+
 type App (logging : ILogging, scope : Scope) =
     let env = Env.live logging scope
     let mutable args : AppArgs option = None
@@ -90,7 +96,7 @@ type App (logging : ILogging, scope : Scope) =
     let setup (this : App) : unit =
         let args' = args |> Option.get
         try
-            let (* IClientPack *) userStub' = env |> Env.spawn (Dap.Remote.Proxy.Logic.spec args'.UserStub) "UserStub" ""
+            let (* IClientPack *) userStub' = env |> Env.spawn (Dap.Remote.Proxy.Logic.spec args'.UserStub) AppKinds.UserStub AppKeys.UserStub
             userStub <- Some userStub'
             this.Setup' ()
             logInfo env "App.setup" "Setup_Succeed" (E.encodeJson 4 args')

@@ -112,7 +112,7 @@ let private update : ActorUpdate<Agent<'extra, 'frame>, Args, Model<'extra, 'fra
 
 let private init : ActorInit<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
     fun runner args ->
-        let ticker = runner.Env |> Env.getService args.TickerIdent.Kind args.TickerIdent.Key
+        let ticker = runner.Env |> Env.getService args.TickerKind args.TickerKey
         let ticker = ticker :?> TickerTypes.Agent
         ticker.WatchOnTick runner "OnTick" (runner.Deliver << OnTick)
         ({

@@ -99,8 +99,7 @@ let compile segments =
                     G.PackInterface <@ ICommonPack @>
                     G.PackInterface <@ IAppPack @>
                     G.PackInterface <@ IBackupPack @>
-                    G.AppInterface <@ App @>
-                    G.AppClass <@ App @>
+                    G.App <@ App @>
                 ]
             )
         )

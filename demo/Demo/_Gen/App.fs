@@ -158,6 +158,14 @@ type IApp =
     abstract AsAppPack : IAppPack with get
     abstract AsBackupPack : IBackupPack with get
 
+type AppKinds () =
+    static member Ticker (* IServicesPack *) = "Ticker"
+    static member BackupTicker (* IBackupPack *) = "Ticker"
+
+type AppKeys () =
+    static member Ticker (* IServicesPack *) = ""
+    static member BackupTicker (* IBackupPack *) = "Backup"
+
 type App (logging : ILogging, scope : Scope) =
     let env = Env.live MailboxPlatform logging scope
     let mutable args : AppArgs option = None
@@ -167,9 +175,9 @@ type App (logging : ILogging, scope : Scope) =
     let setupAsync (this : App) : Task<unit> = task {
         let args' = args |> Option.get
         try
-            let! (* IServicesPack *) ticker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.Ticker) "Ticker" ""
+            let! (* IServicesPack *) ticker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.Ticker) AppKinds.Ticker AppKeys.Ticker
             ticker <- Some ticker'
-            let! (* IBackupPack *) backupTicker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.BackupTicker) "Ticker" "Backup"
+            let! (* IBackupPack *) backupTicker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args'.BackupTicker) AppKinds.BackupTicker AppKeys.BackupTicker
             backupTicker <- Some backupTicker'
             do! this.SetupAsync' ()
             logInfo env "App.setupAsync" "Setup_Succeed" (E.encodeJson 4 args')
