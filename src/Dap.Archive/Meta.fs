@@ -10,7 +10,7 @@ type M with
         let alias = "EventRecorder", "Dap.Archive.Recorder.EventRecorder"
         let args = JsonArgs "EventRecorder.Args"
         let type' = "EventRecorder.Agent"
-        let spec = "Dap.Archive.Recorder.Logic.spec"
+        let spec = "EventRecorder.spec"
         M.spawner ([alias], args, type', spec, kind)
     static member eventRecorderSpawner () =
         M.eventRecorderSpawner (Dap.Archive.Recorder.EventRecorder.Kind)

@@ -99,3 +99,6 @@ let getBundleSpec' (profile : Profile) : BundleSpec' =
 let createBundle' (profile : Profile) (param : BundleParam') : Bundle' =
     let spec = getBundleSpec' profile
     new Bundle' (spec, param)
+
+let spec args =
+    Dap.Archive.Recorder.Logic.spec<Meta, Frame> args
