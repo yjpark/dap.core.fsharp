@@ -79,3 +79,8 @@ type LoggingArgs with
         this.File
         |> Option.map (fun x -> x.LogFolder)
         |> Option.defaultValue ""
+    member this.WithFileName filename =
+        this.File
+        |> Option.map (fun x ->
+            x.WithPath <| System.IO.Path.Combine (x.LogFolder, filename)
+        )|> this.WithFile
