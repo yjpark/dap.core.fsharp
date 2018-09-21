@@ -35,7 +35,6 @@ let TickerArgs =
         var (M.bool ("auto_start", true))
     }
 
-
 let compile segments =
     [
         G.File (segments, ["_Gen"; "Args.fs"],

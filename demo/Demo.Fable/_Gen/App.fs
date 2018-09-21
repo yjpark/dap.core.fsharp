@@ -42,6 +42,10 @@ type AppArgs = {
     static member Default () =
         AppArgs.Create
             (Proxy.args UserHubTypes.StubSpec (getWebSocketUri "ws_user") (Some 5.000000<second>) true)
+    static member SetUserStub ((* IClientPack *) userStub : Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt>) (this : AppArgs) =
+        {this with UserStub = userStub}
+    static member UpdateUserStub ((* IClientPack *) update : Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt> -> Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt>) (this : AppArgs) =
+        this |> AppArgs.SetUserStub (update this.UserStub)
     static member JsonEncoder : JsonEncoder<AppArgs> =
         fun (this : AppArgs) ->
             E.object []
@@ -54,6 +58,8 @@ type AppArgs = {
     interface IJson with
         member this.ToJson () = AppArgs.JsonEncoder this
     interface IObj
+    member this.WithUserStub ((* IClientPack *) userStub : Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt>) =
+        this |> AppArgs.SetUserStub userStub
     interface IClientPackArgs with
         member this.UserStub' (* IClientPack *) : Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt> = this.UserStub
     member this.AsClientPackArgs = this :> IClientPackArgs

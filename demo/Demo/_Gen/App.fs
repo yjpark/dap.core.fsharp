@@ -80,6 +80,22 @@ type AppArgs = {
             100
             100
             (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
+    static member SetTicker ((* IServicesPack *) ticker : TickerTypes.Args) (this : AppArgs) =
+        {this with Ticker = ticker}
+    static member SetCommon ((* ICommonPack *) common : int) (this : AppArgs) =
+        {this with Common = common}
+    static member SetTest ((* IAppPack *) test : int) (this : AppArgs) =
+        {this with Test = test}
+    static member SetBackupTicker ((* IBackupPack *) backupTicker : TickerTypes.Args) (this : AppArgs) =
+        {this with BackupTicker = backupTicker}
+    static member UpdateTicker ((* IServicesPack *) update : TickerTypes.Args -> TickerTypes.Args) (this : AppArgs) =
+        this |> AppArgs.SetTicker (update this.Ticker)
+    static member UpdateCommon ((* ICommonPack *) update : int -> int) (this : AppArgs) =
+        this |> AppArgs.SetCommon (update this.Common)
+    static member UpdateTest ((* IAppPack *) update : int -> int) (this : AppArgs) =
+        this |> AppArgs.SetTest (update this.Test)
+    static member UpdateBackupTicker ((* IBackupPack *) update : TickerTypes.Args -> TickerTypes.Args) (this : AppArgs) =
+        this |> AppArgs.SetBackupTicker (update this.BackupTicker)
     static member JsonEncoder : JsonEncoder<AppArgs> =
         fun (this : AppArgs) ->
             E.object [
@@ -97,7 +113,14 @@ type AppArgs = {
     interface IJson with
         member this.ToJson () = AppArgs.JsonEncoder this
     interface IObj
-    member this.WithTicker ((* IServicesPack *) ticker : TickerTypes.Args) = {this with Ticker = ticker}
+    member this.WithTicker ((* IServicesPack *) ticker : TickerTypes.Args) =
+        this |> AppArgs.SetTicker ticker
+    member this.WithCommon ((* ICommonPack *) common : int) =
+        this |> AppArgs.SetCommon common
+    member this.WithTest ((* IAppPack *) test : int) =
+        this |> AppArgs.SetTest test
+    member this.WithBackupTicker ((* IBackupPack *) backupTicker : TickerTypes.Args) =
+        this |> AppArgs.SetBackupTicker backupTicker
     interface IServicesPackArgs with
         member this.Ticker (* IServicesPack *) : TickerTypes.Args = this.Ticker
     member this.AsServicesPackArgs = this :> IServicesPackArgs

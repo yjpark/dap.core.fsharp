@@ -85,6 +85,19 @@ type RecordGenerator (meta : ComboMeta) =
                 else
                     yield sprintf "        |> D.required \"%s\" %s" prop.Key prop.Decoder
         ]
+    let getFieldSetter (param : RecordParam) (prop : IPropMeta) =
+        [
+            let memberName = prop.Key.AsCodeMemberName
+            let varName = prop.Key.AsCodeVariableName
+            yield sprintf "    static member Set%s (%s%s : %s) (this : %s) =" memberName prop.CommentCode varName prop.Type param.Name
+            yield sprintf "        {this with %s = %s}" memberName varName
+        ]
+    let getFieldUpdater (param : RecordParam) (prop : IPropMeta) =
+        [
+            let memberName = prop.Key.AsCodeMemberName
+            yield sprintf "    static member Update%s (%supdate : %s -> %s) (this : %s) =" memberName prop.CommentCode prop.Type prop.Type param.Name
+            yield sprintf "        this |> %s.Set%s (update this.%s)" param.Name memberName memberName
+        ]
     let getRecordMiddle (param : RecordParam) =
         let names =
             meta.Fields
@@ -107,6 +120,10 @@ type RecordGenerator (meta : ComboMeta) =
                 for f in meta.Fields do
                     yield sprintf "            %s" f.InitValue
         ] @ (
+            meta.Fields |> List.map (getFieldSetter param) |> List.concat
+        ) @ (
+            meta.Fields |> List.map (getFieldUpdater param) |> List.concat
+        ) @ (
             if param.IsJson then
                 getJsonEncoder param
                 @ getJsonDecoder param
@@ -123,12 +140,12 @@ type RecordGenerator (meta : ComboMeta) =
         )
     let getFieldAdder (prop : IPropMeta) =
         sprintf "    %s : %s%s" prop.Key.AsCodeMemberName prop.CommentCode prop.Type
-    let getFieldMember (prop : IPropMeta) =
+    let getFieldMember (param : RecordParam) (prop : IPropMeta) =
         [
-            if prop.Decoder <> "" then
-                let memberName = prop.Key.AsCodeMemberName
-                let varName = prop.Key.AsCodeVariableName
-                yield sprintf "    member this.With%s (%s%s : %s) = {this with %s = %s}" memberName prop.CommentCode varName prop.Type memberName varName
+            let memberName = prop.Key.AsCodeMemberName
+            let varName = prop.Key.AsCodeVariableName
+            yield sprintf "    member this.With%s (%s%s : %s) =" memberName prop.CommentCode varName prop.Type
+            yield sprintf "        this |> %s.Set%s %s" param.Name memberName varName
         ]
     interface IGenerator<RecordParam> with
         member __.Generate param =
@@ -136,7 +153,7 @@ type RecordGenerator (meta : ComboMeta) =
                 getRecordHeader param
                 meta.AllFields |> List.map getFieldAdder
                 getRecordMiddle param
-                meta.AllFields |> List.map getFieldMember |> List.concat
+                meta.AllFields |> List.map (getFieldMember param) |> List.concat
                 InterfaceGenerator.GetImplementations param.Interfaces
             ]|> List.concat
 

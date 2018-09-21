@@ -36,6 +36,14 @@ type Publisher = {
         Publisher.Create
             ""
             0
+    static member SetName (name : string) (this : Publisher) =
+        {this with Name = name}
+    static member SetYear (year : int) (this : Publisher) =
+        {this with Year = year}
+    static member UpdateName (update : string -> string) (this : Publisher) =
+        this |> Publisher.SetName (update this.Name)
+    static member UpdateYear (update : int -> int) (this : Publisher) =
+        this |> Publisher.SetYear (update this.Year)
     static member JsonEncoder : JsonEncoder<Publisher> =
         fun (this : Publisher) ->
             E.object [
@@ -52,8 +60,10 @@ type Publisher = {
     interface IJson with
         member this.ToJson () = Publisher.JsonEncoder this
     interface IObj
-    member this.WithName (name : string) = {this with Name = name}
-    member this.WithYear (year : int) = {this with Year = year}
+    member this.WithName (name : string) =
+        this |> Publisher.SetName name
+    member this.WithYear (year : int) =
+        this |> Publisher.SetYear year
     interface IPublisher with
         member this.Name = this.Name
         member this.Year = this.Year
