@@ -171,7 +171,7 @@ type G = CodeGeneratorHelper with
         let (name, meta) = unquotePropertyGetExpr expr
         G.LooseJsonRecord (name, interfaces, meta)
     static member LooseJsonRecord (expr) =
-        G.JsonRecord (expr, [])
+        G.LooseJsonRecord (expr, [])
     static member Union (name, isJson, meta) =
         UnionParam.Create name isJson
         |> generate meta getUnionGenerator
