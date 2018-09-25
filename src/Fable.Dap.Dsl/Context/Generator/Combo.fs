@@ -80,7 +80,7 @@ type RecordGenerator (meta : ComboMeta) =
             for prop in meta.Fields do
                 if prop.Decoder = "" then
                     yield sprintf "        |> D.hardcoded %s" prop.InitValue
-                elif param.IsLoose then
+                elif param.IsLoose && prop.InitValue <> "" then
                     yield sprintf "        |> D.optional \"%s\" %s %s" prop.Key prop.Decoder prop.InitValue
                 else
                     yield sprintf "        |> D.required \"%s\" %s" prop.Key prop.Decoder
