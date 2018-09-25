@@ -1,4 +1,4 @@
-version 5.172.4
+version 5.181.1
 
 source https://www.nuget.org/api/v2
 storage: none
@@ -23,11 +23,6 @@ nuget Thoth.Json 1.0.0
 nuget Thoth.Json.Net 1.0.0
 
 clitool dotnet-fable
-
-# https://github.com/fsprojects/FSharp.TypeProviders.SDK
-github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fsi
-github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypes.fs
-github fsprojects/FSharp.TypeProviders.StarterPack src/ProvidedTypesTesting.fs
 
 group Build
     source https://nuget.yjpark.org/nuget/dap
