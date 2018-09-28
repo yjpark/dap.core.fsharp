@@ -12,6 +12,6 @@ type IContext with
     [<PassGenericsAttribute>]
 #endif
     member this.AsCombo = this :?> ComboContext
-    member this.ToMap<'p when 'p :> IProperty> () = this :?> MapContext<'p>
+    member this.ToDict<'p when 'p :> IProperty> () = this :?> DictContext<'p>
     member this.ToList<'p when 'p :> IProperty> () = this :?> ListContext<'p>
     member this.ToCustom<'p when 'p :> ICustomProperties> () = this :?> CustomContext<'p>

@@ -125,6 +125,7 @@ type G = CodeGeneratorHelper with
             [
                 "open Dap.Prelude"
                 "open Dap.Context"
+                "open Dap.Context.Helper"
             ] |> ensureOpens sections
         ModuleParam.Create name autoOpen requireQualifiedAccess
         |> generateModule sections
@@ -136,40 +137,59 @@ type G = CodeGeneratorHelper with
         G.Module (name, false, true, sections)
     static member AutoOpenQualifiedModule (name, sections : Lines list) =
         G.Module (name, true, true, sections)
-    static member BuilderModule (name, sections) =
+    static member BuilderModule (name : string, sections) =
+        let autoOpen = not <| name.EndsWith ("Builder")
         let sections =
             [
                 "open Dap.Prelude"
                 "open Dap.Context"
+                "open Dap.Context.Helper"
                 "open Dap.Context.Builder"
             ] |> ensureOpens sections
-        ModuleParam.Create name false false
+        ModuleParam.Create name autoOpen false
         |> generateModule sections
-    static member Interface (face : Interface) =
-        face.Param
-        |> generate face.Meta getInterfaceGenerator
-    static member Record (name, isJson, isLoose, interfaces, meta) =
-        RecordParam.Create name isJson isLoose interfaces
-        |> generate meta getRecordGenerator
-    static member Record (name, interfaces, meta) =
-        G.Record (name, false, false, interfaces, meta)
-    static member Record (expr, interfaces) =
+    static member ComboInterface (name, meta, parents) =
+        InterfaceParam.Create InterfaceType.ComboInterface name parents
+        |> generate meta getInterfaceGenerator
+    static member ComboInterface (name, meta) =
+        G.ComboInterface (name, meta, [])
+    static member ComboInterface (expr : Expr<'obj>, parents) =
         let (name, meta) = unquotePropertyGetExpr expr
-        G.Record (name, interfaces, meta)
+        G.ComboInterface (name, meta, parents)
+    static member ComboInterface (expr : Expr<'obj>) =
+        G.ComboInterface (expr, [])
+    static member ValueInterface (name, meta, parents) =
+        InterfaceParam.Create InterfaceType.ValueInterface name parents
+        |> generate meta getInterfaceGenerator
+    static member ValueInterface (name, meta) =
+        G.ValueInterface (name, meta, [])
+    static member ValueInterface (expr : Expr<'obj>, parents) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        G.ValueInterface (name, meta, parents)
+    static member ValueInterface (expr : Expr<'obj>) =
+        G.ValueInterface (expr, [])
+    static member Record (name, isJson, isLoose, meta) =
+        RecordParam.Create name isJson isLoose
+        |> generate meta getRecordGenerator
+    static member Record (name, meta) =
+        G.Record (name, false, false,  meta)
+    static member Record (expr) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        G.Record (name, meta)
     static member Record (expr) =
         G.Record (expr, [])
-    static member JsonRecord (name, interfaces, meta) =
-        G.Record (name, true, false, interfaces, meta)
-    static member JsonRecord (expr, interfaces) =
+    static member JsonRecord (name, meta) =
+        G.Record (name, true, false, meta)
+    static member JsonRecord (expr) =
         let (name, meta) = unquotePropertyGetExpr expr
-        G.JsonRecord (name, interfaces, meta)
+        G.JsonRecord (name, meta)
     static member JsonRecord (expr) =
         G.JsonRecord (expr, [])
-    static member LooseJsonRecord (name, interfaces, meta) =
-        G.Record (name, true, true, interfaces, meta)
-    static member LooseJsonRecord (expr, interfaces) =
+    static member LooseJsonRecord (name, meta) =
+        G.Record (name, true, true, meta)
+    static member LooseJsonRecord (expr) =
         let (name, meta) = unquotePropertyGetExpr expr
-        G.LooseJsonRecord (name, interfaces, meta)
+        G.LooseJsonRecord (name, meta)
     static member LooseJsonRecord (expr) =
         G.LooseJsonRecord (expr, [])
     static member Union (name, isJson, meta) =
@@ -185,24 +205,24 @@ type G = CodeGeneratorHelper with
     static member JsonUnion (expr) =
         let (name, meta) = unquotePropertyGetExpr expr
         G.JsonUnion (name, meta)
-    static member Class (name, isAbstract, isFinal, interfaces, meta) =
-        ClassParam.Create name isAbstract isFinal interfaces
+    static member Class (name, isAbstract, isFinal, meta) =
+        ClassParam.Create name isAbstract isFinal
         |> generate meta getClassGenerator
-    static member AbstractClass (name, interfaces, meta) =
-        G.Class (name, true, false, interfaces, meta)
-    static member AbstractClass (expr, interfaces) =
+    static member AbstractClass (name, meta) =
+        G.Class (name, true, false, meta)
+    static member AbstractClass (expr) =
         let (name, meta) = unquotePropertyGetExpr expr
-        G.AbstractClass (name, interfaces, meta)
-    static member FinalClass (name, interfaces, meta) =
-        G.Class (name, false, true, interfaces, meta)
-    static member FinalClass (expr, interfaces) =
+        G.AbstractClass (name, meta)
+    static member FinalClass (name, meta) =
+        G.Class (name, false, true, meta)
+    static member FinalClass (expr) =
         let (name, meta) = unquotePropertyGetExpr expr
-        G.FinalClass (name, interfaces, meta)
-    static member BaseClass (name, interfaces, meta) =
-        G.Class (name, false, false, interfaces, meta)
-    static member BaseClass (expr, interfaces) =
+        G.FinalClass (name, meta)
+    static member BaseClass (name, meta) =
+        G.Class (name, false, false, meta)
+    static member BaseClass (expr) =
         let (name, meta) = unquotePropertyGetExpr expr
-        G.BaseClass (name, interfaces, meta)
+        G.BaseClass (name, meta)
     static member ComboBuilder (name, kind, key, meta) =
         BuilderParam.Create ComboBuilder name kind key
         |> generate meta getBuilderGenerator
@@ -214,7 +234,7 @@ type G = CodeGeneratorHelper with
         G.ComboBuilder (kind, key, meta)
     static member ComboBuilder (expr) =
         let (kind, meta) = unquotePropertyGetExpr expr
-        let key = kind.AsCodeVariableName
+        let key = kind.AsCodeJsonKey
         G.ComboBuilder (kind, key, meta)
     static member ValueBuilder (name, kind, key, meta) =
         BuilderParam.Create ValueBuilder name kind key
@@ -223,14 +243,14 @@ type G = CodeGeneratorHelper with
         let name = sprintf "%sBuilder" kind.AsCodeMemberName
         G.ValueBuilder (name, kind, key, meta)
     static member ValueBuilder (kind : string, meta) =
-        let key = kind.AsCodeVariableName
+        let key = kind.AsCodeJsonKey
         G.ValueBuilder (kind, key, meta)
     static member ValueBuilder (expr, key : string) =
         let (kind, meta) = unquotePropertyGetExpr expr
         G.ValueBuilder (kind, key, meta)
     static member ValueBuilder (expr) =
         let (kind, meta) = unquotePropertyGetExpr expr
-        let key = kind.AsCodeVariableName
+        let key = kind.AsCodeJsonKey
         G.ValueBuilder (kind, key, meta)
     static member AsDisplay (code : string) (lines : Lines) =
         """[<StructuredFormatDisplay("{AsDisplay}")>]"""

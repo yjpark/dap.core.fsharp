@@ -3,13 +3,14 @@ module Dap.Platform.Args
 
 open Dap.Prelude
 open Dap.Context
+open Dap.Context.Helper
 
 (*
  * Generated: <Record>
  *     IsJson, IsLoose
  *)
 type ConsoleSinkArgs = {
-    MinLevel : LogLevel
+    MinLevel : (* ConsoleSinkArgs *) LogLevel
 } with
     static member Create minLevel
             : ConsoleSinkArgs =
@@ -37,7 +38,7 @@ type ConsoleSinkArgs = {
     interface IJson with
         member this.ToJson () = ConsoleSinkArgs.JsonEncoder this
     interface IObj
-    member this.WithMinLevel (minLevel : LogLevel) =
+    member this.WithMinLevel ((* ConsoleSinkArgs *) minLevel : LogLevel) =
         this |> ConsoleSinkArgs.SetMinLevel minLevel
 
 (*
@@ -70,9 +71,9 @@ with
  *     IsJson, IsLoose
  *)
 type FileSinkArgs = {
-    MinLevel : LogLevel
-    Path : string
-    Rolling : RollingInterval option
+    MinLevel : (* FileSinkArgs *) LogLevel
+    Path : (* FileSinkArgs *) string
+    Rolling : (* FileSinkArgs *) RollingInterval option
 } with
     static member Create minLevel path rolling
             : FileSinkArgs =
@@ -116,11 +117,11 @@ type FileSinkArgs = {
     interface IJson with
         member this.ToJson () = FileSinkArgs.JsonEncoder this
     interface IObj
-    member this.WithMinLevel (minLevel : LogLevel) =
+    member this.WithMinLevel ((* FileSinkArgs *) minLevel : LogLevel) =
         this |> FileSinkArgs.SetMinLevel minLevel
-    member this.WithPath (path : string) =
+    member this.WithPath ((* FileSinkArgs *) path : string) =
         this |> FileSinkArgs.SetPath path
-    member this.WithRolling (rolling : RollingInterval option) =
+    member this.WithRolling ((* FileSinkArgs *) rolling : RollingInterval option) =
         this |> FileSinkArgs.SetRolling rolling
 
 (*
@@ -128,8 +129,8 @@ type FileSinkArgs = {
  *     IsJson, IsLoose
  *)
 type LoggingArgs = {
-    Console : ConsoleSinkArgs option
-    File : FileSinkArgs option
+    Console : (* LoggingArgs *) ConsoleSinkArgs option
+    File : (* LoggingArgs *) FileSinkArgs option
 } with
     static member Create console file
             : LoggingArgs =
@@ -165,9 +166,9 @@ type LoggingArgs = {
     interface IJson with
         member this.ToJson () = LoggingArgs.JsonEncoder this
     interface IObj
-    member this.WithConsole (console : ConsoleSinkArgs option) =
+    member this.WithConsole ((* LoggingArgs *) console : ConsoleSinkArgs option) =
         this |> LoggingArgs.SetConsole console
-    member this.WithFile (file : FileSinkArgs option) =
+    member this.WithFile ((* LoggingArgs *) file : FileSinkArgs option) =
         this |> LoggingArgs.SetFile file
 
 (*
@@ -175,8 +176,8 @@ type LoggingArgs = {
  *     IsJson, IsLoose
  *)
 type TickerArgs = {
-    FrameRate : float
-    AutoStart : bool
+    FrameRate : (* TickerArgs *) float
+    AutoStart : (* TickerArgs *) bool
 } with
     static member Create frameRate autoStart
             : TickerArgs =
@@ -212,7 +213,7 @@ type TickerArgs = {
     interface IJson with
         member this.ToJson () = TickerArgs.JsonEncoder this
     interface IObj
-    member this.WithFrameRate (frameRate : float) =
+    member this.WithFrameRate ((* TickerArgs *) frameRate : float) =
         this |> TickerArgs.SetFrameRate frameRate
-    member this.WithAutoStart (autoStart : bool) =
+    member this.WithAutoStart ((* TickerArgs *) autoStart : bool) =
         this |> TickerArgs.SetAutoStart autoStart

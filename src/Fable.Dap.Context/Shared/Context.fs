@@ -6,7 +6,7 @@ open Dap.Context.Internal
 open Dap.Context.ContextSpec
 
 [<AbstractClass>]
-type MapContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<IDictProperty<'p>> and 'p :> IProperty> (logging, spec) =
+type DictContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<IDictProperty<'p>> and 'p :> IProperty> (logging, spec) =
     inherit BaseContext<'c, 's, IDictProperty<'p>> (logging, spec)
 
 [<AbstractClass>]
@@ -21,10 +21,10 @@ type ComboContext<'c, 's when 'c :> IContext and 's :> IContextSpec<IComboProper
 type CustomContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<'p> and 'p :> ICustomProperties> (logging, spec) =
     inherit BaseContext<'c, 's, 'p> (logging, spec)
 
-type MapContext<'p when 'p :> IProperty> (logging, kind, spawner) =
-    inherit MapContext<MapContext<'p>, MapContextSpec<'p>, 'p> (logging, new MapContextSpec<'p> (kind, spawner))
+type DictContext<'p when 'p :> IProperty> (logging, kind, spawner) =
+    inherit DictContext<DictContext<'p>, DictContextSpec<'p>, 'p> (logging, new DictContextSpec<'p> (kind, spawner))
     override this.Self = this
-    override __.Spawn l = new MapContext<'p> (l, kind, spawner)
+    override __.Spawn l = new DictContext<'p> (l, kind, spawner)
 
 type ListContext<'p when 'p :> IProperty> (logging, kind, spawner) =
     inherit ListContext<ListContext<'p>, ListContextSpec<'p>, 'p> (logging, new ListContextSpec<'p> (kind, spawner))

@@ -64,7 +64,8 @@ and internal VarProperty<'v> private (owner, spec) =
             | Error err ->
                 owner.Log <| tplPropertyError "Property:Decode_Failed" spec.Luid this.Value (E.encode 4 json, err)
                 None
-    override this.Clone0 o k = (this :> IVarProperty<'v>) .Clone o k :> IProperty
+    override this.Clone0 o k = this.AsVarProperty.Clone o k :> IProperty
+    override this.SyncTo0 t = this.AsVarProperty.SyncTo (t :?> IVarProperty<'v>)
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif

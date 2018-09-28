@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Dap.Archive.Args
 
+open Dap.Context.Helper
 open Dap.Prelude
 open Dap.Context
 open Dap.Platform
@@ -10,9 +11,9 @@ open Dap.Platform
  *     IsJson, IsLoose
  *)
 type RecorderArgs = {
-    TickerKind : string
-    TickerKey : string
-    FlushInterval : Duration
+    TickerKind : (* RecorderArgs *) string
+    TickerKey : (* RecorderArgs *) string
+    FlushInterval : (* RecorderArgs *) Duration
 } with
     static member Create tickerKind tickerKey flushInterval
             : RecorderArgs =
@@ -56,9 +57,9 @@ type RecorderArgs = {
     interface IJson with
         member this.ToJson () = RecorderArgs.JsonEncoder this
     interface IObj
-    member this.WithTickerKind (tickerKind : string) =
+    member this.WithTickerKind ((* RecorderArgs *) tickerKind : string) =
         this |> RecorderArgs.SetTickerKind tickerKind
-    member this.WithTickerKey (tickerKey : string) =
+    member this.WithTickerKey ((* RecorderArgs *) tickerKey : string) =
         this |> RecorderArgs.SetTickerKey tickerKey
-    member this.WithFlushInterval (flushInterval : Duration) =
+    member this.WithFlushInterval ((* RecorderArgs *) flushInterval : Duration) =
         this |> RecorderArgs.SetFlushInterval flushInterval

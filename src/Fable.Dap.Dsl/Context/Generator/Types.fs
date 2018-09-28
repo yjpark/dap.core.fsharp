@@ -21,11 +21,13 @@ type InterfaceType =
 type InterfaceParam = {
     Type : InterfaceType
     Name : string
+    Parents : string list
 } with
-    static member Create type' name =
+    static member Create type' name parents =
         {
             Type = type'
             Name = name
+            Parents = parents
         }
     interface IParam with
         member this.Category =
@@ -33,35 +35,20 @@ type InterfaceParam = {
             | ComboInterface -> "ComboInterface"
             | ValueInterface -> "ValueInterface"
         member this.Name = this.Name
-        member __.Desc = ""
-
-type Interface = {
-    Param : InterfaceParam
-    Meta : obj
-} with
-    static member CreateCombo name meta =
-        {
-            Param = InterfaceParam.Create ComboInterface name
-            Meta = meta
-        }
-    static member CreateValue name meta =
-        {
-            Param = InterfaceParam.Create ValueInterface name
-            Meta = meta
-        }
+        member this.Desc =
+            this.Parents
+            |> String.concat ", "
 
 type RecordParam = {
     Name : string
     IsJson : bool
     IsLoose : bool
-    Interfaces : Interface list
 } with
-    static member Create name isJson isLoose interfaces =
+    static member Create name isJson isLoose =
         {
             Name = name
             IsJson = isJson
             IsLoose = isLoose
-            Interfaces = interfaces
         }
     interface IParam with
         member __.Category = "Record"
@@ -72,8 +59,6 @@ type RecordParam = {
                     yield "IsJson"
                     if this.IsLoose then
                         yield "IsLoose"
-                for face in this.Interfaces do
-                    yield face.Param.Name
             ] |> String.concat ", "
 
 type UnionParam = {
@@ -98,14 +83,12 @@ type ClassParam = {
     Name : string
     IsAbstract : bool
     IsFinal : bool
-    Interfaces : Interface list
 } with
-    static member Create name isAbstract isFinal interfaces =
+    static member Create name isAbstract isFinal =
         {
             Name = name
             IsAbstract = isAbstract
             IsFinal = isFinal
-            Interfaces = interfaces
         }
     interface IParam with
         member __.Category = "Class"
@@ -116,8 +99,6 @@ type ClassParam = {
                     yield "IsFinal"
                 if this.IsAbstract then
                     yield "IsAbstract"
-                for face in this.Interfaces do
-                    yield face.Param.Name
             ] |> String.concat ", "
 
 type BuilderType =

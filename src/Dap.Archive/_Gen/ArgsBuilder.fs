@@ -1,5 +1,6 @@
 module Dap.Archive.ArgsBuilder
 
+open Dap.Context.Helper
 open Dap.Prelude
 open Dap.Context
 open Dap.Context.Builder
@@ -12,13 +13,13 @@ type RecorderArgsBuilder () =
     inherit ObjBuilder<RecorderArgs> ()
     override __.Zero () = RecorderArgs.Default ()
     [<CustomOperation("ticker_kind")>]
-    member __.TickerKind (target : RecorderArgs, tickerKind : string) =
+    member __.TickerKind (target : RecorderArgs, (* RecorderArgs *) tickerKind : string) =
         target.WithTickerKind tickerKind
     [<CustomOperation("ticker_key")>]
-    member __.TickerKey (target : RecorderArgs, tickerKey : string) =
+    member __.TickerKey (target : RecorderArgs, (* RecorderArgs *) tickerKey : string) =
         target.WithTickerKey tickerKey
     [<CustomOperation("flush_interval")>]
-    member __.FlushInterval (target : RecorderArgs, flushInterval : Duration) =
+    member __.FlushInterval (target : RecorderArgs, (* RecorderArgs *) flushInterval : Duration) =
         target.WithFlushInterval flushInterval
 
 let recorderArgs = RecorderArgsBuilder ()

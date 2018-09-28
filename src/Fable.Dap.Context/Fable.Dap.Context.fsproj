@@ -38,6 +38,7 @@
     <Compile Include="Shared/Builder/Types.fs" />
     <Compile Include="Shared/Builder/Combo.fs" />
     <Compile Include="Shared/Builder/Context.fs" />
+    <Compile Include="Shared/Builder/Helper.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Prelude\Fable.Dap.Prelude.fsproj" />

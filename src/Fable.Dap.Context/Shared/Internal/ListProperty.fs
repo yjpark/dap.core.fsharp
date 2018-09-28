@@ -51,6 +51,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
         *)
         Some (value, ok)
     override this.Clone0 o k = this.AsListProperty.Clone o k :> IProperty
+    override this.SyncTo0 t = this.AsListProperty.SyncTo (t :?> IListProperty<'p>)
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif

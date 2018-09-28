@@ -113,7 +113,7 @@ type ArgsGenerator (meta : AppMeta) =
                 |> ComboMeta.Create []
             clearProcessedPacks ()
             [
-                G.LooseJsonRecord (kind, [], argsMeta)
+                G.LooseJsonRecord (kind, argsMeta)
                 meta.Packs |> List.map (getPackArgsMembers []) |> List.concat
                 [""]
                 G.ValueBuilder (kind, argsMeta)

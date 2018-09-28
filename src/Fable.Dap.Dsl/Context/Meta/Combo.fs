@@ -20,5 +20,15 @@ type Builder (parents : (string * ComboMeta) list) =
 
     override __.AddVariant variation field fields =
         field.ToVariant variation
-        :?> IPropMeta
         |> fields.AddField
+    [<CustomOperation("nothing")>]
+    member __.Nothing (meta : ComboMeta, ()) =
+        meta
+    [<CustomOperation("prop")>]
+    member __.Prop (meta : ComboMeta, prop : PropMeta) =
+        match prop.Kind with
+        | VarProperty ->
+            {prop with Kind = PropertyKind.CustomProperty}
+        | _ ->
+            prop
+        |> meta.AddField

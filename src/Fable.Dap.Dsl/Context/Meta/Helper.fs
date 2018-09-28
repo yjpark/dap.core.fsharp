@@ -35,7 +35,8 @@ type M = MetaBuilderHelper with
     static member hardcoded (name : string, key, initValue) =
         PropMeta.Create name "" "" "" VarProperty
             key initValue ""
-
+    static member combo (key : string) =
+        PropMeta.CreateCombo key
 type M with
     static member custom (name : string, key, initValue, validator) =
         PropMeta.Create name (name + ".JsonEncoder") (name + ".JsonDecoder") (name + ".JsonSpec") VarProperty
@@ -43,14 +44,15 @@ type M with
     static member custom (name : string, key, initValue) =
         M.custom (name, key, initValue, "")
     static member custom (name : string, key) =
-        M.custom (name, key, "")
+        M.custom (name, key, sprintf "(%s.Default ())" name)
     static member custom (expr : Expr<'obj>, key, initValue, validator) =
         let (name, _meta) = unquotePropertyGetExpr expr
         M.custom (name, key, initValue, validator)
     static member custom (expr : Expr<'obj>, key, initValue) =
         M.custom (expr, key, initValue, "")
     static member custom (expr : Expr<'obj>, key) =
-        M.custom (expr, key, "")
+        let (name, _meta) = unquotePropertyGetExpr expr
+        M.custom (expr, key, sprintf "(%s.Default ())" name)
 
 type M with
     static member union (expr : Expr<CaseMeta list>, key, initValue, validator) =

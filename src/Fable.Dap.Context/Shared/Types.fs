@@ -165,6 +165,7 @@ and IProperty =
     abstract WithJson : Json -> bool
     abstract OnChanged : IBus<PropertyChanged> with get
     abstract Clone0 : IOwner -> Key -> IProperty
+    abstract SyncTo0 : IProperty -> unit
 
 and IPropertySpec<'p when 'p :> IProperty> =
     inherit IPropertySpec
@@ -208,7 +209,7 @@ and IDictProperty =
     abstract ElementType : Type with get
 #endif
     abstract ElementSpawner : IOwner -> Key -> IProperty
-    abstract SealMap : unit -> unit
+    abstract SealDict : unit -> unit
     abstract MapSealed : bool with get
     abstract Has : Key -> bool
     abstract OnAdded0 : IBus<IProperty> with get
@@ -216,13 +217,13 @@ and IDictProperty =
 
 and IDictProperty<'p when 'p :> IProperty> =
     inherit IDictProperty
-    inherit IValue<Map<Luid, 'p>>
+    inherit IValue<Map<Key, 'p>>
     abstract Spec : IPropertySpec<'p> with get
     abstract TryGet : Key -> 'p option
     abstract Get : Key -> 'p
     abstract Add : Key -> 'p
     abstract Remove : Key -> 'p option
-    abstract Clear : unit -> Map<Luid, 'p>
+    abstract Clear : unit -> Map<Key, 'p>
     abstract OnAdded : IBus<'p> with get
     abstract OnRemoved : IBus<'p> with get
     abstract SyncTo : IDictProperty<'p> -> unit
@@ -278,7 +279,7 @@ and IComboProperty =
     abstract Get : Key -> IProperty
     abstract AddAny : Key -> PropertySpawner -> IProperty
     abstract AddVar<'v> : IVarPropertySpec<'v> -> IVarProperty<'v>
-    abstract AddMap<'p when 'p :> IProperty> : IPropertySpec<'p> -> IDictProperty<'p>
+    abstract AddDict<'p when 'p :> IProperty> : IPropertySpec<'p> -> IDictProperty<'p>
     abstract AddList<'p when 'p :> IProperty> : IPropertySpec<'p> -> IListProperty<'p>
     abstract AddCombo : IPropertySpec -> IComboProperty
     abstract AddCustom<'p when 'p :> ICustomProperty> : IPropertySpec<'p> -> 'p
@@ -334,10 +335,6 @@ module Extensions =
         static member Create (luid) =
             IOwner.Create (getLogging(), luid)
     type IProperty with
-        member this.SyncTo0 (other : IProperty) =
-            this.ToJson ()
-            |> other.WithJson
-            |> ignore
         member this.SyncWith0 (other : IProperty) =
             other.SyncTo0 this
     type IComboProperty with

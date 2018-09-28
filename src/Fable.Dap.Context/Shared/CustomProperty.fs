@@ -35,11 +35,12 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         member this.Self = this.Self
         member this.SyncTo other = this.SyncTo other
         member this.Clone o k =
-            let clone = this.Spawn o k
-            let clone' = (clone :> IProperty)
-            this.AsProperty.ToJson () |> clone'.WithJson |> ignore
-            if this.AsProperty.Sealed then clone'.Seal ()
-            clone
+            this.Spawn o k
+            |> this.SetupClone<'p> (Some this.SyncTo)
+            |> fun clone ->
+                if this.AsProperty.Sealed then
+                    (clone :> IProperty) .Seal ()
+                clone
     interface IProperty with
         member __.Kind = PropertyKind.CustomProperty
         member this.Ver = this.Target.Ver
@@ -49,6 +50,17 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         member this.WithJson json = this.Target.WithJson json
         member this.OnChanged = this.Target.OnChanged
         member this.Clone0 o k = this.AsCustomProperty.Clone o k :> IProperty
+#if FABLE_COMPILER
+        [<PassGenericsAttribute>]
+#endif
+        member this.SyncTo0 t =
+            let this' = this.AsProperty
+            if this'.Kind <> t.Kind then
+                this'.Owner.Log <| tplPropertyError "Property:InValid_Kind" this'.Spec.Luid this'.Ver (this'.Kind, t.Kind, t)
+            elif this.GetType () <> t.GetType () then
+                this'.Owner.Log <| tplPropertyError "Property:InValid_Type" this'.Spec.Luid this'.Ver (this.GetType (), t.GetType (), t)
+            else
+                this.SyncTo (t :?> 'p)
     interface IAspect with
         member this.Owner = this.Target.Owner
     interface IJson with
@@ -66,7 +78,7 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
     #if FABLE_COMPILER
         [<PassGenericsAttribute>]
     #endif
-        member this.ToMap<'p1 when 'p1 :> IProperty> () = this.UnsafeTarget.ToMap<'p1> ()
+        member this.ToDict<'p1 when 'p1 :> IProperty> () = this.UnsafeTarget.ToDict<'p1> ()
     #if FABLE_COMPILER
         [<PassGenericsAttribute>]
     #endif

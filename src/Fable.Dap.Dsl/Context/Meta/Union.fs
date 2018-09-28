@@ -21,6 +21,9 @@ type FieldsBuilder<'fields, 'field> () =
     [<CustomOperation("list")>]
     member this.List (fields : 'fields, field : 'field) =
         fields |> this.AddVariant FieldVariation.List field
+    [<CustomOperation("dict")>]
+    member this.Dict (fields : 'fields, field : 'field) =
+        fields |> this.AddVariant FieldVariation.Dict field
 
 type FieldsBuilder () =
     inherit FieldsBuilder<IFieldMeta list, IFieldMeta> ()
@@ -30,7 +33,7 @@ type FieldsBuilder () =
 
     override this.AddVariant variation field fields =
         fields
-        |> this.AddField ^<| field.ToVariant variation
+        |> this.AddField ^<| field.ToVariant0 variation
 
 type CasesBuilder () =
     inherit MetaBuilder<CaseMeta list> ()

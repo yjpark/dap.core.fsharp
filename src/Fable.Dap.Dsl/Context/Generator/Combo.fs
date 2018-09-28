@@ -9,12 +9,29 @@ open Dap.Context.Meta
 open Dap.Context.Generator.Util
 open Dap.Context.Internal
 
+let getAsInterfaceName (iName : string) =
+    if iName.StartsWith ("I") then
+        iName.Substring (1, iName.Length - 1)
+    else
+        iName
+    |> sprintf "As%s"
+
+let mutable private processedInterfaces : Set<string> = Set.empty
+let clearProcessedInterfaces () =
+    processedInterfaces <- Set.empty
+let markInterfaceProcessed (pack : string) =
+    processedInterfaces <- processedInterfaces |> Set.add pack
+let didInterfaceProcessed (pack : string) =
+    processedInterfaces |> Set.contains pack
+
 type InterfaceGenerator (meta : ComboMeta) =
     let getInterfaceHeader (param : InterfaceParam) =
         [
             yield sprintf "type %s =" param.Name
+            for (parentName) in param.Parents do
+                yield sprintf "    inherit %s" parentName
             for (parentName, parentMeta) in meta.Parents do
-                yield sprintf "inherit %s" parentName
+                yield sprintf "    inherit %s" parentName
         ]
     let getOperation (param : InterfaceParam) (prop : IPropMeta) =
         [
@@ -23,25 +40,37 @@ type InterfaceGenerator (meta : ComboMeta) =
             | ValueInterface -> prop.Type
             |> sprintf "    abstract %s : %s with get" prop.Key.AsCodeMemberName
         ]
-    static member GetImplementation (face : Interface) =
-        [
-            match face.Meta with
-            | :? ComboMeta as meta ->
-                yield sprintf "    interface %s with" face.Param.Name
-                for prop in meta.Fields do
+    static member GetImplementation (interfaceType : InterfaceType) ((iName, iMeta) : string * ComboMeta) =
+        if didInterfaceProcessed iName then
+            []
+        else
+            markInterfaceProcessed iName
+            (
+                iMeta.Parents
+                |> List.map (InterfaceGenerator.GetImplementation interfaceType)
+                |> List.concat
+            ) @ [
+                if iMeta.Fields.Length > 0 then
+                    yield sprintf "    interface %s with" iName
+                else
+                    yield sprintf "    interface %s" iName
+            ] @ (
+                iMeta.Fields
+                |> List.map (fun prop ->
                     let name = prop.Key.AsCodeMemberName
-                    yield sprintf "        member this.%s = this.%s" name name
-                for (parentName, parentMeta) in meta.Parents do
-                    yield sprintf "    interface %s with" parentName
-                    for prop in parentMeta.Fields do
-                        let name = prop.Key.AsCodeMemberName
-                        yield sprintf "        member this.%s = this.%s" name name
-            | _ ->
-                yield sprintf "        //Unsupported interface meta: %s" <| (face.Meta.GetType()) .FullName
-        ]
-    static member GetImplementations (interfaces : Interface list) =
+                    let type' =
+                        match interfaceType with
+                        | ComboInterface -> prop.PropType
+                        | ValueInterface -> prop.Type
+                    sprintf "        member this.%s (* %s *) : %s = this.%s" name iName type' name
+                )
+            ) @ [
+                sprintf "    member this.%s = this :> %s" (getAsInterfaceName iName) iName
+            ]
+    static member GetImplementations (interfaceType : InterfaceType) (interfaces : (string * ComboMeta) list) =
+        clearProcessedInterfaces ()
         interfaces
-        |> List.map InterfaceGenerator.GetImplementation
+        |> List.map (InterfaceGenerator.GetImplementation interfaceType)
         |> List.concat
     interface IGenerator<InterfaceParam> with
         member __.Generate param =
@@ -58,32 +87,34 @@ type RecordGenerator (meta : ComboMeta) =
             yield sprintf "type %s = {" param.Name
         ]
     let getJsonEncoder (param : RecordParam) =
+        let fields = meta.GetAllFields param.Name
         let isNotEmpty =
-            meta.Fields
+            fields
             |> List.exists (fun prop -> prop.Encoder <> "")
         [
             yield sprintf "    static member JsonEncoder : JsonEncoder<%s> =" param.Name
             yield sprintf "        fun (this : %s) ->" param.Name
             if isNotEmpty then
                 yield sprintf "            E.object ["
-                for prop in meta.Fields do
+                for prop in fields do
                     if prop.Encoder <> "" then
-                        yield sprintf "                \"%s\", %sthis.%s" prop.Key prop.EncoderCall prop.Key.AsCodeMemberName
+                        yield sprintf "                %s\"%s\", %sthis.%s" prop.CommentCode prop.Key prop.EncoderCall prop.Key.AsCodeMemberName
                 yield sprintf "            ]"
             else
                 yield sprintf "            E.object []"
         ]
     let getJsonDecoder (param : RecordParam) =
+        let fields = meta.GetAllFields param.Name
         [
             yield sprintf "    static member JsonDecoder : JsonDecoder<%s> =" param.Name
             yield sprintf "        D.decode %s.Create" param.Name
-            for prop in meta.Fields do
+            for prop in fields do
                 if prop.Decoder = "" then
-                    yield sprintf "        |> D.hardcoded %s" prop.InitValue
+                    yield sprintf "        |> D.hardcoded %s(* %s *) %s" prop.CommentCode prop.Key prop.InitValue
                 elif param.IsLoose && prop.InitValue <> "" then
-                    yield sprintf "        |> D.optional \"%s\" %s %s" prop.Key prop.Decoder prop.InitValue
+                    yield sprintf "        |> D.optional %s\"%s\" %s %s" prop.CommentCode prop.Key prop.Decoder prop.InitValue
                 else
-                    yield sprintf "        |> D.required \"%s\" %s" prop.Key prop.Decoder
+                    yield sprintf "        |> D.required %s\"%s\" %s" prop.CommentCode prop.Key prop.Decoder
         ]
     let getFieldSetter (param : RecordParam) (prop : IPropMeta) =
         [
@@ -98,31 +129,53 @@ type RecordGenerator (meta : ComboMeta) =
             yield sprintf "    static member Update%s (%supdate : %s -> %s) (this : %s) =" memberName prop.CommentCode prop.Type prop.Type param.Name
             yield sprintf "        this |> %s.Set%s (update this.%s)" param.Name memberName memberName
         ]
+    let rec getComboHelper (param : RecordParam) ((name, combo) : string * ComboMeta) =
+        if didInterfaceProcessed name then
+            []
+        else
+            markInterfaceProcessed name
+            (
+                combo.Parents
+                |> List.map ^<| getComboHelper param
+                |> List.concat
+            ) @ (
+                combo.Fields
+                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map ^<| getFieldSetter param
+                |> List.concat
+            ) @ (
+                combo.Fields
+                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map ^<| getFieldUpdater param
+                |> List.concat
+            )
+    let rec getSelfComboHelper (param : RecordParam) =
+        clearProcessedInterfaces ()
+        getComboHelper param (param.Name, meta)
     let getRecordMiddle (param : RecordParam) =
+        let fields = meta.GetAllFields param.Name
         let names =
-            meta.Fields
+            fields
             |> List.map (fun f -> f.Key.AsCodeVariableName)
             |> String.concat " "
         let noDefault =
-            meta.Fields
+            fields
             |> List.exists (fun f -> f.InitValue = "")
         [
             yield sprintf "} with"
             yield sprintf "    static member Create %s" names
             yield sprintf "            : %s =" param.Name
             yield sprintf "        {"
-            for field in meta.Fields do
-                yield sprintf "            %s = %s" field.Key.AsCodeMemberName field.Key.AsCodeVariableName
+            for field in fields do
+                yield sprintf "            %s = %s%s" field.Key.AsCodeMemberName field.CommentCode field.Key.AsCodeVariableName
             yield sprintf "        }"
             if not noDefault then
                 yield sprintf "    static member Default () ="
                 yield sprintf "        %s.Create" param.Name
-                for f in meta.Fields do
-                    yield sprintf "            %s" f.InitValue
+                for f in fields do
+                    yield sprintf "            %s(* %s *) %s" f.CommentCode f.Key.AsCodeVariableName f.InitValue
         ] @ (
-            meta.Fields |> List.map (getFieldSetter param) |> List.concat
-        ) @ (
-            meta.Fields |> List.map (getFieldUpdater param) |> List.concat
+            getSelfComboHelper param
         ) @ (
             if param.IsJson then
                 getJsonEncoder param
@@ -140,6 +193,23 @@ type RecordGenerator (meta : ComboMeta) =
         )
     let getFieldAdder (prop : IPropMeta) =
         sprintf "    %s : %s%s" prop.Key.AsCodeMemberName prop.CommentCode prop.Type
+    let rec getComboAdder (param : RecordParam) ((name, combo) : string * ComboMeta) =
+        if didInterfaceProcessed name then
+            []
+        else
+            markInterfaceProcessed name
+            (
+                combo.Parents
+                |> List.map ^<| getComboAdder param
+                |> List.concat
+            ) @ (
+                combo.Fields
+                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map getFieldAdder
+            )
+    let rec getSelfComboAdder (param : RecordParam) =
+        clearProcessedInterfaces ()
+        getComboAdder param (param.Name, meta)
     let getFieldMember (param : RecordParam) (prop : IPropMeta) =
         [
             let memberName = prop.Key.AsCodeMemberName
@@ -147,14 +217,33 @@ type RecordGenerator (meta : ComboMeta) =
             yield sprintf "    member this.With%s (%s%s : %s) =" memberName prop.CommentCode varName prop.Type
             yield sprintf "        this |> %s.Set%s %s" param.Name memberName varName
         ]
+    let rec getComboMember (param : RecordParam) ((name, combo) : string * ComboMeta) =
+        if didInterfaceProcessed name then
+            []
+        else
+            markInterfaceProcessed name
+            (
+                combo.Parents
+                |> List.map ^<| getComboMember param
+                |> List.concat
+            ) @ (
+                combo.Fields
+                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map ^<| getFieldMember param
+                |> List.concat
+            )
+    let rec getSelfComboMember (param : RecordParam) =
+        clearProcessedInterfaces ()
+        getComboMember param (param.Name, meta)
+
     interface IGenerator<RecordParam> with
         member __.Generate param =
             [
                 getRecordHeader param
-                meta.AllFields |> List.map getFieldAdder
+                getSelfComboAdder param
                 getRecordMiddle param
-                meta.AllFields |> List.map (getFieldMember param) |> List.concat
-                InterfaceGenerator.GetImplementations param.Interfaces
+                getSelfComboMember param
+                InterfaceGenerator.GetImplementations InterfaceType.ValueInterface meta.Parents
             ]|> List.concat
 
 type ClassGenerator (meta : ComboMeta) =
@@ -182,6 +271,7 @@ type ClassGenerator (meta : ComboMeta) =
             yield sprintf "    override __.SyncTo t = target.SyncTo t.Target"
         ]
     let getFieldAdder (prop : IPropMeta) =
+        let varName = prop.Key.AsCodeVariableName
         let validator =
             if prop.Validator = "" then
                 "None"
@@ -189,22 +279,88 @@ type ClassGenerator (meta : ComboMeta) =
                 sprintf "Some %s" prop.Validator
         match prop.Kind with
         | VarProperty ->
-            sprintf "    let %s = target.AddVar<%s%s> (%s, %s, \"%s\", %s, %s)"
-                prop.Key prop.CommentCode prop.Type prop.Encoder prop.Decoder prop.Key prop.InitValue validator
-        | _ ->
-            failWith "Unsupported" <| sprintf "%A<%s>" prop.Kind prop.Type
+            match prop.Variation with
+            | FieldVariation.List ->
+                let prop = prop.ToVariant FieldVariation.Nothing
+                sprintf "    let %s = target.AddList<%s%s> (%s, %s, \"%s\", %s, %s)"
+                    varName prop.CommentCode prop.Type prop.Encoder prop.Decoder prop.Key prop.InitValue validator
+            | FieldVariation.Dict ->
+                let prop = prop.ToVariant FieldVariation.Nothing
+                sprintf "    let %s = target.AddDict<%s%s> (%s, %s, \"%s\", %s, %s)"
+                    varName prop.CommentCode prop.Type prop.Encoder prop.Decoder prop.Key prop.InitValue validator
+            | FieldVariation.Option
+            | FieldVariation.Nothing ->
+                sprintf "    let %s = target.AddVar<%s%s> (%s, %s, \"%s\", %s, %s)"
+                    varName prop.CommentCode prop.Type prop.Encoder prop.Decoder prop.Key prop.InitValue validator
+        | ComboProperty ->
+            match prop.Variation with
+            | Nothing ->
+                sprintf "    let %s = target.AddCombo %s(\"%s\")" varName prop.CommentCode prop.Key
 
+            | List ->
+                sprintf "    let %s = target.AddComboList %s(\"%s\")" varName prop.CommentCode prop.Key
+
+            | Dict ->
+                sprintf "    let %s = target.AddComboDict %s(\"%s\")" varName prop.CommentCode prop.Key
+
+            | _ ->
+                failWith "Unsupported" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
+        (*
+        | CustomProperty ->
+            match prop.Variation with
+            | Nothing ->
+                sprintf "    let %s = target.AddCustom<%s> %s(\"%s\")" varName prop.CommentCode prop.Key
+            | _ ->
+                failWith "Unsupported" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
+        *)
+        | _ ->
+            failWith "Unsupported" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
+
+    let rec getComboAdder (param : ClassParam) ((name, combo) : string * ComboMeta) =
+        if didInterfaceProcessed name then
+            []
+        else
+            markInterfaceProcessed name
+            (
+                combo.Parents
+                |> List.map ^<| getComboAdder param
+                |> List.concat
+            ) @ (
+                combo.Fields
+                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map getFieldAdder
+            )
+    let rec getSelfComboAdder (param : ClassParam) =
+        clearProcessedInterfaces ()
+        getComboAdder param (param.Name, meta)
     let getFieldMember (prop : IPropMeta) =
-        sprintf "    member __.%s : %s%s = %s"
+        sprintf "    member __.%s %s: %s = %s"
             prop.Key.AsCodeMemberName prop.CommentCode prop.PropType prop.Key
+    let rec getComboMember (param : ClassParam) ((name, combo) : string * ComboMeta) =
+        if didInterfaceProcessed name then
+            []
+        else
+            markInterfaceProcessed name
+            (
+                combo.Parents
+                |> List.map ^<| getComboMember param
+                |> List.concat
+            ) @ (
+                combo.Fields
+                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map getFieldMember
+            )
+    let rec getSelfComboMember (param : ClassParam) =
+        clearProcessedInterfaces ()
+        getComboMember param (param.Name, meta)
     interface IGenerator<ClassParam> with
         member __.Generate param =
             [
                 getClassHeader param
-                meta.AllFields |> List.map getFieldAdder
+                getSelfComboAdder param
                 getClassMiddle param
-                meta.AllFields |> List.map getFieldMember
-                InterfaceGenerator.GetImplementations param.Interfaces
+                getSelfComboMember param
+                InterfaceGenerator.GetImplementations InterfaceType.ComboInterface meta.Parents
             ]|> List.concat
 
 type BuilderGenerator (meta : ComboMeta) =
@@ -219,27 +375,84 @@ type BuilderGenerator (meta : ComboMeta) =
             yield sprintf ""
             yield sprintf "let %s = %s ()" param.Key param.Name
         ]
-    let getOperation (param : BuilderParam) (prop : IPropMeta) =
+    let getComboSetter (prop : IPropMeta) =
+        let memberName = prop.Key.AsCodeMemberName
+        let varName = prop.Key.AsCodeVariableName
         [
-            if prop.Decoder <> "" then
+            match prop.Kind with
+            | VarProperty ->
+                match prop.Variation with
+                | FieldVariation.List ->
+                    yield sprintf "        %s" varName
+                    yield sprintf "        |> List.iter (fun v ->"
+                    yield sprintf "            let prop = target.%s.Add ()" memberName
+                    yield sprintf "            prop.SetValue v"
+                    yield sprintf "        )"
+                | FieldVariation.Dict ->
+                    yield sprintf "        %s" varName
+                    yield sprintf "        |> Map.iter (fun k v ->"
+                    yield sprintf "            let prop = target.%s.Add (k)" memberName
+                    yield sprintf "            prop.SetValue v"
+                    yield sprintf "        )"
+                | FieldVariation.Option
+                | FieldVariation.Nothing ->
+                    yield sprintf "        target.%s.SetValue %s" memberName varName
+            | ComboProperty ->
+                match prop.Variation with
+                | FieldVariation.Nothing ->
+                    yield sprintf "        target.%s.SyncWith %s" memberName varName
+                | _ ->
+                    yield sprintf "        //NotSupported %A %A" prop.Kind prop.Variation
+            | _ ->
+                yield sprintf "        //NotSupported %A %A" prop.Kind prop.Variation
+        ]
+    let getOperation (param : BuilderParam) (prop : IPropMeta) =
+        let supported =
+            match prop.Kind with
+            | VarProperty ->
+                prop.Decoder <> ""
+            | ComboProperty ->
+                true
+            | _ ->
+                false
+        [
+            if supported then
                 let memberName = prop.Key.AsCodeMemberName
                 let varName = prop.Key.AsCodeVariableName
                 yield sprintf "    [<CustomOperation(\"%s\")>]" prop.Key
                 yield sprintf "    member __.%s (target : %s, %s%s : %s) =" memberName param.Kind prop.CommentCode varName prop.Type
                 match param.Type with
                 | ComboBuilder ->
-                    yield sprintf "        target.%s.SetValue %s" memberName varName
+                    for line in getComboSetter (prop) do
+                        yield line
                     yield sprintf "        target"
                 | ValueBuilder ->
                     yield sprintf "        target.With%s %s" memberName varName
         ]
+    let rec getComboOperation (param : BuilderParam) ((name, combo) : string * ComboMeta) =
+        if didInterfaceProcessed name then
+            []
+        else
+            markInterfaceProcessed name
+            (
+                combo.Parents
+                |> List.map ^<| getComboOperation param
+                |> List.concat
+            ) @ (
+                combo.Fields
+                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map ^<| getOperation param
+                |> List.concat
+            )
+    let getSelfComboOperation (param : BuilderParam) =
+        let name = param.Name.Replace ("Builder", "")
+        clearProcessedInterfaces ()
+        getComboOperation param (name, meta)
     interface IGenerator<BuilderParam> with
         member __.Generate param =
             [
                 getBuilderHeader param
-                meta.AllFields
-                |> List.map ^<| getOperation param
-                |> List.concat
+                getSelfComboOperation param
                 getBuilderFooter param
             ]|> List.concat
 

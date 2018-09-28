@@ -37,6 +37,7 @@
     <Compile Include="../Fable.Dap.Context/Shared/Builder/Types.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Builder/Combo.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Builder/Context.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Builder/Helper.fs" />
     <Compile Include="../Fable.Dap.Dsl/Context/Meta/Util.fs" />
     <Compile Include="../Fable.Dap.Dsl/Context/Meta/Types.fs" />
     <Compile Include="../Fable.Dap.Dsl/Context/Meta/Union.fs" />

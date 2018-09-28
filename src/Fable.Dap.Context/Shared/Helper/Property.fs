@@ -6,7 +6,7 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Internal
 
-let mapSpec<'p when 'p :> IProperty> key initValue spawner =
+let dictSpec<'p when 'p :> IProperty> key initValue spawner =
     PropertySpec<'p>.Create2 key initValue spawner
 
 let listSpec<'p when 'p :> IProperty> key initValue spawner =

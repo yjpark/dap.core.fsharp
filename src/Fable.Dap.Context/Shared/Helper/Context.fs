@@ -7,7 +7,7 @@ open Dap.Context
 open Dap.Context.Helper
 
 let map<'p when 'p :> IProperty> kind (spawner : PropertySpawner<'p>) =
-    new MapContext<'p> (getLogging (), kind, spawner)
+    new DictContext<'p> (getLogging (), kind, spawner)
 
 let list<'p when 'p :> IProperty> kind (spawner : PropertySpawner<'p>) =
     new ListContext<'p> (getLogging (), kind, spawner)

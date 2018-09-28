@@ -8,9 +8,12 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Unsafe
 open Dap.Context.Builder
+open Dap.Context.Helper
 open Dap.Context.Generator
 open Dap.Platform
 open Dap.WebSocket.Client
+
+open Demo.Builder
 
 (*
 let doSimpleTestAsync (env : IEnv) delay : Task<unit> = task {
@@ -89,6 +92,7 @@ let doBuilderTest (env : IEnv) : unit =
     logWarn pub "Test" "Publisher_Context" (E.encodeJson 4 pub)
  *)
 
+    (*
 let doJsonTest (env : IEnv) =
     let s = Demo.Types.Status.CreatePublished "Test" 2001 (Some 100)
     let s = E.encodeJson 0 s
@@ -97,6 +101,22 @@ let doJsonTest (env : IEnv) =
     logWarn env "Test" "Decode_Status" s
     let s = E.encodeJson 0 s
     logWarn env "Test" "Decode_Status" s
+    *)
+
+let doCustomCloneTest (logger : ILogger) =
+    let b =
+        Dap.Context.Builder.Helper.combo {
+            var (Property.string noOwner "test" "help" None)
+        }
+    let a =
+        author {
+            name "Test"
+            age 20
+            publisher "Some One"
+            books b
+        }
+    logWarn logger "Test" "Original" <| E.encodeJson 4 a
+    logWarn logger "Test" "Clone" <| E.encodeJson 4 ^<| a.AsProperty.Clone0 noOwner "Clone"
 
 [<EntryPoint>]
 let main _argv =
@@ -106,6 +126,9 @@ let main _argv =
 
     Demo.Dsl.compile []
     |> List.iter (fun l -> logWarn logger "Dsl" l ())
+
+
+    doCustomCloneTest (getLogger "Clone")
 
     (*
     let d = Duration.FromSeconds 1.0
@@ -132,7 +155,6 @@ let main _argv =
     Task.Delay 1.0<second>
     |> Async.AwaitTask |> Async.RunSynchronously |> ignore
     *)
-
 
     //doJsonTest env
     //doBuilderTest env

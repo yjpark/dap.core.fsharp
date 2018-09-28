@@ -25,7 +25,7 @@ type UnsafeProperty internal (owner') =
     abstract member AsCombo : IComboProperty with get
     abstract member AsCustom : ICustomProperty with get
     abstract member ToVar<'v1> : unit -> IVarProperty<'v1>
-    abstract member ToMap<'p1 when 'p1 :> IProperty> : unit -> IDictProperty<'p1>
+    abstract member ToDict<'p1 when 'p1 :> IProperty> : unit -> IDictProperty<'p1>
     abstract member ToList<'p1 when 'p1 :> IProperty> : unit -> IListProperty<'p1>
     abstract member ToCustom<'p1 when 'p1 :> ICustomProperty> : unit -> ICustomProperty<'p1>
 #if FABLE_COMPILER
@@ -46,7 +46,7 @@ type UnsafeProperty internal (owner') =
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
-    default this.ToMap<'p1 when 'p1 :> IProperty> () = this.CastFailed<IDictProperty<'p1>> ()
+    default this.ToDict<'p1 when 'p1 :> IProperty> () = this.CastFailed<IDictProperty<'p1>> ()
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
@@ -68,7 +68,7 @@ type UnsafeProperty internal (owner') =
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]
 #endif
-        member this.ToMap<'p1 when 'p1 :> IProperty> () = this.ToMap<'p1> ()
+        member this.ToDict<'p1 when 'p1 :> IProperty> () = this.ToDict<'p1> ()
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]
 #endif
@@ -102,6 +102,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
     abstract member ToJson : 'value -> Json
     abstract member WithJson : 'value -> Json -> ('value * bool) option
     abstract member Clone0 : IOwner -> Key -> IProperty
+    abstract member SyncTo0 : IProperty -> unit
     // virtual members
     abstract member OnSealed : unit -> unit
     abstract member ShouldSetValue : 'value -> bool
@@ -119,7 +120,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
             false
         else
             if this.ShouldSetValue v then
-                let old = v
+                let old = value
                 ver <- ver + 1
                 value <- v
                 this.OnValueChanged old
@@ -155,6 +156,16 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
                 )|> Option.defaultValue false
         member __.OnChanged = onChanged.Publish
         member this.Clone0 o k = this.Clone0 o k
+#if FABLE_COMPILER
+        [<PassGenericsAttribute>]
+#endif
+        member this.SyncTo0 t =
+            if this.Kind <> t.Kind then
+                owner.Log <| tplPropertyError "Property:InValid_Kind" spec.Luid ver (this.Kind, t.Kind, t)
+            elif this.GetType () <> t.GetType () then
+                owner.Log <| tplPropertyError "Property:InValid_Type" spec.Luid ver (this.GetType (), t.GetType (), t)
+            else
+                this.SyncTo0 t
     interface IAspect with
         member __.Owner = owner
     interface IJson with

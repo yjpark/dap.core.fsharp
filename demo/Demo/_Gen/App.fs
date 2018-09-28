@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Demo.App
 
+open Dap.Context.Helper
 open System.Threading.Tasks
 open FSharp.Control.Tasks.V2
 open Dap.Prelude
@@ -61,65 +62,65 @@ type IBackupPack =
  *     IsJson, IsLoose
  *)
 type AppArgs = {
-    Ticker : (* IServicesPack *) TickerTypes.Args
-    Common : (* ICommonPack *) int
-    Test : (* IAppPack *) int
-    BackupTicker : (* IBackupPack *) TickerTypes.Args
+    Ticker : (* AppArgs *) TickerTypes.Args
+    Common : (* AppArgs *) int
+    Test : (* AppArgs *) int
+    BackupTicker : (* AppArgs *) TickerTypes.Args
 } with
     static member Create ticker common test backupTicker
             : AppArgs =
         {
-            Ticker = ticker
-            Common = common
-            Test = test
-            BackupTicker = backupTicker
+            Ticker = (* AppArgs *) ticker
+            Common = (* AppArgs *) common
+            Test = (* AppArgs *) test
+            BackupTicker = (* AppArgs *) backupTicker
         }
     static member Default () =
         AppArgs.Create
-            (TickerTypes.Args.Default ())
-            100
-            100
-            (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
-    static member SetTicker ((* IServicesPack *) ticker : TickerTypes.Args) (this : AppArgs) =
+            (* AppArgs *) (* ticker *) (TickerTypes.Args.Default ())
+            (* AppArgs *) (* common *) 100
+            (* AppArgs *) (* test *) 100
+            (* AppArgs *) (* backupTicker *) (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
+    static member SetTicker ((* AppArgs *) ticker : TickerTypes.Args) (this : AppArgs) =
         {this with Ticker = ticker}
-    static member SetCommon ((* ICommonPack *) common : int) (this : AppArgs) =
+    static member SetCommon ((* AppArgs *) common : int) (this : AppArgs) =
         {this with Common = common}
-    static member SetTest ((* IAppPack *) test : int) (this : AppArgs) =
+    static member SetTest ((* AppArgs *) test : int) (this : AppArgs) =
         {this with Test = test}
-    static member SetBackupTicker ((* IBackupPack *) backupTicker : TickerTypes.Args) (this : AppArgs) =
+    static member SetBackupTicker ((* AppArgs *) backupTicker : TickerTypes.Args) (this : AppArgs) =
         {this with BackupTicker = backupTicker}
-    static member UpdateTicker ((* IServicesPack *) update : TickerTypes.Args -> TickerTypes.Args) (this : AppArgs) =
+    static member UpdateTicker ((* AppArgs *) update : TickerTypes.Args -> TickerTypes.Args) (this : AppArgs) =
         this |> AppArgs.SetTicker (update this.Ticker)
-    static member UpdateCommon ((* ICommonPack *) update : int -> int) (this : AppArgs) =
+    static member UpdateCommon ((* AppArgs *) update : int -> int) (this : AppArgs) =
         this |> AppArgs.SetCommon (update this.Common)
-    static member UpdateTest ((* IAppPack *) update : int -> int) (this : AppArgs) =
+    static member UpdateTest ((* AppArgs *) update : int -> int) (this : AppArgs) =
         this |> AppArgs.SetTest (update this.Test)
-    static member UpdateBackupTicker ((* IBackupPack *) update : TickerTypes.Args -> TickerTypes.Args) (this : AppArgs) =
+    static member UpdateBackupTicker ((* AppArgs *) update : TickerTypes.Args -> TickerTypes.Args) (this : AppArgs) =
         this |> AppArgs.SetBackupTicker (update this.BackupTicker)
     static member JsonEncoder : JsonEncoder<AppArgs> =
         fun (this : AppArgs) ->
             E.object [
-                "ticker", TickerTypes.Args.JsonEncoder this.Ticker
+                (* AppArgs *) "ticker", TickerTypes.Args.JsonEncoder this.Ticker
             ]
     static member JsonDecoder : JsonDecoder<AppArgs> =
         D.decode AppArgs.Create
-        |> D.optional "ticker" TickerTypes.Args.JsonDecoder (TickerTypes.Args.Default ())
-        |> D.hardcoded 100
-        |> D.hardcoded 100
-        |> D.hardcoded (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
+        |> D.optional (* AppArgs *) "ticker" TickerTypes.Args.JsonDecoder (TickerTypes.Args.Default ())
+        |> D.hardcoded (* AppArgs *) (* common *) 100
+        |> D.hardcoded (* AppArgs *) (* test *) 100
+        |> D.hardcoded (* AppArgs *) (* backup_ticker *) (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
     static member JsonSpec =
         FieldSpec.Create<AppArgs>
             AppArgs.JsonEncoder AppArgs.JsonDecoder
     interface IJson with
         member this.ToJson () = AppArgs.JsonEncoder this
     interface IObj
-    member this.WithTicker ((* IServicesPack *) ticker : TickerTypes.Args) =
+    member this.WithTicker ((* AppArgs *) ticker : TickerTypes.Args) =
         this |> AppArgs.SetTicker ticker
-    member this.WithCommon ((* ICommonPack *) common : int) =
+    member this.WithCommon ((* AppArgs *) common : int) =
         this |> AppArgs.SetCommon common
-    member this.WithTest ((* IAppPack *) test : int) =
+    member this.WithTest ((* AppArgs *) test : int) =
         this |> AppArgs.SetTest test
-    member this.WithBackupTicker ((* IBackupPack *) backupTicker : TickerTypes.Args) =
+    member this.WithBackupTicker ((* AppArgs *) backupTicker : TickerTypes.Args) =
         this |> AppArgs.SetBackupTicker backupTicker
     interface IServicesPackArgs with
         member this.Ticker (* IServicesPack *) : TickerTypes.Args = this.Ticker
@@ -145,10 +146,10 @@ type AppArgsBuilder () =
     inherit ObjBuilder<AppArgs> ()
     override __.Zero () = AppArgs.Default ()
     [<CustomOperation("ticker")>]
-    member __.Ticker (target : AppArgs, (* IServicesPack *) ticker : TickerTypes.Args) =
+    member __.Ticker (target : AppArgs, (* AppArgs *) ticker : TickerTypes.Args) =
         target.WithTicker ticker
 
-let appArgs = AppArgsBuilder ()
+let app_args = AppArgsBuilder ()
 
 type IApp =
     inherit IPack

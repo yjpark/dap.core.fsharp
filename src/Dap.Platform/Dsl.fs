@@ -40,11 +40,11 @@ let compile segments =
         G.File (segments, ["_Gen"; "Args.fs"],
             G.AutoOpenModule ("Dap.Platform.Args",
                 [
-                    G.LooseJsonRecord (<@ ConsoleSinkArgs @>, [])
+                    G.LooseJsonRecord (<@ ConsoleSinkArgs @>)
                     G.JsonUnion (<@ RollingInterval @>)
-                    G.LooseJsonRecord (<@ FileSinkArgs @>, [])
-                    G.LooseJsonRecord (<@ LoggingArgs @>, [])
-                    G.LooseJsonRecord (<@ TickerArgs @>, [])
+                    G.LooseJsonRecord (<@ FileSinkArgs @>)
+                    G.LooseJsonRecord (<@ LoggingArgs @>)
+                    G.LooseJsonRecord (<@ TickerArgs @>)
                 ]
             )
         )

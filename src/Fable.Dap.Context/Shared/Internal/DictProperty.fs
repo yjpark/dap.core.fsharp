@@ -50,10 +50,11 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         *)
         Some (value, ok)
     override this.Clone0 o k = this.AsDictProperty.Clone o k :> IProperty
+    override this.SyncTo0 t = this.AsDictProperty.SyncTo (t :?> IDictProperty<'p>)
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
-    override this.ToMap<'p1 when 'p1 :> IProperty> () =
+    override this.ToDict<'p1 when 'p1 :> IProperty> () =
         if typeof<'p> = typeof<'p1> then
             this.AsMap :?> IDictProperty<'p1>
         else
@@ -159,7 +160,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
             |> DictProperty<'p>.Create o
             |> this.SetupClone (Some this.AsDictProperty.SyncTo)
             |> fun clone ->
-                if mapSealed then clone.AsDictProperty.SealMap ()
+                if mapSealed then clone.AsDictProperty.SealDict ()
                 clone
             :> IDictProperty<'p>
     interface IDictProperty with
@@ -167,7 +168,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         member __.ElementType = typeof<'p>
 #endif
         member __.ElementSpawner o k = spec.Spawner o k :> IProperty
-        member __.SealMap () =
+        member __.SealDict () =
             if not mapSealed then
                 mapSealed <- true
         member __.MapSealed = mapSealed

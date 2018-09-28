@@ -22,7 +22,7 @@ let compile segments =
             G.AutoOpenModule ("Dap.Archive.Args",
                 [
                     G.PlatformOpens
-                    G.LooseJsonRecord (<@ RecorderArgs @>, [])
+                    G.LooseJsonRecord (<@ RecorderArgs @>)
                 ]
             )
         )

@@ -48,6 +48,7 @@ type internal ComboProperty (owner, spec) =
             logError owner "ComboProperty:WithJson" "Decode_Has_Error" (E.encode 4 json)
         Some (value, ok)
     override this.Clone0 o k = this.AsCombo.Clone o k :> IProperty
+    override this.SyncTo0 t = this.AsCombo.SyncTo (t :?> IComboProperty)
     override this.OnSealed () =
         comboSealed <- true
         this.Value
@@ -104,7 +105,7 @@ type internal ComboProperty (owner, spec) =
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]
 #endif
-        member this.AddMap<'p when 'p :> IProperty> (subSpec : IPropertySpec<'p>) =
+        member this.AddDict<'p when 'p :> IProperty> (subSpec : IPropertySpec<'p>) =
             this.CheckAdd subSpec typeof<'p>
             subSpec.AsSubSpec spec
             |> DictProperty<'p>.Create owner
@@ -138,7 +139,11 @@ type internal ComboProperty (owner, spec) =
             this.Value
             |> Map.toList
             |> List.iter (fun (key, prop) ->
-                other.AddAny key prop.Clone0 |> ignore
+                match other.TryGet key with
+                | None ->
+                    other.AddAny key prop.Clone0 |> ignore
+                | Some t ->
+                    prop.SyncTo0 t
             )
             if comboSealed
                 then other.SealCombo ()
