@@ -118,9 +118,12 @@ type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IP
     [<PassGenericsAttribute>]
 #endif
     default __.SetupCloneAfter (_p : 'p) = ()
+
     override __.Kind = PropertyKind.CustomProperty
     override this.AsCustom = this.Self :> ICustomProperty
     member this.AsCustomProperty = this :> ICustomProperty<'p>
+    override this.Clone0 o k = this.AsCustomProperty.Clone o k :> IProperty
+    override this.SyncTo0 t = this.AsCustomProperty.SyncTo (t :?> 'p)
     interface ICustomProperty<'p> with
         member this.Self = this.Self
         member this.SyncTo other = this.SyncTo other

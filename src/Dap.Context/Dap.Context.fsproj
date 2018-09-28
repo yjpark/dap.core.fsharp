@@ -30,6 +30,7 @@
     <Compile Include="../Fable.Dap.Context/Shared/Helper/Property.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Helper/Properties.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/CustomProperty.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/LinkProperty.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/ContextSpec.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Context.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Helper/Context.fs" />
