@@ -22,9 +22,11 @@ type LinkProperty<'t when 't :> IProperty> (target : 't, owner, key) =
         combo.AddCustom<LinkProperty<'t>> (LinkProperty<'t>.Create t, k)
     override this.Self = this
     override __.Spawn o k = LinkProperty<'t>.Create target o k
-    override __.SyncTo other = ()
-    override __.ToJson _value = E.nil
-    override __.WithJson _value _json = None
+    override __.SyncTo other = target.SyncTo0 other.Value
+    override __.ToJson value = value.ToJson ()
+    override __.WithJson value json =
+        (value :> IProperty) .WithJson json |> ignore
+        None
 
 type IComboProperty with
     member this.AddLink<'t when 't :> IProperty> (target : 't, key) =

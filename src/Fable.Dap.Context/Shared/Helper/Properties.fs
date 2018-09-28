@@ -28,7 +28,7 @@ let custom<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOw
 type IComboProperty with
     static member Default () = combo noOwner NoKey
     member this.ValueAsList =
-        this.Value |> Map.toList |> List.map snd
+        this.Value |> List.map snd
 
 type IComboProperty with
     member this.AddDict<'p when 'p :> IProperty> (spawner, key) =

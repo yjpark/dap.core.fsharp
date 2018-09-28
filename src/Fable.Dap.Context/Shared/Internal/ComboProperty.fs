@@ -12,7 +12,7 @@ open Dap.Context.Unsafe
 open Dap.Context.Internal
 
 type internal ComboProperty (owner, spec) =
-    inherit Property<IPropertySpec, Map<Key, IProperty>> (owner, spec, Map.empty)
+    inherit Property<IPropertySpec, (Key * IProperty) list> (owner, spec, [])
     let mutable comboSealed : bool = false
     let onAdded = new Bus<IProperty> (owner, sprintf "%s:OnAdded" spec.Luid)
 #if FABLE_COMPILER
@@ -22,16 +22,15 @@ type internal ComboProperty (owner, spec) =
     override __.Kind = PropertyKind.ComboProperty
     override this.AsCombo = this :> IComboProperty
     member this.AsProperties = this :> IProperties
-    override __.ToJson (v : Map<Key, IProperty>) =
+    override __.ToJson (v : (Key * IProperty) list) =
         v
-        |> Map.toList
         |> List.map (fun (k, prop) ->
             k, prop.ToJson ()
         )|> E.object
     override this.WithJson value json =
         let mutable ok = true
         value
-        |> Map.iter (fun k prop ->
+        |> List.iter (fun (k, prop) ->
             match tryCastJson (D.field k D.value) json with
             | Ok propJson ->
 #if FABLE_COMPILER
@@ -52,15 +51,15 @@ type internal ComboProperty (owner, spec) =
     override this.OnSealed () =
         comboSealed <- true
         this.Value
-        |> Map.iter (fun _key prop ->
+        |> List.iter (fun (_key, prop) ->
             prop.Seal ()
         )
     member private this.CheckAdd (subSpec : IPropertySpec) (subType : Type) =
         if comboSealed then
             failWith "Combo_Sealed" <| sprintf "[%s] <%s> [%s]" spec.Luid subType.FullName subSpec.Key
         this.Value
-        |> Map.tryFind subSpec.Key
-        |> Option.iter (fun prop ->
+        |> List.tryFind (fun (k, _) -> k = subSpec.Key)
+        |> Option.iter (fun (_, prop) ->
             failWith "Key_Exist" <| sprintf "[%s] <%s> [%s] %A -> %A" spec.Luid subType.FullName subSpec.Luid prop subSpec
         )
 #if FABLE_COMPILER
@@ -68,8 +67,7 @@ type internal ComboProperty (owner, spec) =
 #endif
     member private this.Add<'prop when 'prop :> IProperty> (prop : 'prop) =
         let k = (prop :> IProperty) .Spec.Key
-        if (this.Value
-            |> Map.add k (prop :> IProperty)
+        if (this.Value @ [(k, prop :> IProperty)]
             |> this.SetValue) then
             onAdded.Trigger prop
             prop
@@ -81,7 +79,10 @@ type internal ComboProperty (owner, spec) =
                 comboSealed <- true
         member __.ComboSealed = comboSealed
         member this.Value = this.Value
-        member this.TryGet k = this.Value |> Map.tryFind k
+        member this.TryGet k =
+            this.Value
+            |> List.tryFind (fun (k', _) -> k = k')
+            |> Option.map snd
         member this.Has k =
             (this.AsCombo.TryGet k).IsSome
         member this.Get k =
@@ -137,7 +138,6 @@ type internal ComboProperty (owner, spec) =
         member __.OnAdded = onAdded.Publish
         member this.SyncTo (other : IComboProperty) =
             this.Value
-            |> Map.toList
             |> List.iter (fun (key, prop) ->
                 match other.TryGet key with
                 | None ->
@@ -153,4 +153,4 @@ type internal ComboProperty (owner, spec) =
             |> this.SetupClone (Some this.AsCombo.SyncTo)
             :> IComboProperty
     interface IProperties with
-        member this.Count = this.Value.Count
+        member this.Count = this.Value.Length

@@ -271,7 +271,7 @@ and IListProperty<'p when 'p :> IProperty> =
 
 and IComboProperty =
     inherit IProperties
-    inherit IValue<Map<Key, IProperty>>
+    inherit IValue<(Key * IProperty) list>
     abstract SealCombo : unit -> unit
     abstract ComboSealed : bool with get
     abstract TryGet : Key -> IProperty option
