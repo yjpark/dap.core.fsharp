@@ -98,7 +98,7 @@ type RecordGenerator (meta : ComboMeta) =
                 yield sprintf "            E.object ["
                 for prop in fields do
                     if prop.Encoder <> "" then
-                        yield sprintf "                %s\"%s\", %sthis.%s" prop.CommentCode prop.Key prop.EncoderCall prop.Key.AsCodeMemberName
+                        yield sprintf "                \"%s\", %s%sthis.%s" prop.Key prop.EncoderCall prop.CommentCode prop.Key.AsCodeMemberName
                 yield sprintf "            ]"
             else
                 yield sprintf "            E.object []"
@@ -173,7 +173,7 @@ type RecordGenerator (meta : ComboMeta) =
                 yield sprintf "    static member Default () ="
                 yield sprintf "        %s.Create" param.Name
                 for f in fields do
-                    yield sprintf "            %s(* %s *) %s" f.CommentCode f.Key.AsCodeVariableName f.InitValue
+                    yield sprintf "            %s %s(* %s *)" f.InitValue f.CommentCode f.Key.AsCodeVariableName
         ] @ (
             getSelfComboHelper param
         ) @ (
