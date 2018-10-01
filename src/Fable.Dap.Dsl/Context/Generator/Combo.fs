@@ -84,7 +84,10 @@ type InterfaceGenerator (meta : ComboMeta) =
 type RecordGenerator (meta : ComboMeta) =
     let getRecordHeader (param : RecordParam) =
         [
-            yield sprintf "type %s = {" param.Name
+            if param.InGroup then
+                yield sprintf "and %s = {" param.Name
+            else
+                yield sprintf "type %s = {" param.Name
         ]
     let getJsonEncoder (param : RecordParam) =
         let fields = meta.GetAllFields param.Name
@@ -125,9 +128,10 @@ type RecordGenerator (meta : ComboMeta) =
         ]
     let getFieldUpdater (param : RecordParam) (prop : IPropMeta) =
         [
-            let memberName = prop.Key.AsCodeMemberName
-            yield sprintf "    static member Update%s (%supdate : %s -> %s) (this : %s) =" memberName prop.CommentCode prop.Type prop.Type param.Name
-            yield sprintf "        this |> %s.Set%s (update this.%s)" param.Name memberName memberName
+            if not (prop.Type.Contains ("->")) then
+                let memberName = prop.Key.AsCodeMemberName
+                yield sprintf "    static member Update%s (%supdate : %s -> %s) (this : %s) =" memberName prop.CommentCode prop.Type prop.Type param.Name
+                yield sprintf "        this |> %s.Set%s (update this.%s)" param.Name memberName memberName
         ]
     let rec getComboHelper (param : RecordParam) ((name, combo) : string * ComboMeta) =
         if didInterfaceProcessed name then
@@ -140,12 +144,12 @@ type RecordGenerator (meta : ComboMeta) =
                 |> List.concat
             ) @ (
                 combo.Fields
-                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map ^<| IPropMeta.SetFallbackComment name
                 |> List.map ^<| getFieldSetter param
                 |> List.concat
             ) @ (
                 combo.Fields
-                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map ^<| IPropMeta.SetFallbackComment name
                 |> List.map ^<| getFieldUpdater param
                 |> List.concat
             )
@@ -204,7 +208,7 @@ type RecordGenerator (meta : ComboMeta) =
                 |> List.concat
             ) @ (
                 combo.Fields
-                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map ^<| IPropMeta.SetFallbackComment name
                 |> List.map getFieldAdder
             )
     let rec getSelfComboAdder (param : RecordParam) =
@@ -228,7 +232,7 @@ type RecordGenerator (meta : ComboMeta) =
                 |> List.concat
             ) @ (
                 combo.Fields
-                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map ^<| IPropMeta.SetFallbackComment name
                 |> List.map ^<| getFieldMember param
                 |> List.concat
             )
@@ -327,7 +331,7 @@ type ClassGenerator (meta : ComboMeta) =
                 |> List.concat
             ) @ (
                 combo.Fields
-                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map ^<| IPropMeta.SetFallbackComment name
                 |> List.map getFieldAdder
             )
     let rec getSelfComboAdder (param : ClassParam) =
@@ -347,7 +351,7 @@ type ClassGenerator (meta : ComboMeta) =
                 |> List.concat
             ) @ (
                 combo.Fields
-                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map ^<| IPropMeta.SetFallbackComment name
                 |> List.map getFieldMember
             )
     let rec getSelfComboMember (param : ClassParam) =
@@ -440,7 +444,7 @@ type BuilderGenerator (meta : ComboMeta) =
                 |> List.concat
             ) @ (
                 combo.Fields
-                |> List.map (fun prop -> prop.WithComment (Some name))
+                |> List.map ^<| IPropMeta.SetFallbackComment name
                 |> List.map ^<| getOperation param
                 |> List.concat
             )

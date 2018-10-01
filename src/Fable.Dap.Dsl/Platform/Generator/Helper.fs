@@ -21,18 +21,6 @@ type G with
         G.PackInterface (name, meta)
 
 type G with
-    static member AppArgs (param : AppParam, meta : AppMeta) =
-        new App.ArgsGenerator (meta)
-        :> IGenerator<AppParam>
-        |> fun g -> g.Generate param
-    static member AppArgs (name, meta) =
-        let param = AppParam.Create name
-        G.AppArgs (param, meta)
-    static member AppArgs (expr : Expr<AppMeta>) =
-        let (name, meta) = unquotePropertyGetExpr expr
-        G.AppArgs (name, meta)
-
-type G with
     static member AppInterface (param : AppParam, meta : AppMeta) =
         new App.InterfaceGenerator (meta)
         :> IGenerator<AppParam>
@@ -59,8 +47,6 @@ type G with
 type G with
     static member App (param : AppParam, meta : AppMeta) =
         [
-            G.AppArgs (param, meta)
-            [""]
             G.AppInterface (param, meta)
             [""]
             G.AppClass (param, meta)

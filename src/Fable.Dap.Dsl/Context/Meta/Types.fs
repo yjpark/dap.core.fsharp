@@ -231,6 +231,10 @@ type UnionPropMeta = {
 [<AutoOpen>]
 module Extensions =
     type IPropMeta with
+        static member SetFallbackComment (name : string) (this : IPropMeta) =
+            match this.Comment with
+            | Some _ -> this
+            | None -> this.WithComment (Some name)
         member this.EncoderCall =
             if this.Encoder = "" then
                 ""
@@ -279,7 +283,7 @@ module Extensions =
                     fields <- fields @ parentFields
                 (names,
                     this.Fields
-                    |> List.map (fun prop -> prop.WithComment (Some name))
+                    |> List.map ^<| IPropMeta.SetFallbackComment name
                     |> List.append fields
                 )
         member this.GetAllFields (name : string) =

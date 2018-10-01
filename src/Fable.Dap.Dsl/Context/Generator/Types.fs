@@ -43,12 +43,14 @@ type RecordParam = {
     Name : string
     IsJson : bool
     IsLoose : bool
+    InGroup : bool
 } with
     static member Create name isJson isLoose =
         {
             Name = name
             IsJson = isJson
             IsLoose = isLoose
+            InGroup = false
         }
     interface IParam with
         member __.Category = "Record"

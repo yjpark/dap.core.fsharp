@@ -15,12 +15,12 @@ nuget Serilog.Sinks.Console
 nuget Serilog.Sinks.File
 nuget Serilog.Formatting.Compact
 
-nuget Fable.Elmish 1.0.3
+nuget Fable.Elmish
 nuget Fable.JsonConverter
 nuget Fable.Websockets.Elmish
 
-nuget Thoth.Json 1.0.0
-nuget Thoth.Json.Net 1.0.0
+nuget Thoth.Json
+nuget Thoth.Json.Net
 
 clitool dotnet-fable
 

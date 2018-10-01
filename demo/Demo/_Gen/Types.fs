@@ -35,8 +35,8 @@ type Publisher = {
         }
     static member Default () =
         Publisher.Create
-            (* IPublisher *) (* name *) ""
-            (* IPublisher *) (* year *) 0
+            "" (* IPublisher *) (* name *)
+            0 (* IPublisher *) (* year *)
     static member SetName ((* IPublisher *) name : string) (this : Publisher) =
         {this with Name = name}
     static member SetYear ((* IPublisher *) year : int) (this : Publisher) =
@@ -48,8 +48,8 @@ type Publisher = {
     static member JsonEncoder : JsonEncoder<Publisher> =
         fun (this : Publisher) ->
             E.object [
-                (* IPublisher *) "name", E.string this.Name
-                (* IPublisher *) "year", E.int this.Year
+                "name", E.string (* IPublisher *) this.Name
+                "year", E.int (* IPublisher *) this.Year
             ]
     static member JsonDecoder : JsonDecoder<Publisher> =
         D.decode Publisher.Create
