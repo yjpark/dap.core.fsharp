@@ -26,9 +26,12 @@
     <Compile Include="../Fable.Dap.Context/Shared/Internal/DictProperty.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/ListProperty.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/ComboProperty.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Internal/Channel.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Internal/Channels.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Context.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Helper/Property.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Helper/Properties.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/Helper/Channels.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/CustomProperty.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/LinkProperty.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/ContextSpec.fs" />

@@ -48,7 +48,7 @@ and IVarPropertySpec<'v> with
 
 and internal VarProperty<'v> private (owner, spec) =
     inherit Property<IVarPropertySpec<'v>, 'v> (owner, spec, spec.InitValue)
-    let onValueChanged : Bus<VarPropertyChanged<'v>> = new Bus<VarPropertyChanged<'v>> (owner, sprintf "%s:OnValueChanged" spec.Luid)
+    let onChanged : Bus<VarPropertyChanged<'v>> = new Bus<VarPropertyChanged<'v>> (owner, sprintf "%s:OnValueChanged" spec.Luid)
     static member Create o s = new VarProperty<'v> (o, s)
     override __.Kind = PropertyKind.VarProperty
     override this.AsVar = this :> IVarProperty
@@ -89,12 +89,12 @@ and internal VarProperty<'v> private (owner, spec) =
                 Old = old
                 New = this.Value
             }
-        onValueChanged.Trigger evt
+        onChanged.Trigger evt
     interface IVarProperty<'v> with
         member __.Spec = spec
         member this.Value = this.Value
         member this.SetValue' v = this.SetValue v
-        member __.OnValueChanged = onValueChanged.Publish
+        member __.OnChanged = onChanged.Publish
         member this.SyncTo (other : IVarProperty<'v>) =
             other.SetValue' this.Value |> ignore
 #if FABLE_COMPILER

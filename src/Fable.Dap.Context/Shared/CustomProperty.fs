@@ -48,7 +48,7 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         member this.Seal () = this.Target.Seal ()
         member this.Sealed = this.Target.Sealed
         member this.WithJson json = this.Target.WithJson json
-        member this.OnChanged = this.Target.OnChanged
+        member this.OnChanged0 = this.Target.OnChanged0
         member this.Clone0 o k = this.AsCustomProperty.Clone o k :> IProperty
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]

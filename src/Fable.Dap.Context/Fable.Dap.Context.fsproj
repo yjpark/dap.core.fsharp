@@ -27,9 +27,12 @@
     <Compile Include="Shared/Internal/DictProperty.fs" />
     <Compile Include="Shared/Internal/ListProperty.fs" />
     <Compile Include="Shared/Internal/ComboProperty.fs" />
+    <Compile Include="Shared/Internal/Channel.fs" />
+    <Compile Include="Shared/Internal/Channels.fs" />
     <Compile Include="Shared/Internal/Context.fs" />
     <Compile Include="Shared/Helper/Property.fs" />
     <Compile Include="Shared/Helper/Properties.fs" />
+    <Compile Include="Shared/Helper/Channels.fs" />
     <Compile Include="Shared/CustomProperty.fs" />
     <Compile Include="Shared/LinkProperty.fs" />
     <Compile Include="Shared/ContextSpec.fs" />

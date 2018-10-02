@@ -113,7 +113,7 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
         (agent', spec', model') =
     let agent : IAgent<'msg> = agent'
     let spec : IActorSpec<'args, 'msg, 'req, 'evt> = spec'
-    let bus = new Bus<'evt> (agent :> IOwner, "OnEvent")
+    let onEvent = new Bus<'evt> (agent :> IOwner, "OnEvent")
     let mutable state : 'model = model'
     let mutable version : Version = Version.Init
     let tryFireEvent (msg : 'msg) =
@@ -122,7 +122,7 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
             ()
         | Some evt ->
             version <- version.IncEvt
-            bus.Trigger evt
+            onEvent.Trigger evt
     member __.AsDisplay = (agent.Ident, version)
     member __.State = state
     member __.SetState (msg : 'msg) (newState : 'model) =
@@ -146,15 +146,13 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
 #if !FABLE_COMPILER
         member this.HandleAsync getReq = this.HandleAsync getReq
 #endif
-        member __.OnEvent = bus.Publish
+        member __.OnEvent = onEvent.Publish
         member __.Ident = agent.Ident
         member __.Args = spec.Args
         member __.State = state
         member __.Version = version
         member this.AsActor1 = this :> IActor
         member this.AsActor2 = this :> IActor<'req, 'evt>
-    interface IAspect with
-        member __.Owner = agent :> IOwner
 
 let internal createActor'
         (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)

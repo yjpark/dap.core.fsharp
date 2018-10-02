@@ -73,7 +73,7 @@ let doBuilderTest (env : IEnv) : unit =
     logWarn book "Test" "Book.copied" (book.AsCombo.Properties.Get "copies")
     logWarn book "Test" "Init" (E.encodeJson 4 book)
     let copies =
-        book.Properties0.AsCombo.Get "copies"
+        book.Properties.AsCombo.Get "copies"
         :?> IVarProperty<int>
     copies.OnValueChanged.AddWatcher env "test" (fun evt ->
         logWarn book "Test" "copies.OnValueChanged" evt

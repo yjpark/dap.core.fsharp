@@ -97,7 +97,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
     let mutable value : 'value = value'
     let mutable ver = 0
     let mutable sealed' : bool = false
-    let onChanged : Bus<PropertyChanged> = new Bus<PropertyChanged> (owner, sprintf "%s:OnChanged" spec.Luid)
+    let onChanged0 : Bus<PropertyChanged> = new Bus<PropertyChanged> (owner, sprintf "%s:OnChanged0" spec.Luid)
     // abstract members
     abstract member ToJson : 'value -> Json
     abstract member WithJson : 'value -> Json -> ('value * bool) option
@@ -124,14 +124,14 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
                 ver <- ver + 1
                 value <- v
                 this.OnValueChanged old
-                if onChanged.HasWatchers then
+                if onChanged0.HasWatchers then
                     let evt0 : PropertyChanged =
                         {
                             Spec = spec :> IPropertySpec
                             Old = this.ToJson old
                             New = this.ToJson v
                         }
-                    onChanged.Trigger evt0
+                    onChanged0.Trigger evt0
                 true
             else
                 false
@@ -154,7 +154,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
                 |> Option.map (fun (v, ok) ->
                     (this.SetValue v) && ok
                 )|> Option.defaultValue false
-        member __.OnChanged = onChanged.Publish
+        member __.OnChanged0 = onChanged0.Publish
         member this.Clone0 o k = this.Clone0 o k
 #if FABLE_COMPILER
         [<PassGenericsAttribute>]

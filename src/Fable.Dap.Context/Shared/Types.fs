@@ -78,6 +78,15 @@ let NoKind = ""
 [<Literal>]
 let NoKey = ""
 
+[<Literal>]
+let PropertiesKey = "_P_"
+
+[<Literal>]
+let ChannelsKey = "_C_"
+
+[<Literal>]
+let HandlersKey = "_H_"
+
 let noOwner = new Owner (getLogging (), "<noOwner>") :> IOwner
 
 type IAspect =
@@ -93,17 +102,7 @@ type IBus<'msg> =
     abstract RemoveWatcher : IOwner -> unit
     abstract RemoveWatcher : IOwner * Luid -> unit
 
-type IEvt = interface end
-
-and IChannel<'evt> when 'evt :> IEvt =
-    inherit IAspect
-    abstract OnEvent : IBus<'evt> with get
-
 type IReq = interface end
-
-type IHandler<'req> when 'req :> IReq =
-    inherit IAspect
-    abstract Handle : 'req -> unit
 
 //Note that can NOT add 'req into it, since it's used
 // in Req definition.
@@ -118,10 +117,9 @@ with
 
 type Callback<'res> = (Reply<'res> -> unit) option
 
-#if !FABLE_COMPILER
-type IAsyncHandler<'req> when 'req :> IReq =
-    abstract HandleAsync<'res> : (Callback<'res> -> 'req) -> Task<'res>
-#endif
+type IAspectSpec =
+    abstract Luid : Luid with get
+    abstract Key : Key with get
 
 and IValue<'v> =
     abstract Value : 'v with get
@@ -129,10 +127,6 @@ and IValue<'v> =
 type Validator<'v> = {
     Check : IValue<'v> -> 'v -> bool
 }
-
-type IAspectSpec =
-    abstract Luid : Luid with get
-    abstract Key : Key with get
 
 type IPropertySpec =
     inherit IAspectSpec
@@ -163,7 +157,7 @@ and IProperty =
     abstract Seal : unit -> unit
     abstract Sealed : bool with get
     abstract WithJson : Json -> bool
-    abstract OnChanged : IBus<PropertyChanged> with get
+    abstract OnChanged0 : IBus<PropertyChanged> with get
     abstract Clone0 : IOwner -> Key -> IProperty
     abstract SyncTo0 : IProperty -> unit
 
@@ -195,7 +189,7 @@ and IVarProperty<'v> =
     inherit IValue<'v>
     abstract Spec : IVarPropertySpec<'v> with get
     abstract SetValue' : 'v -> bool
-    abstract OnValueChanged : IBus<VarPropertyChanged<'v>> with get
+    abstract OnChanged : IBus<VarPropertyChanged<'v>> with get
     abstract SyncTo : IVarProperty<'v> -> unit
     abstract Clone : IOwner -> Key -> IVarProperty<'v>
 
@@ -271,7 +265,7 @@ and IListProperty<'p when 'p :> IProperty> =
 
 and IComboProperty =
     inherit IProperties
-    inherit IValue<(Key * IProperty) list>
+    inherit IValue<IProperty list>
     abstract SealCombo : unit -> unit
     abstract ComboSealed : bool with get
     abstract TryGet : Key -> IProperty option
@@ -300,6 +294,57 @@ and ICustomProperty<'p when 'p :> ICustomProperty> =
     abstract SyncTo : 'p -> unit
     abstract Clone : IOwner -> Key -> 'p
 
+type IChannelSpec =
+    inherit IAspectSpec
+#if !FABLE_COMPILER
+    abstract EventType : Type with get
+#endif
+
+and IChannelSpec<'evt> =
+    inherit IChannelSpec
+    abstract Encoder : JsonEncoder<'evt>
+    abstract Decoder : JsonDecoder<'evt>
+
+type EventFired = {
+    Spec : IChannelSpec
+    Evt : Json
+}
+
+and IChannel =
+    inherit IAspect
+    abstract Ver : int with get
+    abstract Spec : IChannelSpec with get
+    abstract Muted : bool with get
+    abstract SetMuted : bool -> unit
+    abstract OnEvent0 : IBus<EventFired> with get
+
+and IChannel<'evt> =
+    inherit IAspect
+    abstract Spec : IChannelSpec<'evt> with get
+    abstract FireEvent : 'evt -> unit
+    abstract OnEvent : IBus<'evt> with get
+
+type IHandler<'req> when 'req :> IReq =
+    inherit IAspect
+    abstract Handle : 'req -> unit
+
+#if !FABLE_COMPILER
+type IAsyncHandler<'req> when 'req :> IReq =
+    abstract HandleAsync<'res> : (Callback<'res> -> 'req) -> Task<'res>
+#endif
+
+and IChannels =
+    inherit IAspect
+    inherit IValue<IChannel list>
+    abstract Ver : int with get
+    abstract Seal : unit -> unit
+    abstract Sealed : bool with get
+    abstract TryGet : Key -> IChannel option
+    abstract Has : Key -> bool
+    abstract Get : Key -> IChannel
+    abstract Add<'evt> : JsonEncoder<'evt> -> JsonDecoder<'evt> -> Key -> IChannel<'evt>
+    abstract OnAdded : IBus<IChannel> with get
+
 type IContextSpec =
     abstract Kind : Kind with get
     abstract Luid : Luid with get
@@ -312,8 +357,9 @@ type IContext =
     inherit IOwner
     inherit IJson
     abstract Dispose : unit -> bool
-    abstract Spec0 : IContextSpec with get
-    abstract Properties0 : IProperties with get
+    abstract Spec : IContextSpec with get
+    abstract Properties : IProperties with get
+    abstract Channels : IChannels with get
     abstract Clone0 : ILogging -> IContext
 
 type IContext<'p when 'p :> IProperties> =

@@ -12,7 +12,7 @@ open Dap.Context.Unsafe
 open Dap.Context.Internal
 
 type internal ComboProperty (owner, spec) =
-    inherit Property<IPropertySpec, (Key * IProperty) list> (owner, spec, [])
+    inherit Property<IPropertySpec, IProperty list> (owner, spec, [])
     let mutable comboSealed : bool = false
     let onAdded = new Bus<IProperty> (owner, sprintf "%s:OnAdded" spec.Luid)
 #if FABLE_COMPILER
@@ -22,16 +22,16 @@ type internal ComboProperty (owner, spec) =
     override __.Kind = PropertyKind.ComboProperty
     override this.AsCombo = this :> IComboProperty
     member this.AsProperties = this :> IProperties
-    override __.ToJson (v : (Key * IProperty) list) =
+    override __.ToJson (v : IProperty list) =
         v
-        |> List.map (fun (k, prop) ->
-            k, prop.ToJson ()
+        |> List.map (fun prop ->
+            prop.Spec.Key, prop.ToJson ()
         )|> E.object
     override this.WithJson value json =
         let mutable ok = true
         value
-        |> List.iter (fun (k, prop) ->
-            match tryCastJson (D.field k D.value) json with
+        |> List.iter (fun prop ->
+            match tryCastJson (D.field prop.Spec.Key D.value) json with
             | Ok propJson ->
 #if FABLE_COMPILER
                 let propJson = fableObjToJson propJson
@@ -41,7 +41,7 @@ type internal ComboProperty (owner, spec) =
                     ok <- false
             | Error err ->
                 ok <- false
-                owner.Log <| tplPropertyError "ComboProperty:Decode_Field_Failed" k (prop.ToJson ()) err
+                owner.Log <| tplPropertyError "ComboProperty:Decode_Field_Failed" prop.Spec.Key (prop.ToJson ()) err
         )
         if not ok then
             logError owner "ComboProperty:WithJson" "Decode_Has_Error" (E.encode 4 json)
@@ -51,23 +51,22 @@ type internal ComboProperty (owner, spec) =
     override this.OnSealed () =
         comboSealed <- true
         this.Value
-        |> List.iter (fun (_key, prop) ->
+        |> List.iter (fun prop ->
             prop.Seal ()
         )
     member private this.CheckAdd (subSpec : IPropertySpec) (subType : Type) =
         if comboSealed then
             failWith "Combo_Sealed" <| sprintf "[%s] <%s> [%s]" spec.Luid subType.FullName subSpec.Key
         this.Value
-        |> List.tryFind (fun (k, _) -> k = subSpec.Key)
-        |> Option.iter (fun (_, prop) ->
-            failWith "Key_Exist" <| sprintf "[%s] <%s> [%s] %A -> %A" spec.Luid subType.FullName subSpec.Luid prop subSpec
+        |> List.tryFind (fun prop -> prop.Spec.Key = subSpec.Key)
+        |> Option.iter (fun prop ->
+            failWith "Key_Exist" <| sprintf "[%s] <%s> [%s] -> %A" spec.Luid subType.FullName subSpec.Luid prop
         )
 #if FABLE_COMPILER
     [<PassGenericsAttribute>]
 #endif
     member private this.Add<'prop when 'prop :> IProperty> (prop : 'prop) =
-        let k = (prop :> IProperty) .Spec.Key
-        if (this.Value @ [(k, prop :> IProperty)]
+        if (this.Value @ [prop :> IProperty]
             |> this.SetValue) then
             onAdded.Trigger prop
             prop
@@ -81,8 +80,7 @@ type internal ComboProperty (owner, spec) =
         member this.Value = this.Value
         member this.TryGet k =
             this.Value
-            |> List.tryFind (fun (k', _) -> k = k')
-            |> Option.map snd
+            |> List.tryFind (fun prop -> k = prop.Spec.Key)
         member this.Has k =
             (this.AsCombo.TryGet k).IsSome
         member this.Get k =
@@ -138,10 +136,10 @@ type internal ComboProperty (owner, spec) =
         member __.OnAdded = onAdded.Publish
         member this.SyncTo (other : IComboProperty) =
             this.Value
-            |> List.iter (fun (key, prop) ->
-                match other.TryGet key with
+            |> List.iter (fun prop ->
+                match other.TryGet prop.Spec.Key with
                 | None ->
-                    other.AddAny key prop.Clone0 |> ignore
+                    other.AddAny prop.Spec.Key prop.Clone0 |> ignore
                 | Some t ->
                     prop.SyncTo0 t
             )

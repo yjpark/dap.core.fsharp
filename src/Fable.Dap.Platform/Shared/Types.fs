@@ -23,18 +23,10 @@ type Index = ContextTypes.Index
 type IOwner = ContextTypes.IOwner
 type IBus<'evt> = ContextTypes.IBus<'evt>
 
-type IEvt = ContextTypes.IEvt
-type IChannel<'evt> when 'evt :> IEvt = ContextTypes.IChannel<'evt>
-
 type IReq = ContextTypes.IReq
-type IHandler<'req> when 'req :> IReq = ContextTypes.IHandler<'req>
-
 type Reply<'res> = ContextTypes.Reply<'res>
 type Callback<'res> = ContextTypes.Callback<'res>
 
-#if !FABLE_COMPILER
-type IAsyncHandler<'req> when 'req :> IReq = ContextTypes.IAsyncHandler<'req>
-#endif
 //Alias Context Types End
 
 [<Measure>]
@@ -125,6 +117,8 @@ type Version = {
     member this.IncReq = {this with ReqCount = this.ReqCount + 1}
     member this.IncEvt = {this with EvtCount = this.EvtCount + 1}
 
+type IEvt = interface end
+
 type IMsg = interface end
 
 type IPoster<'req> =
@@ -140,10 +134,10 @@ and IActor =
 
 and IActor<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IActor
-    inherit IHandler<'req>
-    inherit IChannel<'evt>
+    abstract Handle : 'req -> unit
+    abstract OnEvent : IBus<'evt> with get
 #if !FABLE_COMPILER
-    inherit IAsyncHandler<'req>
+    abstract HandleAsync<'res> : (Callback<'res> -> 'req) -> Task<'res>
 #endif
     abstract AsActor1 : IActor with get
 

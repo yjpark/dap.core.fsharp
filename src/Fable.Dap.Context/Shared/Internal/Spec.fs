@@ -52,3 +52,33 @@ type IPropertySpec with
     member this.ForClone key =
         new PropertySpec (key, key, this.InitValue)
         :> IPropertySpec
+
+type internal ChannelSpec<'evt> internal (luid, key, encoder', decoder') =
+    inherit AspectSpec (luid, key)
+    let encoder : JsonEncoder<'evt> = encoder'
+    let decoder : JsonDecoder<'evt> = decoder'
+    static member Create key encoder decoder =
+        new ChannelSpec<'evt> (key, key, encoder, decoder)
+        :> IChannelSpec<'evt>
+    interface IChannelSpec<'evt> with
+        member __.Encoder = encoder
+        member __.Decoder = decoder
+#if !FABLE_COMPILER
+        member __.EventType = typeof<'evt>
+#endif
+
+type IChannelSpec<'evt> with
+#if FABLE_COMPILER
+    [<PassGenericsAttribute>]
+#endif
+    member this.GetSubSpec subKey =
+        let luid = AspectSpec.CalcSubLuid this.Luid subKey
+        new ChannelSpec<'evt> (luid, subKey, this.Encoder, this.Decoder)
+        :> IChannelSpec<'evt>
+    member this.AsSubSpec (parent : IAspectSpec) =
+        let luid = AspectSpec.CalcSubLuid parent.Luid this.Key
+        new ChannelSpec<'evt> (luid, this.Key, this.Encoder, this.Decoder)
+        :> IChannelSpec<'evt>
+    member this.ForClone key =
+        new ChannelSpec<'evt> (key, key, this.Encoder, this.Decoder)
+        :> IChannelSpec<'evt>
