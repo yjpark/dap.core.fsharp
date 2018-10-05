@@ -51,7 +51,7 @@ let IServicesPack =
     }
 
 let backupTickerArgs =
-    tickerArgs {
+    ticker_args {
         frame_rate 1.0
     }
 

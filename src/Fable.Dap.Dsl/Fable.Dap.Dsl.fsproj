@@ -34,7 +34,13 @@
     <Compile Include="Platform/Generator/App.fs" />
     <Compile Include="Platform/Generator/Helper.fs" />
     <Compile Include="WebSocket/Meta.fs" />
-    <Compile Include="Remote/Meta.fs" />
+    <Compile Include="Remote/Meta/Proxy.fs" />
+    <Compile Include="Remote/Meta/Types.fs" />
+    <Compile Include="Remote/Meta/Stub.fs" />
+    <Compile Include="Remote/Meta/Helper.fs" />
+    <Compile Include="Remote/Generator/Types.fs" />
+    <Compile Include="Remote/Generator/Stub.fs" />
+    <Compile Include="Remote/Generator/Helper.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Remote\Fable.Dap.Remote.fsproj" />

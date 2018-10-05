@@ -19,7 +19,6 @@ let Kind = "WebSocketProxy"
 type Args<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> = BaseTypes.Args<Extra, SubEvt, 'req, 'res, 'evt>
 type Proxy<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> = BaseTypes.Proxy<Extra, SubEvt, 'req, 'res, 'evt>
 
-[<PassGenericsAttribute>]
 let args (stubSpec : Stub.StubSpec<'req, 'res, 'evt>) uri retryDelay logTraffic =
     let subSpec : BaseTypes.SubSpec<Extra, SubEvt, 'req, 'res, 'evt> = {
         NewExtra = Extra.New

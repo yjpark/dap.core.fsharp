@@ -2,9 +2,6 @@
 module Dap.Context.Internal.VarProperty
 
 open System
-#if FABLE_COMPILER
-open Fable.Core
-#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -31,9 +28,6 @@ type internal VarPropertySpec<'v> internal (luid, key, encoder', decoder', initV
                 :> IVarProperty<'v>
 
 and IVarPropertySpec<'v> with
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.GetSubSpec subKey =
         let luid = AspectSpec.CalcSubLuid this.Luid subKey
         new VarPropertySpec<'v> (luid, subKey, this.Encoder, this.Decoder, this.InitValue, this.Validator)
@@ -66,9 +60,6 @@ and internal VarProperty<'v> private (owner, spec) =
                 None
     override this.Clone0 o k = this.AsVarProperty.Clone o k :> IProperty
     override this.SyncTo0 t = this.AsVarProperty.SyncTo (t :?> IVarProperty<'v>)
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     override this.ToVar<'v1> () =
         if typeof<'v> = typeof<'v1> then
             this.AsVar :?> IVarProperty<'v1>
@@ -97,9 +88,6 @@ and internal VarProperty<'v> private (owner, spec) =
         member __.OnChanged = onChanged.Publish
         member this.SyncTo (other : IVarProperty<'v>) =
             other.SetValue' this.Value |> ignore
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Clone o k =
             spec.ForClone k
             |> VarProperty<'v>.Create o

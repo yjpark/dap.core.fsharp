@@ -67,8 +67,7 @@ type UnionGenerator (meta : CaseMeta list) =
                     sprintf "    static member JsonEncoder = E.union %s.JsonSpec'" param.Name
                     sprintf "    static member JsonDecoder = D.union %s.JsonSpec'" param.Name
                     sprintf "    static member JsonSpec ="
-                    sprintf "        FieldSpec.Create<%s>" param.Name
-                    sprintf "            %s.JsonEncoder %s.JsonDecoder" param.Name param.Name
+                    sprintf "        FieldSpec.Create<%s> %s.JsonEncoder %s.JsonDecoder" param.Name param.Name param.Name
                     sprintf "    interface IJson with"
                     sprintf "        member this.ToJson () = %s.JsonEncoder this" param.Name
                 ]

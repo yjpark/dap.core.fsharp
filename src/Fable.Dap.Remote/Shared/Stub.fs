@@ -3,9 +3,6 @@
 module Dap.Remote.Stub
 
 open Microsoft.FSharp.Reflection
-#if FABLE_COMPILER
-open Fable.Core
-#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -64,9 +61,6 @@ type ResponseSpec<'res> = {
     GetErrResult : RemoteReason' -> obj
     GetErrReason : LocalReason -> obj
 } with
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     static member Create<'param, 'result, 'error>
                             (kind : PacketKind)
                             (fields : FieldSpec list)
@@ -125,9 +119,6 @@ type ResponseSpec<'res> = {
             GetErrReason = getErrReason
         }
 
-#if FABLE_COMPILER
-[<PassGenericsAttribute>]
-#endif
 let private spawnRes (spec : ResponseSpec<'res> list)
                         (req : IRequest)
                         (getResult : ResponseSpec<'res> -> obj) =
@@ -135,10 +126,7 @@ let private spawnRes (spec : ResponseSpec<'res> list)
     |> List.find (fun s -> s.Kind = req.Kind)
     |> (fun spec ->
         let json = req.ToJson ()
-#if FABLE_COMPILER
-        let json = json :> obj
-#endif
-        let param = json |> spec.ParamDecoder |> Result.get
+        let param = json |> spec.ParamDecoder "" |> Result.get
         let result = getResult spec
         FSharpValue.MakeUnion(spec.Case, Array.append param [| result |]) :?> 'res
     )
@@ -147,9 +135,6 @@ type StubSpec<'req, 'res, 'evt> when 'evt :> IEvent = {
     Response : ResponseSpec<'res> list
     Event : CaseSpec<'evt> list
 } with
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.DecodeResponse (runner : IRunner) (req : IRequest) (res : Result<Json, Reason'>) : 'res =
         try
             match res with
@@ -164,9 +149,6 @@ type StubSpec<'req, 'res, 'evt> when 'evt :> IEvent = {
         with e ->
             logException runner "Stub.DecodeResponse" typeof<'res>.FullName (req, res) e
             raise e
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.DecodeEvent (runner : IRunner) (json : Json) : 'evt =
         try
             castJson (D.union this.Event) json

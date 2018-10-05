@@ -1,19 +1,12 @@
 [<AutoOpen>]
 module Dap.Context.Internal.Context
 
-#if FABLE_COMPILER
-open Fable.Core
-#endif
-
 open Dap.Prelude
 open Dap.Context
 open Dap.Context.Internal
 open Dap.Context.Unsafe
 
 type IContext with
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.SetupClone<'c when 'c :> IContext> (extraSetup : ('c -> unit) option) (clone : 'c) =
         extraSetup
         |> Option.iter (fun setup ->
@@ -71,9 +64,6 @@ type BaseContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<'p> and '
         member __.Channels = channels
         member this.Clone0 l = this.AsContext.Clone l :> IContext
     interface IUnsafeContext with
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.ToContext<'c1 when 'c1 :> IContext> () = this :> IContext :?> 'c1
     interface IJson with
         member this.ToJson () = properties.ToJson ()

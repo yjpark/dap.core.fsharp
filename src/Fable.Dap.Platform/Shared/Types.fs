@@ -72,11 +72,14 @@ type Ident = {
                 "ver", E.int this.Ver
             ]
     static member JsonDecoder : JsonDecoder<Ident> =
-        D.decode Ident.Create'
-        |> D.required "scope" D.string
-        |> D.required "kind" D.string
-        |> D.required "key" D.string
-        |> D.optional "ver" D.int -1
+        D.object (fun get ->
+            {
+                Scope = get.Required.Field "scope" D.string
+                Kind = get.Required.Field "kind" D.string
+                Key = get.Required.Field "key" D.string
+                Ver = get.Optional.Field "ver" D.int |> Option.defaultValue -1
+            }
+        )
     static member JsonSpec =
         FieldSpec.Create<Ident>
             Ident.JsonEncoder Ident.JsonDecoder

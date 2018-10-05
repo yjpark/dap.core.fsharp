@@ -2,9 +2,6 @@
 module Dap.Context.Internal.ListProperty
 
 open System
-#if FABLE_COMPILER
-open Fable.Core
-#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -52,9 +49,6 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
         Some (value, ok)
     override this.Clone0 o k = this.AsListProperty.Clone o k :> IProperty
     override this.SyncTo0 t = this.AsListProperty.SyncTo (t :?> IListProperty<'p>)
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     override this.ToList<'p1 when 'p1 :> IProperty> () =
         if typeof<'p> = typeof<'p1> then
             this.AsList :?> IListProperty<'p1>
@@ -74,15 +68,9 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
             prop
         )
         |> this.SetValue
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member private this.CheckChange tip =
         if listSealed then
             failWith "Already_Sealed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Length tip
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member private this.Add (toIndex : ToIndex option) =
         let k = newSubKey ()
         let subSpec = spec.GetSubSpec k
@@ -105,9 +93,6 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
         onAdded.Trigger (prop, index)
         onAdded0.Trigger (prop :> IProperty, index)
         prop
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member private this.Remove (i : Index) =
         let prop = this.Value |> List.item i
         let k = prop.Spec.Luid
@@ -121,9 +106,6 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
                 failWith "Remove_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Length prop.Spec.Key
             prop
         )
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member private this.CheckIndex (i : Index) =
         if i < 0 || i >= this.Value.Length then
             failWith "Invalid_Index" <| sprintf "[%s] <%s> [%d] -> [%d]" spec.Luid typeof<'p>.FullName this.Value.Length i
@@ -135,21 +117,12 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
                 Some <| List.item i this.Value
             else
                 None
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Get i =
             this.CheckIndex i
             List.item i this.Value
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Add () =
             this.CheckChange "Add"
             this.Add None
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Insert i =
             this.CheckChange <| sprintf "Insert: %d" i
             if i = this.Value.Length then
@@ -157,16 +130,10 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
             else
                 this.CheckIndex i
                 this.Add <| Some i
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Remove i =
             this.CheckChange <| sprintf "Remove: %d" i
             this.CheckIndex i
             this.Remove i
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Clear () =
             this.CheckChange "Clear"
             if this.Value.Length = 0 then
@@ -188,9 +155,6 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
         member this.SyncTo other =
             //TODO
             ()
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Clone o k =
             spec.ForClone k
             |> ListProperty<'p>.Create o
@@ -210,9 +174,6 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
         member __.ListSealed = listSealed
         member this.Has i =
             i >= 0 && i < this.Value.Length
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.MoveTo i toIndex =
             this.CheckIndex toIndex
             let prop = this.AsListProperty.Get i
@@ -221,9 +182,6 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
                 failWith "Move_Failed" <| sprintf "[%s] <%s> [%d] %d -> %d" spec.Luid typeof<'p>.FullName this.Value.Length i toIndex
         member this.MoveBy i offset =
             (this :> IListProperty).MoveTo i (i + offset)
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Swap indexA indexB =
             let propA = this.AsListProperty.Get indexA
             let propB = this.AsListProperty.Get indexB

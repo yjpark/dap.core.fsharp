@@ -2,9 +2,6 @@
 module Dap.Context.Internal.DictProperty
 
 open System
-#if FABLE_COMPILER
-open Fable.Core
-#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -51,9 +48,6 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         Some (value, ok)
     override this.Clone0 o k = this.AsDictProperty.Clone o k :> IProperty
     override this.SyncTo0 t = this.AsDictProperty.SyncTo (t :?> IDictProperty<'p>)
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     override this.ToDict<'p1 when 'p1 :> IProperty> () =
         if typeof<'p> = typeof<'p1> then
             this.AsMap :?> IDictProperty<'p1>
@@ -65,15 +59,9 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         |> Map.iter (fun _key prop ->
             prop.Seal ()
         )
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member private this.CheckChange tip =
         if mapSealed then
             failWith "Already_Sealed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Count tip
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member private this.Add (k : Key) =
         let subSpec = spec.GetSubSpec k
         let prop = subSpec.Spawner owner k
@@ -86,9 +74,6 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
             prop
         else
             failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Count prop.Spec.Key
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member private this.Remove (k : Key) =
         this.Value
         |> Map.tryFind k
@@ -113,9 +98,6 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
             |> function
                 | Some prop -> prop
                 | None -> failWith "Not_Found" k
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Add k =
             this.CheckChange <| sprintf "Add: %s" k
             this.AsDictProperty.TryGet k
@@ -123,15 +105,9 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
                 failWith "Already_Exist" <| sprintf "[%s] <%s> [%s] -> %A" spec.Luid typeof<'p>.FullName k prop
             )
             this.Add k
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Remove k =
             this.CheckChange <| sprintf "Remove: %s" k
             this.Remove k
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Clear () =
             this.CheckChange "Clear"
             if this.Value.Count = 0 then
@@ -152,9 +128,6 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         member this.SyncTo other =
             //TODO
             ()
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Clone o k =
             spec.ForClone k
             |> DictProperty<'p>.Create o

@@ -55,12 +55,20 @@ type M with
         M.custom (expr, key, sprintf "(%s.Default ())" name)
 
 type M with
+    static member union (name : string, key, initValue, validator) =
+        M.custom (name, key, initValue, validator)
+    static member union (name : string, key, initValue) =
+        M.union (name, key, initValue, "")
+    static member union (name : string, key) =
+        M.union (name, key, "")
+
+type M with
     static member union (expr : Expr<CaseMeta list>, key, initValue, validator) =
         let (name, cases) = unquotePropertyGetExpr expr
         UnionPropMeta.Create name cases key initValue validator
-    static member union (expr, key, initValue) =
+    static member union (expr : Expr<CaseMeta list>, key, initValue) =
         M.union (expr, key, initValue, "")
-    static member union (expr, key) =
+    static member union (expr : Expr<CaseMeta list>, key) =
         M.union (expr, key, "")
 
 type M with

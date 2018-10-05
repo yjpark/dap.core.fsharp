@@ -15,7 +15,7 @@ type ConsoleSinkArgsBuilder () =
     member __.MinLevel (target : ConsoleSinkArgs, (* ConsoleSinkArgs *) minLevel : LogLevel) =
         target.WithMinLevel minLevel
 
-let consoleSinkArgs = ConsoleSinkArgsBuilder ()
+let console_sink_args = ConsoleSinkArgsBuilder ()
 
 (*
  * Generated: <ValueBuilder>
@@ -33,7 +33,7 @@ type FileSinkArgsBuilder () =
     member __.Rolling (target : FileSinkArgs, (* FileSinkArgs *) rolling : RollingInterval option) =
         target.WithRolling rolling
 
-let fileSinkArgs = FileSinkArgsBuilder ()
+let file_sink_args = FileSinkArgsBuilder ()
 
 (*
  * Generated: <ValueBuilder>
@@ -48,7 +48,7 @@ type LoggingArgsBuilder () =
     member __.File (target : LoggingArgs, (* LoggingArgs *) file : FileSinkArgs option) =
         target.WithFile file
 
-let loggingArgs = LoggingArgsBuilder ()
+let logging_args = LoggingArgsBuilder ()
 
 (*
  * Generated: <ValueBuilder>
@@ -63,4 +63,4 @@ type TickerArgsBuilder () =
     member __.AutoStart (target : TickerArgs, (* TickerArgs *) autoStart : bool) =
         target.WithAutoStart autoStart
 
-let tickerArgs = TickerArgsBuilder ()
+let ticker_args = TickerArgsBuilder ()

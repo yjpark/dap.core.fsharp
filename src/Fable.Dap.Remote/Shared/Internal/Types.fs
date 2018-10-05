@@ -39,12 +39,15 @@ type Packet = {
         Kind = kind
         Payload = payload
     }
-    static member JsonDecoder =
-        D.decode Packet.Create
-        |> D.required "t" D.dateTime
-        |> D.required "i" D.string
-        |> D.required "k" D.string
-        |> D.required "p" D.json
+    static member JsonDecoder : JsonDecoder<Packet> =
+        D.object (fun get ->
+            {
+                Time = get.Required.Field "t" D.dateTime
+                Id = get.Required.Field "i" D.string
+                Kind = get.Required.Field "k" D.string
+                Payload = get.Required.Field "p" D.json
+            }
+        )
     override this.ToString () =
         sprintf "[Packet: <%s> <%s> %s]" this.Id this.Kind <| String.capped 256 ^<| E.encode 0 this.Payload
     member this.AsDisplay = this.ToString ()
@@ -76,10 +79,13 @@ type NakJson = {
             "e", E.string this.Err
             "d", E.string this.Detail
         ]
-    static member JsonDecoder =
-        D.decode NakJson.Create
-        |> D.required "e" D.string
-        |> D.required "d" D.string
+    static member JsonDecoder : JsonDecoder<NakJson> =
+        D.object (fun get ->
+            {
+                Err = get.Required.Field "e" D.string
+                Detail = get.Required.Field "d" D.string
+            }
+        )
     interface IJson with
         member this.ToJson () = NakJson.JsonEncoder this
 
@@ -99,9 +105,12 @@ type ExnJson = {
             "m", E.string this.Msg
             "t", E.string this.Trace
         ]
-    static member JsonDecoder =
-        D.decode ExnJson.Create
-        |> D.required "m" D.string
-        |> D.required "t" D.string
+    static member JsonDecoder : JsonDecoder<ExnJson> =
+        D.object (fun get ->
+            {
+                Msg = get.Required.Field "m" D.string
+                Trace = get.Required.Field "t" D.string
+            }
+        )
     interface IJson with
         member this.ToJson () = ExnJson.JsonEncoder this

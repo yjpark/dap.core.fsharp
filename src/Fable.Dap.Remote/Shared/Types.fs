@@ -29,6 +29,7 @@ with
         E.nil
     static member JsonDecoder =
         D.nil NoResult
+    static member JsonSpec = FieldSpec.Create<NoResult> NoResult.JsonEncoder NoResult.JsonDecoder
     interface IResult with
         member this.ToJson () = NoResult.JsonEncoder this
 
@@ -38,6 +39,7 @@ with
         E.nil
     static member JsonDecoder =
         D.nil NoError
+    static member JsonSpec = FieldSpec.Create<NoError> NoError.JsonEncoder NoError.JsonDecoder
     interface IError with
         member this.ToJson () = NoError.JsonEncoder this
 
@@ -47,6 +49,7 @@ with
         E.nil
     static member JsonDecoder =
         D.nil JsonNil
+    static member JsonSpec = FieldSpec.Create<JsonNil> JsonNil.JsonEncoder JsonNil.JsonDecoder
     interface IJson with
         member this.ToJson () = JsonNil.JsonEncoder this
 
@@ -59,6 +62,7 @@ with
         E.bool this.Value
     static member JsonDecoder =
         D.bool |> D.map (fun v -> JsonBool v)
+    static member JsonSpec = FieldSpec.Create<JsonBool> JsonBool.JsonEncoder JsonBool.JsonDecoder
     interface IJson with
         member this.ToJson () = JsonBool.JsonEncoder this
 
@@ -71,6 +75,7 @@ with
         E.int this.Value
     static member JsonDecoder =
         D.int |> D.map (fun v -> JsonInt v)
+    static member JsonSpec = FieldSpec.Create<JsonInt> JsonInt.JsonEncoder JsonInt.JsonDecoder
     interface IJson with
         member this.ToJson () = JsonInt.JsonEncoder this
 
@@ -83,5 +88,6 @@ with
         E.string this.Value
     static member JsonDecoder =
         D.string |> D.map (fun v -> JsonString v)
+    static member JsonSpec = FieldSpec.Create<JsonString> JsonString.JsonEncoder JsonString.JsonDecoder
     interface IJson with
         member this.ToJson () = JsonString.JsonEncoder this

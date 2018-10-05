@@ -1,10 +1,6 @@
 [<RequireQualifiedAccess>]
 module Dap.Platform.Context
 
-#if FABLE_COMPILER
-open Fable.Core
-#endif
-
 open Dap.Prelude
 open Dap.Context
 
@@ -30,9 +26,6 @@ let private update : Update<Agent<'context>, 'context, Msg> =
     fun _runner _msg model ->
         (model, noCmd)
 
-#if FABLE_COMPILER
-[<PassGenericsAttribute>]
-#endif
 let spec<'context when 'context : not struct and 'context :> IContext> (args) =
     new ActorSpec<Agent<'context>, Args<'context>, 'context, Msg, Req, Evt>
         (Agent<'context>.Spawn, args, noWrapReq, noCastEvt, init, update)

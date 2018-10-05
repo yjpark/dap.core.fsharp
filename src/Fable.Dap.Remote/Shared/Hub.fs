@@ -3,9 +3,6 @@
 module Dap.Remote.Hub
 
 open Microsoft.FSharp.Reflection
-#if FABLE_COMPILER
-open Fable.Core
-#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -36,9 +33,6 @@ type RequestSpec<'req> = {
     ParamDecoder : JsonDecoder<obj array>
     GetCallback : IRunner -> OnHandled -> obj
 } with
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     static member Create (kind : PacketKind)
                             (fields : FieldSpec list)
                             getCallback : RequestSpec<'req> =
@@ -54,19 +48,13 @@ type HubSpec<'req, 'evt
     Request : RequestSpec<'req> list
     GetHub : GetHub<'req, 'evt>
 } with
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.DecodeRequest (runner : IRunner) (json : Json) (onHandled : OnHandled) =
         try
             let kind = JsonKind.Cast json
             this.Request
             |> List.find (fun s -> s.Case.Name = kind.Value)
             |> (fun spec ->
-#if FABLE_COMPILER
-                let json = json :> obj
-#endif
-                let param = spec.ParamDecoder json |> Result.get
+                let param = spec.ParamDecoder "" json |> Result.get
                 let callback = spec.GetCallback runner onHandled
                 FSharpValue.MakeUnion(spec.Case, Array.append param [| callback |]) :?> 'req
             )
@@ -74,9 +62,6 @@ type HubSpec<'req, 'evt
             logException runner "Hub.DecodeRequest" typeof<'req>.FullName json e
             raise e
 
-#if FABLE_COMPILER
-[<PassGenericsAttribute>]
-#endif
 let forwardAck<'res, 'err when 'res :> IResult and 'err :> IError> (onHandled : OnHandled) (res : Result<'res, 'err>) : unit =
     match res with
     | Ok res ->
@@ -87,9 +72,6 @@ let forwardAck<'res, 'err when 'res :> IResult and 'err :> IError> (onHandled : 
 let forwardNak (onHandled : OnHandled) ((err, detail) : string * obj) : unit =
     onHandled <| Error ^<| HubNak ^<| NakJson.OfNak err detail
 
-#if FABLE_COMPILER
-[<PassGenericsAttribute>]
-#endif
 let getCallback<'res, 'err when 'res :> IResult and 'err :> IError> (runner : IRunner) (onHandled : OnHandled) =
     callback' runner (forwardNak onHandled) (forwardAck<'res, 'err> onHandled)
     :> obj

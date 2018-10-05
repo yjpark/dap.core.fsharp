@@ -7,7 +7,6 @@ open FSharp.Control.Tasks.V2
 open Dap.Prelude
 open Dap.Context
 
-
 let private tplAckReply = LogEvent.Template2<IReq, obj>(AckLogLevel, "[Ack] {Req} ~> {Res}")
 let private tplNakReply = LogEvent.Template3<IReq, string, obj>(LogLevelError, "[Nak] {Req} ~> {Err}: {Detail}")
 

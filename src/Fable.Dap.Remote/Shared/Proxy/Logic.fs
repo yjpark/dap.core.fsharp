@@ -2,9 +2,6 @@
 module Dap.Remote.Proxy.Logic
 
 open System
-#if FABLE_COMPILER
-open Fable.Core
-#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -54,9 +51,6 @@ let private doSend (runner : Proxy<'extra, 'sub, 'req, 'res, 'evt>)
         doEnqueue' runner (req, pkt)
     None
 
-#if FABLE_COMPILER
-[<PassGenericsAttribute>]
-#endif
 let private doInit : ActorOperate<'extra, 'sub, 'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         let link : Client.Link = {
@@ -84,9 +78,6 @@ let private doInit : ActorOperate<'extra, 'sub, 'req, 'res, 'evt> =
         |-|> updateModel (fun m -> {m with Client = Some client})
         |=|> runner.Actor.Args.Sub.DoInit
 
-#if FABLE_COMPILER
-[<PassGenericsAttribute>]
-#endif
 let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'extra, 'sub, 'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         match evt with
@@ -110,15 +101,9 @@ let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'extra, 'sub, '
             noOperation
         <| runner <| (model, cmd)
 
-#if FABLE_COMPILER
-[<PassGenericsAttribute>]
-#endif
 let private handleProxyReq (req : 'req) : ActorOperate<'extra, 'sub, 'req, 'res, 'evt> =
     handleClient <| Client.DoSend req
 
-#if FABLE_COMPILER
-[<PassGenericsAttribute>]
-#endif
 let private update : Update<Proxy<'extra, 'sub, 'req, 'res, 'evt>, Model<'extra, 'res, 'evt>, Msg<'sub, 'req, 'res, 'evt>> =
     fun runner msg model ->
         (match msg with
@@ -142,9 +127,6 @@ let private init : ActorInit<Args<'extra, 'sub, 'req, 'res, 'evt>, Model<'extra,
             Extra = args.Sub.NewExtra ()
         }, cmdOfMsg (InternalEvt DoInit))
 
-#if FABLE_COMPILER
-[<PassGenericsAttribute>]
-#endif
 let spec<'extra, 'sub, 'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> (args : Args<'extra, 'sub, 'req, 'res, 'evt>) =
     new ActorSpec<Proxy<'extra, 'sub, 'req, 'res, 'evt>, Args<'extra, 'sub, 'req, 'res, 'evt>, Model<'extra, 'res, 'evt>, Msg<'sub, 'req, 'res, 'evt>, 'req, 'evt>
         (Proxy<'extra, 'sub, 'req, 'res, 'evt>.Spawn, args, ProxyReq, castEvt<'sub, 'req, 'res, 'evt>, init, update)

@@ -122,16 +122,16 @@ with
     member this.JsonEncoder : JsonEncoder<Instant> =
         fun instant -> E.string <| this.Format instant
     member this.JsonDecoder : JsonDecoder<Instant> =
-        fun token ->
+        fun path token ->
             if token.IsDate then
                 Ok <| Instant.FromDateTimeUtc (token.Value<DateTime> ())
             elif token.IsString then
                 this.Parse (token.ToStringValue ())
                 |> Result.mapError (fun e ->
-                    TD.BadPrimitiveExtra ("parse Instant failed", token, e.Message)
+                    (path, TD.BadPrimitiveExtra ("parse Instant failed", token, e.Message))
                 )
             else
-                Error <| TD.BadPrimitive("a string of Instant", token)
+                Error (path, TD.BadPrimitive("a string of Instant", token))
     member this.JsonSpec =
         FieldSpec.Create<Instant> this.JsonEncoder this.JsonDecoder
 
@@ -170,16 +170,16 @@ with
     member this.JsonEncoder : JsonEncoder<Duration> =
         fun duration -> E.string <| this.Format duration
     member this.JsonDecoder : JsonDecoder<Duration> =
-        fun token ->
+        fun path token ->
             if token.IsTimeSpan then
                 Ok <| Duration.FromTimeSpan (token.Value<TimeSpan> ())
             elif token.IsString then
                 this.Parse (token.ToStringValue ())
                 |> Result.mapError (fun e ->
-                    TD.BadPrimitiveExtra ("parse Duration failed", token, e.Message)
+                    (path, TD.BadPrimitiveExtra ("parse Duration failed", token, e.Message))
                 )
             else
-                Error <| TD.BadPrimitive("a string of Duration", token)
+                Error (path, TD.BadPrimitive("a string of Duration", token))
     member this.JsonSpec =
         FieldSpec.Create<Duration> this.JsonEncoder this.JsonDecoder
 

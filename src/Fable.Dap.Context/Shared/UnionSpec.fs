@@ -6,11 +6,11 @@ open Microsoft.FSharp.Reflection
 
 #if FABLE_COMPILER
 open Fable.Core
-module E = Thoth.Json.Encode
-module D = Thoth.Json.Decode
+module TE = Thoth.Json.Encode
+module TD = Thoth.Json.Decode
 #else
-module E = Thoth.Json.Net.Encode
-module D = Thoth.Json.Net.Decode
+module TE = Thoth.Json.Net.Encode
+module TD = Thoth.Json.Net.Decode
 #endif
 
 open Dap.Prelude
@@ -20,9 +20,6 @@ type FieldSpec = {
     Encoder : JsonEncoder<obj>
     Decoder : JsonDecoder<obj>
 } with
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     static member Create<'f>
                             (encoder : JsonEncoder<'f>)
                             (decoder : JsonDecoder<'f>)
@@ -30,7 +27,7 @@ type FieldSpec = {
         let encoder' = fun (v : obj) ->
             v :?> 'f |> encoder
         let decoder' =
-            decoder |> D.map (fun v -> v :> obj)
+            decoder |> TD.map (fun v -> v :> obj)
         {
             Type = typeof<'f>
             Encoder = encoder'
@@ -45,25 +42,20 @@ type FieldSpec = {
             |> List.mapi (fun index (field, v) ->
                 (FieldSpec.GetFieldJsonKey index, field.Encoder v)
             )|> List.append head
-            |> E.object
-#if FABLE_COMPILER
-    static member GetFieldsDecoder (fields : FieldSpec list) (json : obj) : Result<obj array, D.DecoderError> =
-        let json = fableObjToJson json
-#else
-    static member GetFieldsDecoder (fields : FieldSpec list) (json : Json) : Result<obj array, D.DecoderError> =
-#endif
+            |> TE.object
+    static member GetFieldsDecoder (fields : FieldSpec list) (path : string) (json : Json) : Result<obj array, TD.DecoderError> =
         try
             fields
             |> List.mapi (fun index field ->
                 json
-                |> D.decodeValue (D.field (FieldSpec.GetFieldJsonKey index) field.Decoder)
+                |> TD.fromValue path (TD.field (FieldSpec.GetFieldJsonKey index) field.Decoder)
                 |> Result.mapError (fun err ->
                     sprintf "Json.FieldsDecoder [%d] <%s> -> %s" index (field.Type.FullName) err
                 )|> Result.get
             )|> List.toArray
             |> Ok
         with e ->
-            Error <| D.FailMessage e.Message
+            Error (path, TD.FailMessage e.Message)
 
 type JsonKind = JsonKind of string
 with
@@ -76,12 +68,12 @@ with
     static member Cast (json : Json) =
         castJson JsonKind.JsonDecoder json
     static member JsonEncoder' (kind : string) =
-        [(JsonKind.KindJsonKey, E.string kind)]
+        [(JsonKind.KindJsonKey, TE.string kind)]
     static member JsonEncoder (this : JsonKind) =
-        this.Value |> JsonKind.JsonEncoder' |> E.object
+        this.Value |> JsonKind.JsonEncoder' |> TE.object
     static member JsonDecoder =
-        D.field JsonKind.KindJsonKey D.string
-        |> D.map (fun v -> JsonKind v)
+        TD.field JsonKind.KindJsonKey TD.string
+        |> TD.map (fun v -> JsonKind v)
     interface IJson with
         member this.ToJson () = JsonKind.JsonEncoder this
 
@@ -90,9 +82,6 @@ type CaseSpec<'u> = {
     Encoder : JsonEncoder<obj array>
     Decoder : JsonDecoder<obj array>
 } with
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     static member Create (kind : string)
                             (fields : FieldSpec list)
                                 : CaseSpec<'u> =
@@ -103,9 +92,6 @@ type CaseSpec<'u> = {
             Decoder = FieldSpec.GetFieldsDecoder fields
         }
 
-#if FABLE_COMPILER
-[<PassGenericsAttribute>]
-#endif
 let getUnionEncoder<'u> (spec : CaseSpec<'u> list) (v : 'u) : Json =
     let (case, values) = FSharpValue.GetUnionFields (v, typeof<'u>)
     let kind = Union.getKind<'u> v
@@ -113,31 +99,21 @@ let getUnionEncoder<'u> (spec : CaseSpec<'u> list) (v : 'u) : Json =
     |> List.find (fun s -> s.Case.Name = kind)
     |> fun spec -> spec.Encoder values
 
-#if FABLE_COMPILER
-[<PassGenericsAttribute>]
-#endif
 let getUnionDecoder<'u> (spec : CaseSpec<'u> list) : JsonDecoder<'u> =
-    fun json ->
+    fun path json ->
         try
-#if FABLE_COMPILER
-            let json = fableObjToJson json
-#endif
             let kind = JsonKind.Cast json
             spec
             |> List.find (fun s -> s.Case.Name = kind.Value)
             |> (fun spec ->
                 let values =
-#if FABLE_COMPILER
-                    let json = json :> obj
-#endif
-                    json
-                    |> spec.Decoder
+                    spec.Decoder path json
                     |> Result.mapError (fun err ->
-                        D.FailMessage <| sprintf "%s -> %A" spec.Case.Name err
+                        (path, TD.FailMessage <| sprintf "%s -> %A" spec.Case.Name err)
                     )|> Result.get
                 FSharpValue.MakeUnion(spec.Case, values) :?> 'u
                 |> Ok
             )
         with err ->
             let err = sprintf "Json.UnionDecoder<%s> -> %A" (typeof<'u>.FullName) err
-            Error <| D.FailMessage err
+            Error (path, TD.FailMessage err)

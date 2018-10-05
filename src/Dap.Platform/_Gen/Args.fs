@@ -15,26 +15,29 @@ type ConsoleSinkArgs = {
     static member Create minLevel
             : ConsoleSinkArgs =
         {
-            MinLevel = minLevel
+            MinLevel = (* ConsoleSinkArgs *) minLevel
         }
     static member Default () =
         ConsoleSinkArgs.Create
-            LogLevelWarning
-    static member SetMinLevel (minLevel : LogLevel) (this : ConsoleSinkArgs) =
+            LogLevelWarning (* ConsoleSinkArgs *) (* minLevel *)
+    static member SetMinLevel ((* ConsoleSinkArgs *) minLevel : LogLevel) (this : ConsoleSinkArgs) =
         {this with MinLevel = minLevel}
-    static member UpdateMinLevel (update : LogLevel -> LogLevel) (this : ConsoleSinkArgs) =
+    static member UpdateMinLevel ((* ConsoleSinkArgs *) update : LogLevel -> LogLevel) (this : ConsoleSinkArgs) =
         this |> ConsoleSinkArgs.SetMinLevel (update this.MinLevel)
     static member JsonEncoder : JsonEncoder<ConsoleSinkArgs> =
         fun (this : ConsoleSinkArgs) ->
             E.object [
-                "min_level", LogLevel.JsonEncoder this.MinLevel
+                "min_level", LogLevel.JsonEncoder (* ConsoleSinkArgs *) this.MinLevel
             ]
     static member JsonDecoder : JsonDecoder<ConsoleSinkArgs> =
-        D.decode ConsoleSinkArgs.Create
-        |> D.optional "min_level" LogLevel.JsonDecoder LogLevelWarning
+        D.object (fun get ->
+            {
+                MinLevel = get.Optional.Field (* ConsoleSinkArgs *) "min_level" LogLevel.JsonDecoder
+                    |> Option.defaultValue LogLevelWarning
+            }
+        )
     static member JsonSpec =
-        FieldSpec.Create<ConsoleSinkArgs>
-            ConsoleSinkArgs.JsonEncoder ConsoleSinkArgs.JsonDecoder
+        FieldSpec.Create<ConsoleSinkArgs> ConsoleSinkArgs.JsonEncoder ConsoleSinkArgs.JsonDecoder
     interface IJson with
         member this.ToJson () = ConsoleSinkArgs.JsonEncoder this
     interface IObj
@@ -78,42 +81,46 @@ type FileSinkArgs = {
     static member Create minLevel path rolling
             : FileSinkArgs =
         {
-            MinLevel = minLevel
-            Path = path
-            Rolling = rolling
+            MinLevel = (* FileSinkArgs *) minLevel
+            Path = (* FileSinkArgs *) path
+            Rolling = (* FileSinkArgs *) rolling
         }
     static member Default () =
         FileSinkArgs.Create
-            LogLevelInformation
-            ""
-            None
-    static member SetMinLevel (minLevel : LogLevel) (this : FileSinkArgs) =
+            LogLevelInformation (* FileSinkArgs *) (* minLevel *)
+            "" (* FileSinkArgs *) (* path *)
+            None (* FileSinkArgs *) (* rolling *)
+    static member SetMinLevel ((* FileSinkArgs *) minLevel : LogLevel) (this : FileSinkArgs) =
         {this with MinLevel = minLevel}
-    static member SetPath (path : string) (this : FileSinkArgs) =
+    static member SetPath ((* FileSinkArgs *) path : string) (this : FileSinkArgs) =
         {this with Path = path}
-    static member SetRolling (rolling : RollingInterval option) (this : FileSinkArgs) =
+    static member SetRolling ((* FileSinkArgs *) rolling : RollingInterval option) (this : FileSinkArgs) =
         {this with Rolling = rolling}
-    static member UpdateMinLevel (update : LogLevel -> LogLevel) (this : FileSinkArgs) =
+    static member UpdateMinLevel ((* FileSinkArgs *) update : LogLevel -> LogLevel) (this : FileSinkArgs) =
         this |> FileSinkArgs.SetMinLevel (update this.MinLevel)
-    static member UpdatePath (update : string -> string) (this : FileSinkArgs) =
+    static member UpdatePath ((* FileSinkArgs *) update : string -> string) (this : FileSinkArgs) =
         this |> FileSinkArgs.SetPath (update this.Path)
-    static member UpdateRolling (update : RollingInterval option -> RollingInterval option) (this : FileSinkArgs) =
+    static member UpdateRolling ((* FileSinkArgs *) update : RollingInterval option -> RollingInterval option) (this : FileSinkArgs) =
         this |> FileSinkArgs.SetRolling (update this.Rolling)
     static member JsonEncoder : JsonEncoder<FileSinkArgs> =
         fun (this : FileSinkArgs) ->
             E.object [
-                "min_level", LogLevel.JsonEncoder this.MinLevel
-                "path", E.string this.Path
-                "rolling", (E.option RollingInterval.JsonEncoder) this.Rolling
+                "min_level", LogLevel.JsonEncoder (* FileSinkArgs *) this.MinLevel
+                "path", E.string (* FileSinkArgs *) this.Path
+                "rolling", (E.option RollingInterval.JsonEncoder) (* FileSinkArgs *) this.Rolling
             ]
     static member JsonDecoder : JsonDecoder<FileSinkArgs> =
-        D.decode FileSinkArgs.Create
-        |> D.optional "min_level" LogLevel.JsonDecoder LogLevelInformation
-        |> D.optional "path" D.string ""
-        |> D.optional "rolling" (D.option RollingInterval.JsonDecoder) None
+        D.object (fun get ->
+            {
+                MinLevel = get.Optional.Field (* FileSinkArgs *) "min_level" LogLevel.JsonDecoder
+                    |> Option.defaultValue LogLevelInformation
+                Path = get.Optional.Field (* FileSinkArgs *) "path" D.string
+                    |> Option.defaultValue ""
+                Rolling = get.Optional.Field (* FileSinkArgs *) "rolling" RollingInterval.JsonDecoder
+            }
+        )
     static member JsonSpec =
-        FieldSpec.Create<FileSinkArgs>
-            FileSinkArgs.JsonEncoder FileSinkArgs.JsonDecoder
+        FieldSpec.Create<FileSinkArgs> FileSinkArgs.JsonEncoder FileSinkArgs.JsonDecoder
     interface IJson with
         member this.ToJson () = FileSinkArgs.JsonEncoder this
     interface IObj
@@ -135,34 +142,36 @@ type LoggingArgs = {
     static member Create console file
             : LoggingArgs =
         {
-            Console = console
-            File = file
+            Console = (* LoggingArgs *) console
+            File = (* LoggingArgs *) file
         }
     static member Default () =
         LoggingArgs.Create
-            None
-            None
-    static member SetConsole (console : ConsoleSinkArgs option) (this : LoggingArgs) =
+            None (* LoggingArgs *) (* console *)
+            None (* LoggingArgs *) (* file *)
+    static member SetConsole ((* LoggingArgs *) console : ConsoleSinkArgs option) (this : LoggingArgs) =
         {this with Console = console}
-    static member SetFile (file : FileSinkArgs option) (this : LoggingArgs) =
+    static member SetFile ((* LoggingArgs *) file : FileSinkArgs option) (this : LoggingArgs) =
         {this with File = file}
-    static member UpdateConsole (update : ConsoleSinkArgs option -> ConsoleSinkArgs option) (this : LoggingArgs) =
+    static member UpdateConsole ((* LoggingArgs *) update : ConsoleSinkArgs option -> ConsoleSinkArgs option) (this : LoggingArgs) =
         this |> LoggingArgs.SetConsole (update this.Console)
-    static member UpdateFile (update : FileSinkArgs option -> FileSinkArgs option) (this : LoggingArgs) =
+    static member UpdateFile ((* LoggingArgs *) update : FileSinkArgs option -> FileSinkArgs option) (this : LoggingArgs) =
         this |> LoggingArgs.SetFile (update this.File)
     static member JsonEncoder : JsonEncoder<LoggingArgs> =
         fun (this : LoggingArgs) ->
             E.object [
-                "console", (E.option ConsoleSinkArgs.JsonEncoder) this.Console
-                "file", (E.option FileSinkArgs.JsonEncoder) this.File
+                "console", (E.option ConsoleSinkArgs.JsonEncoder) (* LoggingArgs *) this.Console
+                "file", (E.option FileSinkArgs.JsonEncoder) (* LoggingArgs *) this.File
             ]
     static member JsonDecoder : JsonDecoder<LoggingArgs> =
-        D.decode LoggingArgs.Create
-        |> D.optional "console" (D.option ConsoleSinkArgs.JsonDecoder) None
-        |> D.optional "file" (D.option FileSinkArgs.JsonDecoder) None
+        D.object (fun get ->
+            {
+                Console = get.Optional.Field (* LoggingArgs *) "console" ConsoleSinkArgs.JsonDecoder
+                File = get.Optional.Field (* LoggingArgs *) "file" FileSinkArgs.JsonDecoder
+            }
+        )
     static member JsonSpec =
-        FieldSpec.Create<LoggingArgs>
-            LoggingArgs.JsonEncoder LoggingArgs.JsonDecoder
+        FieldSpec.Create<LoggingArgs> LoggingArgs.JsonEncoder LoggingArgs.JsonDecoder
     interface IJson with
         member this.ToJson () = LoggingArgs.JsonEncoder this
     interface IObj
@@ -182,34 +191,38 @@ type TickerArgs = {
     static member Create frameRate autoStart
             : TickerArgs =
         {
-            FrameRate = frameRate
-            AutoStart = autoStart
+            FrameRate = (* TickerArgs *) frameRate
+            AutoStart = (* TickerArgs *) autoStart
         }
     static member Default () =
         TickerArgs.Create
-            10.0
-            true
-    static member SetFrameRate (frameRate : float) (this : TickerArgs) =
+            10.0 (* TickerArgs *) (* frameRate *)
+            true (* TickerArgs *) (* autoStart *)
+    static member SetFrameRate ((* TickerArgs *) frameRate : float) (this : TickerArgs) =
         {this with FrameRate = frameRate}
-    static member SetAutoStart (autoStart : bool) (this : TickerArgs) =
+    static member SetAutoStart ((* TickerArgs *) autoStart : bool) (this : TickerArgs) =
         {this with AutoStart = autoStart}
-    static member UpdateFrameRate (update : float -> float) (this : TickerArgs) =
+    static member UpdateFrameRate ((* TickerArgs *) update : float -> float) (this : TickerArgs) =
         this |> TickerArgs.SetFrameRate (update this.FrameRate)
-    static member UpdateAutoStart (update : bool -> bool) (this : TickerArgs) =
+    static member UpdateAutoStart ((* TickerArgs *) update : bool -> bool) (this : TickerArgs) =
         this |> TickerArgs.SetAutoStart (update this.AutoStart)
     static member JsonEncoder : JsonEncoder<TickerArgs> =
         fun (this : TickerArgs) ->
             E.object [
-                "frame_rate", E.float this.FrameRate
-                "auto_start", E.bool this.AutoStart
+                "frame_rate", E.float (* TickerArgs *) this.FrameRate
+                "auto_start", E.bool (* TickerArgs *) this.AutoStart
             ]
     static member JsonDecoder : JsonDecoder<TickerArgs> =
-        D.decode TickerArgs.Create
-        |> D.optional "frame_rate" D.float 10.0
-        |> D.optional "auto_start" D.bool true
+        D.object (fun get ->
+            {
+                FrameRate = get.Optional.Field (* TickerArgs *) "frame_rate" D.float
+                    |> Option.defaultValue 10.0
+                AutoStart = get.Optional.Field (* TickerArgs *) "auto_start" D.bool
+                    |> Option.defaultValue true
+            }
+        )
     static member JsonSpec =
-        FieldSpec.Create<TickerArgs>
-            TickerArgs.JsonEncoder TickerArgs.JsonDecoder
+        FieldSpec.Create<TickerArgs> TickerArgs.JsonEncoder TickerArgs.JsonDecoder
     interface IJson with
         member this.ToJson () = TickerArgs.JsonEncoder this
     interface IObj

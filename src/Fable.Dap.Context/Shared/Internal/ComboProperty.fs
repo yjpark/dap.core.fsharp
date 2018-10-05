@@ -2,9 +2,6 @@
 module Dap.Context.Internal.ComboProperty
 
 open System
-#if FABLE_COMPILER
-open Fable.Core
-#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -15,9 +12,6 @@ type internal ComboProperty (owner, spec) =
     inherit Property<IPropertySpec, IProperty list> (owner, spec, [])
     let mutable comboSealed : bool = false
     let onAdded = new Bus<IProperty> (owner, sprintf "%s:OnAdded" spec.Luid)
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     static member Create o s = new ComboProperty(o, s)
     override __.Kind = PropertyKind.ComboProperty
     override this.AsCombo = this :> IComboProperty
@@ -33,9 +27,6 @@ type internal ComboProperty (owner, spec) =
         |> List.iter (fun prop ->
             match tryCastJson (D.field prop.Spec.Key D.value) json with
             | Ok propJson ->
-#if FABLE_COMPILER
-                let propJson = fableObjToJson propJson
-#endif
                 let oneOk = prop.WithJson propJson
                 if not oneOk then
                     ok <- false
@@ -62,9 +53,6 @@ type internal ComboProperty (owner, spec) =
         |> Option.iter (fun prop ->
             failWith "Key_Exist" <| sprintf "[%s] <%s> [%s] -> %A" spec.Luid subType.FullName subSpec.Luid prop
         )
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member private this.Add<'prop when 'prop :> IProperty> (prop : 'prop) =
         if (this.Value @ [prop :> IProperty]
             |> this.SetValue) then
@@ -92,27 +80,18 @@ type internal ComboProperty (owner, spec) =
             let prop = spawner owner key
             this.CheckAdd prop.Spec (prop.GetType())
             this.Add prop
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.AddVar<'v> (subSpec : IVarPropertySpec<'v>) =
             this.CheckAdd subSpec typeof<'v>
             subSpec.AsSubSpec spec
             |> VarProperty<'v>.Create owner
             |> this.Add
             |> fun prop -> prop.AsVarProperty
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.AddDict<'p when 'p :> IProperty> (subSpec : IPropertySpec<'p>) =
             this.CheckAdd subSpec typeof<'p>
             subSpec.AsSubSpec spec
             |> DictProperty<'p>.Create owner
             |> this.Add
             |> fun prop -> prop.AsDictProperty
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.AddList<'p when 'p :> IProperty> (subSpec : IPropertySpec<'p>) =
             this.CheckAdd subSpec typeof<'p>
             subSpec.AsSubSpec spec
@@ -125,9 +104,6 @@ type internal ComboProperty (owner, spec) =
             |> ComboProperty.Create owner
             |> this.Add
             |> fun prop -> prop.AsCombo
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.AddCustom<'p when 'p :> ICustomProperty> (subSpec : IPropertySpec<'p>) =
             this.CheckAdd subSpec typeof<'p>
             subSpec.AsSubSpec spec

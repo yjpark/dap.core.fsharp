@@ -2,9 +2,6 @@
 module Dap.Context.Internal.Property
 
 open System
-#if FABLE_COMPILER
-open Fable.Core
-#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -29,7 +26,6 @@ type UnsafeProperty internal (owner') =
     abstract member ToList<'p1 when 'p1 :> IProperty> : unit -> IListProperty<'p1>
     abstract member ToCustom<'p1 when 'p1 :> ICustomProperty> : unit -> ICustomProperty<'p1>
 #if FABLE_COMPILER
-    [<PassGenericsAttribute>]
     member this.CastFailed<'p> () : 'p = failWith "UnsafeProperty" ("Cast_Failed: " + typeof<'p>.Name)
 #else
     member this.CastFailed<'p> () : 'p = failWith (this.GetType().FullName) ("Cast_Failed: " + typeof<'p>.Name)
@@ -39,21 +35,9 @@ type UnsafeProperty internal (owner') =
     default this.AsList = this.CastFailed<IListProperty> ()
     default this.AsCombo = this.CastFailed<IComboProperty> ()
     default this.AsCustom = this.CastFailed<ICustomProperty> ()
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     default this.ToVar<'v1> () = this.CastFailed<IVarProperty<'v1>> ()
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     default this.ToDict<'p1 when 'p1 :> IProperty> () = this.CastFailed<IDictProperty<'p1>> ()
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     default this.ToList<'p1 when 'p1 :> IProperty> () = this.CastFailed<IListProperty<'p1>> ()
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     default this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = this.CastFailed<ICustomProperty<'p1>> ()
     interface IUnsafeProperty with
         member this.AsVar = this.AsVar
@@ -61,27 +45,12 @@ type UnsafeProperty internal (owner') =
         member this.AsList = this.AsList
         member this.AsCombo = this.AsCombo
         member this.AsCustom = this.AsCustom
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.ToVar<'v1> () = this.ToVar<'v1> ()
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.ToDict<'p1 when 'p1 :> IProperty> () = this.ToDict<'p1> ()
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.ToList<'p1 when 'p1 :> IProperty> () = this.ToList<'p1> ()
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = this.ToCustom<'p1> ()
 
 type IProperty with
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.SetupClone<'p when 'p :> IProperty> (setup : ('p -> unit) option) (clone : 'p) =
         setup
         |> Option.defaultValue this.SyncTo0
@@ -156,9 +125,6 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
                 )|> Option.defaultValue false
         member __.OnChanged0 = onChanged0.Publish
         member this.Clone0 o k = this.Clone0 o k
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.SyncTo0 t =
             if this.Kind <> t.Kind then
                 owner.Log <| tplPropertyError "Property:InValid_Kind" spec.Luid ver (this.Kind, t.Kind, t)

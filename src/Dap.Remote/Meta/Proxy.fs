@@ -1,4 +1,5 @@
-module Dap.Remote.Meta
+[<AutoOpen>]
+module Dap.Remote.Meta.Proxy
 
 open Dap.Prelude
 open Dap.Context
@@ -59,17 +60,3 @@ type M with
         M.proxyService (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, kind, key)
     static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool) =
         M.proxyService (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, NoKey)
-
-type M with
-    static member gatewaySpawner (aliases : ModuleAlias list, reqEvt : string, hubSpec : string, logTraffic : bool, kind : Kind) =
-        let alias = "Gateway", "Dap.Remote.WebSocketGateway.Gateway"
-        let args = sprintf "Gateway.Args<%s>" reqEvt
-        let args =
-            sprintf "(Gateway.args %s %b)" hubSpec logTraffic
-            |> CodeArgs args
-        let type' = "Gateway.Gateway"
-        let spec = "Dap.Remote.WebSocketGateway.Logic.spec"
-        M.spawner (alias :: aliases, args, type', spec, kind)
-    static member gatewaySpawner (aliases : ModuleAlias list, reqEvt : string, hubSpec : string, logTraffic : bool) =
-        let kind = Dap.Remote.WebSocketGateway.Gateway.Kind
-        M.gatewaySpawner (aliases, reqEvt, hubSpec, logTraffic, kind)

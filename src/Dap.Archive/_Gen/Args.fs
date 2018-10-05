@@ -18,42 +18,47 @@ type RecorderArgs = {
     static member Create tickerKind tickerKey flushInterval
             : RecorderArgs =
         {
-            TickerKind = tickerKind
-            TickerKey = tickerKey
-            FlushInterval = flushInterval
+            TickerKind = (* RecorderArgs *) tickerKind
+            TickerKey = (* RecorderArgs *) tickerKey
+            FlushInterval = (* RecorderArgs *) flushInterval
         }
     static member Default () =
         RecorderArgs.Create
-            "Ticker"
-            ""
-            (decodeJsonString Duration.JsonDecoder """0:00:00:30""")
-    static member SetTickerKind (tickerKind : string) (this : RecorderArgs) =
+            "Ticker" (* RecorderArgs *) (* tickerKind *)
+            "" (* RecorderArgs *) (* tickerKey *)
+            (decodeJsonString Duration.JsonDecoder """0:00:00:30""") (* RecorderArgs *) (* flushInterval *)
+    static member SetTickerKind ((* RecorderArgs *) tickerKind : string) (this : RecorderArgs) =
         {this with TickerKind = tickerKind}
-    static member SetTickerKey (tickerKey : string) (this : RecorderArgs) =
+    static member SetTickerKey ((* RecorderArgs *) tickerKey : string) (this : RecorderArgs) =
         {this with TickerKey = tickerKey}
-    static member SetFlushInterval (flushInterval : Duration) (this : RecorderArgs) =
+    static member SetFlushInterval ((* RecorderArgs *) flushInterval : Duration) (this : RecorderArgs) =
         {this with FlushInterval = flushInterval}
-    static member UpdateTickerKind (update : string -> string) (this : RecorderArgs) =
+    static member UpdateTickerKind ((* RecorderArgs *) update : string -> string) (this : RecorderArgs) =
         this |> RecorderArgs.SetTickerKind (update this.TickerKind)
-    static member UpdateTickerKey (update : string -> string) (this : RecorderArgs) =
+    static member UpdateTickerKey ((* RecorderArgs *) update : string -> string) (this : RecorderArgs) =
         this |> RecorderArgs.SetTickerKey (update this.TickerKey)
-    static member UpdateFlushInterval (update : Duration -> Duration) (this : RecorderArgs) =
+    static member UpdateFlushInterval ((* RecorderArgs *) update : Duration -> Duration) (this : RecorderArgs) =
         this |> RecorderArgs.SetFlushInterval (update this.FlushInterval)
     static member JsonEncoder : JsonEncoder<RecorderArgs> =
         fun (this : RecorderArgs) ->
             E.object [
-                "ticker_kind", E.string this.TickerKind
-                "ticker_key", E.string this.TickerKey
-                "flush_interval", E.duration this.FlushInterval
+                "ticker_kind", E.string (* RecorderArgs *) this.TickerKind
+                "ticker_key", E.string (* RecorderArgs *) this.TickerKey
+                "flush_interval", E.duration (* RecorderArgs *) this.FlushInterval
             ]
     static member JsonDecoder : JsonDecoder<RecorderArgs> =
-        D.decode RecorderArgs.Create
-        |> D.optional "ticker_kind" D.string "Ticker"
-        |> D.optional "ticker_key" D.string ""
-        |> D.optional "flush_interval" D.duration (decodeJsonString Duration.JsonDecoder """0:00:00:30""")
+        D.object (fun get ->
+            {
+                TickerKind = get.Optional.Field (* RecorderArgs *) "ticker_kind" D.string
+                    |> Option.defaultValue "Ticker"
+                TickerKey = get.Optional.Field (* RecorderArgs *) "ticker_key" D.string
+                    |> Option.defaultValue ""
+                FlushInterval = get.Optional.Field (* RecorderArgs *) "flush_interval" D.duration
+                    |> Option.defaultValue (decodeJsonString Duration.JsonDecoder """0:00:00:30""")
+            }
+        )
     static member JsonSpec =
-        FieldSpec.Create<RecorderArgs>
-            RecorderArgs.JsonEncoder RecorderArgs.JsonDecoder
+        FieldSpec.Create<RecorderArgs> RecorderArgs.JsonEncoder RecorderArgs.JsonDecoder
     interface IJson with
         member this.ToJson () = RecorderArgs.JsonEncoder this
     interface IObj

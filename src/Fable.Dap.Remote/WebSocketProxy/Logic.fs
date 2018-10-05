@@ -28,7 +28,6 @@ let internal doSend (runner : Proxy<'req, 'res, 'evt>)
     let socket = runner.Actor.State.Extra.Socket |> Option.get
     socket.Actor.Handle <| WebSocketTypes.DoSend (pkt, callback)
 
-[<PassGenericsAttribute>]
 let private handlerSocketEvt (evt : WebSocketTypes.Evt<Packet>) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         match evt with
@@ -50,7 +49,6 @@ let private handlerSocketEvt (evt : WebSocketTypes.Evt<Packet>) : ActorOperate<'
             noOperation
         <| runner <| (model, noCmd)
 
-[<PassGenericsAttribute>]
 let private setSocket (socket : WebSocketTypes.Agent<Packet>) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         match model.Extra.Socket with
@@ -62,7 +60,6 @@ let private setSocket (socket : WebSocketTypes.Agent<Packet>) : ActorOperate<'re
             noOperation
         <| runner <| (model, cmd)
 
-[<PassGenericsAttribute>]
 let internal handleSub (evt : SubEvt) : ActorOperate<'req, 'res, 'evt> =
     match evt with
     | SocketEvt evt -> handlerSocketEvt evt
@@ -77,7 +74,6 @@ let internal doInit : ActorOperate<'req, 'res, 'evt> =
             | :? string as pkt ->
                 decodeJson Packet.JsonDecoder pkt
             | _ ->
-                let json = fableObjToJson json
                 castJson Packet.JsonDecoder json
         let args = WebSocketTypes.Args<Packet>.Create encode decode runner.Actor.Args.Uri false
         let spec = WebSocketLogic.spec args

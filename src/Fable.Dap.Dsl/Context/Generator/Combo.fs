@@ -110,14 +110,22 @@ type RecordGenerator (meta : ComboMeta) =
         let fields = meta.GetAllFields param.Name
         [
             yield sprintf "    static member JsonDecoder : JsonDecoder<%s> =" param.Name
-            yield sprintf "        D.decode %s.Create" param.Name
+            yield sprintf "        D.object (fun get ->"
+            yield sprintf "            {"
             for prop in fields do
+                let memberName = prop.Key.AsCodeMemberName
                 if prop.Decoder = "" then
-                    yield sprintf "        |> D.hardcoded %s(* %s *) %s" prop.CommentCode prop.Key prop.InitValue
+                    yield sprintf "                %s = (* %s *) %s" memberName prop.CommentCode prop.InitValue
                 elif param.IsLoose && prop.InitValue <> "" then
-                    yield sprintf "        |> D.optional %s\"%s\" %s %s" prop.CommentCode prop.Key prop.Decoder prop.InitValue
+                    if prop.Variation = FieldVariation.Option then
+                        yield sprintf "                %s = get.Optional.Field %s\"%s\" %s" memberName prop.CommentCode prop.Key prop.Decoder'
+                    else
+                        yield sprintf "                %s = get.Optional.Field %s\"%s\" %s" memberName prop.CommentCode prop.Key prop.Decoder
+                        yield sprintf "                    |> Option.defaultValue %s" prop.InitValue
                 else
-                    yield sprintf "        |> D.required %s\"%s\" %s" prop.CommentCode prop.Key prop.Decoder
+                    yield sprintf "                %s = get.Required.Field %s\"%s\" %s" memberName prop.CommentCode prop.Key prop.Decoder
+            yield sprintf "            }"
+            yield sprintf "        )"
         ]
     let getFieldSetter (param : RecordParam) (prop : IPropMeta) =
         [
@@ -186,8 +194,7 @@ type RecordGenerator (meta : ComboMeta) =
                 @ getJsonDecoder param
                 @ [
                     sprintf "    static member JsonSpec ="
-                    sprintf "        FieldSpec.Create<%s>" param.Name
-                    sprintf "            %s.JsonEncoder %s.JsonDecoder" param.Name param.Name
+                    sprintf "        FieldSpec.Create<%s> %s.JsonEncoder %s.JsonDecoder" param.Name param.Name param.Name
                     sprintf "    interface IJson with"
                     sprintf "        member this.ToJson () = %s.JsonEncoder this" param.Name
                     sprintf "    interface IObj"

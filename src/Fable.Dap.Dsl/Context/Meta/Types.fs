@@ -51,6 +51,8 @@ with
 
 type IFieldMeta =
     abstract Type' : string with get
+    abstract Encoder' : string with get
+    abstract Decoder' : string with get
     abstract Type : string with get
     abstract Encoder : string with get
     abstract Decoder : string with get
@@ -113,6 +115,8 @@ type PropMeta = {
             failWith "Unsupported" <| sprintf "%A<%s> %A" this.Kind this.Type variation
     interface IFieldMeta with
         member this.Type' = this.Type
+        member this.Encoder' = this.Encoder
+        member this.Decoder' = this.Decoder
         member this.Type = this.Variation.DecorateType this.Type
         member this.Encoder = this.Variation.DecorateEncoder this.Encoder
         member this.Decoder = this.Variation.DecorateDecoder this.Decoder
@@ -165,6 +169,8 @@ type UnionFieldMeta = {
         }
     interface IFieldMeta with
         member this.Type' = this.Kind
+        member this.Encoder' = this.Kind + ".JsonEncoder"
+        member this.Decoder' = this.Kind + ".JsonDecoder"
         member this.Type =
             this.Variation.DecorateType this.Kind
         member this.Encoder =
@@ -202,6 +208,8 @@ type UnionPropMeta = {
         }
     interface IFieldMeta with
         member this.Type' = this.Kind
+        member this.Encoder' = this.Kind + ".JsonEncoder"
+        member this.Decoder' = this.Kind + ".JsonDecoder"
         member this.Type =
             this.Variation.DecorateType this.Kind
         member this.Encoder =

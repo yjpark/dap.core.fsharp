@@ -1,10 +1,6 @@
 [<AutoOpen>]
 module Dap.Context.CustomProperty
 
-#if FABLE_COMPILER
-open Fable.Core
-#endif
-
 open Dap.Prelude
 open Dap.Context.Unsafe
 open Dap.Context.Internal
@@ -50,9 +46,6 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         member this.WithJson json = this.Target.WithJson json
         member this.OnChanged0 = this.Target.OnChanged0
         member this.Clone0 o k = this.AsCustomProperty.Clone o k :> IProperty
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.SyncTo0 t =
             let this' = this.AsProperty
             if this'.Kind <> t.Kind then
@@ -71,21 +64,9 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         member this.AsList = this.UnsafeTarget.AsList
         member this.AsCombo = this.UnsafeTarget.AsCombo
         member this.AsCustom = this.UnsafeTarget.AsCustom
-    #if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-    #endif
         member this.ToVar<'v1> () = this.UnsafeTarget.ToVar<'v1> ()
-    #if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-    #endif
         member this.ToDict<'p1 when 'p1 :> IProperty> () = this.UnsafeTarget.ToDict<'p1> ()
-    #if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-    #endif
         member this.ToList<'p1 when 'p1 :> IProperty> () = this.UnsafeTarget.ToList<'p1> ()
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = this.UnsafeTarget.ToCustom<'p1> ()
 
 [<AbstractClass>]
@@ -102,21 +83,9 @@ type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IP
     abstract member Spawn : IOwner -> Key -> 'p
     abstract member SyncTo : 'p -> unit
     // virtual members
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     abstract member SetupCloneBefore : 'p -> unit
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     abstract member SetupCloneAfter : 'p -> unit
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     default __.SetupCloneBefore (_p : 'p) = ()
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     default __.SetupCloneAfter (_p : 'p) = ()
 
     override __.Kind = PropertyKind.CustomProperty
@@ -127,9 +96,6 @@ type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IP
     interface ICustomProperty<'p> with
         member this.Self = this.Self
         member this.SyncTo other = this.SyncTo other
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Clone o k =
             this.Spawn o k
             |> this.SetupClone (Some this.SetupCloneBefore)

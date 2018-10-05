@@ -29,15 +29,18 @@ type Meta<'extra> when 'extra :> IJson = {
         Memo = memo
     }
     static member JsonDecoder (extraDecoder : JsonDecoder<'extra>) =
-        D.decode Meta<'extra>.Create
-        |> D.required "kind" D.string
-        |> D.required "key" D.string
-        |> D.required "version" D.int
-        |> D.required "length" D.int
-        |> D.required "extra" extraDecoder
-        |> D.optional "begin_time" (D.option D.instant) None
-        |> D.optional "end_time" (D.option D.instant) None
-        |> D.optional "memo" (D.option D.string) None
+        D.object (fun get ->
+            {
+                Kind = get.Required.Field "kind" D.string
+                Key = get.Required.Field "key" D.string
+                Version = get.Required.Field "version" D.int
+                Length = get.Required.Field "length" D.int
+                Extra = get.Required.Field "extra" extraDecoder
+                BeginTime = get.Optional.Field "begin_time" D.instant
+                EndTime = get.Optional.Field "end_time" D.instant
+                Memo = get.Optional.Field "memo" D.string
+            }
+        )
     interface IJson with
         member this.ToJson () =
             E.object [

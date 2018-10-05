@@ -29,7 +29,14 @@
     <Compile Include="WebSocketProxy/Tasks.fs" />
     <Compile Include="WebSocketProxy/Logic.fs" />
     <Compile Include="WebSocketProxy/Proxy.fs" />
-    <Compile Include="Meta.fs" />
+    <Compile Include="Meta/Proxy.fs" />
+    <Compile Include="Meta/Gateway.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Remote/Meta/Types.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Remote/Meta/Stub.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Remote/Meta/Helper.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Remote/Generator/Types.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Remote/Generator/Stub.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Remote/Generator/Helper.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.WebSocket\Dap.WebSocket.fsproj" />

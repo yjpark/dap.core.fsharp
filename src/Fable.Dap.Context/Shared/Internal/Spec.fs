@@ -2,9 +2,6 @@
 module Dap.Context.Internal.Spec
 
 open System
-#if FABLE_COMPILER
-open Fable.Core
-#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -68,9 +65,6 @@ type internal ChannelSpec<'evt> internal (luid, key, encoder', decoder') =
 #endif
 
 type IChannelSpec<'evt> with
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.GetSubSpec subKey =
         let luid = AspectSpec.CalcSubLuid this.Luid subKey
         new ChannelSpec<'evt> (luid, subKey, this.Encoder, this.Decoder)

@@ -20,9 +20,12 @@ type Extra = {
     static member Create events = {
         Events = events
     }
-    static member JsonDecoder (extraDecoder : JsonDecoder<'extra>) =
-        D.decode Extra.Create
-        |> D.required "events" (D.dict D.int)
+    static member JsonDecoder : JsonDecoder<Extra> =
+        D.object (fun get ->
+            {
+                Events = get.Required.Field "events" (D.dict D.int)
+            }
+        )
     interface IJson with
         member this.ToJson () =
             E.object [

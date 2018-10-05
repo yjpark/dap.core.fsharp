@@ -1,10 +1,6 @@
 [<AutoOpen>]
 module Dap.Context.Unsafe.Types
 
-#if FABLE_COMPILER
-open Fable.Core
-#endif
-
 open Dap.Context
 
 type IUnsafeProperty =
@@ -24,28 +20,13 @@ type IProperty with
     member this.AsList = (this :?> IUnsafeProperty) .AsList
     member this.AsCombo = (this :?> IUnsafeProperty) .AsCombo
     member this.AsCustom = (this :?> IUnsafeProperty) .AsCustom
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.ToVar<'v1> () = (this :?> IUnsafeProperty) .ToVar<'v1> ()
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.ToDict<'p1 when 'p1 :> IProperty> () = (this :?> IUnsafeProperty) .ToDict<'p1> ()
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.ToList<'p1 when 'p1 :> IProperty> () = (this :?> IUnsafeProperty) .ToList<'p1> ()
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = (this :?> IUnsafeProperty) .ToCustom<'p1> ()
 
 type IUnsafeContext =
     abstract ToContext<'c1 when 'c1 :> IContext> : unit -> 'c1
 
 type IContext with
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member this.ToContext<'c1 when 'c1 :> IContext> () = (this :?> IUnsafeContext) .ToContext<'c1> ()

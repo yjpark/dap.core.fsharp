@@ -7,20 +7,21 @@ open Microsoft.FSharp.Reflection
 #if FABLE_COMPILER
 open Fable.Core
 open Fable.Core.JsInterop
+open Fable.Import
 
-module E = Thoth.Json.Encode
-module D = Thoth.Json.Decode
-type Json = E.Value
+module TE = Thoth.Json.Encode
+module TD = Thoth.Json.Decode
+type Json = TE.Value
 #else
 open Newtonsoft.Json.Linq
-module E = Thoth.Json.Net.Encode
-module D = Thoth.Json.Net.Decode
+module TE = Thoth.Json.Net.Encode
+module TD = Thoth.Json.Net.Decode
 type Json = JToken
 #endif
 
 open Dap.Prelude
 
-type JsonDecoder<'json> = D.Decoder<'json>
+type JsonDecoder<'json> = TD.Decoder<'json>
 type JsonEncoder<'json> = 'json -> Json
 
 type IJson =
@@ -30,17 +31,17 @@ type IJson =
 module Extensions =
     type IJson with
         member this.EncodeJson (indent : int) =
-            E.encode indent <| this.ToJson ()
+            TE.toString indent <| this.ToJson ()
 
 let tryDecodeJson (decoder : JsonDecoder<'res>) (pkt : string) =
-    D.decodeString decoder pkt
+    TD.fromString decoder pkt
 
 let decodeJson (decoder : JsonDecoder<'res>) (pkt : string) =
     tryDecodeJson decoder pkt
     |> Result.get
 
 let tryCastJson (decoder : JsonDecoder<'res>) (json : Json) =
-    D.decodeValue decoder json
+    TD.fromValue "" decoder json
 
 let castJson (decoder : JsonDecoder<'res>) (json : Json) =
     tryCastJson decoder json
@@ -61,7 +62,7 @@ let tryDecodeJsonValue (decoder : JsonDecoder<'res>) (pkt : string) =
     if pkt.StartsWith ("{") || pkt.StartsWith ("[") then
         tryDecodeJson decoder pkt
     else
-        let decoder = (D.field "v" decoder)
+        let decoder = (TD.field "v" decoder)
         tryDecodeJson decoder ("{\"v\":" + pkt + "}")
 
 let decodeJsonValue (decoder : JsonDecoder<'res>) (pkt : string) =
@@ -80,11 +81,8 @@ let decodeJsonString (decoder : JsonDecoder<'res>) (pkt : string) =
     |> Result.get
 
 #if FABLE_COMPILER
-[<Import("identity", "../Native/Util.js")>]
-let fableObjToJson : obj -> E.Value = jsNative
-
 [<Import("parseJson", "../Native/Util.js")>]
-let parseJson : string -> E.Value = jsNative
+let parseJson : string -> TE.Value = jsNative
 #else
 
 let parseJson (pkt : string) =
@@ -92,40 +90,70 @@ let parseJson (pkt : string) =
 #endif
 
 type Boolean with
-    static member JsonDecoder : JsonDecoder<Boolean> = D.bool
-    static member JsonEncoder : JsonEncoder<Boolean> = E.bool
-    member this.ToJson () = E.bool this
+    static member JsonDecoder : JsonDecoder<Boolean> = TD.bool
+    static member JsonEncoder : JsonEncoder<Boolean> = TE.bool
+    member this.ToJson () = TE.bool this
 
 type Int32 with
-    static member JsonDecoder : JsonDecoder<Int32> = D.int
-    static member JsonEncoder : JsonEncoder<Int32> = E.int
-    member this.ToJson () = E.int this
+    static member JsonDecoder : JsonDecoder<Int32> = TD.int
+    static member JsonEncoder : JsonEncoder<Int32> = TE.int
+    member this.ToJson () = TE.int this
 
 type String with
-    static member JsonDecoder : JsonDecoder<String> = D.string
-    static member JsonEncoder : JsonEncoder<String> = E.string
-    member this.ToJson () = E.string this
+    static member JsonDecoder : JsonDecoder<String> = TD.string
+    static member JsonEncoder : JsonEncoder<String> = TE.string
+    member this.ToJson () = TE.string this
 
 #if FABLE_COMPILER
-type E.Value with
-    static member JsonDecoder : JsonDecoder<E.Value> =
-        fun v ->
-            Ok <| fableObjToJson v
-    static member JsonEncoder : JsonEncoder<E.Value> = id
-    member this.IsBool = D.Helpers.isBoolean this
-    member this.IsInt = D.Helpers.isNumber this && D.Helpers.isValidIntRange this
-    member this.IsString = D.Helpers.isString this
-    member this.IsObject = D.Helpers.isObject this
-    member this.IsArray = D.Helpers.isArray this
+//Copied from Thoth, which is internal
+module JsonHelpers =
+    [<Emit("typeof $0")>]
+    let jsTypeof (_ : obj) : string = jsNative
+    [<Emit("$0 instanceof SyntaxError")>]
+    let isSyntaxError (_ : obj) : bool = jsNative
+    let inline isString (o: obj) : bool = o :? string
+    let inline isBoolean (o: obj) : bool = o :? bool
+    let inline isNumber (o: obj) : bool = jsTypeof o = "number"
+    let inline isArray (o: obj) : bool = JS.Array.isArray(o)
+    [<Emit("Object.getPrototypeOf($0 || false) === Object.prototype")>]
+    let isObject (_ : obj) : bool = jsNative
+    let inline isNaN (o: obj) : bool = JS.Number.isNaN(!!o)
+    let inline isNull (o: obj): bool = isNull o
+    [<Emit("-2147483648 < $0 && $0 < 2147483647 && ($0 | 0) === $0")>]
+    let isValidIntRange (_: obj) : bool = jsNative
+    [<Emit("isFinite($0) && !($0 % 1)")>]
+    let isIntFinite (_: obj) : bool = jsNative
+    [<Emit("($0 !== undefined)")>]
+    let isDefined (_: obj) : bool = jsNative
+    [<Emit("JSON.stringify($0, null, 4) + ''")>]
+    let anyToString (_: obj) : string= jsNative
+    let inline isFunction (o: obj) : bool = jsTypeof o = "function"
+    let inline objectKeys (o: obj) : string seq = upcast JS.Object.keys(o)
+    let inline asBool (o: obj): bool = unbox o
+    let inline asInt (o: obj): int = unbox o
+    let inline asFloat (o: obj): float = unbox o
+    let inline asString (o: obj): string = unbox o
+    let inline asArray (o: obj): obj[] = unbox o
+
+type Object with
+    (*
+    static member JsonDecoder : JsonDecoder<Object> = TD.value
+    static member JsonEncoder : JsonEncoder<Object> = id
+    *)
+    member this.IsBool = JsonHelpers.isBoolean this
+    member this.IsInt = JsonHelpers.isNumber this && JsonHelpers.isValidIntRange this
+    member this.IsString = JsonHelpers.isString this
+    member this.IsObject = JsonHelpers.isObject this
+    member this.IsArray = JsonHelpers.isArray this
     // Fable Only
-    member this.IsNumber = D.Helpers.isNumber this
-    member this.IsNaN = D.Helpers.isNaN this
-    member this.IsDefined = D.Helpers.isDefined this
-    member this.IsFunction = D.Helpers.isFunction this
-    member this.ObjectKeys = D.Helpers.objectKeys this
+    member this.IsNumber = JsonHelpers.isNumber this
+    member this.IsNaN = JsonHelpers.isNaN this
+    member this.IsDefined = JsonHelpers.isDefined this
+    member this.IsFunction = JsonHelpers.isFunction this
+    member this.ObjectKeys = JsonHelpers.objectKeys this
 #else
 type JToken with
-    static member JsonDecoder : JsonDecoder<JToken> = D.value
+    static member JsonDecoder : JsonDecoder<JToken> = TD.value
     static member JsonEncoder : JsonEncoder<JToken> = id
     member this.IsBool = (this.Type = JTokenType.Boolean)
     member this.IsInt = (this.Type = JTokenType.Integer)
@@ -151,37 +179,21 @@ type JToken with
             ""
 #endif
     member this.EncodeJson (indent : int) =
-        E.encode indent this
+        TE.toString indent this
 
 type Double with
-    static member JsonDecoder : JsonDecoder<float> = D.float
-    static member JsonEncoder : JsonEncoder<float> = E.float
-    member this.ToJson () = E.float this
+    static member JsonDecoder : JsonDecoder<float> = TD.float
+    static member JsonEncoder : JsonEncoder<float> = TE.float
+    member this.ToJson () = TE.float this
 
 type Decimal with
-    static member JsonDecoder : JsonDecoder<Decimal> =
-        D.string |> D.map (fun s -> Decimal.Parse s)
-    static member JsonEncoder : JsonEncoder<Decimal> =
-        fun this -> E.string <| this.ToString ()
+    static member JsonDecoder : JsonDecoder<Decimal> = TD.decimal
+    static member JsonEncoder : JsonEncoder<Decimal> = TE.decimal
 
-#if !FABLE_COMPILER
 type Int64 with
-    static member JsonDecoder : JsonDecoder<int64> =
-        fun token ->
-            if token.Type <> JTokenType.Integer then
-                Error <| D.BadPrimitive("a long", token)
-            else
-                try
-                    let value = token.Value<int64>()
-                    Ok value
-                with _ ->
-                    Error <| D.BadPrimitiveExtra ("a long", token, "Value was either too large or too small for an long")
-    static member JsonEncoder : JsonEncoder<Int64> =
-        fun this -> this.ToJson ()
-    member this.ToJson () =
-        JValue(this) :> JToken
-
-#endif
+    static member JsonDecoder : JsonDecoder<int64> = TD.int64
+    static member JsonEncoder : JsonEncoder<Int64> = TE.int64
+    member this.ToJson () = TE.int64 this
 
 type LogLevel with
     static member JsonEncoder : JsonEncoder<LogLevel> =
@@ -192,10 +204,10 @@ type LogLevel with
         | LogLevelInformation -> "information"
         | LogLevelDebug -> "debug"
         | LogLevelVerbose -> "verbose"
-        >> E.string
+        >> TE.string
     static member JsonDecoder : JsonDecoder<LogLevel> =
-        D.string
-        |> D.map (fun level' ->
+        TD.string
+        |> TD.map (fun level' ->
             let level = level'.ToLower ()
             if level = "fatal" then
                 LogLevelFatal

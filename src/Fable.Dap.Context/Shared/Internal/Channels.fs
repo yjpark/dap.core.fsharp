@@ -2,9 +2,6 @@
 module Dap.Context.Internal.Channels
 
 open System
-#if FABLE_COMPILER
-open Fable.Core
-#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -28,9 +25,6 @@ type internal Channels internal (owner', spec') =
     member __.Ver = ver
     member __.Sealed = sealed'
     member this.AsChannels = this :> IChannels
-#if FABLE_COMPILER
-    [<PassGenericsAttribute>]
-#endif
     member __.Add<'evt> (subSpec : IChannelSpec<'evt>) =
         checkAdd subSpec typeof<'evt>
         subSpec.AsSubSpec spec
@@ -60,9 +54,6 @@ type internal Channels internal (owner', spec') =
             |> function
                 | Some ch -> ch
                 | None -> failWith "Not_Found" k
-#if FABLE_COMPILER
-        [<PassGenericsAttribute>]
-#endif
         member this.Add<'evt> (encoder : JsonEncoder<'evt>) (decoder : JsonDecoder<'evt>) (key : Key) =
             ChannelSpec<'evt>.Create key encoder decoder
             |> this.Add
