@@ -277,8 +277,10 @@ type ClassGenerator (meta : AppMeta) =
                 |> List.map ^<| getPackMembers names
                 |> List.concat
             ) @ [
-                sprintf "    interface %s with" name
-                sprintf "        member __.Args = this.Args.%sArgs" <| getAsPackName name
+                yield sprintf "    interface %s with" name
+            #if !FABLE_COMPILER
+                yield sprintf "        member __.Args = this.Args.%sArgs" <| getAsPackName name
+            #endif
             ] @ (
                 package.Services
                 |> List.map ^<| getServiceMember name

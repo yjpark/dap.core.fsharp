@@ -84,7 +84,9 @@ type InterfaceGenerator (meta : PackMeta) =
         ]
     let getInterfaceMiddle (param : PackParam) =
         [
-            sprintf "    abstract Args : %sArgs with get" param.Name
+        #if !FABLE_COMPILER
+            yield sprintf "    abstract Args : %sArgs with get" param.Name
+        #endif
         ]
     let getServiceMember (service : ServiceMeta) =
         let name = sprintf "%s%s" service.Key service.Kind
