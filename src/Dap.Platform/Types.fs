@@ -93,7 +93,7 @@ and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IAgent
     inherit IPoster<'req>
     inherit IAsyncPoster<'req>
-    abstract Actor : IActor<'req, 'evt> with get
+    abstract Actor2 : IActor<'req, 'evt> with get
     abstract RunFunc2<'res> : Func<IAgent<'req, 'evt>, 'res> -> Result<'res, exn>
     abstract AddTask2 : OnFailed<IAgent<'req, 'evt>> -> GetTask<IAgent<'req, 'evt>, unit> -> unit
     abstract RunTask2 : OnFailed<IAgent<'req, 'evt>> -> GetTask<IAgent<'req, 'evt>, unit> -> unit

@@ -103,7 +103,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         this.Actor.Handle subReq
     interface IAgent<'req, 'evt> with
         member this.Post req = this.Post req
-        member this.Actor = this.Actor :> IActor<'req, 'evt>
+        member this.Actor2 = this.Actor :> IActor<'req, 'evt>
         member this.AsAgent1 = this.AsAgent1
     //IAgent<'msg>
     member this.Deliver (msg : 'msg) = this.Deliver' <| cmdOfMsg msg

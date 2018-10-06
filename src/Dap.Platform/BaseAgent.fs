@@ -141,7 +141,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     member this.Post (subReq : 'req) = this.Actor.Handle subReq
     member this.PostAsync (getSubReq : Callback<'res> -> 'req) = this.Actor.HandleAsync getSubReq
     interface IAgent<'req, 'evt> with
-        member this.Actor = this.Actor :> IActor<'req, 'evt>
+        member this.Actor2 = this.Actor :> IActor<'req, 'evt>
         member this.Post subReq = this.Post subReq
         member this.PostAsync getSubReq = this.PostAsync getSubReq
         member this.RunFunc2 func = runFunc' this func

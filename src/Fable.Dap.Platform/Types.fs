@@ -31,7 +31,7 @@ type IAgent =
 and IAgent<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IAgent
     inherit IPoster<'req>
-    abstract Actor : IActor<'req, 'evt> with get
+    abstract Actor2 : IActor<'req, 'evt> with get
     abstract AsAgent1 : IAgent with get
 
 and IAgent<'msg> when 'msg :> IMsg =
