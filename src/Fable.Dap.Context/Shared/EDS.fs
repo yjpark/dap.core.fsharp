@@ -20,14 +20,44 @@ type E = JsonEncodeHelper with
     static member encode (indent : int) (json : Json) = TE.toString indent json
     static member encodeJson (indent : int) (json : IJson) = TE.toString indent <| json.ToJson ()
     static member json (json : IJson) = json.ToJson ()
-    static member union<'u> (spec : CaseSpec<'u> list) : JsonEncoder<'u> = getUnionEncoder spec
-    static member kindStr<'a> (a : 'a) =
-        Union.getKind (a)
-        |> TE.string
-    static member kind<'a> (a : 'a) =
-        Union.getKind (a)
-        |> JsonKind |> JsonKind.JsonEncoder
-
+    static member union<'u> (spec : CaseSpec<'u> list
+        #if FABLE_COMPILER
+            , [<Inject>] ?resolver: ITypeResolver<'u>
+        #endif
+            ) : JsonEncoder<'u> =
+    #if FABLE_COMPILER
+        Union.getEncoder<'u> (spec, ?resolver=resolver)
+    #else
+        Union.getEncoder<'u> spec
+    #endif
+    static member kindStr<'u>
+        #if FABLE_COMPILER
+            ([<Inject>] ?resolver: ITypeResolver<'u>)
+        #else
+            ()
+        #endif
+            : JsonEncoder<'u> =
+        fun v ->
+        #if FABLE_COMPILER
+            Union.getKind (v, ?resolver=resolver)
+        #else
+            Union.getKind (v)
+        #endif
+            |> TE.string
+    static member kind<'u>
+        #if FABLE_COMPILER
+            ([<Inject>] ?resolver: ITypeResolver<'u>)
+        #else
+            ()
+        #endif
+            : JsonEncoder<'u> =
+        fun v ->
+        #if FABLE_COMPILER
+            Union.getKind (v, ?resolver=resolver)
+        #else
+            Union.getKind (v)
+        #endif
+            |> JsonKind |> JsonKind.JsonEncoder
     static member long = TE.int64
     static member array (encoder : JsonEncoder<'a>) (v : 'a []) =
         v |> Array.map encoder |> TE.array
@@ -49,38 +79,52 @@ type E = JsonEncodeHelper with
 #endif
 
 type D = JsonDecodeHelper with
-    static member bind (binder : 'a -> Result<'b, string>) (d1 : JsonDecoder<'a>) : JsonDecoder<'b> =
-        d1
-        |> TD.map (fun a ->
-            match binder a with
-            | Ok b -> b
-            | Error err -> failwith err
-        )
     static member failWith path err detail =
         Error (path, TD.FailMessage ^<| sprintf "%s: %A" err detail)
-
     static member json : JsonDecoder<Json> = TD.value
     static member long = TD.int64
-    static member union<'u> (spec : CaseSpec<'u> list) : JsonDecoder<'u> = getUnionDecoder<'u> spec
-
-#if FABLE_COMPILER
-    static member kindStr<'u> (path : string) (json : obj) : Result<'u, TD.DecoderError> =
-#else
-    static member kindStr<'u> (path : string) (json : Json) : Result<'u, TD.DecoderError> =
-#endif
-        TD.string path json
-        |> Result.map (fun kind ->
-            Union.fromKind<'u> kind
-        )
-#if FABLE_COMPILER
-    static member kind<'u> (path : string) (json : obj) : Result<'u, TD.DecoderError> =
-#else
-    static member kind<'u> (path : string) (json : Json) : Result<'u, TD.DecoderError> =
-#endif
-        JsonKind.JsonDecoder path json
-        |> Result.map (fun kind ->
-            Union.fromKind<'u> kind.Value
-        )
+    static member union<'u> (spec : CaseSpec<'u> list
+        #if FABLE_COMPILER
+            , [<Inject>] ?resolver: ITypeResolver<'u>
+        #endif
+            ) : JsonDecoder<'u> =
+    #if FABLE_COMPILER
+        Union.getDecoder<'u> (spec, ?resolver=resolver)
+    #else
+        Union.getDecoder<'u> spec
+    #endif
+    static member kindStr<'u>
+        #if FABLE_COMPILER
+            ([<Inject>] ?resolver: ITypeResolver<'u>)
+        #else
+            ()
+        #endif
+            : JsonDecoder<'u> =
+        fun path json ->
+            TD.string path json
+            |> Result.map (fun kind ->
+            #if FABLE_COMPILER
+                Union.fromKind<'u> (kind, ?resolver=resolver)
+            #else
+                Union.fromKind<'u> kind
+            #endif
+            )
+    static member kind<'u>
+        #if FABLE_COMPILER
+            ([<Inject>] ?resolver: ITypeResolver<'u>)
+        #else
+            ()
+        #endif
+            : JsonDecoder<'u> =
+        fun path json ->
+            JsonKind.JsonDecoder path json
+            |> Result.map (fun kind ->
+            #if FABLE_COMPILER
+                Union.fromKind<'u> (kind.Value, ?resolver=resolver)
+            #else
+                Union.fromKind<'u> kind.Value
+            #endif
+            )
 
 type E with
     static member string = TE.string
@@ -278,23 +322,6 @@ type D with
             (decoder7: JsonDecoder<'T7>)
             (decoder8: JsonDecoder<'T8>) : JsonDecoder<'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6 * 'T7 * 'T8> =
         TD.tuple8 decoder1 decoder2 decoder3 decoder4 decoder5 decoder6 decoder7 decoder8
-    (*
-    static member custom d1 d2 = TD.custom d1 d2
-#if FABLE_COMPILER
-    static member hardcoded<'a, 'b, 'c> (a : 'a) (decoder : JsonDecoder<'a -> 'b>) (json : 'c) =
-        TD.hardcoded<'a, 'b, 'c> a decoder json
-#else
-    static member hardcoded<'a, 'b> (a : 'a) (decoder : JsonDecoder<'a -> 'b>) (json : Json) =
-        TD.hardcoded<'a, 'b> a decoder json
-#endif
-    static member required (key : string) (valDecoder : JsonDecoder<'a>) (decoder : JsonDecoder<'a -> 'b>) = TD.required key valDecoder decoder
-    static member requiredAt (path : string list) (valDecoder : JsonDecoder<'a>) (decoder : JsonDecoder<'a -> 'b>) = TD.requiredAt path valDecoder decoder
-    static member decode output value = TD.decode output value
-    static member resolve d1 = TD.resolve d1
-    static member optionalDecoder pathDecoder valDecoder fallback = TD.optionalDecoder pathDecoder valDecoder fallback
-    static member optional key valDecoder fallback decoder = TD.optional key valDecoder fallback decoder
-    static member optionalAt path valDecoder fallback decoder = TD.optionalAt path valDecoder fallback decoder
-    *)
 
 type TD.IRequiredGetter with
     member this.Custom (decoder : JsonDecoder<'value>) =
@@ -315,17 +342,39 @@ type TD.IGetters with
         this.Custom D.json
 
 type S = JsonSpecHelper with
-    static member option<'v> (encoder : JsonEncoder<'v>) (decoder : JsonDecoder<'v>) =
-        FieldSpec.Create<'v option> (E.option encoder) (D.option decoder)
-    static member list<'v> (encoder : JsonEncoder<'v>) (decoder : JsonDecoder<'v>) =
-        FieldSpec.Create<'v list> (E.list encoder) (D.list decoder)
-    static member json = FieldSpec.Create<Json> id D.value
-    static member bool = FieldSpec.Create<bool> E.bool D.bool
-    static member int = FieldSpec.Create<int> E.int D.int
-    static member long = FieldSpec.Create<int64> E.long D.long
-    static member string = FieldSpec.Create<string> E.string D.string
-    static member float = FieldSpec.Create<float> E.float D.float
-    static member decimal = FieldSpec.Create<decimal> E.decimal D.decimal
+    static member option<'v>
+            (
+                encoder : JsonEncoder<'v>,
+                decoder : JsonDecoder<'v>
+            #if FABLE_COMPILER
+                , [<Inject>] ?resolver: ITypeResolver<'v option>
+            #endif
+            ) =
+    #if FABLE_COMPILER
+        FieldSpec.Create<'v option> (E.option encoder, D.option decoder, ?resolver=resolver)
+    #else
+        FieldSpec.Create<'v option> (E.option encoder, D.option decoder)
+    #endif
+    static member list<'v>
+            (
+                encoder : JsonEncoder<'v>,
+                decoder : JsonDecoder<'v>
+            #if FABLE_COMPILER
+                , [<Inject>] ?resolver: ITypeResolver<'v list>
+            #endif
+            ) =
+    #if FABLE_COMPILER
+        FieldSpec.Create<'v list> (E.list encoder, D.list decoder, ?resolver=resolver)
+    #else
+        FieldSpec.Create<'v list> (E.list encoder, D.list decoder)
+    #endif
+    static member json = FieldSpec.Create<Json> (id, D.value)
+    static member bool = FieldSpec.Create<bool> (E.bool, D.bool)
+    static member int = FieldSpec.Create<int> (E.int, D.int)
+    static member long = FieldSpec.Create<int64> (E.long, D.long)
+    static member string = FieldSpec.Create<string> (E.string, D.string)
+    static member float = FieldSpec.Create<float> (E.float, D.float)
+    static member decimal = FieldSpec.Create<decimal> (E.decimal, D.decimal)
 
 type Boolean with
     static member JsonSpec = S.bool
@@ -346,4 +395,4 @@ type Int64 with
     static member JsonSpec = S.long
 
 type LogLevel with
-    static member JsonSpec = FieldSpec.Create<LogLevel> LogLevel.JsonEncoder LogLevel.JsonDecoder
+    static member JsonSpec = FieldSpec.Create<LogLevel> (LogLevel.JsonEncoder, LogLevel.JsonDecoder)

@@ -133,7 +133,7 @@ with
             else
                 Error (path, TD.BadPrimitive("a string of Instant", token))
     member this.JsonSpec =
-        FieldSpec.Create<Instant> this.JsonEncoder this.JsonDecoder
+        FieldSpec.Create<Instant> (this.JsonEncoder, this.JsonDecoder)
 
 let instantToText (instant : Instant) =
     InstantFormat.General.Format instant
@@ -181,7 +181,7 @@ with
             else
                 Error (path, TD.BadPrimitive("a string of Duration", token))
     member this.JsonSpec =
-        FieldSpec.Create<Duration> this.JsonEncoder this.JsonDecoder
+        FieldSpec.Create<Duration> (this.JsonEncoder, this.JsonDecoder)
 
 let durationToText (duration : Duration) =
     DurationFormat.RoundTrip.Format duration

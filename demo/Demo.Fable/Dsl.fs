@@ -9,22 +9,23 @@ open Dap.Platform.Meta
 open Dap.Platform.Generator
 open Dap.Remote.Meta
 
-let Publisher =
+let IPublisher =
     combo {
         var (M.string "name")
         var (M.int "year")
     }
 
-let IPublisher = Interface.CreateValue "IPublisher" Publisher
+let Publisher =
+    extend [ <@ IPublisher @> ] {
+        nothing ()
+    }
 
-let Person = combo {
+let IPerson = combo {
     var (M.string "name")
     var (M.int "age")
 }
 
-let IPerson = Interface.CreateCombo "IPerson" Person
-
-let Author = extend [ <@ Person @> ] {
+let Author = extend [ <@ IPerson @> ] {
     var (M.string "publisher")
 }
 
@@ -66,10 +67,10 @@ let compile segments =
         G.File (segments, ["_Gen"; "Types.fs"],
             G.AutoOpenModule ("Demo.Types",
                 [
-                    G.Interface IPublisher
-                    G.Interface IPerson
-                    G.LooseJsonRecord (<@ Publisher @>, [IPublisher])
-                    G.FinalClass (<@ Author @>, [IPerson])
+                    G.ValueInterface <@ IPublisher @>
+                    G.ComboInterface <@ IPerson @>
+                    G.LooseJsonRecord (<@ Publisher @>)
+                    G.FinalClass (<@ Author @>)
                     G.JsonUnion <@ Status @>
                 ]
             )

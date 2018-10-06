@@ -3,6 +3,9 @@
 module Dap.Remote.Hub
 
 open Microsoft.FSharp.Reflection
+#if FABLE_COMPILER
+open Fable.Core
+#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -33,10 +36,20 @@ type RequestSpec<'req> = {
     ParamDecoder : JsonDecoder<obj array>
     GetCallback : IRunner -> OnHandled -> obj
 } with
-    static member Create (kind : PacketKind)
-                            (fields : FieldSpec list)
-                            getCallback : RequestSpec<'req> =
-        let case = kind |> Union.findCase<'req>
+    static member Create
+            (
+                kind : PacketKind,
+                fields : FieldSpec list,
+                getCallback : IRunner -> OnHandled -> obj
+            #if FABLE_COMPILER
+                , [<Inject>] ?resolver: ITypeResolver<'req>
+            #endif
+            ) : RequestSpec<'req> =
+    #if FABLE_COMPILER
+        let case = Union.findCase<'req> (kind, ?resolver=resolver)
+    #else
+        let case = Union.findCase<'req> kind
+    #endif
         {
             Case = case
             ParamDecoder = FieldSpec.GetFieldsDecoder fields
@@ -59,7 +72,12 @@ type HubSpec<'req, 'evt
                 FSharpValue.MakeUnion(spec.Case, Array.append param [| callback |]) :?> 'req
             )
         with e ->
-            logException runner "Hub.DecodeRequest" typeof<'req>.FullName json e
+        #if FABLE_COMPILER
+            let reqType = "'req"
+        #else
+            let reqType = typeof<'req>.FullName
+        #endif
+            logException runner "Hub.DecodeRequest" reqType json e
             raise e
 
 let forwardAck<'res, 'err when 'res :> IResult and 'err :> IError> (onHandled : OnHandled) (res : Result<'res, 'err>) : unit =

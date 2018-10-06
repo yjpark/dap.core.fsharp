@@ -37,7 +37,7 @@ type ConsoleSinkArgs = {
             }
         )
     static member JsonSpec =
-        FieldSpec.Create<ConsoleSinkArgs> ConsoleSinkArgs.JsonEncoder ConsoleSinkArgs.JsonDecoder
+        FieldSpec.Create<ConsoleSinkArgs> (ConsoleSinkArgs.JsonEncoder, ConsoleSinkArgs.JsonDecoder)
     interface IJson with
         member this.ToJson () = ConsoleSinkArgs.JsonEncoder this
     interface IObj
@@ -58,14 +58,13 @@ with
         Hourly
     static member JsonSpec' : CaseSpec<RollingInterval> list =
         [
-            CaseSpec<RollingInterval>.Create "Daily" []
-            CaseSpec<RollingInterval>.Create "Hourly" []
+            CaseSpec<RollingInterval>.Create ("Daily", [])
+            CaseSpec<RollingInterval>.Create ("Hourly", [])
         ]
     static member JsonEncoder = E.union RollingInterval.JsonSpec'
     static member JsonDecoder = D.union RollingInterval.JsonSpec'
     static member JsonSpec =
-        FieldSpec.Create<RollingInterval>
-            RollingInterval.JsonEncoder RollingInterval.JsonDecoder
+        FieldSpec.Create<RollingInterval> (RollingInterval.JsonEncoder, RollingInterval.JsonDecoder)
     interface IJson with
         member this.ToJson () = RollingInterval.JsonEncoder this
 
@@ -120,7 +119,7 @@ type FileSinkArgs = {
             }
         )
     static member JsonSpec =
-        FieldSpec.Create<FileSinkArgs> FileSinkArgs.JsonEncoder FileSinkArgs.JsonDecoder
+        FieldSpec.Create<FileSinkArgs> (FileSinkArgs.JsonEncoder, FileSinkArgs.JsonDecoder)
     interface IJson with
         member this.ToJson () = FileSinkArgs.JsonEncoder this
     interface IObj
@@ -171,7 +170,7 @@ type LoggingArgs = {
             }
         )
     static member JsonSpec =
-        FieldSpec.Create<LoggingArgs> LoggingArgs.JsonEncoder LoggingArgs.JsonDecoder
+        FieldSpec.Create<LoggingArgs> (LoggingArgs.JsonEncoder, LoggingArgs.JsonDecoder)
     interface IJson with
         member this.ToJson () = LoggingArgs.JsonEncoder this
     interface IObj
@@ -222,7 +221,7 @@ type TickerArgs = {
             }
         )
     static member JsonSpec =
-        FieldSpec.Create<TickerArgs> TickerArgs.JsonEncoder TickerArgs.JsonDecoder
+        FieldSpec.Create<TickerArgs> (TickerArgs.JsonEncoder, TickerArgs.JsonDecoder)
     interface IJson with
         member this.ToJson () = TickerArgs.JsonEncoder this
     interface IObj

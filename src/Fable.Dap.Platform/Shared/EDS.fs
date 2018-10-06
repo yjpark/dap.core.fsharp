@@ -19,7 +19,7 @@ open Dap.Context
 type DateTime with
     static member JsonEncoder : JsonEncoder<DateTime> = TE.datetime
     static member JsonDecoder : JsonDecoder<DateTime> = TD.datetime
-    static member JsonSpec = FieldSpec.Create<DateTime> DateTime.JsonEncoder DateTime.JsonDecoder
+    static member JsonSpec = FieldSpec.Create<DateTime> (DateTime.JsonEncoder, DateTime.JsonDecoder)
     member this.ToJson () = DateTime.JsonEncoder this
 
 #if !FABLE_COMPILER

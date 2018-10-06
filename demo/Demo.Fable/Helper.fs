@@ -9,8 +9,10 @@ let Scope = "Demo"
 type App with
     static member Create (consoleLogLevel : LogLevel) =
         let logging = setupConsole consoleLogLevel
-        let app = new App (logging, Scope)
-        app.Setup AppArgs.Default
+        let args =
+            AppArgs.Default  ()
+            |> AppArgs.SetScope Scope
+        new App (logging, args)
     static member Create () =
         App.Create (LogLevelInformation)
 

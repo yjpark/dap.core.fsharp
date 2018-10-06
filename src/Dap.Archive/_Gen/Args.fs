@@ -58,7 +58,7 @@ type RecorderArgs = {
             }
         )
     static member JsonSpec =
-        FieldSpec.Create<RecorderArgs> RecorderArgs.JsonEncoder RecorderArgs.JsonDecoder
+        FieldSpec.Create<RecorderArgs> (RecorderArgs.JsonEncoder, RecorderArgs.JsonDecoder)
     interface IJson with
         member this.ToJson () = RecorderArgs.JsonEncoder this
     interface IObj

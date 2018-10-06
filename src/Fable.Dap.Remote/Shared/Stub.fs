@@ -3,6 +3,9 @@
 module Dap.Remote.Stub
 
 open Microsoft.FSharp.Reflection
+#if FABLE_COMPILER
+open Fable.Core
+#endif
 
 open Dap.Prelude
 open Dap.Context
@@ -62,17 +65,33 @@ type ResponseSpec<'res> = {
     GetErrReason : LocalReason -> obj
 } with
     static member Create<'param, 'result, 'error>
-                            (kind : PacketKind)
-                            (fields : FieldSpec list)
-                            (case : PacketKind)
-                            (resDecoder : JsonDecoder<'result>)
-                            (errDecoder : JsonDecoder<'error>) : ResponseSpec<'res> =
-        let case = case |> Union.findCase<'res>
+            (
+                kind : PacketKind,
+                fields : FieldSpec list,
+                case : PacketKind,
+                resDecoder : JsonDecoder<'result>,
+                errDecoder : JsonDecoder<'error>
+            #if FABLE_COMPILER
+                , [<Inject>] ?resolver: ITypeResolver<'res>
+            #endif
+            ) : ResponseSpec<'res> =
+    #if FABLE_COMPILER
+        let resultType = "'result"
+        let errorType = "'error"
+    #else
+        let resultType = typeof<'result>.FullName
+        let errorType = typeof<'error>.FullName
+    #endif
+    #if FABLE_COMPILER
+        let case = Union.findCase<'res> (case, ?resolver=resolver)
+    #else
+        let case = Union.findCase<'res> case
+    #endif
         let getResResult = fun (json : Json) ->
             let res : StubResult<'result, 'error> =
                 tryCastJson resDecoder json
                 |> Result.mapError (fun err ->
-                    sprintf "Stub.DecodeRes<%s> -> %s" (typeof<'result>.FullName) err
+                    sprintf "Stub.DecodeRes<%s> -> %s" resultType err
                 )|> Result.get
                 |> Ok
             res :> obj
@@ -91,7 +110,7 @@ type ResponseSpec<'res> = {
                 | RemoteError' json ->
                     tryCastJson errDecoder json
                     |> Result.mapError (fun err ->
-                        sprintf "Stub.DecodeErr<%s> -> %s" (typeof<'error>.FullName) err
+                        sprintf "Stub.DecodeErr<%s> -> %s" errorType err
                     )|> Result.get
                     |> RemoteError
                 | RemoteException' json ->
@@ -119,7 +138,7 @@ type ResponseSpec<'res> = {
             GetErrReason = getErrReason
         }
 
-let private spawnRes (spec : ResponseSpec<'res> list)
+let inline spawnRes (spec : ResponseSpec<'res> list)
                         (req : IRequest)
                         (getResult : ResponseSpec<'res> -> obj) =
     spec
@@ -135,7 +154,15 @@ type StubSpec<'req, 'res, 'evt> when 'evt :> IEvent = {
     Response : ResponseSpec<'res> list
     Event : CaseSpec<'evt> list
 } with
-    member this.DecodeResponse (runner : IRunner) (req : IRequest) (res : Result<Json, Reason'>) : 'res =
+    member this.DecodeResponse
+            (
+                runner : IRunner,
+                req : IRequest,
+                res : Result<Json, Reason'>
+            #if FABLE_COMPILER
+                , [<Inject>] ?resolver: ITypeResolver<'res>
+            #endif
+            ) : 'res =
         try
             match res with
             | Ok json ->
@@ -147,13 +174,34 @@ type StubSpec<'req, 'res, 'evt> when 'evt :> IEvent = {
                 | Remote' reason ->
                     spawnRes this.Response req (fun s -> s.GetErrResult reason)
         with e ->
-            logException runner "Stub.DecodeResponse" typeof<'res>.FullName (req, res) e
+        #if FABLE_COMPILER
+            let resType = resolver.Value.ResolveType ()
+        #else
+            let resType = typeof<'res>
+        #endif
+            logException runner "Stub.DecodeResponse" resType.FullName (req, res) e
             raise e
-    member this.DecodeEvent (runner : IRunner) (json : Json) : 'evt =
+    member this.DecodeEvent
+            (
+                runner : IRunner,
+                json : Json
+            #if FABLE_COMPILER
+                , [<Inject>] ?resolver: ITypeResolver<'evt>
+            #endif
+            ) : 'evt =
         try
+        #if FABLE_COMPILER
+            castJson (D.union (this.Event, ?resolver=resolver)) json
+        #else
             castJson (D.union this.Event) json
+        #endif
         with e ->
-            logException runner "Stub.DecodeEvent" typeof<'evt>.FullName json e
+        #if FABLE_COMPILER
+            let evtType = resolver.Value.ResolveType ()
+        #else
+            let evtType = typeof<'evt>
+        #endif
+            logException runner "Stub.DecodeEvent" evtType.FullName json e
             raise e
 
 let getReasonContent (reason : Reason<'err> when 'err :> IError) : string * string * string option =

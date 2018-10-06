@@ -21,15 +21,24 @@ type FieldSpec = {
     Decoder : JsonDecoder<obj>
 } with
     static member Create<'f>
-                            (encoder : JsonEncoder<'f>)
-                            (decoder : JsonDecoder<'f>)
-                                : FieldSpec =
+                (
+                    encoder : JsonEncoder<'f>,
+                    decoder : JsonDecoder<'f>
+                #if FABLE_COMPILER
+                    , [<Inject>] ?resolver: ITypeResolver<'f>
+                #endif
+                ) : FieldSpec =
+    #if FABLE_COMPILER
+        let fieldType = resolver.Value.ResolveType ()
+    #else
+        let fieldType = typeof<'f>
+    #endif
         let encoder' = fun (v : obj) ->
             v :?> 'f |> encoder
         let decoder' =
             decoder |> TD.map (fun v -> v :> obj)
         {
-            Type = typeof<'f>
+            Type = fieldType
             Encoder = encoder'
             Decoder = decoder'
         }
@@ -82,38 +91,67 @@ type CaseSpec<'u> = {
     Encoder : JsonEncoder<obj array>
     Decoder : JsonDecoder<obj array>
 } with
-    static member Create (kind : string)
-                            (fields : FieldSpec list)
-                                : CaseSpec<'u> =
-        let case = kind |> Union.findCase<'u>
+    static member Create (kind : string, fields : FieldSpec list
+        #if FABLE_COMPILER
+            , [<Inject>] ?resolver: ITypeResolver<'u>
+        #endif
+            ) : CaseSpec<'u> =
+    #if FABLE_COMPILER
+        let case = Union.findCase<'u> (kind, ?resolver=resolver)
+    #else
+        let case = Union.findCase<'u> kind
+    #endif
         {
             Case = case
             Encoder = FieldSpec.GetFieldsEncoder fields (JsonKind.JsonEncoder' kind)
             Decoder = FieldSpec.GetFieldsDecoder fields
         }
 
-let getUnionEncoder<'u> (spec : CaseSpec<'u> list) (v : 'u) : Json =
-    let (case, values) = FSharpValue.GetUnionFields (v, typeof<'u>)
-    let kind = Union.getKind<'u> v
-    spec
-    |> List.find (fun s -> s.Case.Name = kind)
-    |> fun spec -> spec.Encoder values
-
-let getUnionDecoder<'u> (spec : CaseSpec<'u> list) : JsonDecoder<'u> =
-    fun path json ->
-        try
-            let kind = JsonKind.Cast json
+type Union with
+    static member getEncoder<'u> (spec : CaseSpec<'u> list
+        #if FABLE_COMPILER
+            , [<Inject>] ?resolver: ITypeResolver<'u>
+        #endif
+            ) : JsonEncoder<'u> =
+        fun v ->
+        #if FABLE_COMPILER
+            let uType = resolver.Value.ResolveType ()
+        #else
+            let uType = typeof<'u>
+        #endif
+            let (case, values) = FSharpValue.GetUnionFields (v, uType)
+        #if FABLE_COMPILER
+            let kind = Union.getKind<'u> (v, ?resolver=resolver)
+        #else
+            let kind = Union.getKind<'u> v
+        #endif
             spec
-            |> List.find (fun s -> s.Case.Name = kind.Value)
-            |> (fun spec ->
-                let values =
-                    spec.Decoder path json
-                    |> Result.mapError (fun err ->
-                        (path, TD.FailMessage <| sprintf "%s -> %A" spec.Case.Name err)
-                    )|> Result.get
-                FSharpValue.MakeUnion(spec.Case, values) :?> 'u
-                |> Ok
-            )
-        with err ->
-            let err = sprintf "Json.UnionDecoder<%s> -> %A" (typeof<'u>.FullName) err
-            Error (path, TD.FailMessage err)
+            |> List.find (fun s -> s.Case.Name = kind)
+            |> fun spec -> spec.Encoder values
+    static member  getDecoder<'u> (spec : CaseSpec<'u> list
+        #if FABLE_COMPILER
+            , [<Inject>] ?resolver: ITypeResolver<'u>
+        #endif
+            ) : JsonDecoder<'u> =
+    #if FABLE_COMPILER
+        let uType = resolver.Value.ResolveType ()
+    #else
+        let uType = typeof<'u>
+    #endif
+        fun path json ->
+            try
+                let kind = JsonKind.Cast json
+                spec
+                |> List.find (fun s -> s.Case.Name = kind.Value)
+                |> (fun spec ->
+                    let values =
+                        spec.Decoder path json
+                        |> Result.mapError (fun err ->
+                            (path, TD.FailMessage <| sprintf "%s -> %A" spec.Case.Name err)
+                        )|> Result.get
+                    FSharpValue.MakeUnion(spec.Case, values) :?> 'u
+                    |> Ok
+                )
+            with err ->
+                let err = sprintf "Json.UnionDecoder<%s> -> %A" uType.FullName err
+                Error (path, TD.FailMessage err)

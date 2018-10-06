@@ -13,25 +13,25 @@ module TD = Thoth.Json.Net.Decode
 open Dap.Prelude
 open Dap.Context
 
-let fableDecodeJson<'t> (str : string) =
+let inline fableDecodeJson<'t> (str : string) =
     TD.Auto.unsafeFromString<'t> (str)
 
-let fableEncodeJson (indent : int) (v : obj) : string =
+let inline fableEncodeJson (indent : int) (v : obj) : string =
     TE.Auto.toString (indent, v)
 
-let fableToJson (v : obj) : Json =
+let inline fableToJson (v : obj) : Json =
     fableEncodeJson 0 v |> parseJson
 
-let fableCastJson<'t> (v : Json)  =
+let inline fableCastJson<'t> (v : Json)  =
     v.EncodeJson 0
     |> fableDecodeJson<'t>
 
 type E with
-    static member fable<'t> (v : 't) = fableToJson (v :> obj)
-    static member encodeFable (indent : int) (v : 't) = fableEncodeJson indent v
+    static member inline fable<'t> (v : 't) = fableToJson (v :> obj)
+    static member inline encodeFable (indent : int) (v : 't) = fableEncodeJson indent v
 
 type D with
-    static member fable<'t> (path : string) (json : Json) : Result<'t, TD.DecoderError> =
+    static member inline fable<'t> (path : string) (json : Json) : Result<'t, TD.DecoderError> =
         try
             Ok <| fableCastJson<'t> json
         with e ->

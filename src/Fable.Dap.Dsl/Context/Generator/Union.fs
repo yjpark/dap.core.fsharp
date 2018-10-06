@@ -16,16 +16,16 @@ type UnionGenerator (meta : CaseMeta list) =
     let getCaseSpec (param : UnionParam) (case : CaseMeta) =
         if case.Fields.Length = 0 then
             [
-                sprintf "            CaseSpec<%s>.Create \"%s\" []" param.Name case.Kind
+                sprintf "            CaseSpec<%s>.Create (\"%s\", [])" param.Name case.Kind
             ]
         else
             [
-                sprintf "            CaseSpec<%s>.Create \"%s\" [" param.Name case.Kind
+                sprintf "            CaseSpec<%s>.Create (\"%s\", [" param.Name case.Kind
                 case.Fields
                 |> List.map (fun f -> f.Spec)
                 |> String.concat " ; "
                 |> sprintf "                %s"
-                sprintf "            ]"
+                sprintf "            ])"
 
             ]
     let getCaseCreate (param : UnionParam) (case : CaseMeta) =
@@ -67,7 +67,7 @@ type UnionGenerator (meta : CaseMeta list) =
                     sprintf "    static member JsonEncoder = E.union %s.JsonSpec'" param.Name
                     sprintf "    static member JsonDecoder = D.union %s.JsonSpec'" param.Name
                     sprintf "    static member JsonSpec ="
-                    sprintf "        FieldSpec.Create<%s> %s.JsonEncoder %s.JsonDecoder" param.Name param.Name param.Name
+                    sprintf "        FieldSpec.Create<%s> (%s.JsonEncoder, %s.JsonDecoder)" param.Name param.Name param.Name
                     sprintf "    interface IJson with"
                     sprintf "        member this.ToJson () = %s.JsonEncoder this" param.Name
                 ]

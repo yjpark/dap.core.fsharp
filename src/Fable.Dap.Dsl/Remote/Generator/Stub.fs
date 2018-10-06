@@ -52,8 +52,8 @@ type StubGenerator (meta : StubMeta) =
             for req in meta.Req do
                 let reqKind = getFieldKind req
                 let resKind = getResKind req
-                yield sprintf "            Stub.ResponseSpec<ClientRes>.Create \"%s\" [%sReq.JsonSpec]" reqKind req.Type
-                yield sprintf "                \"%s\" %sRes.JsonDecoder %sErr.JsonDecoder" resKind req.Type req.Type
+                yield sprintf "            Stub.ResponseSpec<ClientRes>.Create (\"%s\", [%sReq.JsonSpec]," reqKind req.Type
+                yield sprintf "                \"%s\", %sRes.JsonDecoder, %sErr.JsonDecoder)" resKind req.Type req.Type
             yield sprintf "        ]"
         ]
     let getServerReq (_param : StubParam) =
@@ -68,8 +68,8 @@ type StubGenerator (meta : StubMeta) =
             for req in meta.Req do
                 let reqKind = getFieldKind req
                 let resKind = getResKind req
-                yield sprintf "            Hub.RequestSpec<ServerReq>.Create \"%s\" [%sReq.JsonSpec]" reqKind req.Type
-                yield sprintf "                Hub.getCallback<%sRes, %sErr>" req.Type req.Type
+                yield sprintf "            Hub.RequestSpec<ServerReq>.Create (\"%s\", [%sReq.JsonSpec]," reqKind req.Type
+                yield sprintf "                Hub.getCallback<%sRes, %sErr>)" req.Type req.Type
             yield sprintf "        ]"
             yield sprintf "    interface IReq"
         ]

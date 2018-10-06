@@ -194,7 +194,7 @@ type RecordGenerator (meta : ComboMeta) =
                 @ getJsonDecoder param
                 @ [
                     sprintf "    static member JsonSpec ="
-                    sprintf "        FieldSpec.Create<%s> %s.JsonEncoder %s.JsonDecoder" param.Name param.Name param.Name
+                    sprintf "        FieldSpec.Create<%s> (%s.JsonEncoder, %s.JsonDecoder)" param.Name param.Name param.Name
                     sprintf "    interface IJson with"
                     sprintf "        member this.ToJson () = %s.JsonEncoder this" param.Name
                     sprintf "    interface IObj"

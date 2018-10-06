@@ -81,8 +81,7 @@ type Ident = {
             }
         )
     static member JsonSpec =
-        FieldSpec.Create<Ident>
-            Ident.JsonEncoder Ident.JsonDecoder
+        FieldSpec.Create<Ident> (Ident.JsonEncoder, Ident.JsonDecoder)
     interface IJson with
         member this.ToJson () = Ident.JsonEncoder this
     member this.ToLuid () = sprintf "[%s:%s:%s]<%i>" this.Scope this.Kind this.Key this.Ver
@@ -165,7 +164,7 @@ with
     static member JsonDecoder : JsonDecoder<NoArgs> =
         D.succeed NoArgs
     static member JsonSpec =
-        FieldSpec.Create<NoArgs> NoArgs.JsonEncoder NoArgs.JsonDecoder
+        FieldSpec.Create<NoArgs> (NoArgs.JsonEncoder, NoArgs.JsonDecoder)
     static member Default () = NoArgs
     interface IJson with
         member this.ToJson () = NoArgs.JsonEncoder this

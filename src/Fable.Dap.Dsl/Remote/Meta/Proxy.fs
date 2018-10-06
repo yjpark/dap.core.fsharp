@@ -19,7 +19,7 @@ type M with
             sprintf "(Proxy.args %s %s %s %b)" stubSpec url retryDelay logTraffic
             |> CodeArgs args
         let type' = sprintf "Proxy.Proxy<%s>" reqResEvt
-        let spec = "Dap.Remote.Proxy.Logic.spec"
+        let spec = "Dap.Remote.Proxy.Logic.Logic.spec"
         M.service (alias :: aliases, args, type', spec, kind, key)
     static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool, key : Key) =
         M.proxyService (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, Dap.Remote.WebSocketProxy.Proxy.Kind, key)

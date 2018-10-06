@@ -40,7 +40,7 @@ with
         |> Option.defaultValue decoder
     member this.DecorateSpec encoder decoder spec =
         this.Decorator
-        |> Option.map (fun decorator -> sprintf "(S.%s %s %s)" decorator encoder decoder)
+        |> Option.map (fun decorator -> sprintf "(S.%s (%s, %s))" decorator encoder decoder)
         |> Option.defaultValue spec
     member this.DecorateInitValue initValue =
         match this with

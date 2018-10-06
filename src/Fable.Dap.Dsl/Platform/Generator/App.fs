@@ -373,11 +373,9 @@ type ClassGenerator (meta : AppMeta) =
     let getExtraNews (param : AppParam) =
         [
         #if !FABLE_COMPILER
-            yield sprintf "    new (loggingArgs : LoggingArgs, a : %sArgs) =" param.Name
-            yield sprintf "        %s (loggingArgs.CreateLogging (), a)" param.Name
+            yield sprintf "    new (loggingArgs : LoggingArgs, a : %sArgs) = new %s (loggingArgs.CreateLogging (), a)" param.Name param.Name
+            yield sprintf "    new (a : %sArgs) = new %s (getLogging (), a)" param.Name param.Name
         #endif
-            yield sprintf "    new (a : %sArgs) =" param.Name
-            yield sprintf "        %s (getLogging (), a)" param.Name
         ]
     let getFablePrivateSetup (param : AppParam) =
         [
