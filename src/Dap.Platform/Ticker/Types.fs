@@ -64,7 +64,7 @@ let noTickStats = {
 }
 
 let watchOnTick (owner : IOwner) (ident : string) onTick (this : IAgent<Req, Evt>) =
-    this.Actor.OnEvent.AddWatcher owner ident (fun evt ->
+    this.Actor2.OnEvent.AddWatcher owner ident (fun evt ->
         match evt with
         | OnTick (a, b) -> onTick (a, b)
         | _ -> ()

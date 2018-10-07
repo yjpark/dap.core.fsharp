@@ -132,7 +132,7 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
     interface IAgent<'req, 'evt> with
         member this.Post req = this.Post req
         member this.PostAsync getReq = this.PostAsync getReq
-        member this.Actor = this.Part :> IActor<'req, 'evt>
+        member this.Actor2 = this.Part :> IActor<'req, 'evt>
         member this.RunFunc2 func = runFunc' this func
         member this.AddTask2 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask2 onFailed getTask = runTask' this onFailed getTask

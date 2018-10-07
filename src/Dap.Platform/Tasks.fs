@@ -153,5 +153,6 @@ type System.Threading.Tasks.Task with
             Task.CompletedTask
 
 let syncTask (task : System.Threading.Tasks.Task<'res>) =
-    task.RunSynchronously ()
-    task.Result
+    task
+    |> Async.AwaitTask
+    |> Async.RunSynchronously

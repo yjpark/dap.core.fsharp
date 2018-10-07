@@ -103,7 +103,7 @@ let getHubSpec<'agent, 'req, 'evt when 'agent :> IAgent<'req, 'evt>> (kind : Kin
                 agent |> setGateway gateway
             let hub : Hub<'req, 'evt> = {
                 PostReq = agent.Post
-                OnEvent = agent.Actor.OnEvent
+                OnEvent = agent.Actor2.OnEvent
             }
             setHub hub
         )

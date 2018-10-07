@@ -32,6 +32,6 @@ let createForClientAsync (profile : Profile) (param : EventRecorder.BundleParam'
     let recorder = recorder :?> EventRecorder.Agent
     let! meta = recorder.PostAsync <| RecorderTypes.DoBeginRecording (EventRecorder.createBundle' profile param)
     logInfo recorder "Recorder" "Start_Recording" (recorder.Ident, meta)
-    watch recorder client.Actor.OnEvent
+    watch recorder client.Actor2.OnEvent
     return recorder
 }
