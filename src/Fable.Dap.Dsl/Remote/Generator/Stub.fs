@@ -25,21 +25,26 @@ type StubGenerator (meta : StubMeta) =
     let getReq (_param : StubParam) =
         meta.Req
         |> List.map ^<| getCaseMeta "req"
-        |> fun reqMeta ->
-            G.JsonUnion ("Req", reqMeta)
-            @ [
-                "    interface IRequest with"
-                "        member this.Kind = Union.getKind<Req> this"
-            ]
+        |> function
+            | [] ->
+                failWith "Invalid_Stub" "No_Requests"
+            | reqMeta ->
+                G.JsonUnion ("Req", reqMeta)
+                @ [
+                    "    interface IRequest with"
+                    "        member this.Kind = Union.getKind<Req> this"
+                ]
     let getEvt (_param : StubParam) =
         meta.Evt
         |> List.map ^<| getCaseMeta "evt"
-        |> fun evtMeta ->
-            G.JsonUnion ("Evt", evtMeta)
-            @ [
-                "    interface IEvent with"
-                "        member this.Kind = Union.getKind<Evt> this"
-            ]
+        |> function
+            | [] -> []
+            | evtMeta ->
+                G.JsonUnion ("Evt", evtMeta)
+                @ [
+                    "    interface IEvent with"
+                    "        member this.Kind = Union.getKind<Evt> this"
+                ]
     let getClientRes (_param : StubParam) =
         [
             yield sprintf "type ClientRes ="
