@@ -4,18 +4,11 @@ module Dap.Platform.Const
 open Dap.Prelude
 
 [<Literal>]
-let DefaultDeliverSlowCap : float<ms> = 100.0<ms>
+let EnvConsoleKind = "EnvConsole"
+let AgentConsoleKind = "AgentConsole"
 
-[<Literal>]
-let DefaultProcessSlowCap : float<ms> = 100.0<ms>
-
-[<Literal>]
-let DefaultReplySlowCap : float<ms> = 100.0<ms>
-
-[<Literal>]
-let DefaultFuncSlowCap : float<ms> = 100.0<ms>
-
-[<Literal>]
-let DefaultTaskSlowCap : float<ms> = 60000.0<ms>
+let DefaultSlowCap = NodaTime.Duration.FromMilliseconds 200L
+let DefaultTaskSlowCap = NodaTime.Duration.FromMilliseconds 500L
+let DefaultLongTaskSlowCap = NodaTime.Duration.FromSeconds 10L
 
 let ``AckLogLevel`` = LogLevelDebug

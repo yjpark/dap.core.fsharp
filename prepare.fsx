@@ -6,10 +6,20 @@
 #r @"src/Dap.Platform/bin/Release/netstandard2.0/Dap.Platform.dll"
 
 open Dap.Prelude
-#load "src/Dap.Platform/Dsl.fs"
+#load "src/Fable.Dap.Platform/Shared/Clock.fs"
+#load "src/Fable.Dap.Dsl/Platform/MG.fs"
+#load "src/Dap.Platform/Dsl/Args.fs"
+#load "src/Dap.Platform/Dsl/Stats.fs"
+#load "src/Dap.Platform/Dsl/Packs.fs"
 #load "src/Dap.Archive/Dsl.fs"
 
-Dap.Platform.Dsl.compile ["src" ; "Dap.Platform"]
+Dap.Platform.Dsl.Args.compile ["src" ; "Dap.Platform"]
+|> List.iter ^<| printfn "%s\n"
+
+Dap.Platform.Dsl.Stats.compile ["src" ; "Dap.Platform"]
+|> List.iter ^<| printfn "%s\n"
+
+Dap.Platform.Dsl.Packs.compile ["src" ; "Dap.Platform"]
 |> List.iter ^<| printfn "%s\n"
 
 Dap.Archive.Dsl.compile ["src" ; "Dap.Archive"]

@@ -160,7 +160,7 @@ with
         | MinuteSecond -> DurationPattern.CreateWithInvariantCulture "-M:ss.FFFFFFFFF"
         | Second -> DurationPattern.CreateWithInvariantCulture "-D:hh:mm:ss.FFFFFFFFF"
         | Custom format -> DurationPattern.CreateWithInvariantCulture format
-    member this.Format instant = this.Pattern.Format instant
+    member this.Format duration = this.Pattern.Format duration
     member this.Parse text =
         let result = this.Pattern.Parse text
         if result.Success then

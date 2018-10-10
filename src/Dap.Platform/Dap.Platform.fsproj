@@ -10,20 +10,23 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Dsl.fs" />
-    <Compile Include="_Gen/Args.fs" />
-    <Compile Include="_Gen/ArgsBuilder.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Logic.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Cmd.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Clock.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Types.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Callback.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Wrapping.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Operator.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Util.fs" />
-    <Compile Include="../Fable.Dap.Platform/Shared/Clock.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/EDS.fs" />
-    <Compile Include="Stats.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Platform/MG.fs" />
     <Compile Include="Const.fs" />
+    <Compile Include="Dsl/Args.fs" />
+    <Compile Include="Dsl/Stats.fs" />
+    <Compile Include="_Gen/Args.fs" />
+    <Compile Include="_Gen/ArgsBuilder.fs" />
+    <Compile Include="_Gen/Stats.fs" />
+    <Compile Include="Console.fs" />
     <Compile Include="Runner.fs" />
     <Compile Include="Dispatcher.fs" />
     <Compile Include="Runnable.fs" />
@@ -48,7 +51,6 @@
     <Compile Include="Ticker/Logic.fs" />
     <Compile Include="Registry/Types.fs" />
     <Compile Include="Registry/Logic.fs" />
-    <Compile Include="../Fable.Dap.Dsl/Platform/MG.fs" />
     <Compile Include="../Fable.Dap.Dsl/Platform/Meta/Types.fs" />
     <Compile Include="../Fable.Dap.Dsl/Platform/Meta/Pack.fs" />
     <Compile Include="../Fable.Dap.Dsl/Platform/Meta/App.fs" />
@@ -58,6 +60,7 @@
     <Compile Include="../Fable.Dap.Dsl/Platform/Generator/App.fs" />
     <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Helper.fs" />
     <Compile Include="Meta/Helper.fs" />
+    <Compile Include="Dsl/Packs.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.Context\Dap.Context.fsproj" />

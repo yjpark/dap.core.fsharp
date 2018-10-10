@@ -37,7 +37,7 @@ let internal dispatch' (dispatcher : IDispatcher<'msg>)
                 (msg : 'msg when 'msg :> IMsg) : unit =
     match dispatcher.Dispatch with
     | Some dispatch ->
-        dispatcher.Stats.Reply.IncStartedCount ()
+        dispatcher.Console0.Stats.Reply.IncPendingCount ()
         dispatch (dispatcher.Clock.Now', msg)
     | None ->
         let msg' = toMessageDetail msg

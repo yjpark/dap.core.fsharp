@@ -9,7 +9,7 @@ let private loop (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>)
         async {
             let! (time, msg) = mailbox.Receive()
             //logWarn runnable "MailboxPlatform" "loop" msg
-            trackDeliverDuration runnable time msg
+            trackDeliverDuration runnable "MailboxPlatform" time msg
             runnable.Process msg |> runnable.Deliver
             return! handle()
         }

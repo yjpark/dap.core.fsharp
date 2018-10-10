@@ -254,7 +254,9 @@ type RecordGenerator (meta : ComboMeta) =
                 getSelfComboAdder param
                 getRecordMiddle param
                 getSelfComboMember param
-                InterfaceGenerator.GetImplementations InterfaceType.ValueInterface meta.Parents
+                meta.Parents
+                |> List.filter (fun (parentName, parentMeta) -> parentName.StartsWith ("I"))
+                |> InterfaceGenerator.GetImplementations InterfaceType.ValueInterface
             ]|> List.concat
 
 type ClassGenerator (meta : ComboMeta) =
@@ -315,17 +317,15 @@ type ClassGenerator (meta : ComboMeta) =
                 sprintf "    let %s = target.AddComboDict %s(\"%s\")" varName prop.CommentCode prop.Key
 
             | _ ->
-                failWith "Unsupported" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
-        (*
+                failWith "getFieldAdder: Unsupported_Combo" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
         | CustomProperty ->
             match prop.Variation with
             | Nothing ->
-                sprintf "    let %s = target.AddCustom<%s> %s(\"%s\")" varName prop.CommentCode prop.Key
+                sprintf "    let %s = target.AddCustom<%s>(%s.Create, %s\"%s\")" varName prop.Type prop.Type prop.CommentCode prop.Key
             | _ ->
-                failWith "Unsupported" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
-        *)
+                failWith "getFieldAdder: Unsupported_Custom" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
         | _ ->
-            failWith "Unsupported" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
+            failWith "getFieldAdder: Unsupported" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
 
     let rec getComboAdder (param : ClassParam) ((name, combo) : string * ComboMeta) =
         if didInterfaceProcessed name then
@@ -346,7 +346,7 @@ type ClassGenerator (meta : ComboMeta) =
         getComboAdder param (param.Name, meta)
     let getFieldMember (prop : IPropMeta) =
         sprintf "    member __.%s %s: %s = %s"
-            prop.Key.AsCodeMemberName prop.CommentCode prop.PropType prop.Key
+            prop.Key.AsCodeMemberName prop.CommentCode prop.PropType prop.Key.AsCodeVariableName
     let rec getComboMember (param : ClassParam) ((name, combo) : string * ComboMeta) =
         if didInterfaceProcessed name then
             []
@@ -371,7 +371,9 @@ type ClassGenerator (meta : ComboMeta) =
                 getSelfComboAdder param
                 getClassMiddle param
                 getSelfComboMember param
-                InterfaceGenerator.GetImplementations InterfaceType.ComboInterface meta.Parents
+                meta.Parents
+                |> List.filter (fun (parentName, parentMeta) -> parentName.StartsWith ("I"))
+                |> InterfaceGenerator.GetImplementations InterfaceType.ComboInterface
             ]|> List.concat
 
 type BuilderGenerator (meta : ComboMeta) =

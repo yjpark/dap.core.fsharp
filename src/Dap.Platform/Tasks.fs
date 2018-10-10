@@ -7,9 +7,10 @@ open FSharp.Control.Tasks.V2
 open Dap.Prelude
 
 let private tplRunTaskSucceed = LogEvent.Template3<string, string, Duration>(AckLogLevel, "[{Section}] {Task} {Duration} ~> Succeed")
+let private tplSlowRunTaskSucceed = LogEvent.Template3<string, string, Duration>(LogLevelWarning, "[{Section}] {Task} {Duration} ~> Succeed")
 let private tplRunTaskSucceed' = LogEvent.Template4<string, string, Duration, obj>(AckLogLevel, "[{Section}] {Task} {Duration} ~> Succeed: {Res}")
-let private tplRunTaskFailed = LogEvent.Template3WithException<string, string, Duration>(LogLevelError, "[{Section}] {Task} {Duration} ~> Failed")
-let private tplSlowTaskStats = LogEvent.Template4<string, float<ms>, string, DurationStats<ms>>(LogLevelWarning, "[{Section}] {Duration}<ms> {Task} ~> {Detail}")
+let private tplRunTaskFailed = LogEvent.Template5<string, string, Duration, string, string>(LogLevelError, "[{Section}] {Task} {Duration} ~> Failed {Detail}\n{StackTrace}")
+let private tplSlowTaskStats = LogEvent.Template5<string, Duration, string, string, string>(LogLevelWarning, "[{Section}] {Duration} {Task} ~> {Detail}\n{StackTrace}")
 
 let internal dispatchAsync' (dispatcher : IDispatcher<'msg>) (getMsg : Callback<'res> -> 'msg) : Task<'res> =
     let onDone = new TaskCompletionSource<'res>();
@@ -22,38 +23,33 @@ let private getSlowTaskMessage (section : string)
                                 (getTask : string) (duration, stats) =
     tplSlowTaskStats ("Slow_" + section) duration getTask stats
 
-let private logRunResult (runner : IRunner) (section : string)
-                            (stats : FuncStats<ms>)
-                            (getTask : string) (startTime : Instant) (result : exn option) =
-    let (_, duration, _, _) = trackDurationStatsInMs runner startTime stats.Duration (getSlowTaskMessage section getTask)
-    match result with
-    | None ->
-        stats.SucceedCount <- stats.SucceedCount + 1
-        runner.Log <| tplRunTaskSucceed section getTask duration
-    | Some e ->
-        stats.FailedCount <- stats.FailedCount + 1
-        runner.Log <| tplRunTaskFailed section getTask duration e
+let private logRunResult (runner : IRunner) (msg : string) (startTime : Instant) (result : exn option) =
+    let stats = runner.Console0.Stats.Task
+    let op = stats.Spec.Key
+    let result' =
+        match result with
+        | Some e -> Error e
+        | None -> Ok ()
+    let (duration, slowOp, failedOp) = stats.AddResult runner msg startTime result'
+    slowOp
+    |> Option.iter (fun opLog ->
+        runner.Log <| tplSlowTaskStats ("Slow_" + op) duration msg (stats.ToLogDetail ()) opLog.StackTrace
+    )
+    failedOp
+    |> Option.iter (fun opLog ->
+        runner.Log <| tplRunTaskFailed op msg duration (stats.ToLogDetail ()) opLog.StackTrace
+    )
+    if failedOp.IsNone then
+        if slowOp.IsSome then
+            runner.Log <| tplSlowRunTaskSucceed op msg duration
+        else
+            runner.Log <| tplRunTaskSucceed op msg duration
     result
 
-let private logRunResult' runner section states getTask startTime (onFailed : exn -> unit) result =
-    match logRunResult runner section states getTask startTime result with
+let private logRunResult' runner getTask startTime (onFailed : exn -> unit) result =
+    match logRunResult runner getTask startTime result with
     | None -> ()
     | Some e -> onFailed e
-
-(*
-let private tryRunTask (runner : 'runner) (getTask : GetTask<'runner, unit>) (onDone : exn option -> unit) : unit =
-    let getTask' : unit -> Task<unit> = fun () -> task {
-        do! Task.Yield()
-        try
-            do! (getTask runner)
-            onDone None
-        with
-        | e ->
-            onDone <| Some e
-    }
-    Task.Run (fun () -> (getTask' ()) :> Task)
-    |> ignore
-*)
 
 type internal PendingTask<'runner> when 'runner :> IRunner = {
     Runner : 'runner
@@ -70,8 +66,8 @@ type internal PendingTask<'runner> when 'runner :> IRunner = {
         member this.Run (cancellationToken : CancellationToken) =
             let runner = this.Runner
             let time = runner.Clock.Now'
-            runner.Stats.Task.StartedCount <- this.Runner.Stats.Task.StartedCount + 1
-            let onDone = logRunResult' runner "RunTask" runner.Stats.Task (this.GetTask.ToString()) time (this.OnFailed runner)
+            (runner :> IRunner).Console0.Stats.Task.IncPendingCount ()
+            let onDone = logRunResult' runner (this.GetTask.ToString()) time (this.OnFailed runner)
             let runTask = fun () ->
                 try
                     let task = this.GetTask runner

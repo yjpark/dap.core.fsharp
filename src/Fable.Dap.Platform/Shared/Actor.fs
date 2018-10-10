@@ -35,22 +35,13 @@ type ActorOperate<'runner, 'args, 'model, 'msg, 'req, 'evt>
 
 type ActorParam<'msg> when 'msg :> IMsg = {
     WrapEvt : Wrapper<'msg, AgentEvt> option
-#if !FABLE_COMPILER
-    GetSlowCap : GetSlowCap option
-#endif
 } with
     member this.WithWrapEvt v = {this with WrapEvt = Some v}
 
-#if !FABLE_COMPILER
-    member this.WithGetSlowCap v = {this with GetSlowCap = Some v}
-#endif
 
 let noActorParam<'msg when 'msg :> IMsg> : ActorParam<'msg> =
     {
         WrapEvt = None
-#if !FABLE_COMPILER
-        GetSlowCap = None
-#endif
     }
 
 type Spawner<'runner> =

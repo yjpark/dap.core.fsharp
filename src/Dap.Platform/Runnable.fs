@@ -18,7 +18,7 @@ type IRunnable<'initer, 'runner, 'args, 'model, 'msg>
 
 let private tplRunnableFailed = LogEvent.Template2WithException<string, obj>(LogLevelError, "[{Section}] {Msg} -> Failed")
 
-let private tplSlowStats = LogEvent.Template4<string, float<ms>, IMsg, DurationStats<ms>>(LogLevelWarning, "[{Section}] {Duration}<ms> {Msg} ~> {Detail}")
+let private tplSlowStats = LogEvent.Template5<string, Duration, IMsg, string, string>(LogLevelWarning, "[{Section}] {Duration}<ms> {Msg} ~> {Detail}\n{StackTrace}")
 
 let internal start' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>)
                 (setState : 'model -> unit) : Cmd<'msg> =
@@ -48,12 +48,16 @@ let internal start' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>
 let private getSlowProcessMessage (msg : IMsg) (duration, stats) =
     tplSlowStats "Slow_Process" duration msg stats
 
-let private getSlowDeliverMessage (msg : IMsg) (duration, stats) =
-    tplSlowStats "Slow_Deliver" duration msg stats
-
-let internal trackDeliverDuration (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>) fromTime msg : unit =
-    trackDurationStatsInMs runnable fromTime runnable.Stats.Deliver (getSlowDeliverMessage msg) |> ignore
-
+let trackDeliverDuration (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>)
+        (platform : string)
+        (fromTime : Instant)
+        (msg : 'msg) : unit =
+    let stats = runnable.Console0.Stats.Deliver
+    let (duration, slowOpLog) = stats.AddOp runnable platform fromTime
+    slowOpLog
+    |> Option.iter (fun opLog ->
+        runnable.Log <| tplSlowStats "Slow_Deliver" duration msg (stats.ToLogDetail ()) opLog.StackTrace
+    )
 let internal process' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>)
                 (msg : 'msg)
                 (setState : 'model -> unit)
@@ -69,7 +73,12 @@ let internal process' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'ms
                 runnable.Logic.Update runner msg state
         setState model
         (runner :> ITaskManager).StartPendingTasks () |> ignore
-        trackDurationStatsInMs runner time runnable.Stats.Process (getSlowProcessMessage msg) |> ignore
+        let stats = runnable.Console0.Stats.Process
+        let (duration, slowOpLog) = stats.AddOp runnable "" time
+        slowOpLog
+        |> Option.iter (fun opLog ->
+            runnable.Log <| tplSlowStats "Slow_Process" duration msg (stats.ToLogDetail ()) opLog.StackTrace
+        )
         cmd
     with e ->
         runner.Log <| tplRunnableFailed "Update" msg e

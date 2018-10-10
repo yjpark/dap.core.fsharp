@@ -269,9 +269,15 @@ module Extensions =
                 | FieldVariation.Dict ->
                     sprintf "IDictProperty<IComboProperty>"
                 | FieldVariation.Option ->
-                    failWith "Unsupported" <| sprintf "%A<%s> %A" this.Kind this.Type this.Variation
+                    failWith "IPropMeta.PropType: Unsupported_Combo" <| sprintf "%A<%s> %A" this.Kind this.Type this.Variation
+            | CustomProperty ->
+                match this.Variation with
+                | FieldVariation.Nothing ->
+                    sprintf "%s" this.Type
+                | _ ->
+                    failWith "IPropMeta.PropType: Unsupported_Custom" <| sprintf "%A<%s> %A" this.Kind this.Type this.Variation
             | _ ->
-                failWith "Unsupported" <| sprintf "%A<%s> %A" this.Kind this.Type this.Variation
+                failWith "IPropMeta.PropType: Unsupported" <| sprintf "%A<%s> %A" this.Kind this.Type this.Variation
         member this.CommentCode =
             this.Comment
             |> Option.map (fun comment -> sprintf "(* %s *) " comment)

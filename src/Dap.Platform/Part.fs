@@ -102,7 +102,7 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
     member this.Clock = env.Clock
     interface IRunner with
         member this.Clock = this.Clock
-        member this.Stats = this.Agent.Stats
+        member this.Console0 = this.Agent.Console0
         member this.RunFunc0 func = runFunc' this func
         member this.AddTask0 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask0 onFailed getTask = runTask' this onFailed getTask
@@ -151,6 +151,7 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
     interface IAgent with
         member this.Env = this.Env
         member this.Ident = this.Ident
+        member this.Console = this.Agent.Console
         member this.Handle req = this.Handle req
         member this.HandleAsync getReq = this.HandleAsync getReq
         member this.RunFunc1 func = runFunc' this func

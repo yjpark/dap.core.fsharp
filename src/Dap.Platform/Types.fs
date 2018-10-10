@@ -30,8 +30,12 @@ and EnvParam = {
     Logging : ILogging
     Scope : Scope
     Clock : IClock
-    GetSlowCap : GetSlowCap option
 }
+
+and EnvConsole (env : IEnv) =
+    inherit Console<EnvConsole> (EnvConsoleKind, env.Logging)
+    override this.Self = this
+    override __.Spawn l = failWith "Invalid_Operation" "EnvConsole.Spawn"
 
 and IEnv =
     inherit IOwner
@@ -39,6 +43,7 @@ and IEnv =
     inherit IHandler<EnvReq>
     inherit IAsyncHandler<EnvReq>
     abstract Platform : IPlatform with get
+    abstract Console : EnvConsole with get
     abstract Logging : ILogging with get
     abstract Scope : Scope with get
     abstract State : EnvModel with get
@@ -77,6 +82,11 @@ and AgentParam = {
             Key = key
         }
 
+and AgentConsole (agent : IAgent) =
+    inherit Console<AgentConsole> (AgentConsoleKind, agent.Env.Logging)
+    override this.Self = this
+    override __.Spawn l = failWith "Invalid_Operation" "AgentConsole.Spawn"
+
 and IAgent =
     inherit IOwner
     inherit IRunner
@@ -85,6 +95,7 @@ and IAgent =
     //inherit IChannel<AgentEvt>
     abstract Env : IEnv with get
     abstract Ident : Ident with get
+    abstract Console : AgentConsole with get
     abstract RunFunc1<'res> : Func<IAgent, 'res> -> Result<'res, exn>
     abstract AddTask1 : OnFailed<IAgent> -> GetTask<IAgent, unit> -> unit
     abstract RunTask1 : OnFailed<IAgent> -> GetTask<IAgent, unit> -> unit

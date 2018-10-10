@@ -17,58 +17,59 @@ type internal EnvLogic =
     Logic<IEnv, IEnv, NoArgs, EnvModel, EnvMsg>
 
 [<StructuredFormatDisplay("<Env>{AsDisplay}")>]
-type internal Env (param' : EnvParam, logic') =
+type internal Env (param' : EnvParam, logic') as this =
     let param : EnvParam = param'
     let logger : ILogger = param.Logging.GetLogger param.Scope
     let logic : EnvLogic = logic'
-    let stats : Stats = statsOfCap <| defaultArg param.GetSlowCap getDefaultSlowCap
+    let console : EnvConsole = new EnvConsole (this)
     let taskManager : ITaskManager = new TaskManager () :> ITaskManager
     let mutable dispatch : DispatchMsg<EnvMsg> option = None
     let mutable state : EnvModel option = None
     let mutable version : Version = Version.Init
     member __.AsDisplay = (param.Scope, version)
-    member this.SetState (newState : EnvModel) =
+    member __.SetState (newState : EnvModel) =
         let stateChanged = state.IsNone || not (newState =? Option.get state)
         state <- Some newState
         version <- version.IncMsg stateChanged
-    member this.Handle (req : EnvReq) = dispatch' this (EnvReq req)
-    member this.HandleAsync (getReq : Callback<'res> -> EnvReq) = dispatchAsync' this (EnvReq << getReq)
+    member __.Handle (req : EnvReq) = dispatch' this (EnvReq req)
+    member __.HandleAsync (getReq : Callback<'res> -> EnvReq) = dispatchAsync' this (EnvReq << getReq)
     interface IRunnable<IEnv, IEnv, NoArgs, EnvModel, EnvMsg> with
         member __.Args = NoArgs
-        member this.Logic = logic
-        member this.Dispatch = dispatch
-        member this.State = state
-        member this.SetDispatch dispatch' = dispatch <- Some dispatch'
-        member this.Start () = start' this this.SetState
-        member this.Process parcel = process' this parcel this.SetState
-        member this.Deliver msg = deliver' this msg
-        member this.Initer = this :> IEnv
-        member this.Runner = this :> IEnv
+        member __.Logic = logic
+        member __.Dispatch = dispatch
+        member __.State = state
+        member __.SetDispatch dispatch' = dispatch <- Some dispatch'
+        member __.Start () = start' this this.SetState
+        member __.Process parcel = process' this parcel this.SetState
+        member __.Deliver msg = deliver' this msg
+        member __.Initer = this :> IEnv
+        member __.Runner = this :> IEnv
     interface IRunner with
-        member this.Clock = param.Clock
-        member this.Stats = stats
-        member this.RunFunc0 func = runFunc' this func
-        member this.AddTask0 onFailed getTask = addTask' this onFailed getTask
-        member this.RunTask0 onFailed getTask = runTask' this onFailed getTask
+        member __.Clock = param.Clock
+        member __.Console0 = console :> IConsole
+        member __.RunFunc0 func = runFunc' this func
+        member __.AddTask0 onFailed getTask = addTask' this onFailed getTask
+        member __.RunTask0 onFailed getTask = runTask' this onFailed getTask
     interface ITaskManager with
-        member this.StartTask task = taskManager.StartTask task
-        member this.ScheduleTask task = taskManager.ScheduleTask task
-        member this.PendingTasksCount = taskManager.PendingTasksCount
-        member this.StartPendingTasks () = taskManager.StartPendingTasks ()
-        member this.ClearPendingTasks () = taskManager.ClearPendingTasks ()
-        member this.RunningTasksCount = taskManager.RunningTasksCount
-        member this.CancelRunningTasks () = taskManager.CancelRunningTasks ()
+        member __.StartTask task = taskManager.StartTask task
+        member __.ScheduleTask task = taskManager.ScheduleTask task
+        member __.PendingTasksCount = taskManager.PendingTasksCount
+        member __.StartPendingTasks () = taskManager.StartPendingTasks ()
+        member __.ClearPendingTasks () = taskManager.ClearPendingTasks ()
+        member __.RunningTasksCount = taskManager.RunningTasksCount
+        member __.CancelRunningTasks () = taskManager.CancelRunningTasks ()
     interface IEnv with
-        member this.Handle req = this.Handle req
-        member this.HandleAsync getReq = this.HandleAsync getReq
-        member this.Platform = param.Platform
-        member this.Logging = param.Logging
-        member this.Scope = param.Scope
-        member this.State = state |> Option.get
+        member __.Handle req = this.Handle req
+        member __.HandleAsync getReq = this.HandleAsync getReq
+        member __.Platform = param.Platform
+        member __.Console = console
+        member __.Logging = param.Logging
+        member __.Scope = param.Scope
+        member __.State = state |> Option.get
     interface IAspect with
-        member this.Owner = this :> IOwner
+        member __.Owner = this :> IOwner
     interface IOwner with
         member __.Luid = param.Scope
         member __.Disposed = false
     interface ILogger with
-        member this.Log m = logger.Log m
+        member __.Log m = logger.Log m

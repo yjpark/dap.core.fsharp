@@ -3,28 +3,13 @@ module Dap.Platform.Runner
 
 open System.Threading
 open System.Threading.Tasks
+
 open Dap.Prelude
+open Dap.Context
 
-type StatsKind =
-    | DeliverDuration
-    | ProcessDuration
-    | ReplyDuration
-    | FuncDuration
-    | TaskDuration
-
-type GetSlowCap = StatsKind -> float<ms>
-
-and Func<'runner, 'res> = 'runner -> 'res
-and OnFailed<'runner> = 'runner -> exn -> unit
-and GetTask<'runner, 'res> = 'runner -> Task<'res>
-
-and Stats = {
-    Deliver : DurationStats<ms>
-    Process : DurationStats<ms>
-    Reply : FuncStats<ms>
-    Func : FuncStats<ms>
-    Task : FuncStats<ms>
-}
+type Func<'runner, 'res> = 'runner -> 'res
+type OnFailed<'runner> = 'runner -> exn -> unit
+type GetTask<'runner, 'res> = 'runner -> Task<'res>
 
 type IPendingTask =
     abstract Run : CancellationToken -> Task option
@@ -42,7 +27,7 @@ and IRunner =
     inherit ILogger
     inherit ITaskManager
     abstract Clock : IClock with get
-    abstract Stats : Stats with get
+    abstract Console0 : IConsole with get
     abstract RunFunc0<'res> : Func<IRunner, 'res> -> Result<'res, exn>
     abstract AddTask0 : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
     abstract RunTask0 : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
@@ -53,57 +38,93 @@ and IRunner<'runner when 'runner :> IRunner> =
     abstract AddTask : OnFailed<'runner> -> GetTask<'runner, unit> -> unit
     abstract RunTask : OnFailed<'runner> -> GetTask<'runner, unit> -> unit
 
-let statsOfCap (getSlowCap : GetSlowCap) : Stats = {
-    Deliver = durationStatsOfCap <| getSlowCap DeliverDuration
-    Process = durationStatsOfCap <| getSlowCap ProcessDuration
-    Reply = funcStatsOfCap <| getSlowCap ReplyDuration
-    Func = funcStatsOfCap <| getSlowCap FuncDuration
-    Task = funcStatsOfCap <| getSlowCap TaskDuration
-}
-
-let getRemoteSlowCap replySlowCap =
-    function
-    | DeliverDuration -> DefaultDeliverSlowCap
-    | ProcessDuration -> DefaultProcessSlowCap
-    | ReplyDuration -> replySlowCap
-    | FuncDuration -> DefaultFuncSlowCap
-    | TaskDuration -> DefaultTaskSlowCap
-
-let getDefaultSlowCap =
-    getRemoteSlowCap DefaultReplySlowCap
-
 let private tplRunFuncSucceed = LogEvent.Template4<string, string, Duration, obj>(AckLogLevel, "[{Section}] {Func} {Duration} ~> Succeed: {Res}")
 let private tplSlowRunFuncSucceed = LogEvent.Template4<string, string, Duration, obj>(LogLevelWarning, "[{Section}] {Func} {Duration} ~> Succeed: {Res}")
-let private tplRunFuncFailed = LogEvent.Template3WithException<string, string, Duration>(LogLevelError, "[{Section}] {Func} {Duration} ~> Failed")
-let private tplSlowFuncStats = LogEvent.Template4<string, float<ms>, string, DurationStats<ms>>(LogLevelWarning, "[{Section}] {Duration}<ms> {Func} ~> {Detail}")
+let private tplRunFuncFailed = LogEvent.Template3WithException<string, string, Duration>(LogLevelWarning, "[{Section}] {Func} {Duration} ~> Failed")
+let private tplSlowFuncStats = LogEvent.Template5<string, Duration, string, string, string>(LogLevelWarning, "[{Section}] {Duration} {Func} ~> {Detail}\n{StackTrace}")
 
-let trackDurationStatsInMs (runner : 'runner when 'runner :> IRunner ) (fromTime : Instant)
-                            (stats : DurationStats<ms>)
-                            (getSlowMessage : float<ms> * DurationStats<ms> -> LogEvent)
-                            : Instant * Duration * float<ms> * bool =
-    let (time, duration) = runner.Clock.CalcDuration' fromTime
-    let durationInMs = msOfDuration duration
-    let isSlow = stats.AddDuration durationInMs
-    if isSlow then
-        runner.Log <| getSlowMessage (durationInMs, stats)
-    (time, duration, durationInMs, isSlow)
+type DurationStats with
+    static member AddOp' (op : string)
+            (slowCap : IVarProperty<Duration>)
+            (totalCount : IVarProperty<int>)
+            (slowCount : IVarProperty<int>)
+            (slowOps : IListProperty<IVarProperty<OpLog>>)
+            (getStackTrace : unit -> string)
+            (runner : 'runner when 'runner :> IRunner) (msg : string) (startTime : Instant) =
+        let (time, duration) = runner.Clock.CalcDuration' startTime
+        let isSlow = duration > slowCap.Value
+        let opLog =
+            if isSlow then
+                let stackTrace = getStackTrace ()
+                let opLog = OpLog.Create op msg startTime duration stackTrace
+                (slowOps.Add ()) .SetValue opLog
+                slowCount.SetValue (slowCount.Value + 1)
+                Some opLog
+            else
+                None
+        totalCount.SetValue (totalCount.Value + 1)
+        (duration, opLog)
+    member this.AddOp (runner : 'runner when 'runner :> IRunner) (msg : string) (startTime : Instant) =
+        DurationStats.AddOp' this.Spec.Key this.SlowCap this.TotalCount this.SlowCount this.SlowOps (fun () ->
+            (System.Diagnostics.StackTrace(2)) .ToString()
+        ) runner msg startTime
+    member this.ToLogDetail () =
+        sprintf "[Total: %d, Slow: %d, SlowCap: %s]"
+            this.TotalCount.Value this.SlowCount.Value (DurationFormat.Second.Format this.SlowCap.Value)
 
-let private getSlowTaskMessage (section : string)
-                                (getTask : string) (duration, stats) =
-    tplSlowFuncStats ("Slow_" + section) duration getTask stats
+type FuncStats with
+    member this.IncPendingCount () =
+        this.PendingCount.SetValue (this.PendingCount.Value + 1)
+    member this.AddSucceedOp () =
+        this.PendingCount.SetValue (this.PendingCount.Value + 1)
+        this.PendingCount.SetValue (this.PendingCount.Value - 1)
+        None
+    member this.AddFailedOp
+            (msg : string) (startTime : Instant) (duration : Duration) (stackTrace) =
+        let opLog = OpLog.Create this.Spec.Key msg startTime duration stackTrace
+        (this.FailedOps.Add ()) .SetValue opLog
+        this.FailedCount.SetValue (this.FailedCount.Value + 1)
+        this.PendingCount.SetValue (this.PendingCount.Value - 1)
+        Some opLog
+    member this.AddResult (runner : 'runner when 'runner :> IRunner) (msg : string) (startTime : Instant) (result : Result<'res, exn>) =
+        let (duration, slowOp) =
+            DurationStats.AddOp' this.Spec.Key this.SlowCap this.TotalCount this.SlowCount this.SlowOps (fun () ->
+                match result with
+                | Ok _res ->
+                    (System.Diagnostics.StackTrace(2)) .ToString()
+                | Result.Error e ->
+                    sprintf "%s\n%s" e.Message e.StackTrace
+            ) runner msg startTime
+        let failedOp =
+            match result with
+            | Ok _res ->
+                this.AddSucceedOp ()
+            | Result.Error e ->
+                let stackTrace = sprintf "%s\n%s" e.Message e.StackTrace
+                this.AddFailedOp msg startTime duration stackTrace
+        (duration, slowOp, failedOp)
+    member this.ToLogDetail () =
+        sprintf "[Pending:%d, Succeed: %d, Failed: %d, Total: %d, Slow: %d, SlowCap: %s]"
+            this.PendingCount.Value this.SucceedCount.Value this.FailedCount.Value
+            this.TotalCount.Value this.SlowCount.Value (DurationFormat.Second.Format this.SlowCap.Value)
 
-let private logRunResult (runner : IRunner) (section : string)
-                            (stats : FuncStats<ms>)
-                            (func : string) (startTime : Instant) (result : Result<'res, exn>) =
-    let (_, duration, _, isSlow) = trackDurationStatsInMs runner startTime stats.Duration (getSlowTaskMessage section func)
+let private logRunResult (runner : 'runner when 'runner :> IRunner)
+            (msg : string) (startTime : Instant) (result : Result<'res, exn>) =
+    let stats = runner.Console0.Stats.Func
+    let op = stats.Spec.Key
+    let (duration, slowOp, _failedOp) = stats.AddResult runner msg startTime result
+    slowOp
+    |> Option.iter (fun opLog ->
+        runner.Log <| tplSlowFuncStats ("Slow_" + op) duration msg (stats.ToLogDetail ()) opLog.StackTrace
+    )
     match result with
     | Ok res ->
-        stats.IncSucceedCount ()
-        let tpl = if isSlow then tplSlowRunFuncSucceed else tplRunFuncSucceed
-        runner.Log <| tpl section func duration res
+        if slowOp.IsSome then
+            runner.Log <| tplSlowRunFuncSucceed op msg duration res
+        else
+            runner.Log <| tplRunFuncSucceed op msg duration res
     | Result.Error e ->
-        stats.IncFailedCount ()
-        runner.Log <| tplRunFuncFailed section func duration e
+        runner.Log <| tplRunFuncFailed op msg duration e
     result
 
 let ignoreOnFailed : OnFailed<'runner> =
@@ -114,11 +135,11 @@ let raiseOnFailed : OnFailed<'runner> =
 
 let runFunc' (runner : 'runner when 'runner :> IRunner) (func : Func<'runner, 'res>) : Result<'res, exn> =
     let time = runner.Clock.Now'
-    runner.Stats.Func.IncStartedCount ()
+    (runner :> IRunner).Console0.Stats.Func.IncPendingCount ()
     try
         let res = func runner
         Ok res
     with
     | e ->
         Error e
-    |> logRunResult runner "RunFunc'" runner.Stats.Func (func.ToString()) time
+    |> logRunResult runner (func.ToString()) time

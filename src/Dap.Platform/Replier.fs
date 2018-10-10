@@ -7,14 +7,14 @@ open FSharp.Control.Tasks.V2
 open Dap.Prelude
 open Dap.Context
 
-let private tplAckReply = LogEvent.Template2<IReq, obj>(AckLogLevel, "[Ack] {Req} ~> {Res}")
-let private tplNakReply = LogEvent.Template3<IReq, string, obj>(LogLevelError, "[Nak] {Req} ~> {Err}: {Detail}")
+let private tplAckReply = LogEvent.Template3<string, IReq, obj>(AckLogLevel, "[{Section}] {Req} ~> {Res}") "Ack"
+let private tplNakReply = LogEvent.Template4<string, IReq, string, obj>(LogLevelError, "[{Section}] {Req} ~> {Err}: {Detail}") "Nak"
 
-let private tplAckCallback = LogEvent.Template3<float<ms>, IReq, obj>(AckLogLevel, "[Ack] {Duration}<ms> {Req} ~> {Res}")
-let private tplSlowAckCallback = LogEvent.Template3<float<ms>, IReq, obj>(LogLevelWarning, "[Ack] {Duration}<ms> {Req} ~> {Res}")
-let private tplNakCallback = LogEvent.Template4<float<ms>, IReq, string, obj>(LogLevelError, "[Nak] {Duration}<ms> {Req} ~> {Err}: {Detail}")
+let private tplAckCallback = LogEvent.Template4<string, Duration, IReq, obj>(AckLogLevel, "[{Section}] {Duration}<ms> {Req} ~> {Res}") "Ack"
+let private tplSlowAckCallback = LogEvent.Template4<string, Duration, IReq, obj>(LogLevelWarning, "[{Section}] {Duration} {Req} ~> {Res}") "Ack"
+let private tplNakCallback = LogEvent.Template5<string, Duration, IReq, string, obj>(LogLevelError, "[{Section}] {Duration} {Req} ~> {Err}: {Detail}") "Nak"
 
-let private tplSlowStats = LogEvent.Template4<string, float<ms>, IReq, DurationStats<ms>>(LogLevelWarning, "[{Section}] {Duration}<ms> {Msg} ~> {Detail}")
+let private tplSlowStats = LogEvent.Template5<string, Duration, IReq, string, string>(LogLevelWarning, "[{Section}] {Duration} {Msg} ~> {Detail}\n{StackTrace}")
 
 let ack (req : IReq) (res : 'res) =
     Ack (req, res)
@@ -39,24 +39,43 @@ let replyAfter (runner : IRunner) (callback : Callback<'res>) (reply' : Reply<'r
         reply runner callback reply'
     }
 
-let private getSlowReplyMessage req (duration, stats) =
-    tplSlowStats "Slow_Reply" duration req stats
+type FuncStats with
+    member this.AddReply (runner : 'runner when 'runner :> IRunner) (msg : string) (startTime : Instant) (reply : Reply<'res>) =
+        let (duration, slowOp) =
+            DurationStats.AddOp' this.Spec.Key this.SlowCap this.TotalCount this.SlowCount this.SlowOps (fun () ->
+                (System.Diagnostics.StackTrace(2)) .ToString()
+            ) runner msg startTime
+        let failedOp =
+            match reply with
+            | Ack (_req, _res) ->
+                this.AddSucceedOp ()
+            | Nak (_req, _err, _detail) ->
+                let stackTrace = (System.Diagnostics.StackTrace(2)) .ToString()
+                this.AddFailedOp msg startTime duration stackTrace
+        (duration, slowOp, failedOp)
 
 let callback' (runner : 'runner when 'runner :> IRunner) onNak onAck : Callback<'res> =
+    let stats = runner.Console0.Stats.Reply
     let sendTime = runner.Clock.Now'
     Some <| fun (r : Reply<'res>) ->
+        let req =
+            match r with
+            | Ack (req, _res) -> req
+            | Nak (req, _err, _detail) -> req
+        let (duration, slowOp, _failedOp) = stats.AddReply runner (req.GetType().Name) sendTime r
+        slowOp
+        |> Option.iter (fun opLog ->
+            runner.Log <| tplSlowStats "Slow_Reply" duration req  (stats.ToLogDetail ()) opLog.StackTrace
+        )
         match r with
             | Ack (req, res) ->
-                runner.Stats.Reply.IncSucceedCount ()
-                let (_, _, durationInMs, isSlow) = trackDurationStatsInMs runner sendTime runner.Stats.Reply.Duration (getSlowReplyMessage req)
-                let tpl = if isSlow then tplSlowAckCallback else tplAckCallback
-                runner.Log <| tpl durationInMs req res
+                if slowOp.IsSome then
+                    runner.Log <| tplSlowAckCallback duration req res
+                else
+                    runner.Log <| tplAckCallback duration req res
                 onAck res
             | Nak (req, err, detail) ->
-                runner.Stats.Reply.IncFailedCount ()
-                let (_, _, durationInMs, _) = trackDurationStatsInMs runner sendTime runner.Stats.Reply.Duration (getSlowReplyMessage req)
-                let message = tplNakCallback durationInMs req err detail
-                runner.Log <| message
+                runner.Log <| tplNakCallback duration req err detail
                 onNak (err, detail)
 
 let callback (runner : IRunner) onAck : Callback<'res> =

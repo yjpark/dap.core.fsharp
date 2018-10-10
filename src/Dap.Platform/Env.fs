@@ -158,21 +158,20 @@ let create (param : EnvParam) : IEnv =
     param.Platform.Start env
     env :> IEnv
 
-let param platform logging scope clock getSlowCap =
+let param platform logging scope clock : EnvParam =
     {
         Platform = platform
         Logging = logging
         Scope = scope
         Clock = clock :> IClock
-        GetSlowCap = getSlowCap
     }
 
 let live platform logging scope =
-    param platform logging scope (RealClock()) None
+    param platform logging scope (RealClock())
     |> create
 
 let play platform logging scope =
-    param platform logging scope (FakeClock()) None
+    param platform logging scope (FakeClock())
     |> create
 
 let registerAsync (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>)

@@ -44,13 +44,13 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
             when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
                     and 'model : not struct and 'msg :> IMsg
                     and 'req :> IReq and 'evt :> IEvt>
-        (param : AgentParam) =
+        (param : AgentParam) as this =
     let env : IEnv = param.Env
     let ident : Ident = Ident.Create param.Env.Scope param.Kind param.Key
     let mutable logger : ILogger = env.Logging.GetLogger <| ident.ToLuid ()
     let mutable spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt> option = None
     let mutable logic : AgentLogic<'runner, 'args, 'model, 'msg, 'req, 'evt> option = None
-    let mutable stats : Stats = statsOfCap getDefaultSlowCap
+    let mutable console : AgentConsole = new AgentConsole (this)
     let taskManager : ITaskManager = new TaskManager () :> ITaskManager
     let mutable disposed : bool = false
     let mutable dispatch : DispatchMsg<AgentMsg<'runner, 'args, 'model, 'msg, 'req, 'evt>> option = None
@@ -67,10 +67,6 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
             failWith "Already_Setup" (spec, spec')
         spec <- Some spec'
         logic <- Some logic'
-        spec'.Param.GetSlowCap
-        |> Option.iter (fun getSlowCap ->
-            stats <- statsOfCap getSlowCap
-        )
     member __.SetState (newState : AgentModel<'runner, 'args, 'model, 'msg, 'req, 'evt>) =
         let stateChanged = state.IsNone || not (newState =? Option.get state)
         state <- Some newState
@@ -96,9 +92,10 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.Runner = this.Runner
     //IRunner
     member this.Clock = env.Clock
+    member this.Console = console
     interface IRunner with
         member this.Clock = this.Clock
-        member __.Stats = stats
+        member this.Console0 = this.Console :> IConsole
         member this.RunFunc0 func = runFunc' this func
         member this.AddTask0 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask0 onFailed getTask = runTask' this onFailed getTask
@@ -168,6 +165,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.Ident = this.Ident
         member this.Handle req = this.Handle req
         member this.HandleAsync getReq = this.HandleAsync getReq
+        member this.Console = this.Console
         member this.RunFunc1 func = runFunc' this func
         member this.AddTask1 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask1 onFailed getTask = runTask' this onFailed getTask
