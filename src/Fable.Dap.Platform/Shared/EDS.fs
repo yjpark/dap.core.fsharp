@@ -30,7 +30,11 @@ type TimeSpan with
         fun path json ->
             TD.decimal path json
             |> Result.map (fun v ->
+            #if FABLE_COMPILER
+                TimeSpan.FromSeconds <| (double) v
+            #else
                 TimeSpan.FromSeconds <| System.Decimal.ToDouble v
+            #endif
             )
     static member JsonSpec = FieldSpec.Create<TimeSpan> (TimeSpan.JsonEncoder, TimeSpan.JsonDecoder)
     member this.ToJson () = TimeSpan.JsonEncoder this
