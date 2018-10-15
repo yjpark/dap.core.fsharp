@@ -16,7 +16,6 @@ nuget Serilog.Sinks.File
 nuget Serilog.Formatting.Compact
 
 nuget Fable.Elmish
-nuget Fable.JsonConverter
 
 nuget Thoth.Json
 nuget Thoth.Json.Net
