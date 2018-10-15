@@ -56,6 +56,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     let mutable dispatch : DispatchMsg<AgentMsg<'runner, 'args, 'model, 'msg, 'req, 'evt>> option = None
     let mutable state : AgentModel<'runner, 'args, 'model, 'msg, 'req, 'evt> option = None
     let mutable version : Version = Version.Init
+    let onEvent = new Bus<AgentEvt> (this :> IOwner, "OnEvent")
     member this.AsDisplay = (ident, version, this.Actor)
     member this.AsAgent1 = this :> IAgent
     member this.AsAgent2 = this :> IAgent<'req, 'evt>
@@ -160,17 +161,17 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     member this.HandleAsync (getReq : Callback<'res> -> AgentReq) =
         version <- version.IncReq
         dispatchAsync' this (AgentReq << getReq)
+    member this.OnEvent = onEvent.Publish
     interface IAgent with
         member this.Env = this.Env
         member this.Ident = this.Ident
         member this.Handle req = this.Handle req
         member this.HandleAsync getReq = this.HandleAsync getReq
+        member this.OnEvent = this.OnEvent
         member this.Console = this.Console
         member this.RunFunc1 func = runFunc' this func
         member this.AddTask1 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask1 onFailed getTask = runTask' this onFailed getTask
-    interface IAspect with
-        member this.Owner = this :> IOwner
 
 [<AbstractClass>]
 type PackAgent<'pack, 'runner, 'args, 'model, 'msg, 'req, 'evt

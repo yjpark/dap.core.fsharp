@@ -23,10 +23,6 @@ type Index = ContextTypes.Index
 type IOwner = ContextTypes.IOwner
 type IBus<'evt> = ContextTypes.IBus<'evt>
 
-type IReq = ContextTypes.IReq
-type Reply<'res> = ContextTypes.Reply<'res>
-type Callback<'res> = ContextTypes.Callback<'res>
-
 //Alias Context Types End
 
 [<Measure>]
@@ -123,7 +119,22 @@ type IEvt = interface end
 
 type IMsg = interface end
 
-type IPoster<'req> =
+type IReq = interface end
+
+//Note that can NOT add 'req into it, since it's used
+// in Req definition.
+type Reply<'res> =
+    | Ack of IReq * 'res
+    | Nak of IReq * string * obj
+
+exception ReplyException of err : string * detail : obj
+with
+    override this.Message =
+        sprintf "ReplyException: %s: %A" this.err this.detail
+
+type Callback<'res> = (Reply<'res> -> unit) option
+
+type IPoster<'req when 'req :> IReq> =
     abstract Post : 'req -> unit
 
 #if !FABLE_COMPILER
@@ -137,10 +148,10 @@ and IActor =
 and IActor<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IActor
     abstract Handle : 'req -> unit
-    abstract OnEvent : IBus<'evt> with get
 #if !FABLE_COMPILER
     abstract HandleAsync<'res> : (Callback<'res> -> 'req) -> Task<'res>
 #endif
+    abstract OnEvent : IBus<'evt> with get
     abstract AsActor1 : IActor with get
 
 and IActor<'args, 'model, 'req, 'evt> when 'req :> IReq and 'evt :> IEvt =

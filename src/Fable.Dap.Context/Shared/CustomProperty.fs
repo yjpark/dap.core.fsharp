@@ -15,7 +15,7 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         target <- Some target'
         spec <-
             let initValue = target'.ToJson ()
-            new PropertySpec (target'.Spec.Luid, target'.Spec.Key, initValue)
+            new PropertySpec (target'.Spec0.Luid, target'.Spec0.Key, initValue)
             :> IPropertySpec
             |> Some
     abstract member Self : 'p with get
@@ -39,8 +39,7 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
                 clone
     interface IProperty with
         member __.Kind = PropertyKind.CustomProperty
-        member this.Ver = this.Target.Ver
-        member this.Spec = this.Spec
+        member this.Spec0 = this.Spec
         member this.Seal () = this.Target.Seal ()
         member this.Sealed = this.Target.Sealed
         member this.WithJson json = this.Target.WithJson json
@@ -49,13 +48,14 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         member this.SyncTo0 t =
             let this' = this.AsProperty
             if this'.Kind <> t.Kind then
-                this'.Owner.Log <| tplPropertyError "Property:InValid_Kind" this'.Spec.Luid this'.Ver (this'.Kind, t.Kind, t)
+                this'.Owner.Log <| tplPropertyError "Property:InValid_Kind" this'.Spec0.Luid this'.Ver (this'.Kind, t.Kind, t)
             elif this.GetType () <> t.GetType () then
-                this'.Owner.Log <| tplPropertyError "Property:InValid_Type" this'.Spec.Luid this'.Ver (this.GetType (), t.GetType (), t)
+                this'.Owner.Log <| tplPropertyError "Property:InValid_Type" this'.Spec0.Luid this'.Ver (this.GetType (), t.GetType (), t)
             else
                 this.SyncTo (t :?> 'p)
     interface IAspect with
         member this.Owner = this.Target.Owner
+        member this.Ver = this.Target.Ver
     interface IJson with
         member this.ToJson () = this.Target.ToJson ()
     interface IUnsafeProperty with

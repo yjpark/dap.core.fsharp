@@ -1,6 +1,5 @@
-[<AutoOpen>]
 [<RequireQualifiedAccess>]
-module Dap.Context.Reply
+module Dap.Platform.Reply
 
 open Dap.Prelude
 

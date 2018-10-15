@@ -33,7 +33,7 @@ and EnvParam = {
 }
 
 and EnvConsole (env : IEnv, param : EnvParam) =
-    inherit Console<EnvConsole> (EnvConsoleKind, param.Logging)
+    inherit Console<EnvConsole> (EnvConsoleKind, param.Logging, param.Clock)
     do (
         let scope = base.Stats.Target.AddVar<Scope> (E.string, D.string, "scope", param.Scope, None)
         scope.Seal ()
@@ -44,8 +44,8 @@ and EnvConsole (env : IEnv, param : EnvParam) =
 and IEnv =
     inherit IOwner
     inherit IRunner
-    inherit IHandler<EnvReq>
-    inherit IAsyncHandler<EnvReq>
+    abstract Handle : EnvReq -> unit
+    abstract HandleAsync<'res> : (Callback<'res> -> EnvReq) -> Task<'res>
     abstract Platform : IPlatform with get
     abstract Console : EnvConsole with get
     abstract Logging : ILogging with get
@@ -87,7 +87,7 @@ and AgentParam = {
         }
 
 and AgentConsole (agent : IAgent, param : AgentParam, ident : Ident) =
-    inherit Console<AgentConsole> (AgentConsoleKind, param.Env.Logging)
+    inherit Console<AgentConsole> (AgentConsoleKind, param.Env.Logging, param.Env.Clock)
     do (
         let ident' = base.Stats.Target.AddVar<Ident> (E.ident, D.ident, "ident", ident, None)
         ident'.Seal ()
@@ -98,9 +98,9 @@ and AgentConsole (agent : IAgent, param : AgentParam, ident : Ident) =
 and IAgent =
     inherit IOwner
     inherit IRunner
-    inherit IHandler<AgentReq>
-    inherit IAsyncHandler<AgentReq>
-    //inherit IChannel<AgentEvt>
+    abstract Handle : AgentReq -> unit
+    abstract HandleAsync<'res> : (Callback<'res> -> AgentReq) -> Task<'res>
+    abstract OnEvent : IBus<AgentEvt> with get
     abstract Env : IEnv with get
     abstract Ident : Ident with get
     abstract Console : AgentConsole with get

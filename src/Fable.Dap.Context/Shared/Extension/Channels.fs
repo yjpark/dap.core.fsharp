@@ -6,12 +6,16 @@ open Dap.Context
 open Dap.Context.Internal
 
 type IChannels with
-    member this.AddUnit = this.Add<unit> (fun _ -> E.nil) (D.succeed ())
-    member this.AddBool = this.Add<bool> E.bool D.bool
-    member this.AddString = this.Add<string> E.string D.string
-    member this.AddInt = this.Add<int> E.int D.int
-#if !FABLE_COMPILER
-    member this.AddLong = this.Add<int64> E.long D.long
-#endif
-    member this.AddFloat = this.Add<float> E.float D.float
-    member this.AddDecimal = this.Add<decimal> E.decimal D.decimal
+    member this.Add<'evt> (encoder : JsonEncoder<'evt>, decoder : JsonDecoder<'evt>, key : Key) =
+        ChannelSpec<'evt>.Create key encoder decoder
+        |> this.Add<'evt>
+
+type IChannels with
+    member this.AddJson key = this.Add<Json> (E.value, D.value, key)
+    member this.AddUnit key = this.Add<unit> (E.unit, D.unit, key)
+    member this.AddBool key = this.Add<bool> (E.bool, D.bool, key)
+    member this.AddString key = this.Add<string> (E.string, D.string, key)
+    member this.AddInt key = this.Add<int> (E.int, D.int, key)
+    member this.AddLong key = this.Add<int64> (E.long, D.long, key)
+    member this.AddFloat key = this.Add<float> (E.float, D.float, key)
+    member this.AddDecimal key = this.Add<decimal> (E.decimal, D.decimal, key)

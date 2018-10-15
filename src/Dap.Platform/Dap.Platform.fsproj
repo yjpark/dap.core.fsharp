@@ -14,6 +14,7 @@
     <Compile Include="../Fable.Dap.Platform/Shared/Cmd.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Clock.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Types.fs" />
+    <Compile Include="../Fable.Dap.Platform/Shared/Reply.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Callback.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Wrapping.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Operator.fs" />

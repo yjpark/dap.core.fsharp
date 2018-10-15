@@ -66,8 +66,6 @@ type internal Env (param' : EnvParam, logic') as this =
         member __.Logging = param.Logging
         member __.Scope = param.Scope
         member __.State = state |> Option.get
-    interface IAspect with
-        member __.Owner = this :> IOwner
     interface IOwner with
         member __.Luid = param.Scope
         member __.Disposed = false

@@ -52,6 +52,7 @@ type Watcher<'msg> = {
 
 [<StructuredFormatDisplay("{AsString}")>]
 type Bus<'msg> (owner : IOwner, luid : Luid) =
+    let mutable ver = 0
     let mutable logAddRemove = true
     let mutable watchers : Watcher<'msg> list = []
     let setLogAddRemove (v : bool) =
@@ -95,6 +96,7 @@ type Bus<'msg> (owner : IOwner, luid : Luid) =
         if owner.Disposed then
             owner.Log <| tplDisposedInfo "Bus:Owner_Disposed" luid owner evt
         else
+            ver <- ver + 1
             let folder = fun garbage watcher ->
                 match tryGetTarget watcher with
                 | (true, owner) ->
@@ -141,6 +143,7 @@ type Bus<'msg> (owner : IOwner, luid : Luid) =
         )
     member this.Publish : IBus<'msg> =
         { new IBus<'msg> with
+            member _x.Ver = ver
             member _x.AddWatcher watcherOwner watcherLuid action =
                 match this.TryFindWatchers watcherOwner (Some watcherLuid) with
                 | [] ->

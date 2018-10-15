@@ -80,7 +80,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
             | None ->
                 if not (this.Value @ [prop]
                     |> this.SetValue) then
-                    failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Length prop.Spec.Key
+                    failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Length prop.Spec0.Key
                 let index = this.Value.Length
                 valueAndIndexes <- valueAndIndexes |> Map.add k (prop, index)
                 index
@@ -88,14 +88,14 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
                 valueAndIndexes <- valueAndIndexes |> Map.add k (prop, toIndex)
                 if not (this.UpdateValue [prop]) then
                     valueAndIndexes <- valueAndIndexes |> Map.remove k
-                    failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Length prop.Spec.Key
+                    failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Length prop.Spec0.Key
                 toIndex
         onAdded.Trigger (prop, index)
         onAdded0.Trigger (prop :> IProperty, index)
         prop
     member private this.Remove (i : Index) =
         let prop = this.Value |> List.item i
-        let k = prop.Spec.Luid
+        let k = prop.Spec0.Luid
         valueAndIndexes
         |> Map.tryFind k
         |> Option.map (fun (prop, i) ->
@@ -103,7 +103,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
             onRemoved.Trigger (prop, i)
             onRemoved0.Trigger (prop :> IProperty, i)
             if not (this.UpdateValue []) then
-                failWith "Remove_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Length prop.Spec.Key
+                failWith "Remove_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Length prop.Spec0.Key
             prop
         )
     member private this.CheckIndex (i : Index) =
@@ -177,7 +177,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
         member this.MoveTo i toIndex =
             this.CheckIndex toIndex
             let prop = this.AsListProperty.Get i
-            valueAndIndexes <- valueAndIndexes |> Map.add prop.Spec.Luid (prop, toIndex)
+            valueAndIndexes <- valueAndIndexes |> Map.add prop.Spec0.Luid (prop, toIndex)
             if not (this.UpdateValue [prop]) then
                 failWith "Move_Failed" <| sprintf "[%s] <%s> [%d] %d -> %d" spec.Luid typeof<'p>.FullName this.Value.Length i toIndex
         member this.MoveBy i offset =
@@ -187,8 +187,8 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
             let propB = this.AsListProperty.Get indexB
             valueAndIndexes <-
                 valueAndIndexes
-                |> Map.add propA.Spec.Luid (propA, indexB)
-                |> Map.add propB.Spec.Luid (propB, indexA)
+                |> Map.add propA.Spec0.Luid (propA, indexB)
+                |> Map.add propB.Spec0.Luid (propB, indexA)
             if not (this.UpdateValue [propA ; propB]) then
                 failWith "Swap_Failed" <| sprintf "[%s] <%s> [%d] %d <-> %d" spec.Luid typeof<'p>.FullName this.Value.Length indexA indexB
         member __.OnMoved = onMoved.Publish

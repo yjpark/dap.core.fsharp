@@ -92,6 +92,7 @@ let noOwner = new Owner (getLogging (), "<noOwner>") :> IOwner
 type IAspect =
     inherit IObj
     abstract Owner : IOwner with get
+    abstract Ver : int with get
 
 type IBus<'msg> =
     inherit IAspect
@@ -101,21 +102,6 @@ type IBus<'msg> =
     abstract RemoveWatcher' : IOwner * Luid -> Luid list             // -> luid list
     abstract RemoveWatcher : IOwner -> unit
     abstract RemoveWatcher : IOwner * Luid -> unit
-
-type IReq = interface end
-
-//Note that can NOT add 'req into it, since it's used
-// in Req definition.
-type Reply<'res> =
-    | Ack of IReq * 'res
-    | Nak of IReq * string * obj
-
-exception ReplyException of err : string * detail : obj
-with
-    override this.Message =
-        sprintf "ReplyException: %s: %A" this.err this.detail
-
-type Callback<'res> = (Reply<'res> -> unit) option
 
 type IAspectSpec =
     abstract Luid : Luid with get
@@ -152,8 +138,7 @@ and IProperty =
     inherit IAspect
     inherit IJson
     abstract Kind : PropertyKind with get
-    abstract Ver : int with get
-    abstract Spec : IPropertySpec with get
+    abstract Spec0 : IPropertySpec with get
     abstract Seal : unit -> unit
     abstract Sealed : bool with get
     abstract WithJson : Json -> bool
@@ -297,7 +282,7 @@ and ICustomProperty<'p when 'p :> ICustomProperty> =
 type IChannelSpec =
     inherit IAspectSpec
 #if !FABLE_COMPILER
-    abstract EventType : Type with get
+    abstract EvtType : Type with get
 #endif
 
 and IChannelSpec<'evt> =
@@ -312,38 +297,99 @@ type EventFired = {
 
 and IChannel =
     inherit IAspect
-    abstract Ver : int with get
-    abstract Spec : IChannelSpec with get
+    abstract Spec0 : IChannelSpec with get
     abstract Muted : bool with get
     abstract SetMuted : bool -> unit
+    abstract FireEvent0 : Json -> unit
     abstract OnEvent0 : IBus<EventFired> with get
 
+type EventFired<'evt> = {
+    Spec : IChannelSpec<'evt>
+    Evt : 'evt
+}
+
 and IChannel<'evt> =
-    inherit IAspect
+    inherit IChannel
     abstract Spec : IChannelSpec<'evt> with get
     abstract FireEvent : 'evt -> unit
-    abstract OnEvent : IBus<'evt> with get
-
-type IHandler<'req> when 'req :> IReq =
-    inherit IAspect
-    abstract Handle : 'req -> unit
-
-#if !FABLE_COMPILER
-type IAsyncHandler<'req> when 'req :> IReq =
-    abstract HandleAsync<'res> : (Callback<'res> -> 'req) -> Task<'res>
-#endif
+    abstract OnEvent : IBus<EventFired<'evt>> with get
 
 and IChannels =
     inherit IAspect
     inherit IValue<IChannel list>
-    abstract Ver : int with get
     abstract Seal : unit -> unit
     abstract Sealed : bool with get
     abstract TryGet : Key -> IChannel option
     abstract Has : Key -> bool
     abstract Get : Key -> IChannel
-    abstract Add<'evt> : JsonEncoder<'evt> -> JsonDecoder<'evt> -> Key -> IChannel<'evt>
+    abstract Add<'evt> : IChannelSpec<'evt> -> IChannel<'evt>
     abstract OnAdded : IBus<IChannel> with get
+
+type IHandlerSpec =
+    inherit IAspectSpec
+#if !FABLE_COMPILER
+    abstract ReqType : Type with get
+    abstract ResType : Type with get
+#endif
+
+and IHandlerSpec<'req, 'res> =
+    inherit IHandlerSpec
+    abstract ReqEncoder : JsonEncoder<'req>
+    abstract ReqDecoder : JsonDecoder<'req>
+    abstract ResEncoder : JsonEncoder<'res>
+    abstract ResDecoder : JsonDecoder<'res>
+
+type RequestReceived = {
+    Spec : IHandlerSpec
+    Req : Json
+}
+
+type RequestHandled = {
+    Spec : IHandlerSpec
+    Req : Json
+    Res : Json
+}
+
+type IHandler =
+    inherit IAspect
+    abstract Spec0 : IHandlerSpec with get
+    abstract Seal : unit -> unit
+    abstract Sealed : bool with get
+    abstract Muted : bool with get
+    abstract SetMuted : bool -> unit
+    abstract Handle0 : Json -> Json
+    abstract OnRequest0 : IBus<RequestReceived> with get
+    abstract OnResponse0 : IBus<RequestHandled> with get
+
+type RequestReceived<'req, 'res> = {
+    Spec : IHandlerSpec<'req, 'res>
+    Req : 'req
+}
+
+type RequestHandled<'req, 'res> = {
+    Spec : IHandlerSpec<'req, 'res>
+    Req : 'req
+    Res : 'res
+}
+
+type IHandler<'req, 'res> =
+    inherit IHandler
+    abstract Spec : IHandlerSpec<'req, 'res> with get
+    abstract SetHandler' : ('req -> 'res) -> unit
+    abstract Handle : 'req -> 'res
+    abstract OnRequest : IBus<RequestReceived<'req, 'res>> with get
+    abstract OnResponse : IBus<RequestHandled<'req, 'res>> with get
+
+and IHandlers =
+    inherit IAspect
+    inherit IValue<IHandler list>
+    abstract Seal : unit -> unit
+    abstract Sealed : bool with get
+    abstract TryGet : Key -> IHandler option
+    abstract Has : Key -> bool
+    abstract Get : Key -> IHandler
+    abstract Add<'req, 'res> : IHandlerSpec<'req, 'res> -> IHandler<'req, 'res>
+    abstract OnAdded : IBus<IHandler> with get
 
 type IContextSpec =
     abstract Kind : Kind with get
@@ -357,9 +403,10 @@ type IContext =
     inherit IOwner
     inherit IJson
     abstract Dispose : unit -> bool
-    abstract Spec : IContextSpec with get
+    abstract Spec0 : IContextSpec with get
     abstract Properties : IProperties with get
     abstract Channels : IChannels with get
+    abstract Handlers : IHandlers with get
     abstract Clone0 : ILogging -> IContext
 
 type IContext<'p when 'p :> IProperties> =
@@ -408,3 +455,7 @@ module Extensions =
     type ICustomProperty<'p when 'p :> ICustomProperty> with
         member this.SyncWith (other : ICustomProperty<'p>) =
             other.SyncTo this.Self
+    type IHandler<'req, 'res> with
+        member this.SetHandler (handler : 'req -> 'res) =
+            this.SetHandler' handler
+            this.Seal ()

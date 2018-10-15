@@ -61,7 +61,7 @@ type internal ChannelSpec<'evt> internal (luid, key, encoder', decoder') =
         member __.Encoder = encoder
         member __.Decoder = decoder
 #if !FABLE_COMPILER
-        member __.EventType = typeof<'evt>
+        member __.EvtType = typeof<'evt>
 #endif
 
 type IChannelSpec<'evt> with
@@ -76,3 +76,36 @@ type IChannelSpec<'evt> with
     member this.ForClone key =
         new ChannelSpec<'evt> (key, key, this.Encoder, this.Decoder)
         :> IChannelSpec<'evt>
+
+type internal HandlerSpec<'req, 'res> internal (luid, key, reqEncoder', reqDecoder', resEncoder', resDecoder') =
+    inherit AspectSpec (luid, key)
+    let reqEncoder : JsonEncoder<'req> = reqEncoder'
+    let reqDecoder : JsonDecoder<'req> = reqDecoder'
+    let resEncoder : JsonEncoder<'res> = resEncoder'
+    let resDecoder : JsonDecoder<'res> = resDecoder'
+    static member Create key qe qd se sd=
+        new HandlerSpec<'req, 'res> (key, key, qe, qd, se, sd)
+        :> IHandlerSpec<'req, 'res>
+    interface IHandlerSpec<'req, 'res> with
+        member __.ReqEncoder = reqEncoder
+        member __.ReqDecoder = reqDecoder
+        member __.ResEncoder = resEncoder
+        member __.ResDecoder = resDecoder
+#if !FABLE_COMPILER
+        member __.ReqType = typeof<'req>
+        member __.ResType = typeof<'res>
+#endif
+
+type IHandlerSpec<'req, 'res> with
+    member this.GetSubSpec subKey =
+        let luid = AspectSpec.CalcSubLuid this.Luid subKey
+        new HandlerSpec<'req, 'res> (luid, subKey, this.ReqEncoder, this.ReqDecoder, this.ResEncoder, this.ResDecoder)
+        :> IHandlerSpec<'req, 'res>
+    member this.AsSubSpec (parent : IAspectSpec) =
+        let luid = AspectSpec.CalcSubLuid parent.Luid this.Key
+        new HandlerSpec<'req, 'res> (luid, this.Key, this.ReqEncoder, this.ReqDecoder, this.ResEncoder, this.ResDecoder)
+        :> IHandlerSpec<'req, 'res>
+    member this.ForClone key =
+        new HandlerSpec<'req, 'res> (key, key, this.ReqEncoder, this.ReqDecoder, this.ResEncoder, this.ResDecoder)
+        :> IHandlerSpec<'req, 'res>
+

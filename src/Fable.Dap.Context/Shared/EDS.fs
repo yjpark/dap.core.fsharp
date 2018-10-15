@@ -58,6 +58,8 @@ type E = JsonEncodeHelper with
             Union.getKind (v)
         #endif
             |> JsonKind |> JsonKind.JsonEncoder
+    static member unit : JsonEncoder<unit> = fun () -> TE.nil
+    static member value : JsonEncoder<Json> = id
     static member long = TE.int64
     static member array (encoder : JsonEncoder<'a>) (v : 'a []) =
         v |> Array.map encoder |> TE.array
@@ -82,6 +84,7 @@ type D = JsonDecodeHelper with
     static member failWith path err detail =
         Error (path, TD.FailMessage ^<| sprintf "%s: %A" err detail)
     static member json : JsonDecoder<Json> = TD.value
+    static member unit : JsonDecoder<unit> = TD.succeed ()
     static member long = TD.int64
     static member union<'u> (spec : CaseSpec<'u> list
         #if FABLE_COMPILER

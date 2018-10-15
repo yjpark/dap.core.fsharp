@@ -117,17 +117,29 @@ let doCustomCloneTest (logger : ILogger) =
     logWarn logger "Test" "Original" <| E.encodeJson 4 a
     logWarn logger "Test" "Clone" <| E.encodeJson 4 ^<| a.AsProperty.Clone0 noOwner "Clone"
 
+type App with
+    static member CreateAsync (logging : ILogging, args : AppArgs) =
+        let onSetup = new TaskCompletionSource<IApp>();
+        let args =
+            args
+            |> AppArgs.SetScope "Demo"
+            |> AppArgs.SetSetup onSetup.SetResult
+        new App (logging, args) |> ignore
+        onSetup.Task
+    static member Create (logging : ILogging, args : AppArgs) =
+        App.CreateAsync (logging, args)
+        |> syncTask
+
 [<EntryPoint>]
 let main _argv =
     let logging = setupConsole LogLevelWarning
 
+    (*
     let logger = getLogger "Prepare"
-
     Demo.Dsl.compile []
     |> List.iter (fun l -> logWarn logger "Dsl" l ())
-
-
     doCustomCloneTest (getLogger "Clone")
+    *)
 
     (*
     let d = Duration.FromSeconds 1.0
@@ -144,16 +156,15 @@ let main _argv =
     printResult <| tryDecodeJsonValue Duration.JsonDecoder json
     printResult <| tryDecodeJson Duration.JsonDecoder json
     *)
-    (*
-    let app = App.Create logging "Demo"
-    app.SetupAsync (AppArgs.Default ())
-    |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+    let app = App.Create (logging, AppArgs.Default ())
     app.Ticker.Actor.OnEvent.AddWatcher app.Env "Test" (fun evt ->
         logWarn app.Env "Ticker" "OnEvent" evt
     )
     Task.Delay 1.0<second>
     |> Async.AwaitTask |> Async.RunSynchronously |> ignore
-    *)
+    app.Ticker.Console.GetStats.Handle ()
+    |> E.encode 4
+    |> logWarn app.Env "Ticker" "Stats"
 
     //doJsonTest env
     //doBuilderTest env

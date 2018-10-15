@@ -107,8 +107,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
     member this.AsProperty = this :> IProperty
     interface IProperty with
         member this.Kind = this.Kind
-        member __.Ver = ver
-        member __.Spec = spec :> IPropertySpec
+        member __.Spec0 = spec :> IPropertySpec
         member this.Seal () =
             if not sealed' then
                 sealed' <- true
@@ -134,5 +133,6 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
                 this.SyncTo0 t
     interface IAspect with
         member __.Owner = owner
+        member __.Ver = ver
     interface IJson with
         member this.ToJson () = this.ToJson value

@@ -12,15 +12,15 @@ type Builder () =
         IComboProperty.Default ()
     [<CustomOperation("var")>]
     member __.Var (combo : IComboProperty, prop : IVarProperty) =
-        combo.AddAny prop.Spec.Key prop.Clone0 |> ignore
+        combo.AddAny prop.Spec0.Key prop.Clone0 |> ignore
         combo
     [<CustomOperation("custom")>]
     member __.Custom (combo : IComboProperty, prop : ICustomProperty) =
-        combo.AddAny prop.Spec.Key prop.Clone0 |> ignore
+        combo.AddAny prop.Spec0.Key prop.Clone0 |> ignore
         combo
     [<CustomOperation("combo")>]
     member __.Combo (combo : IComboProperty, prop : IComboProperty) =
-        combo.AddAny prop.Spec.Key prop.Clone0 |> ignore
+        combo.AddAny prop.Spec0.Key prop.Clone0 |> ignore
         combo
 
 type ExtendBuilder (parent : IComboProperty) =

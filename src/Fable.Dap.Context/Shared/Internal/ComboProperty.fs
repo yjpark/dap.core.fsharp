@@ -19,20 +19,20 @@ type internal ComboProperty (owner, spec) =
     override __.ToJson (v : IProperty list) =
         v
         |> List.map (fun prop ->
-            prop.Spec.Key, prop.ToJson ()
+            prop.Spec0.Key, prop.ToJson ()
         )|> E.object
     override this.WithJson value json =
         let mutable ok = true
         value
         |> List.iter (fun prop ->
-            match tryCastJson (D.field prop.Spec.Key D.value) json with
+            match tryCastJson (D.field prop.Spec0.Key D.value) json with
             | Ok propJson ->
                 let oneOk = prop.WithJson propJson
                 if not oneOk then
                     ok <- false
             | Error err ->
                 ok <- false
-                owner.Log <| tplPropertyError "ComboProperty:Decode_Field_Failed" prop.Spec.Key (prop.ToJson ()) err
+                owner.Log <| tplPropertyError "ComboProperty:Decode_Field_Failed" prop.Spec0.Key (prop.ToJson ()) err
         )
         if not ok then
             logError owner "ComboProperty:WithJson" "Decode_Has_Error" (E.encode 4 json)
@@ -49,7 +49,7 @@ type internal ComboProperty (owner, spec) =
         if comboSealed then
             failWith "Combo_Sealed" <| sprintf "[%s] <%s> [%s]" spec.Luid subType.FullName subSpec.Key
         this.Value
-        |> List.tryFind (fun prop -> prop.Spec.Key = subSpec.Key)
+        |> List.tryFind (fun prop -> prop.Spec0.Key = subSpec.Key)
         |> Option.iter (fun prop ->
             failWith "Key_Exist" <| sprintf "[%s] <%s> [%s] -> %A" spec.Luid subType.FullName subSpec.Luid prop
         )
@@ -59,7 +59,7 @@ type internal ComboProperty (owner, spec) =
             onAdded.Trigger prop
             prop
         else
-            failWith "Add_Failed" <| sprintf "[%s] <%s> [%s]" spec.Luid (typeof<'prop>).FullName prop.Spec.Key
+            failWith "Add_Failed" <| sprintf "[%s] <%s> [%s]" spec.Luid (typeof<'prop>).FullName prop.Spec0.Key
     interface IComboProperty with
         member __.SealCombo () =
             if not comboSealed then
@@ -68,7 +68,7 @@ type internal ComboProperty (owner, spec) =
         member this.Value = this.Value
         member this.TryGet k =
             this.Value
-            |> List.tryFind (fun prop -> k = prop.Spec.Key)
+            |> List.tryFind (fun prop -> k = prop.Spec0.Key)
         member this.Has k =
             (this.AsCombo.TryGet k).IsSome
         member this.Get k =
@@ -78,7 +78,7 @@ type internal ComboProperty (owner, spec) =
                 | None -> failWith "Not_Found" k
         member this.AddAny (key : Key) (spawner : PropertySpawner) =
             let prop = spawner owner key
-            this.CheckAdd prop.Spec (prop.GetType())
+            this.CheckAdd prop.Spec0 (prop.GetType())
             this.Add prop
         member this.AddVar<'v> (subSpec : IVarPropertySpec<'v>) =
             this.CheckAdd subSpec typeof<'v>
@@ -113,9 +113,9 @@ type internal ComboProperty (owner, spec) =
         member this.SyncTo (other : IComboProperty) =
             this.Value
             |> List.iter (fun prop ->
-                match other.TryGet prop.Spec.Key with
+                match other.TryGet prop.Spec0.Key with
                 | None ->
-                    other.AddAny prop.Spec.Key prop.Clone0 |> ignore
+                    other.AddAny prop.Spec0.Key prop.Clone0 |> ignore
                 | Some t ->
                     prop.SyncTo0 t
             )

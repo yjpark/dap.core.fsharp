@@ -117,8 +117,6 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member __.Ident = ident
     interface ILogger with
         member this.Log m = logger.Log m
-    interface IAspect with
-        member this.Owner = this :> IOwner
 
 [<AbstractClass>]
 type PackAgent<'pack, 'runner, 'args, 'model, 'msg, 'req, 'evt
