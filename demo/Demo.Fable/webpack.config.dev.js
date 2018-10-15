@@ -42,7 +42,4 @@ module.exports = {
       new webpack.HotModuleReplacementPlugin(),
       new webpack.NamedModulesPlugin()
   ]),
-  resolve: {
-    modules: [common.config.nodeModulesDir]
-  },
 };

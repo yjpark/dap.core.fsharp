@@ -1,6 +1,5 @@
 var fs = require("fs");
 var path = require("path");
-var fableUtils = require("fable-utils");
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var HtmlWebpackPolyfillIOPlugin = require('html-webpack-polyfill-io-plugin');
 // var DynamicCdnWebpackPlugin = require('dynamic-cdn-webpack-plugin');
@@ -11,7 +10,6 @@ var errorMsg = "{0} missing in package.json";
 var config = {
   entry: resolve(path.join("", forceGet(packageJson, "fable.entry", errorMsg))),
   publicDir: resolve("assets"),
-  nodeModulesDir: resolve("node_modules"),
   indexHtmlTemplate: resolve("index.html")
 }
 
@@ -32,11 +30,11 @@ function forceGet(obj, path, errorMsg) {
 }
 
 function getModuleRules(isProduction) {
-  var babelOptions = fableUtils.resolveBabelOptions({
+  var babelOptions = {
     presets: [
-      ["env", { "targets": { "browsers": "> 1%" }, "modules": false }]
+      ["@babel/preset-env", { "targets": { "browsers": "> 1%" }, "modules": false }]
     ],
-  });
+  };
 
   return [
     {
