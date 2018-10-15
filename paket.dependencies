@@ -17,7 +17,6 @@ nuget Serilog.Formatting.Compact
 
 nuget Fable.Elmish
 nuget Fable.JsonConverter
-nuget Fable.Websockets.Elmish
 
 nuget Thoth.Json
 nuget Thoth.Json.Net
