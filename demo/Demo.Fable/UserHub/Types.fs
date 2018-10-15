@@ -10,9 +10,7 @@ type Req =
 with
     static member JsonSpec : CaseSpec<Req> list =
         [
-            CaseSpec<Req>.Create "DoLogin" [
-                FieldSpec.Create<JsonString> JsonString.JsonEncoder JsonString.JsonDecoder
-            ]
+            CaseSpec<Req>.Create ("DoLogin", [JsonString.JsonSpec])
         ]
     static member JsonDecoder = D.union Req.JsonSpec
     static member JsonEncoder = E.union Req.JsonSpec
@@ -27,9 +25,7 @@ and Evt =
 with
     static member JsonSpec : CaseSpec<Evt> list =
         [
-            CaseSpec<Evt>.Create "OnTick" [
-                FieldSpec.Create<JsonInt> JsonInt.JsonEncoder JsonInt.JsonDecoder
-            ]
+            CaseSpec<Evt>.Create ("OnTick", [JsonInt.JsonSpec])
         ]
     static member JsonDecoder = D.union Evt.JsonSpec
     static member JsonEncoder = E.union Evt.JsonSpec
@@ -44,9 +40,8 @@ and ClientRes =
 with
     static member StubSpec : Stub.ResponseSpec<ClientRes> list =
         [
-            Stub.ResponseSpec<ClientRes>.Create "DoLogin" [
-                FieldSpec.Create<JsonString> JsonString.JsonEncoder JsonString.JsonDecoder
-            ] "OnLogin" JsonBool.JsonDecoder JsonString.JsonDecoder
+            Stub.ResponseSpec<ClientRes>.Create ("DoLogin", [JsonString.JsonSpec],
+                "OnLogin", JsonBool.JsonDecoder, JsonString.JsonDecoder)
         ]
 
 type ServerReq =
@@ -54,9 +49,8 @@ type ServerReq =
 with
     static member HubSpec =
         [
-            Hub.RequestSpec<ServerReq>.Create "DoLogin" [
-                FieldSpec.Create<JsonString> JsonString.JsonEncoder JsonString.JsonDecoder
-            ] Hub.getCallback<JsonBool, JsonString>
+            Hub.RequestSpec<ServerReq>.Create ("DoLogin", [JsonString.JsonSpec],
+                Hub.getCallback<JsonBool, JsonString>)
         ]
     interface IReq
 
