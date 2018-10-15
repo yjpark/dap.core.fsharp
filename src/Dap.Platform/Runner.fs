@@ -76,7 +76,7 @@ type FuncStats with
     member this.IncPendingCount () =
         this.PendingCount.SetValue (this.PendingCount.Value + 1)
     member this.AddSucceedOp () =
-        this.PendingCount.SetValue (this.PendingCount.Value + 1)
+        this.SucceedCount.SetValue (this.SucceedCount.Value + 1)
         this.PendingCount.SetValue (this.PendingCount.Value - 1)
         None
     member this.AddFailedOp

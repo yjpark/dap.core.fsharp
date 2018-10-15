@@ -22,6 +22,19 @@ type DateTime with
     static member JsonSpec = FieldSpec.Create<DateTime> (DateTime.JsonEncoder, DateTime.JsonDecoder)
     member this.ToJson () = DateTime.JsonEncoder this
 
+type TimeSpan with
+    static member JsonEncoder : JsonEncoder<TimeSpan> =
+        fun (v : TimeSpan) ->
+            TE.decimal <| (decimal) v.TotalSeconds
+    static member JsonDecoder : JsonDecoder<TimeSpan> =
+        fun path json ->
+            TD.decimal path json
+            |> Result.map (fun v ->
+                TimeSpan.FromSeconds <| System.Decimal.ToDouble v
+            )
+    static member JsonSpec = FieldSpec.Create<TimeSpan> (TimeSpan.JsonEncoder, TimeSpan.JsonDecoder)
+    member this.ToJson () = TimeSpan.JsonEncoder this
+
 #if !FABLE_COMPILER
 type NodaTime.Instant with
     static member JsonEncoder : JsonEncoder<NodaTime.Instant> = InstantFormat.General.JsonEncoder
@@ -39,7 +52,11 @@ type NodaTime.Duration with
 type E with
     static member ident = Ident.JsonEncoder
     static member dateTime = DateTime.JsonEncoder
-#if !FABLE_COMPILER
+    static member timeSpan = TimeSpan.JsonEncoder
+#if FABLE_COMPILER
+    static member instant = DateTime.JsonEncoder
+    static member duration = TimeSpan.JsonEncoder
+#else
     static member instant = Instant.JsonEncoder
     static member duration = Duration.JsonEncoder
 #endif
@@ -47,7 +64,11 @@ type E with
 type D with
     static member ident = Ident.JsonDecoder
     static member dateTime = DateTime.JsonDecoder
-#if !FABLE_COMPILER
+    static member timeSpan = TimeSpan.JsonDecoder
+#if FABLE_COMPILER
+    static member instant = DateTime.JsonDecoder
+    static member duration = TimeSpan.JsonDecoder
+#else
     static member instant = Instant.JsonDecoder
     static member duration = Duration.JsonDecoder
 #endif
@@ -55,7 +76,11 @@ type D with
 type S with
     static member ident = Ident.JsonSpec
     static member dateTime = DateTime.JsonSpec
-#if !FABLE_COMPILER
+    static member timeSpan = TimeSpan.JsonSpec
+#if FABLE_COMPILER
+    static member instant = DateTime.JsonSpec
+    static member duration = TimeSpan.JsonSpec
+#else
     static member instant = Instant.JsonSpec
     static member duration = Duration.JsonSpec
 #endif

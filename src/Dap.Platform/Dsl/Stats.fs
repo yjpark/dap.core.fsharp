@@ -33,6 +33,7 @@ let FuncStats =
 
 let Stats =
     combo {
+        var (M.instant (InstantFormat.DateHourMinuteSecondSub, "time"))
         prop (M.custom (<@ DurationStats @>, "deliver"))
         prop (M.custom (<@ DurationStats @>, "process"))
         prop (M.custom (<@ FuncStats @>, "reply"))

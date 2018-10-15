@@ -16,7 +16,7 @@ let ITickingPack =
 let compile segments =
     [
         G.File (segments, ["_Gen" ; "Packs.fs"],
-            G.AutoOpenModule ("Dap.Platform.Packs'",
+            G.AutoOpenModule ("Dap.Platform.Packs",
                 [
                     G.PackOpens
                     G.PackInterface <@ ITickingPack @>

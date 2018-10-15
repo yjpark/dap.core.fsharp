@@ -29,8 +29,8 @@ let internal doSend (runner : Proxy<'req, 'res, 'evt>)
                     (pkt : Packet) (callback : Callback<DateTime>) : unit =
     let callback =
         callback
-        |> Callback.wrap (fun (stats : WebSocketTypes.SendStats) ->
-            stats.SentTime |> toDateTimeUtc
+        |> Callback.wrap (fun () ->
+            runner.Clock.Now |> toDateTimeUtc
         )
     let socket = runner.Actor.State.Extra.Socket |> Option.get
     socket.Actor.Handle <| WebSocketClientTypes.DoSend pkt callback
@@ -38,7 +38,7 @@ let internal doSend (runner : Proxy<'req, 'res, 'evt>)
 let private handlerSocketEvt (evt : WebSocketTypes.Evt<Packet>) : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         match evt with
-        | WebSocketTypes.OnReceived (_stats, pkt) ->
+        | WebSocketTypes.OnReceived pkt ->
             BaseLogic.handleClient <| Client.OnReceived pkt
         | WebSocketTypes.OnStatusChanged status ->
             addSubCmd InternalEvt <| DoSetStatus status

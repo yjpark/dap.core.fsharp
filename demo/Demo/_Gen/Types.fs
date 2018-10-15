@@ -3,7 +3,6 @@ module Demo.Types
 
 open Dap.Prelude
 open Dap.Context
-open Dap.Context.Helper
 
 (*
  * Generated: <ValueInterface>
@@ -52,12 +51,16 @@ type Publisher = {
                 "year", E.int (* IPublisher *) this.Year
             ]
     static member JsonDecoder : JsonDecoder<Publisher> =
-        D.decode Publisher.Create
-        |> D.optional (* IPublisher *) "name" D.string ""
-        |> D.optional (* IPublisher *) "year" D.int 0
+        D.object (fun get ->
+            {
+                Name = get.Optional.Field (* IPublisher *) "name" D.string
+                    |> Option.defaultValue ""
+                Year = get.Optional.Field (* IPublisher *) "year" D.int
+                    |> Option.defaultValue 0
+            }
+        )
     static member JsonSpec =
-        FieldSpec.Create<Publisher>
-            Publisher.JsonEncoder Publisher.JsonDecoder
+        FieldSpec.Create<Publisher> (Publisher.JsonEncoder, Publisher.JsonDecoder)
     interface IJson with
         member this.ToJson () = Publisher.JsonEncoder this
     interface IObj
@@ -88,7 +91,7 @@ type Author (owner : IOwner, key : Key) =
     static member Create o k = new Author (o, k)
     static member Default () = Author.Create noOwner NoKey
     static member AddToCombo key (combo : IComboProperty) =
-        combo.AddCustom<Author>(Author.Create, key)
+        combo.AddCustom<Author> (Author.Create, key)
     override this.Self = this
     override __.Spawn o k = Author.Create o k
     override __.SyncTo t = target.SyncTo t.Target
@@ -118,18 +121,17 @@ with
         Published (publisher, year, copies)
     static member JsonSpec' : CaseSpec<Status> list =
         [
-            CaseSpec<Status>.Create "Unknown" []
-            CaseSpec<Status>.Create "Written" [
+            CaseSpec<Status>.Create ("Unknown", [])
+            CaseSpec<Status>.Create ("Written", [
                 S.string
-            ]
-            CaseSpec<Status>.Create "Published" [
-                S.string ; S.int ; (S.option E.int D.int)
-            ]
+            ])
+            CaseSpec<Status>.Create ("Published", [
+                S.string ; S.int ; (S.option (E.int, D.int))
+            ])
         ]
     static member JsonEncoder = E.union Status.JsonSpec'
     static member JsonDecoder = D.union Status.JsonSpec'
     static member JsonSpec =
-        FieldSpec.Create<Status>
-            Status.JsonEncoder Status.JsonDecoder
+        FieldSpec.Create<Status> (Status.JsonEncoder, Status.JsonDecoder)
     interface IJson with
         member this.ToJson () = Status.JsonEncoder this

@@ -1,7 +1,6 @@
 [<AutoOpen>]
 module Demo.App
 
-open Dap.Context.Helper
 open System.Threading.Tasks
 open FSharp.Control.Tasks.V2
 open Dap.Prelude
@@ -132,16 +131,20 @@ and AppArgs = {
                 "ticker", TickerTypes.Args.JsonEncoder (* IServicesPack *) this.Ticker
             ]
     static member JsonDecoder : JsonDecoder<AppArgs> =
-        D.decode AppArgs.Create
-        |> D.optional (* AppArgs *) "scope" Scope.JsonDecoder NoScope
-        |> D.hardcoded (* AppArgs *) (* Setup *) ignore
-        |> D.optional (* IServicesPack *) "ticker" TickerTypes.Args.JsonDecoder (TickerTypes.Args.Default ())
-        |> D.hardcoded (* ICommonPack *) (* common *) 100
-        |> D.hardcoded (* IAppPack *) (* test *) 100
-        |> D.hardcoded (* IBackupPack *) (* backup_ticker *) (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
+        D.object (fun get ->
+            {
+                Scope = get.Optional.Field (* AppArgs *) "scope" Scope.JsonDecoder
+                    |> Option.defaultValue NoScope
+                Setup = (* (* AppArgs *)  *) ignore
+                Ticker = get.Optional.Field (* IServicesPack *) "ticker" TickerTypes.Args.JsonDecoder
+                    |> Option.defaultValue (TickerTypes.Args.Default ())
+                Common = (* (* ICommonPack *)  *) 100
+                Test = (* (* IAppPack *)  *) 100
+                BackupTicker = (* (* IBackupPack *)  *) (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
+            }
+        )
     static member JsonSpec =
-        FieldSpec.Create<AppArgs>
-            AppArgs.JsonEncoder AppArgs.JsonDecoder
+        FieldSpec.Create<AppArgs> (AppArgs.JsonEncoder, AppArgs.JsonDecoder)
     interface IJson with
         member this.ToJson () = AppArgs.JsonEncoder this
     interface IObj
@@ -211,10 +214,8 @@ type App (logging : ILogging, args : AppArgs) as this =
     do (
         env.RunTask0 raiseOnFailed setupAsync
     )
-    new (loggingArgs : LoggingArgs, a : AppArgs) =
-        App (loggingArgs.CreateLogging (), a)
-    new (a : AppArgs) =
-        App (getLogging (), a)
+    new (loggingArgs : LoggingArgs, a : AppArgs) = new App (loggingArgs.CreateLogging (), a)
+    new (a : AppArgs) = new App (getLogging (), a)
     abstract member SetupAsync' : unit -> Task<unit>
     default __.SetupAsync' () = task {
         return ()
@@ -232,20 +233,20 @@ type App (logging : ILogging, args : AppArgs) as this =
     member __.AsServicesPack = this :> IServicesPack
     interface ICommonPack with
         member __.Args = this.Args.AsCommonPackArgs
-        member __.AsServicesPack = __.AsServicesPack
+        member __.AsServicesPack = this.AsServicesPack
     member __.AsCommonPack = this :> ICommonPack
     interface IAppPack with
         member __.Args = this.Args.AsAppPackArgs
-        member __.AsCommonPack = __.AsCommonPack
-        member __.AsServicesPack = __.AsServicesPack
+        member __.AsCommonPack = this.AsCommonPack
+        member __.AsServicesPack = this.AsServicesPack
     member __.AsAppPack = this :> IAppPack
     interface IBackupPack with
         member __.Args = this.Args.AsBackupPackArgs
         member __.BackupTicker (* IBackupPack *) : TickerTypes.Agent = backupTicker |> Option.get
-        member __.AsCommonPack = __.AsCommonPack
+        member __.AsCommonPack = this.AsCommonPack
     member __.AsBackupPack = this :> IBackupPack
     interface IApp with
         member __.Args : AppArgs = this.Args
-        member __.AsAppPack = __.AsAppPack
-        member __.AsBackupPack = __.AsBackupPack
+        member __.AsAppPack = this.AsAppPack
+        member __.AsBackupPack = this.AsBackupPack
     member __.AsApp = this :> IApp

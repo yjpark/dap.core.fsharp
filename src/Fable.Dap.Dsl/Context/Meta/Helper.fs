@@ -17,6 +17,10 @@ let list<'p when 'p :> IProperty> spawner = new List.Builder<'p> (spawner)
 let list0 spawner = new List.Builder<IProperty> (spawner)
 *)
 
+(*
+ * Note that the jsonInitValue can't be called in Fable generators, since the
+ * encoding is calling js code
+ *)
 let jsonInitValue (type' : string) (encoder : JsonEncoder<'args>) (args : 'args) =
     let json = E.encode 0 <| encoder args
     if json.StartsWith "\"" then
@@ -73,7 +77,7 @@ type M with
 
 type M with
     static member json (key, initValue, validator) =
-        PropMeta.Create "Json" "" "D.value" "S.json" VarProperty
+        PropMeta.Create "Json" "id" "D.value" "S.json" VarProperty
             key initValue validator
     static member json (key, initValue) =
         M.json (key, initValue, "")

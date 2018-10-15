@@ -5,7 +5,6 @@ open System.Reflection
 
 open Dap.Prelude
 open Dap.Context
-open Dap.Context.Helper
 
 type Builder (kind : Kind) =
     inherit ObjBuilder<IContext> ()

@@ -9,7 +9,7 @@ open Dap.Platform
 
 open Dap.Platform.Ticker.Types
 
-type private ActorOperate = ActorOperate<Agent, Args, Model, Msg, Req, Evt>
+type private ActorOperate = Operate<Agent, Model, Msg>
 
 let private doStartTimer req (callback : Callback<Instant>) : ActorOperate =
     fun runner (model, cmd) ->
@@ -124,7 +124,7 @@ let private handleInternalEvt evt : ActorOperate =
         | OnLateTickDone (a, b, c) -> onLateTickDone (a, b, c)
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Agent, Args, Model, Msg, Req, Evt> =
+let private update : Update<Agent, Model, Msg> =
     fun runner msg model ->
         match msg with
         | InternalEvt evt -> handleInternalEvt evt

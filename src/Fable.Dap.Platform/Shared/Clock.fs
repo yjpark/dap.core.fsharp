@@ -79,6 +79,8 @@ let dateTimeOfText (text : string) : Result<DateTime, exn> =
     with e ->
         Error e
 
+let noDuration = TimeSpan.Zero
+
 #else
 let dateTimeOfText (text : string) : Result<DateTime, exn> =
     try
@@ -158,7 +160,7 @@ with
         | RoundTrip -> DurationPattern.Roundtrip
         | HourMinuteSecond -> DurationPattern.CreateWithInvariantCulture "-H:mm:ss.FFFFFFFFF"
         | MinuteSecond -> DurationPattern.CreateWithInvariantCulture "-M:ss.FFFFFFFFF"
-        | Second -> DurationPattern.CreateWithInvariantCulture "-D:hh:mm:ss.FFFFFFFFF"
+        | Second -> DurationPattern.CreateWithInvariantCulture "-s.FFFFFFFFF"
         | Custom format -> DurationPattern.CreateWithInvariantCulture format
     member this.Format duration = this.Pattern.Format duration
     member this.Parse text =

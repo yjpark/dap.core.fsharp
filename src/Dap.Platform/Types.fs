@@ -32,8 +32,12 @@ and EnvParam = {
     Clock : IClock
 }
 
-and EnvConsole (env : IEnv) =
-    inherit Console<EnvConsole> (EnvConsoleKind, env.Logging)
+and EnvConsole (env : IEnv, param : EnvParam) =
+    inherit Console<EnvConsole> (EnvConsoleKind, param.Logging)
+    do (
+        let scope = base.Stats.Target.AddVar<Scope> (E.string, D.string, "scope", param.Scope, None)
+        scope.Seal ()
+    )
     override this.Self = this
     override __.Spawn l = failWith "Invalid_Operation" "EnvConsole.Spawn"
 
@@ -82,8 +86,12 @@ and AgentParam = {
             Key = key
         }
 
-and AgentConsole (agent : IAgent) =
-    inherit Console<AgentConsole> (AgentConsoleKind, agent.Env.Logging)
+and AgentConsole (agent : IAgent, param : AgentParam, ident : Ident) =
+    inherit Console<AgentConsole> (AgentConsoleKind, param.Env.Logging)
+    do (
+        let ident' = base.Stats.Target.AddVar<Ident> (E.ident, D.ident, "ident", ident, None)
+        ident'.Seal ()
+    )
     override this.Self = this
     override __.Spawn l = failWith "Invalid_Operation" "AgentConsole.Spawn"
 

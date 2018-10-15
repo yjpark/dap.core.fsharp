@@ -6,7 +6,7 @@ open Dap.Prelude
 open Dap.Platform
 open Dap.Platform.Registry.Types
 
-type ActorOperate<'k, 'v when 'k : comparison> = ActorOperate<Agent<'k, 'v>, Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>>
+type ActorOperate<'k, 'v when 'k : comparison> = Operate<Agent<'k, 'v>, Model<'k, 'v>, Msg<'k, 'v>>
 
 let private doGetEntry req ((key, callback) : 'k * Callback<'v>) : ActorOperate<'k, 'v> =
     fun runner (model, cmd) ->
@@ -87,7 +87,7 @@ let private handleReq req : ActorOperate<'k, 'v> =
         | TryRemoveEntry (a, b) -> tryRemoveEntry req (a, b)
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Agent<'k, 'v>, Args, Model<'k, 'v>, Msg<'k, 'v>, Req<'k, 'v>, Evt<'k, 'v>> =
+let private update : Update<Agent<'k, 'v>, Model<'k, 'v>, Msg<'k, 'v>> =
     fun runner msg model ->
         match msg with
         | RegistryReq req ->

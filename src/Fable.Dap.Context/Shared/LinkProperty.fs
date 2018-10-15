@@ -8,7 +8,6 @@ open Fable.Core
 open Dap.Prelude
 open Dap.Context.Unsafe
 open Dap.Context.Internal
-open Dap.Context.Helper
 
 let private spec key =
     new PropertySpec (key, key, E.nil)

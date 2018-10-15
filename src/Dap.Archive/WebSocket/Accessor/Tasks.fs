@@ -34,39 +34,37 @@ let internal doSetupAsync : GetReplyTask<Part<'actorMsg, 'pkt>, unit> =
         runner.Deliver <| InternalEvt ^<| OnSetup (req, callback, client, recorder)
     }
 
-let internal doConnectAsync : GetTask<Part<'actorMsg, 'pkt>, WebSocketTypes.LinkedStats> =
+let internal doConnectAsync : GetTask<Part<'actorMsg, 'pkt>, unit> =
     fun runner -> task {
         let uri = runner.Part.State.Uri |> Option.get
         let cts = runner.Part.State.Cts
         let client = runner.Part.State.Client |> Option.get
-        let! stats = client.PostAsync <| WebSocketClientTypes.DoConnect uri cts.Token
-        return stats
+        do! client.PostAsync <| WebSocketClientTypes.DoConnect uri cts.Token
     }
 
 let internal closeOnFailed : OnFailed<Part<'actorMsg, 'pkt>> =
     fun runner e ->
         if runner.Part.State.Status <> LinkStatus.Closed then
-            runner.Deliver <| InternalEvt ^<| OnClosed None
+            runner.Deliver <| InternalEvt OnClosed
 
 
 let internal doReconnectAsync : GetTask<Part<'actorMsg, 'pkt>, unit> =
     fun runner -> task {
         if runner.Part.State.Status <> LinkStatus.Linking
                 && runner.Part.State.Status <> LinkStatus.Linked then
-            let! stats = doConnectAsync runner
-            ()
+            do! doConnectAsync runner
         return ()
     }
 
-let internal doStartFailed : OnReplyFailed<Part<'actorMsg, 'pkt>, WebSocketTypes.LinkedStats option> =
+let internal doStartFailed : OnReplyFailed<Part<'actorMsg, 'pkt>, unit> =
     fun req callback runner e ->
         reply runner callback <| nak req "Exception_Raised" e
         closeOnFailed runner e
 
-let internal doStartAsync : GetReplyTask<Part<'actorMsg, 'pkt>, WebSocketTypes.LinkedStats option> =
+let internal doStartAsync : GetReplyTask<Part<'actorMsg, 'pkt>, unit> =
     fun req callback runner -> task {
         let! stats = doConnectAsync runner
-        reply runner callback <| ack req ^<| Some stats
+        reply runner callback <| ack req ()
     }
 
 let internal doStopAsync : GetReplyTask<Part<'actorMsg, 'pkt>, unit> =
@@ -76,11 +74,11 @@ let internal doStopAsync : GetReplyTask<Part<'actorMsg, 'pkt>, unit> =
         reply runner callback <| ack req ()
     }
 
-let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Part<'actorMsg, 'pkt>, WebSocketTypes.SendStats> =
+let internal doSendAsync (pkt : 'pkt) : GetReplyTask<Part<'actorMsg, 'pkt>, unit> =
     fun req callback runner -> task {
         let client = runner.Part.State.Client |> Option.get
-        let! stats = client.PostAsync <| WebSocketClientTypes.DoSend pkt
-        reply runner callback <| ack req stats
+        do! client.PostAsync <| WebSocketClientTypes.DoSend pkt
+        reply runner callback <| ack req ()
     }
 
 let internal callOnLinkedAsync (onLinkedAsync : GetTask<Client<'pkt>, unit>) : GetTask<Part<'actorMsg, 'pkt>, unit> =

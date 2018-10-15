@@ -11,6 +11,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Const.fs" />
+    <Compile Include="Dsl.fs" />
+    <Compile Include="_Gen/Stats.fs" />
+    <Compile Include="StatsHelper.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Internal/Tasks.fs" />
     <Compile Include="Internal/Logic.fs" />

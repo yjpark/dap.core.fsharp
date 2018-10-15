@@ -3,7 +3,6 @@ module Dap.Platform.Args
 
 open Dap.Prelude
 open Dap.Context
-open Dap.Context.Helper
 
 (*
  * Generated: <Record>

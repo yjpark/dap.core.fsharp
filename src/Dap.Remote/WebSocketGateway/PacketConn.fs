@@ -21,14 +21,14 @@ type Evt = BaseTypes.Evt<Packet>
 type Args = BaseTypes.Args<WebSocket, Packet, Req>
 type Agent = ConnTypes.Agent<Packet>
 
-let encode : Encode<Packet> =
+let encode : BaseTypes.Encode<Packet> =
     fun pkt ->
         Dap.WebSocket.Internal.Text.encode Encoding.UTF8 <| pkt.EncodeJson 0
 
-let decode : Decode<Packet> =
+let decode : BaseTypes.Decode<Packet> =
     fun (buffer, index, count) ->
         Dap.WebSocket.Internal.Text.decode Encoding.UTF8 (buffer, index, count)
         |> decodeJson Packet.JsonDecoder
 
-let args logTraffic bufferSize =
-    Args.Create logTraffic WebSocketMessageType.Text bufferSize encode decode Dap.WebSocket.Conn.Logic.handleReq
+let args logTraffic bufferSize refreshInterval =
+    Args.Create logTraffic WebSocketMessageType.Text bufferSize refreshInterval encode decode Dap.WebSocket.Conn.Logic.handleReq

@@ -36,13 +36,13 @@ let private doSetUri req ((uri, callback) : string * Callback<unit>) : PartOpera
             reply runner callback <| nak req "Not_Setup" ()
             (model, cmd)
 
-let private doStart req (callback : Callback<WebSocketTypes.LinkedStats option>) : PartOperate<'actorMsg, 'pkt> =
+let private doStart req (callback : Callback<unit>) : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match model.Uri with
         | Some uri ->
             match model.Running with
             | true ->
-                reply runner callback <| ack req None
+                reply runner callback <| ack req ()
                 (model, cmd)
             | false ->
                 match model.Client with
@@ -53,7 +53,7 @@ let private doStart req (callback : Callback<WebSocketTypes.LinkedStats option>)
                     match client.Actor.State.Status with
                     | LinkStatus.Linking
                     | LinkStatus.Linked ->
-                        reply runner callback <| ack req None
+                        reply runner callback <| ack req ()
                     | _ ->
                         replyAsync runner req callback doStartFailed doStartAsync
                     (runner, model, cmd)
@@ -88,7 +88,7 @@ let private doStop req (callback : Callback<unit>) : PartOperate<'actorMsg, 'pkt
             reply runner callback <| nak req "Not_Setup" ()
             (model, cmd)
 
-let private doSend req ((pkt, callback) : 'pkt * Callback<WebSocketTypes.SendStats>) : PartOperate<'actorMsg, 'pkt> =
+let private doSend req ((pkt, callback) : 'pkt * Callback<unit>) : PartOperate<'actorMsg, 'pkt> =
     fun runner (model, cmd) ->
         match model.Client with
         | None ->
@@ -114,15 +114,9 @@ let private handleReq req : PartOperate<'actorMsg, 'pkt> =
 let private onStatusChanged (runner : Part<'actorMsg, 'pkt>) (status : LinkStatus) : unit =
     match status with
     | LinkStatus.Linked ->
-        let client = runner.Part.State.Client |> Option.get
-        let stats =
-            client.Actor.State.Stats
-            |> Option.map (fun s -> s.Linked)
-        runner.Deliver <| InternalEvt ^<| OnLinked stats
+        runner.Deliver <| InternalEvt OnLinked
     | LinkStatus.Closed ->
-        let client = runner.Part.State.Client |> Option.get
-        let stats = client.Actor.State.Stats
-        runner.Deliver <| InternalEvt ^<| OnClosed stats
+        runner.Deliver <| InternalEvt OnClosed
     | _ ->
         ()
 
@@ -130,10 +124,10 @@ let private onClientEvent (runner : Part<'actorMsg, 'pkt>)
                             : WebSocketTypes.Evt<'pkt> -> unit =
     fun evt ->
         match evt with
-        | WebSocketTypes.OnSent (stats, pkt) ->
-            runner.Deliver <| AccessorEvt ^<| OnSent (stats, pkt)
-        | WebSocketTypes.OnReceived (stats, pkt) ->
-            runner.Deliver <| AccessorEvt ^<| OnReceived (stats, pkt)
+        | WebSocketTypes.OnSent pkt ->
+            runner.Deliver <| AccessorEvt ^<| OnSent pkt
+        | WebSocketTypes.OnReceived pkt ->
+            runner.Deliver <| AccessorEvt ^<| OnReceived pkt
         | WebSocketTypes.OnStatusChanged status ->
             onStatusChanged runner status
 
@@ -167,29 +161,30 @@ let private handleInternalEvt evt : PartOperate<'actorMsg, 'pkt> =
         | OnSetup (req, callback, client, recorder) ->
             client.Actor.OnEvent.AddWatcher runner "onClientEvent" <| onClientEvent runner
             replyAfter runner callback <| ack req ()
+            runner.SetClientStats' client
             (runner, model, cmd)
             |=|> updateModel (fun m -> {m with Client = Some client ; Recorder = recorder})
-        | OnLinked stats ->
+        | OnLinked ->
             match runner.Part.Args.OnLinkedAsync with
             | None -> ()
             | Some handler ->
                 runner.AddTask ignoreOnFailed <| callOnLinkedAsync handler
             (runner, model, cmd)
-            |=|> addCmd ^<| AccessorEvt ^<| OnStarted stats
-        | OnClosed stats ->
+            |=|> addCmd ^<| AccessorEvt OnStarted
+        | OnClosed ->
             (runner, model, cmd)
             |-|> updateModel (fun m ->
                 {m with
                     Cts = new CancellationTokenSource ()
                     Running = false
                 }
-            )|-|> addCmd ^<| AccessorEvt ^<| OnStopped stats
+            )|-|> addCmd ^<| AccessorEvt OnStopped
             |=|> tryReconnect
         | DoReconnect ->
             (runner, model, cmd)
             |=|> doReconnect
 
-let private update : ActorUpdate<Part<'actorMsg, 'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
+let private update : Update<Part<'actorMsg, 'pkt>, Model<'pkt>, Msg<'pkt>> =
     fun runner msg model ->
         match msg with
         | AccessorReq req -> handleReq req

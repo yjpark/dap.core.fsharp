@@ -1,11 +1,9 @@
 [<AutoOpen>]
-[<RequireQualifiedAccess>]
-module Dap.Context.Helper.Channels
+module Dap.Context.ChannelsExtension
 
 open Dap.Prelude
 open Dap.Context
 open Dap.Context.Internal
-open Dap.Context.Helper
 
 type IChannels with
     member this.AddUnit = this.Add<unit> (fun _ -> E.nil) (D.succeed ())

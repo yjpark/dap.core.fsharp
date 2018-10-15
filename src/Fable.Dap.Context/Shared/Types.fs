@@ -398,6 +398,10 @@ module Extensions =
     type IDictProperty<'p when 'p :> IProperty> with
         member this.SyncWith (other : IDictProperty<'p>) =
             other.SyncTo this
+        member this.GetOrAdd (key : Key) =
+            match this.TryGet key with
+            | Some p -> p
+            | None -> this.Add key
     type IListProperty<'p when 'p :> IProperty> with
         member this.SyncWith (other : IListProperty<'p>) =
             other.SyncTo this

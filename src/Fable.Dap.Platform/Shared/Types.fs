@@ -188,3 +188,13 @@ type LinkStatus =
     | Linked
     | Closing
     | Closed
+with
+    static member JsonEncoder : JsonEncoder<LinkStatus> =
+        E.kindStr<LinkStatus> ()
+    static member JsonDecoder : JsonDecoder<LinkStatus> =
+        D.kindStr<LinkStatus> ()
+    static member JsonSpec =
+        FieldSpec.Create<LinkStatus> (LinkStatus.JsonEncoder, LinkStatus.JsonDecoder)
+    static member Default () = Unknown
+    interface IJson with
+        member this.ToJson () = LinkStatus.JsonEncoder this

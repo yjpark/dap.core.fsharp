@@ -3,7 +3,6 @@ module Demo.Types
 
 open Dap.Prelude
 open Dap.Context
-open Dap.Context.Helper
 
 (*
  * Generated: <ValueInterface>
@@ -61,7 +60,7 @@ type Publisher = {
             }
         )
     static member JsonSpec =
-        FieldSpec.Create<Publisher> Publisher.JsonEncoder Publisher.JsonDecoder
+        FieldSpec.Create<Publisher> (Publisher.JsonEncoder, Publisher.JsonDecoder)
     interface IJson with
         member this.ToJson () = Publisher.JsonEncoder this
     interface IObj
@@ -91,7 +90,7 @@ type Author (owner : IOwner, key : Key) =
     static member Create o k = new Author (o, k)
     static member Default () = Author.Create noOwner NoKey
     static member AddToCombo key (combo : IComboProperty) =
-        combo.AddCustom<Author>(Author.Create, key)
+        combo.AddCustom<Author> (Author.Create, key)
     override this.Self = this
     override __.Spawn o k = Author.Create o k
     override __.SyncTo t = target.SyncTo t.Target
@@ -125,12 +124,12 @@ with
                 S.string
             ])
             CaseSpec<Status>.Create ("Published", [
-                S.string ; S.int ; (S.option E.int D.int)
+                S.string ; S.int ; (S.option (E.int, D.int))
             ])
         ]
     static member JsonEncoder = E.union Status.JsonSpec'
     static member JsonDecoder = D.union Status.JsonSpec'
     static member JsonSpec =
-        FieldSpec.Create<Status> Status.JsonEncoder Status.JsonDecoder
+        FieldSpec.Create<Status> (Status.JsonEncoder, Status.JsonDecoder)
     interface IJson with
         member this.ToJson () = Status.JsonEncoder this

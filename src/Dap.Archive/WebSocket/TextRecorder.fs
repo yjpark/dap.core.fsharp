@@ -18,9 +18,9 @@ module TextConn = Dap.WebSocket.Conn.TextConn
 let watch (agent : EventRecorder.Agent) (onEvent : IBus<WebSocketTypes.Evt<string>>) =
     onEvent.AddWatcher agent "TextRecorder.watchClient" (fun evt ->
         match evt with
-        | WebSocketTypes.OnSent (_stat, pkt) ->
+        | WebSocketTypes.OnSent pkt ->
             EventRecorder.appendEvent' agent "OnSent" pkt
-        | WebSocketTypes.OnReceived (_stat, pkt) ->
+        | WebSocketTypes.OnReceived pkt ->
             EventRecorder.appendEvent' agent "OnReceived" pkt
         | WebSocketTypes.OnStatusChanged status ->
             EventRecorder.appendEvent' agent "OnStatusChanged" <| sprintf "%A" status

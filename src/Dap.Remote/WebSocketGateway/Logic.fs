@@ -12,7 +12,7 @@ module WebSocket = Dap.WebSocket.Types
 module WebSocketConn = Dap.WebSocket.Conn.Types
 
 type ActorOperate<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
-    ActorOperate<Agent<'req, 'evt>, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt>
+    Operate<Agent<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>>
 
 let private handleGateway (msg : Gateway.Msg) : ActorOperate<'req, 'evt> =
     fun _runner (model, cmd) ->
@@ -22,9 +22,9 @@ let private handleGateway (msg : Gateway.Msg) : ActorOperate<'req, 'evt> =
 
 let private handlerSocketEvt (evt : WebSocket.Evt<Packet>) : ActorOperate<'req, 'evt> =
     match evt with
-    | WebSocket.OnReceived (_stats, pkt) ->
+    | WebSocket.OnReceived pkt ->
         handleGateway <| Gateway.OnReceived pkt
-    | WebSocket.OnSent (_stats, pkt) ->
+    | WebSocket.OnSent pkt ->
         handleGateway <| Gateway.OnSent pkt
     | WebSocket.OnStatusChanged status ->
         fun _runner (model, msg) ->
@@ -115,7 +115,7 @@ let private handleReq (req : Req) : ActorOperate<'req, 'evt> =
             replyAsync runner req callback nakOnFailed <| doAttachAsync ident token socket
         (model, cmd)
 
-let private update : ActorUpdate<Agent<'req, 'evt>, Args<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>, Req, NoEvt> =
+let private update : Update<Agent<'req, 'evt>, Model<'req, 'evt>, Msg<'req, 'evt>> =
     fun runner msg model ->
         (match msg with
         | InternalEvt evt -> handleInternalEvt evt

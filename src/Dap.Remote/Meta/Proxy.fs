@@ -8,32 +8,34 @@ open Dap.Platform
 open Dap.Platform.Meta
 
 type M with
-    static member packetClientSpawner (logTraffic : bool, bufferSize : int) =
+    static member packetClientSpawner (logTraffic : bool, bufferSize : int, refreshInterval : Duration) =
+        let refreshInterval = jsonInitValue "Duration" E.duration refreshInterval
         let alias = "PacketClient", "Dap.Remote.WebSocketProxy.PacketClient"
         let args = "PacketClient.Args"
         let args =
-            sprintf "(PacketClient.args %b %i)" logTraffic bufferSize
+            sprintf "(PacketClient.args %b %i %s)" logTraffic bufferSize refreshInterval
             |> CodeArgs args
         let type' = "PacketClient.Agent"
         let spec = "Dap.WebSocket.Internal.Logic.spec"
         let kind = Dap.Remote.WebSocketProxy.PacketClient.Kind
         M.spawner ([alias], args, type', spec, kind)
     static member packetClientSpawner (logTraffic : bool) =
-        M.packetClientSpawner(logTraffic, Dap.WebSocket.Const.DefaultBufferSize)
+        M.packetClientSpawner(logTraffic, Dap.WebSocket.Const.DefaultBufferSize, Dap.WebSocket.Const.DefaultRefreshInterval)
 
 type M with
-    static member packetConnSpawner (logTraffic : bool, bufferSize : int) =
+    static member packetConnSpawner (logTraffic : bool, bufferSize : int, refreshInterval : Duration) =
+        let refreshInterval = jsonInitValue "Duration" E.duration refreshInterval
         let alias = "PacketConn", "Dap.Remote.WebSocketGateway.PacketConn"
         let args = "PacketConn.Args"
         let args =
-            sprintf "(PacketConn.args %b %i)" logTraffic bufferSize
+            sprintf "(PacketConn.args %b %i %s)" logTraffic bufferSize refreshInterval
             |> CodeArgs args
         let type' = "PacketConn.Agent"
         let spec = "Dap.WebSocket.Internal.Logic.spec"
         let kind = Dap.Remote.WebSocketGateway.PacketConn.Kind
         M.spawner ([alias], args, type', spec, kind)
     static member packetConnSpawner (logTraffic : bool) =
-        M.packetConnSpawner(logTraffic, Dap.WebSocket.Const.DefaultBufferSize)
+        M.packetConnSpawner(logTraffic, Dap.WebSocket.Const.DefaultBufferSize, Dap.WebSocket.Const.DefaultRefreshInterval)
 
 type M with
     static member proxySpawner (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool, kind : Kind) =

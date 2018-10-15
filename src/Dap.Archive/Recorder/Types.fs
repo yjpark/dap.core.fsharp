@@ -47,8 +47,8 @@ let DoBeginRecording (bundle : Bundle'<'extra, 'frame>)  callback =
 let DoAppendFrame (frame : 'frame) callback =
     DoAppendFrame (frame, callback)
 
-type Agent<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (param) =
-    inherit BaseAgent<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> (param)
+type Agent<'extra, 'frame> when 'extra :> IJson and 'frame :> IFrame (pack, param) =
+    inherit PackAgent<ITickingPack, Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> (pack, param)
     override this.Runner = this
-    static member Spawn (param) = new Agent<'extra, 'frame> (param)
+    static member Spawn k m = new Agent<'extra, 'frame> (k, m)
 

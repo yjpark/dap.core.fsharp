@@ -14,25 +14,6 @@ type ActorInit<'args, 'model, 'msg>
             when 'model : not struct and 'msg :> IMsg =
     Init<IAgent<'msg>, 'args, 'model, 'msg>
 
-/// Change model according to msg, also may generate cmds.
-type ActorUpdate<'runner, 'args, 'model, 'msg, 'req, 'evt>
-            when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
-                    and 'model : not struct and 'msg :> IMsg
-                    and 'req :> IReq and 'evt :> IEvt =
-    Update<'runner, 'model, 'msg>
-
-/// Generate msg from outside. e.g. an timer, or keyboard.
-type ActorSubscribe<'runner, 'args, 'model, 'msg, 'req, 'evt>
-            when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
-                    and 'model : not struct and 'msg :> IMsg
-                    and 'req :> IReq and 'evt :> IEvt =
-    Subscribe<'runner, 'model, 'msg>
-
-type ActorOperate<'runner, 'args, 'model, 'msg, 'req, 'evt>
-            when 'runner :> IAgent<'args, 'model, 'msg, 'req, 'evt>
-                    and 'msg :> IMsg and 'req :> IReq and 'evt :> IEvt =
-    Operate<'runner, 'model, 'msg>
-
 type ActorParam<'msg> when 'msg :> IMsg = {
     WrapEvt : Wrapper<'msg, AgentEvt> option
 } with
@@ -82,11 +63,6 @@ type ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt
                 Subscribe = subscribe
             }
         this
-    member this.WithParam (param' : ActorParam<'msg>) =
-        if inUse then
-            failWith "Already_In_Use" (param, param')
-        param <- param'
-        this
     member this.WithParam (update : ActorParam<'msg> -> ActorParam<'msg>) =
         if inUse then
             failWith "Already_In_Use" (param, update)
@@ -96,6 +72,12 @@ type ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt
         member __.Args = args
         member __.WrapReq = wrapReq
         member __.CastEvt = castEvt
+
+let withSubscribe (subscribe : Subscribe<'runner, 'model, 'msg>) (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>) =
+    spec.WithSubscribe subscribe
+
+let withWrapEvt (wrapEvt : Wrapper<'msg, AgentEvt>) (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>) =
+    spec.WithParam (fun p -> p.WithWrapEvt wrapEvt)
 
 [<StructuredFormatDisplay("<Actor>{AsDisplay}")>]
 type internal Actor<'args, 'model, 'msg, 'req, 'evt

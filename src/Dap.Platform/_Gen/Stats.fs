@@ -3,7 +3,6 @@ module Dap.Platform.Stats
 
 open Dap.Prelude
 open Dap.Context
-open Dap.Context.Helper
 
 (*
  * Generated: <Record>
@@ -110,7 +109,7 @@ type DurationStats (owner : IOwner, key : Key) =
     static member Create o k = new DurationStats (o, k)
     static member Default () = DurationStats.Create noOwner NoKey
     static member AddToCombo key (combo : IComboProperty) =
-        combo.AddCustom<DurationStats>(DurationStats.Create, key)
+        combo.AddCustom<DurationStats> (DurationStats.Create, key)
     override this.Self = this
     override __.Spawn o k = DurationStats.Create o k
     override __.SyncTo t = target.SyncTo t.Target
@@ -141,7 +140,7 @@ type FuncStats (owner : IOwner, key : Key) =
     static member Create o k = new FuncStats (o, k)
     static member Default () = FuncStats.Create noOwner NoKey
     static member AddToCombo key (combo : IComboProperty) =
-        combo.AddCustom<FuncStats>(FuncStats.Create, key)
+        combo.AddCustom<FuncStats> (FuncStats.Create, key)
     override this.Self = this
     override __.Spawn o k = FuncStats.Create o k
     override __.SyncTo t = target.SyncTo t.Target
@@ -160,21 +159,23 @@ type FuncStats (owner : IOwner, key : Key) =
 type Stats (owner : IOwner, key : Key) =
     inherit WrapProperties<Stats, IComboProperty> ()
     let target = Properties.combo owner key
-    let deliver = target.AddCustom<DurationStats>(DurationStats.Create, (* Stats *) "deliver")
-    let process' = target.AddCustom<DurationStats>(DurationStats.Create, (* Stats *) "process")
-    let reply = target.AddCustom<FuncStats>(FuncStats.Create, (* Stats *) "reply")
-    let func = target.AddCustom<FuncStats>(FuncStats.Create, (* Stats *) "func")
-    let task = target.AddCustom<FuncStats>(FuncStats.Create, (* Stats *) "task")
+    let time = target.AddVar<(* Stats *) Instant> (InstantFormat.DateHourMinuteSecondSub.JsonEncoder, InstantFormat.DateHourMinuteSecondSub.JsonDecoder, "time", (getNow' ()), None)
+    let deliver = target.AddCustom<DurationStats> (DurationStats.Create, (* Stats *) "deliver")
+    let process' = target.AddCustom<DurationStats> (DurationStats.Create, (* Stats *) "process")
+    let reply = target.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "reply")
+    let func = target.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "func")
+    let task = target.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "task")
     do (
         base.Setup (target)
     )
     static member Create o k = new Stats (o, k)
     static member Default () = Stats.Create noOwner NoKey
     static member AddToCombo key (combo : IComboProperty) =
-        combo.AddCustom<Stats>(Stats.Create, key)
+        combo.AddCustom<Stats> (Stats.Create, key)
     override this.Self = this
     override __.Spawn o k = Stats.Create o k
     override __.SyncTo t = target.SyncTo t.Target
+    member __.Time (* Stats *) : IVarProperty<Instant> = time
     member __.Deliver (* Stats *) : DurationStats = deliver
     member __.Process (* Stats *) : DurationStats = process'
     member __.Reply (* Stats *) : FuncStats = reply

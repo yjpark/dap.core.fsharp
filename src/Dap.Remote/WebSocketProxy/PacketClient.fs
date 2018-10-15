@@ -23,5 +23,5 @@ type Agent = ClientTypes.Agent<Packet>
 let encode = Dap.Remote.WebSocketGateway.PacketConn.encode
 let decode = Dap.Remote.WebSocketGateway.PacketConn.decode
 
-let args logTraffic bufferSize =
-    Args.Create logTraffic WebSocketMessageType.Text bufferSize encode decode Dap.WebSocket.Client.Logic.handleReq
+let args logTraffic bufferSize refreshInterval =
+    Args.Create logTraffic WebSocketMessageType.Text bufferSize refreshInterval encode decode Dap.WebSocket.Client.Logic.handleReq

@@ -1,7 +1,6 @@
 [<AutoOpen>]
 module Demo.App
 
-open Dap.Context.Helper
 open Dap.Prelude
 open Dap.Context
 open Dap.Context.Builder
@@ -15,7 +14,6 @@ type IClientPackArgs =
 
 type IClientPack =
     inherit IPack
-    abstract Args : IClientPackArgs with get
     abstract UserStub : Proxy.Proxy<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt> with get
 
 type IAppPackArgs =
@@ -25,7 +23,6 @@ type IAppPackArgs =
 type IAppPack =
     inherit IPack
     inherit IClientPack
-    abstract Args : IAppPackArgs with get
     abstract AsClientPack : IClientPack with get
 
 type AppKinds () =
@@ -86,7 +83,7 @@ and AppArgs = {
             }
         )
     static member JsonSpec =
-        FieldSpec.Create<AppArgs> AppArgs.JsonEncoder AppArgs.JsonDecoder
+        FieldSpec.Create<AppArgs> (AppArgs.JsonEncoder, AppArgs.JsonDecoder)
     interface IJson with
         member this.ToJson () = AppArgs.JsonEncoder this
     interface IObj
@@ -142,11 +139,9 @@ type App (logging : ILogging, args : AppArgs) as this =
     interface IPack with
         member __.Env : IEnv = env
     interface IClientPack with
-        member __.Args = this.Args.AsClientPackArgs
         member __.UserStub (* IClientPack *) : Proxy.Proxy<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt> = userStub |> Option.get
     member __.AsClientPack = this :> IClientPack
     interface IAppPack with
-        member __.Args = this.Args.AsAppPackArgs
         member __.AsClientPack = this.AsClientPack
     member __.AsAppPack = this :> IAppPack
     interface IApp with

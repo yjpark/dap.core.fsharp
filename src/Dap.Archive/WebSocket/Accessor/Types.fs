@@ -1,7 +1,10 @@
 module Dap.Archive.WebSocket.Accessor.Types
 
 open System.Threading
+
+open Dap.Context
 open Dap.Platform
+open Dap.WebSocket
 open Dap.Archive.Recorder
 
 module WebSocketTypes = Dap.WebSocket.Types
@@ -43,22 +46,22 @@ and Model<'pkt> = {
 and Req<'pkt> =
     | DoSetup of string * Callback<unit>
     | DoSetUri of string * Callback<unit>
-    | DoStart of Callback<WebSocketTypes.LinkedStats option>
+    | DoStart of Callback<unit>
     | DoStop of Callback<unit>
-    | DoSend of 'pkt * Callback<WebSocketTypes.SendStats>
+    | DoSend of 'pkt * Callback<unit>
 with interface IReq
 
 and Evt<'pkt> =
-    | OnStarted of WebSocketTypes.LinkedStats option
-    | OnStopped of WebSocketTypes.ConnectionStats option
-    | OnSent of WebSocketTypes.SendStats * 'pkt
-    | OnReceived of WebSocketTypes.ReceiveStats * 'pkt
+    | OnStarted
+    | OnStopped
+    | OnSent of 'pkt
+    | OnReceived of 'pkt
 with interface IEvt
 
 and InternalEvt<'pkt> =
     | OnSetup of  IReq * Callback<unit> * Client<'pkt> * (EventRecorder.Agent option)
-    | OnLinked of WebSocketTypes.LinkedStats option
-    | OnClosed of WebSocketTypes.ConnectionStats option
+    | OnLinked
+    | OnClosed
     | DoReconnect
 
 and Msg<'pkt> =
@@ -83,8 +86,13 @@ let DoSend pkt callback =
 
 type Part<'actorMsg, 'pkt when 'actorMsg :> IMsg> (param) =
     inherit BasePart<'actorMsg, Part<'actorMsg, 'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> (param)
+    let mutable clientStats : LinkStats option = None
     override this.Runner = this
     static member Spawn (param) = new Part<'actorMsg, 'pkt> (param)
+    member this.SetClientStats' (client : Client<'pkt>) =
+        let clientStats' = this.Agent.Console.Stats.Target.AddLink (client.LinkStats, "client")
+        clientStats <- Some client.LinkStats
+    member __.ClientStats : LinkStats option = clientStats
 
 type PartOperate<'actorMsg, 'pkt when 'actorMsg :> IMsg> =
-    ActorOperate<Part<'actorMsg, 'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+    Operate<Part<'actorMsg, 'pkt>, Model<'pkt>, Msg<'pkt>>

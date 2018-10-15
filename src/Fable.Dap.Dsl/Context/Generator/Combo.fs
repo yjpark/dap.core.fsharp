@@ -278,7 +278,7 @@ type ClassGenerator (meta : ComboMeta) =
             yield sprintf "    static member Create o k = new %s (o, k)" param.Name
             yield sprintf "    static member Default () = %s.Create noOwner NoKey" param.Name
             yield sprintf "    static member AddToCombo key (combo : IComboProperty) ="
-            yield sprintf "        combo.AddCustom<%s>(%s.Create, key)" param.Name param.Name
+            yield sprintf "        combo.AddCustom<%s> (%s.Create, key)" param.Name param.Name
             yield sprintf "    override this.Self = this"
             yield sprintf "    override __.Spawn o k = %s.Create o k" param.Name
             yield sprintf "    override __.SyncTo t = target.SyncTo t.Target"
@@ -321,7 +321,7 @@ type ClassGenerator (meta : ComboMeta) =
         | CustomProperty ->
             match prop.Variation with
             | Nothing ->
-                sprintf "    let %s = target.AddCustom<%s>(%s.Create, %s\"%s\")" varName prop.Type prop.Type prop.CommentCode prop.Key
+                sprintf "    let %s = target.AddCustom<%s> (%s.Create, %s\"%s\")" varName prop.Type prop.Type prop.CommentCode prop.Key
             | _ ->
                 failWith "getFieldAdder: Unsupported_Custom" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
         | _ ->

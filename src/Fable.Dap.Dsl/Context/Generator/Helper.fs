@@ -125,7 +125,6 @@ type G = CodeGeneratorHelper with
             [
                 "open Dap.Prelude"
                 "open Dap.Context"
-                "open Dap.Context.Helper"
             ] |> ensureOpens sections
         ModuleParam.Create name autoOpen requireQualifiedAccess
         |> generateModule sections
@@ -143,7 +142,6 @@ type G = CodeGeneratorHelper with
             [
                 "open Dap.Prelude"
                 "open Dap.Context"
-                "open Dap.Context.Helper"
                 "open Dap.Context.Builder"
             ] |> ensureOpens sections
         ModuleParam.Create name autoOpen false

@@ -8,7 +8,6 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Unsafe
 open Dap.Context.Builder
-open Dap.Context.Helper
 open Dap.Context.Generator
 open Dap.Platform
 open Dap.WebSocket.Client

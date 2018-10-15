@@ -31,7 +31,6 @@ type M with
     static member dateTime (key) =
         M.dateTime (key, "System.DateTime.UtcNow")
 
-#if !FABLE_COMPILER
 type M with
     static member instant (key, initValue : string, validator) =
         PropMeta.Create "Instant" "E.instant" "D.instant" "S.instant" VarProperty
@@ -40,6 +39,9 @@ type M with
         M.instant (key, initValue, "")
     static member instant (key) =
         M.instant (key, "(getNow' ())")
+
+#if !FABLE_COMPILER
+type M with
     static member instant (format : InstantFormat, key, initValue : string, validator) =
         let (encoder, decoder, spec) =
             match format with
@@ -62,18 +64,24 @@ type M with
         M.instant (format, key, initValue, "")
     static member instant (format : InstantFormat, key) =
         M.instant (format, key, "(getNow' ())")
+#endif
 
 type M with
     static member duration (key, initValue : string, validator) =
         PropMeta.Create "Duration" "E.duration" "D.duration" "S.duration" VarProperty
             key initValue validator
+    static member duration (key) =
+        M.duration (key, "noDuration", "")
+#if !FABLE_COMPILER
     static member duration (key, initValue : Duration, validator) =
         let initValue = jsonInitValue "Duration" E.duration initValue
         M.duration (key, initValue, validator)
     static member duration (key, initValue : Duration) =
         M.duration (key, initValue, "")
-    static member duration (key) =
-        M.duration (key, noDuration)
+#endif
+
+#if !FABLE_COMPILER
+type M with
     static member duration (format : DurationFormat, key, initValue : string, validator) =
         let (encoder, decoder, spec) =
             match format with
@@ -93,7 +101,7 @@ type M with
         PropMeta.Create "Duration" encoder decoder spec VarProperty
             key initValue validator
     static member duration (format : DurationFormat, key, initValue : Duration, validator) =
-        let initValue = jsonInitValue "Duration" format.JsonEncoder initValue
+        let initValue = jsonInitValue "Duration" E.duration initValue
         M.duration (format, key, initValue, validator)
     static member duration (format : DurationFormat, key, initValue : Duration) =
         M.duration (format, key, initValue, "")

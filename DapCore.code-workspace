@@ -54,7 +54,8 @@
             "log" : true,
             ".vs": true,
             ".vscode": true,
-            ".fake": true
+            ".fake": true,
+            "node_modules": true
 		},
 		"cSpell.words": [
 			"Guid",

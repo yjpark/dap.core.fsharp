@@ -66,11 +66,11 @@ let updateExtra (extra : Extra) (frame : Frame) : Extra * Frame =
         |> Map.add frame.Kind count
     ({extra with Events = events}, {frame with Id = count.ToString ()})
 
-let registerAsync' kind args env =
-    let spec = Logic.spec<Extra, Frame> args
+let registerAsync' kind pack args env =
+    let spec = Logic.spec<Extra, Frame> pack args
     env |> Env.registerAsync spec kind
 
-let registerAsync a = registerAsync' Kind a
+let registerAsync k a = registerAsync' Kind k a
 
 let appendEvent' (agent : Agent) (kind : string) (payload : string) : unit =
     let frame = PacketFrame.Create agent.Env.Clock.Now "" kind payload
@@ -103,5 +103,5 @@ let createBundle' (profile : Profile) (param : BundleParam') : Bundle' =
     let spec = getBundleSpec' profile
     new Bundle' (spec, param)
 
-let spec args =
-    Dap.Archive.Recorder.Logic.spec<Extra, Frame> args
+let spec pack args =
+    Dap.Archive.Recorder.Logic.spec<Extra, Frame> pack args

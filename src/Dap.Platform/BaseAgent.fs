@@ -50,7 +50,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     let mutable logger : ILogger = env.Logging.GetLogger <| ident.ToLuid ()
     let mutable spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt> option = None
     let mutable logic : AgentLogic<'runner, 'args, 'model, 'msg, 'req, 'evt> option = None
-    let mutable console : AgentConsole = new AgentConsole (this)
+    let mutable console : AgentConsole = new AgentConsole (this, param, ident)
     let taskManager : ITaskManager = new TaskManager () :> ITaskManager
     let mutable disposed : bool = false
     let mutable dispatch : DispatchMsg<AgentMsg<'runner, 'args, 'model, 'msg, 'req, 'evt>> option = None

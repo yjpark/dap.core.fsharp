@@ -1,32 +1,12 @@
 [<AutoOpen>]
-[<RequireQualifiedAccess>]
-module Dap.Context.Helper.Properties
+module Dap.Context.PropertiesExtension
 
 open Dap.Prelude
 open Dap.Context
 open Dap.Context.Internal
-open Dap.Context.Helper
-
-let dict<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
-    Property.dictSpec<'p> key E.emptyObject spawner
-    |> DictProperty<'p>.Create owner
-    :> IDictProperty<'p>
-
-let list<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
-    Property.listSpec<'p> key E.emptyList spawner
-    |> ListProperty<'p>.Create owner
-    :> IListProperty<'p>
-
-let combo (owner : IOwner) (key : Key) =
-    Property.comboSpec key <| E.object []
-    |> ComboProperty.Create owner
-    :> IComboProperty
-
-let custom<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
-    spawner owner key
 
 type IComboProperty with
-    static member Default () = combo noOwner NoKey
+    static member Default () = Properties.combo noOwner NoKey
 
 type IComboProperty with
     member this.AddDict<'p when 'p :> IProperty> (spawner, key) =
@@ -58,9 +38,9 @@ type IComboProperty with
         Property.comboSpec key <| E.object []
         |> this.AddCombo
     member this.AddComboDict key =
-        this.AddDict<IComboProperty> (combo, key)
+        this.AddDict<IComboProperty> (Properties.combo, key)
     member this.AddComboList key =
-        this.AddList<IComboProperty> (combo, key)
+        this.AddList<IComboProperty> (Properties.combo, key)
 
 type IComboProperty with
     member this.AddVar<'v> (encoder, decoder, key, initValue, validator) =
@@ -107,7 +87,7 @@ type IComboProperty with
         this.AddDecimal (key, initValue, None)
 
 type IDictProperty<'p when 'p :> IProperty> with
-    static member Default spawner = dict<'p> spawner noOwner NoKey
+    static member Default spawner = Properties.dict<'p> spawner noOwner NoKey
 
 type IListProperty<'p when 'p :> IProperty> with
-    static member Default spawner = list<'p> spawner noOwner NoKey
+    static member Default spawner = Properties.list<'p> spawner noOwner NoKey

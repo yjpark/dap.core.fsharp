@@ -12,7 +12,7 @@ open Dap.Archive.Recorder.Types
 module TickerTypes = Dap.Platform.Ticker.Types
 
 type ActorOperate<'extra, 'frame when 'extra :> IJson and 'frame :> IFrame> =
-    ActorOperate<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
+    Operate<Agent<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>>
 
 let private doBeginRecording req ((bundle, callback) : Bundle'<'extra, 'frame> * Callback<Meta<'extra>>)
                             : ActorOperate<'extra, 'frame> =
@@ -102,7 +102,7 @@ let private onTick ((time, delta) : Instant * Duration) : ActorOperate<'extra, '
         )|> Option.defaultValue noOperation
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>> =
+let private update : Update<Agent<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
     fun runner msg model ->
         match msg with
         | RecorderReq req -> handleReq req
@@ -112,14 +112,17 @@ let private update : ActorUpdate<Agent<'extra, 'frame>, Args, Model<'extra, 'fra
 
 let private init : ActorInit<Args, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
     fun runner args ->
-        let ticker = runner.Env |> Env.getService args.TickerKind args.TickerKey
-        let ticker = ticker :?> TickerTypes.Agent
-        ticker.WatchOnTick runner "OnTick" (runner.Deliver << OnTick)
         ({
             Bundle = None
             NextFlushTime = runner.Clock.Now + args.FlushInterval
         }, noCmd)
 
-let spec<'extra, 'frame when 'extra :> IJson and 'frame :> IFrame> (args : Args) =
+let private subscribe : Subscribe<Agent<'extra, 'frame>, Model<'extra, 'frame>, Msg<'extra, 'frame>> =
+    fun runner _model ->
+        runner.Pack.Ticker.WatchOnTick runner "OnTick" (runner.Deliver << OnTick)
+        noCmd
+
+let spec<'extra, 'frame when 'extra :> IJson and 'frame :> IFrame> pack (args : Args) =
     new ActorSpec<Agent<'extra, 'frame>, Args, Model<'extra, 'frame>, Msg<'extra, 'frame>, Req<'extra, 'frame>, Evt<'extra, 'frame>>
-        (Agent<'extra, 'frame>.Spawn, args, RecorderReq, castEvt<'extra, 'frame>, init, update)
+        (Agent<'extra, 'frame>.Spawn pack, args, RecorderReq, castEvt<'extra, 'frame>, init, update)
+    |> withSubscribe subscribe

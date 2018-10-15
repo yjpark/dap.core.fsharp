@@ -9,6 +9,7 @@ open FSharp.Control.Tasks.V2
 open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket
+open Dap.WebSocket.Types
 open Dap.WebSocket.Internal.Tasks
 open Dap.WebSocket.Conn.Types
 module BaseLogic = Dap.WebSocket.Internal.Logic
@@ -33,16 +34,11 @@ let private doAttach req (ident, token, socket, callback) : ActorOperate<'pkt> =
             let task = doReceiveAsync runner
             reply runner callback <| ack req (task :> Task)
             let (time, duration) = runner.Clock.CalcDuration(time)
-            let stats : LinkedStats = {
-                ProcessTime = processTime
-                ConnectedTime = time
-                ConnectDuration = duration
-            }
             (runner, model, cmd)
             |-|> updateModel (fun m -> {m with Link = Some link})
-            |=|> addCmd ^<| InternalEvt ^<| OnLinked stats
+            |=|> addCmd ^<| InternalEvt OnLinked
 
-let private doSend req ((pkt, callback) : 'pkt * Callback<SendStats>) : ActorOperate<'pkt> =
+let private doSend req ((pkt, callback) : 'pkt * Callback<unit>) : ActorOperate<'pkt> =
     fun runner (model, cmd) ->
         BaseLogic.doSend runner req (pkt, callback)
         (model, cmd)

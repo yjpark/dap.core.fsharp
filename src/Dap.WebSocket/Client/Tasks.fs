@@ -8,15 +8,16 @@ open FSharp.Control.Tasks.V2
 open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket
+open Dap.WebSocket.Types
 open Dap.WebSocket.Client.Types
 open Dap.WebSocket.Internal.Tasks
 
-let internal doConnectFailed : OnReplyFailed<Agent<'pkt>, LinkedStats> =
+let internal doConnectFailed : OnReplyFailed<Agent<'pkt>, unit> =
     fun req callback runner e ->
         reply runner callback <| nak req "Connect_Failed" e
         runner.Deliver <| InternalEvt ^<| DoRefreshStatus (Some e)
 
-let internal doConnectAsync : GetReplyTask<Agent<'pkt>, LinkedStats> =
+let internal doConnectAsync : GetReplyTask<Agent<'pkt>, unit> =
     fun req callback runner -> task {
         let time = runner.Clock.Now
         let processTime = time
@@ -29,16 +30,11 @@ let internal doConnectAsync : GetReplyTask<Agent<'pkt>, LinkedStats> =
         let (time, duration) = runner.Clock.CalcDuration(time)
         match link.Socket.State with
         | WebSocketState.Open ->
-            let stats : LinkedStats = {
-                ProcessTime = processTime
-                ConnectedTime = time
-                ConnectDuration = duration
-            }
             logInfo runner "Link" "Connected" link
-            reply runner callback <| ack req stats
-            runner.Deliver <| InternalEvt ^<| OnLinked stats
+            reply runner callback <| ack req ()
+            runner.Deliver <| InternalEvt OnLinked
             runner.AddTask refreshStatusOnFailed doReceiveAsync
-        | state' ->
-            reply runner callback <| nak req "Connect_Failed" (link, time, duration, state')
+        | state ->
+            reply runner callback <| nak req "Connect_Failed" (link, time, duration, state)
             runner.Deliver <| InternalEvt ^<| DoRefreshStatus None
     }

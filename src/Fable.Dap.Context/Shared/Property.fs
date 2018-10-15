@@ -1,6 +1,5 @@
-[<AutoOpen>]
 [<RequireQualifiedAccess>]
-module Dap.Context.Helper.Property
+module Dap.Context.Property
 
 open Dap.Prelude
 open Dap.Context

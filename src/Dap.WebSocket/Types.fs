@@ -1,4 +1,3 @@
-[<AutoOpen>]
 module Dap.WebSocket.Types
 
 open System
@@ -6,6 +5,7 @@ open System.Net.WebSockets
 open System.Threading
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform
 
 type Encode<'pkt> = 'pkt -> ArraySegment<byte>
@@ -13,78 +13,37 @@ type Encode<'pkt> = 'pkt -> ArraySegment<byte>
 // buffer, index, count
 type Decode<'pkt> = array<byte> * int * int -> 'pkt
 
-type SendStats = {
-    ProcessTime : Instant
-    BytesCount : int
-    SentTime : Instant
-    EncodeDuration : Duration
-    TransferDuration : Duration
-}
-
-type ReceiveStats = {
-    ProcessTime : Instant
-    BytesCount : int
-    ReceivedTime : Instant
-    TransferDuration : Duration
-    DecodeDuration : Duration
-}
-
-type LinkedStats = {
-    ProcessTime : Instant
-    ConnectedTime : Instant
-    ConnectDuration : Duration
-}
-
-type ConnectionStats = {
-    Linked : LinkedStats
-    ClosedTime : Instant option
-    mutable SentCount : int
-    mutable ReceivedCount : int
-} with
-    static member Create linked =
-        {
-            Linked = linked
-            ClosedTime = None
-            SentCount = 0
-            ReceivedCount = 0
-        }
-
-type Agent<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq (param) =
-    inherit BaseAgent<Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> (param)
-    override this.Runner = this
-    static member Spawn (param) = new Agent<'socket, 'pkt, 'req> (param)
-
-and ActorOperate<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq =
-    ActorOperate<Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>>
-
-and Args<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq = {
+type Args<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq = {
     LogTraffic : bool
     SendType : WebSocketMessageType
     BufferSize : int
+    RefreshInterval : Duration
     Encode : Encode<'pkt>
     Decode : Decode<'pkt>
     HandleReq : 'req -> ActorOperate<'socket, 'pkt, 'req>
 } with
-    static member Create logTraffic sendType bufferSize encode decode handleReq =
+    static member Create logTraffic sendType bufferSize refreshInterval encode decode handleReq =
         {
             LogTraffic = logTraffic
             SendType = sendType
             BufferSize = bufferSize
+            RefreshInterval = refreshInterval
             Encode = encode
             Decode = decode
             HandleReq = handleReq
         }
 
 and Evt<'pkt> =
-    | OnSent of SendStats * 'pkt
-    | OnReceived of ReceiveStats * 'pkt
+    | OnSent of 'pkt
+    | OnReceived of 'pkt
     | OnStatusChanged of LinkStatus
 with interface IEvt
 
 and InternalEvt =
-    | OnLinked of LinkedStats
+    | OnLinked
     | TryCloseSocket
     | DoRefreshStatus of exn option
+    | OnTick of Instant * Duration
 
 and Msg<'pkt, 'req> =
     | WebSocketReq of 'req
@@ -94,8 +53,8 @@ with interface IMsg
 
 and Model<'socket, 'pkt> when 'socket :> WebSocket = {
     Link : Link<'socket> option
-    Stats : ConnectionStats option
     Status : LinkStatus
+    NextRefreshTime : Instant
 }
 
 and [<StructuredFormatDisplay("<Link>{AsDisplay}")>]
@@ -106,6 +65,16 @@ and [<StructuredFormatDisplay("<Link>{AsDisplay}")>]
     Buffer : byte[]
 } with
     member this.AsDisplay = (this.Ident, this.Socket)
+
+and ActorOperate<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq =
+    Operate<Agent<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>>
+
+and Agent<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq (pack, param) =
+    inherit PackAgent<ITickingPack, Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> (pack, param)
+    let linkStats = base.Console.Stats.Target.AddCustom<LinkStats> (LinkStats.Create, "link")
+    override this.Runner = this
+    static member Spawn k m = new Agent<'socket, 'pkt, 'req> (k, m)
+    member __.LinkStats : LinkStats = linkStats
 
 let castEvt<'pkt, 'req> : CastEvt<Msg<'pkt, 'req>, Evt<'pkt>> =
     function

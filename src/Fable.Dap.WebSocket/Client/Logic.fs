@@ -5,7 +5,7 @@ open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket.Client.Types
 
-type ActorOperate<'pkt> = ActorOperate<Agent<'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>
+type ActorOperate<'pkt> = Operate<Agent<'pkt>, Model<'pkt>, Msg<'pkt>>
 
 let private createSocket (runner : Agent<'pkt>)  =
     let socket = Fable.Import.Browser.WebSocket.Create runner.Actor.Args.Uri
@@ -46,11 +46,6 @@ let private doSend req ((pkt, callback) : 'pkt * Callback<System.DateTime>) : Ac
         match model.Socket with
         | None ->
             reply runner callback <| nak req "Socket_Not_Exist" runner.Actor.Args.Uri
-            (*
-            let res = nak<System.DateTime> req "Socket_Not_Exist" runner.Actor.Args.Uri
-            callback
-            |> Option.iter (fun c -> c res)
-            *)
         | Some socket ->
             if socket.readyState <> socket.OPEN then
                 reply runner callback <| nak req "Invalid_State" runner.Actor.Args.Uri
@@ -89,7 +84,7 @@ let private handleInternalEvt (evt : InternalEvt) : ActorOperate<'pkt> =
             |-|- doSetStatus LinkStatus.Closed
         <| runner <| (model, cmd)
 
-let private update : ActorUpdate<Agent<'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> =
+let private update : Update<Agent<'pkt>, Model<'pkt>, Msg<'pkt>> =
     fun runner msg model ->
         match msg with
         | WebSocketReq req -> handleReq req

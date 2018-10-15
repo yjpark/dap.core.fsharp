@@ -61,6 +61,7 @@
     <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Helper.fs" />
     <Compile Include="Meta/Helper.fs" />
     <Compile Include="Dsl/Packs.fs" />
+    <Compile Include="_Gen/Packs.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.Context\Dap.Context.fsproj" />

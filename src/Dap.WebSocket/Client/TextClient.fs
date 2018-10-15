@@ -18,7 +18,7 @@ type Evt = BaseTypes.Evt<string>
 type Args = BaseTypes.Args<ClientWebSocket, string, Req>
 type Agent = ClientTypes.Agent<string>
 
-let args encoding logTraffic bufferSize =
+let args encoding logTraffic bufferSize refreshInterval =
     let encode = Dap.WebSocket.Internal.Text.encode encoding
     let decode = Dap.WebSocket.Internal.Text.decode encoding
-    Args.Create logTraffic WebSocketMessageType.Text bufferSize encode decode Dap.WebSocket.Client.Logic.handleReq
+    Args.Create logTraffic WebSocketMessageType.Text bufferSize refreshInterval encode decode Dap.WebSocket.Client.Logic.handleReq
