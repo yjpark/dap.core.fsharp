@@ -115,7 +115,7 @@ let doCustomCloneTest (logger : ILogger) =
             books b
         }
     logWarn logger "Test" "Original" <| E.encodeJson 4 a
-    logWarn logger "Test" "Clone" <| E.encodeJson 4 ^<| a.AsProperty.Clone0 noOwner "Clone"
+    logWarn logger "Test" "Clone" <| E.encodeJson 4 ^<| a.AsProperty.Clone0 (noOwner, "Clone")
 
 type App with
     static member CreateAsync (logging : ILogging, args : AppArgs) =
@@ -162,9 +162,9 @@ let main _argv =
     )
     Task.Delay 1.0<second>
     |> Async.AwaitTask |> Async.RunSynchronously |> ignore
-    app.Ticker.Console.GetStats.Handle ()
-    |> E.encode 4
-    |> logWarn app.Env "Ticker" "Stats"
+    let stats = app.Ticker.Console.GetStats.Handle ()
+    logWarn app.Env "Ticker" "Stats" (E.encode 4 stats)
+    app.Ticker.Console.Stats.AsProperty.WithJson stats |> ignore
 
     //doJsonTest env
     //doBuilderTest env
