@@ -217,7 +217,7 @@ let log (evt : LogEvent) (logger : ILogger) =
     logger
 
 let failWith err detail =
-    failwithf "%s: %A" err detail
+    failwithf "%s: %s" err <| detail.ToString ()
 
 let logInfo (logger : ILogger) section info detail : unit =
     logger.Log <| tplInfo section info detail
