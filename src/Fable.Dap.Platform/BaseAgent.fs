@@ -26,6 +26,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     let mutable dispatch : Elmish.Dispatch<'msg> option = None
     let mutable actor : Actor<'args, 'model, 'msg, 'req, 'evt> option = None
     member this.AsDisplay = (ident, this.Actor)
+    override this.ToString () = sprintf "<Agent>%s" <| ident.ToString ()
     member this.AsAgent1 = this :> IAgent
     member this.AsAgent2 = this :> IAgent<'req, 'evt>
     member this.AsAgent2' = this :> IAgent<'msg>
