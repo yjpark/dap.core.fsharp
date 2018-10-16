@@ -256,3 +256,8 @@ type G = CodeGeneratorHelper with
             "    member this.AsDisplay ="
             "        " + code
         ]
+    static member Default (code : string) (lines : Lines) =
+        lines @ [
+            "    static member Default () ="
+            "        " + code
+        ]
