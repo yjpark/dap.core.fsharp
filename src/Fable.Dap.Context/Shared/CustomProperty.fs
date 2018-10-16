@@ -49,8 +49,10 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
             let this' = this.AsProperty
             if this'.Kind <> t.Kind then
                 this'.Owner.Log <| tplPropertyError "Property:InValid_Kind" this'.Spec0.Luid this'.Ver (this'.Kind, t.Kind, t)
+        #if !FABLE_COMPILER
             elif this.GetType () <> t.GetType () then
                 this'.Owner.Log <| tplPropertyError "Property:InValid_Type" this'.Spec0.Luid this'.Ver (this.GetType (), t.GetType (), t)
+        #endif
             else
                 this.SyncTo (t :?> 'p)
     interface IAspect with
@@ -58,6 +60,9 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         member this.Ver = this.Target.Ver
     interface IJson with
         member this.ToJson () = this.Target.ToJson ()
+#if FABLE_COMPILER
+    interface IUnsafeProperty
+#else
     interface IUnsafeProperty with
         member this.AsVar = this.UnsafeTarget.AsVar
         member this.AsMap = this.UnsafeTarget.AsMap
@@ -68,6 +73,7 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         member this.ToDict<'p1 when 'p1 :> IProperty> () = this.UnsafeTarget.ToDict<'p1> ()
         member this.ToList<'p1 when 'p1 :> IProperty> () = this.UnsafeTarget.ToList<'p1> ()
         member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = this.UnsafeTarget.ToCustom<'p1> ()
+#endif
 
 [<AbstractClass>]
 type WrapProperties<'p, 't when 'p :> ICustomProperty and 't :> IProperties> () =
@@ -89,7 +95,11 @@ type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IP
     default __.SetupCloneAfter (_p : 'p) = ()
 
     override __.Kind = PropertyKind.CustomProperty
+#if FABLE_COMPILER
+    member this.AsCustom = this.Self :> ICustomProperty
+#else
     override this.AsCustom = this.Self :> ICustomProperty
+#endif
     member this.AsCustomProperty = this :> ICustomProperty<'p>
     override this.Clone0 o k = this.AsCustomProperty.Clone o k :> IProperty
     override this.SyncTo0 t = this.AsCustomProperty.SyncTo (t :?> 'p)

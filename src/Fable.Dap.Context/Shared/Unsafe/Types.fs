@@ -4,6 +4,9 @@ module Dap.Context.Unsafe.Types
 open Dap.Context
 
 type IUnsafeProperty =
+#if FABLE_COMPILER
+    interface end
+#else
     abstract AsVar : IVarProperty with get
     abstract AsMap : IDictProperty with get
     abstract AsList : IListProperty with get
@@ -13,7 +16,9 @@ type IUnsafeProperty =
     abstract ToDict<'p1 when 'p1 :> IProperty> : unit -> IDictProperty<'p1>
     abstract ToList<'p1 when 'p1 :> IProperty> : unit -> IListProperty<'p1>
     abstract ToCustom<'p1 when 'p1 :> ICustomProperty> : unit -> ICustomProperty<'p1>
+#endif
 
+#if !FABLE_COMPILER
 type IProperty with
     member this.AsVar = (this :?> IUnsafeProperty) .AsVar
     member this.AsMap = (this :?> IUnsafeProperty) .AsMap
@@ -24,6 +29,7 @@ type IProperty with
     member this.ToDict<'p1 when 'p1 :> IProperty> () = (this :?> IUnsafeProperty) .ToDict<'p1> ()
     member this.ToList<'p1 when 'p1 :> IProperty> () = (this :?> IUnsafeProperty) .ToList<'p1> ()
     member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = (this :?> IUnsafeProperty) .ToCustom<'p1> ()
+#endif
 
 type IUnsafeContext =
     abstract ToContext<'c1 when 'c1 :> IContext> : unit -> 'c1

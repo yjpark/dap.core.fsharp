@@ -14,7 +14,11 @@ type internal ComboProperty (owner, spec) =
     let onAdded = new Bus<IProperty> (owner, sprintf "%s:OnAdded" spec.Luid)
     static member Create o s = new ComboProperty(o, s)
     override __.Kind = PropertyKind.ComboProperty
+#if FABLE_COMPILER
+    member this.AsCombo = this :> IComboProperty
+#else
     override this.AsCombo = this :> IComboProperty
+#endif
     member this.AsProperties = this :> IProperties
     override __.ToJson (v : IProperty list) =
         v
@@ -45,13 +49,13 @@ type internal ComboProperty (owner, spec) =
         |> List.iter (fun prop ->
             prop.Seal ()
         )
-    member private this.CheckAdd (subSpec : IPropertySpec) (subType : Type) =
+    member private this.CheckAdd (subSpec : IPropertySpec) (subTypeName : string) =
         if comboSealed then
-            failWith "Combo_Sealed" <| sprintf "[%s] <%s> [%s]" spec.Luid subType.FullName subSpec.Key
+            failWith "Combo_Sealed" <| sprintf "[%s] <%s> [%s]" spec.Luid subTypeName subSpec.Key
         this.Value
         |> List.tryFind (fun prop -> prop.Spec0.Key = subSpec.Key)
         |> Option.iter (fun prop ->
-            failWith "Key_Exist" <| sprintf "[%s] <%s> [%s] -> %A" spec.Luid subType.FullName subSpec.Luid prop
+            failWith "Key_Exist" <| sprintf "[%s] <%s> [%s] -> %A" spec.Luid subTypeName subSpec.Luid prop
         )
     member private this.Add<'prop when 'prop :> IProperty> (prop : 'prop) =
         if (this.Value @ [prop :> IProperty]
@@ -59,7 +63,7 @@ type internal ComboProperty (owner, spec) =
             onAdded.Trigger prop
             prop
         else
-            failWith "Add_Failed" <| sprintf "[%s] <%s> [%s]" spec.Luid (typeof<'prop>).FullName prop.Spec0.Key
+            failWith "Add_Failed" <| sprintf "[%s] <%s> [%s]" spec.Luid (typeNameOf<'prop> ()) prop.Spec0.Key
     interface IComboProperty with
         member __.SealCombo () =
             if not comboSealed then
@@ -78,34 +82,34 @@ type internal ComboProperty (owner, spec) =
                 | None -> failWith "Not_Found" k
         member this.AddAny (key : Key) (spawner : PropertySpawner) =
             let prop = spawner owner key
-            this.CheckAdd prop.Spec0 (prop.GetType())
+            this.CheckAdd prop.Spec0 (getTypeName prop)
             this.Add prop
         member this.AddVar<'v> (subSpec : IVarPropertySpec<'v>) =
-            this.CheckAdd subSpec typeof<'v>
+            this.CheckAdd subSpec (typeNameOf<'v> ())
             subSpec.AsSubSpec spec
             |> VarProperty<'v>.Create owner
             |> this.Add
             |> fun prop -> prop.AsVarProperty
         member this.AddDict<'p when 'p :> IProperty> (subSpec : IPropertySpec<'p>) =
-            this.CheckAdd subSpec typeof<'p>
+            this.CheckAdd subSpec (typeNameOf<'p> ())
             subSpec.AsSubSpec spec
             |> DictProperty<'p>.Create owner
             |> this.Add
             |> fun prop -> prop.AsDictProperty
         member this.AddList<'p when 'p :> IProperty> (subSpec : IPropertySpec<'p>) =
-            this.CheckAdd subSpec typeof<'p>
+            this.CheckAdd subSpec (typeNameOf<'p> ())
             subSpec.AsSubSpec spec
             |> ListProperty<'p>.Create owner
             |> this.Add
             |> fun prop -> prop.AsListProperty
         member this.AddCombo (subSpec : IPropertySpec) =
-            this.CheckAdd subSpec typeof<IComboProperty>
+            this.CheckAdd subSpec (typeNameOf<IComboProperty> ())
             subSpec.AsSubSpec spec
             |> ComboProperty.Create owner
             |> this.Add
             |> fun prop -> prop.AsCombo
         member this.AddCustom<'p when 'p :> ICustomProperty> (subSpec : IPropertySpec<'p>) =
-            this.CheckAdd subSpec typeof<'p>
+            this.CheckAdd subSpec (typeNameOf<'p> ())
             subSpec.AsSubSpec spec
             |> fun spec -> spec.Spawn owner
             |> this.Add

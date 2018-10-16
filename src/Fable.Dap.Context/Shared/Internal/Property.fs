@@ -16,6 +16,9 @@ type UnsafeProperty internal (owner') =
     let owner : IOwner = owner'
     member __.Owner = owner
     abstract member Kind : PropertyKind with get
+#if FABLE_COMPILER
+    interface IUnsafeProperty
+#else
     abstract member AsVar : IVarProperty with get
     abstract member AsMap : IDictProperty with get
     abstract member AsList : IListProperty with get
@@ -25,11 +28,7 @@ type UnsafeProperty internal (owner') =
     abstract member ToDict<'p1 when 'p1 :> IProperty> : unit -> IDictProperty<'p1>
     abstract member ToList<'p1 when 'p1 :> IProperty> : unit -> IListProperty<'p1>
     abstract member ToCustom<'p1 when 'p1 :> ICustomProperty> : unit -> ICustomProperty<'p1>
-#if FABLE_COMPILER
-    member this.CastFailed<'p> () : 'p = failWith "UnsafeProperty" ("Cast_Failed: " + typeof<'p>.Name)
-#else
     member this.CastFailed<'p> () : 'p = failWith (this.GetType().FullName) ("Cast_Failed: " + typeof<'p>.Name)
-#endif
     default this.AsVar = this.CastFailed<IVarProperty> ()
     default this.AsMap = this.CastFailed<IDictProperty> ()
     default this.AsList = this.CastFailed<IListProperty> ()
@@ -49,6 +48,7 @@ type UnsafeProperty internal (owner') =
         member this.ToDict<'p1 when 'p1 :> IProperty> () = this.ToDict<'p1> ()
         member this.ToList<'p1 when 'p1 :> IProperty> () = this.ToList<'p1> ()
         member this.ToCustom<'p1 when 'p1 :> ICustomProperty> () = this.ToCustom<'p1> ()
+#endif
 
 type IProperty with
     member this.SetupClone<'p when 'p :> IProperty> (setup : ('p -> unit) option) (clone : 'p) =
@@ -127,8 +127,10 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
         member this.SyncTo0 t =
             if this.Kind <> t.Kind then
                 owner.Log <| tplPropertyError "Property:InValid_Kind" spec.Luid ver (this.Kind, t.Kind, t)
+        #if !FABLE_COMPILER
             elif this.GetType () <> t.GetType () then
                 owner.Log <| tplPropertyError "Property:InValid_Type" spec.Luid ver (this.GetType (), t.GetType (), t)
+        #endif
             else
                 this.SyncTo0 t
     interface IAspect with

@@ -18,7 +18,11 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
     let onRemoved0 = new Bus<IProperty> (owner, sprintf "%s:OnRemoved0" spec.Luid)
     static member Create o (s : IPropertySpec<'p>) = new DictProperty<'p>(o, s)
     override __.Kind = PropertyKind.DictProperty
+#if FABLE_COMPILER
+    member this.AsMap = this :> IDictProperty
+#else
     override this.AsMap = this :> IDictProperty
+#endif
     member this.AsDictProperty = this :> IDictProperty<'p>
     member this.AsProperties = this :> IProperties
     override this.ToJson (props : Map<string, 'p>) =
@@ -48,11 +52,13 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         Some (value, ok)
     override this.Clone0 o k = this.AsDictProperty.Clone o k :> IProperty
     override this.SyncTo0 t = this.AsDictProperty.SyncTo (t :?> IDictProperty<'p>)
+#if !FABLE_COMPILER
     override this.ToDict<'p1 when 'p1 :> IProperty> () =
         if typeof<'p> = typeof<'p1> then
             this.AsMap :?> IDictProperty<'p1>
         else
             this.CastFailed<IDictProperty<'p1>> ()
+#endif
     override this.OnSealed () =
         mapSealed <- true
         this.Value
@@ -61,7 +67,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         )
     member private this.CheckChange tip =
         if mapSealed then
-            failWith "Already_Sealed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Count tip
+            failWith "Already_Sealed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Count tip
     member private this.Add (k : Key) =
         let subSpec = spec.GetSubSpec k
         let prop = subSpec.Spawner owner k
@@ -73,7 +79,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
             onAdded0.Trigger prop'
             prop
         else
-            failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Count prop.Spec0.Key
+            failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Count prop.Spec0.Key
     member private this.Remove (k : Key) =
         this.Value
         |> Map.tryFind k
@@ -85,7 +91,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
                 onRemoved0.Trigger (prop :> IProperty)
                 prop
             else
-                failWith "Remove_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid typeof<'p>.FullName this.Value.Count prop.Spec0.Key
+                failWith "Remove_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Count prop.Spec0.Key
         )
     interface IDictProperty<'p> with
         member this.Value = this.Value
@@ -102,7 +108,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
             this.CheckChange <| sprintf "Add: %s" k
             this.AsDictProperty.TryGet k
             |> Option.iter (fun prop ->
-                failWith "Already_Exist" <| sprintf "[%s] <%s> [%s] -> %A" spec.Luid typeof<'p>.FullName k prop
+                failWith "Already_Exist" <| sprintf "[%s] <%s> [%s] -> %A" spec.Luid (typeNameOf<'p> ()) k prop
             )
             this.Add k
         member this.Remove k =
@@ -122,7 +128,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
                     )
                     oldValue
                 else
-                    failWith "Clear_Failed" <| sprintf "[%s] <%s> [%d]" spec.Luid typeof<'p>.FullName oldValue.Count
+                    failWith "Clear_Failed" <| sprintf "[%s] <%s> [%d]" spec.Luid (typeNameOf<'p> ()) oldValue.Count
         member __.OnAdded = onAdded.Publish
         member __.OnRemoved = onRemoved.Publish
         member this.SyncTo other =

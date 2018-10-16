@@ -45,7 +45,11 @@ and internal VarProperty<'v> private (owner, spec) =
     let onChanged : Bus<VarPropertyChanged<'v>> = new Bus<VarPropertyChanged<'v>> (owner, sprintf "%s:OnValueChanged" spec.Luid)
     static member Create o s = new VarProperty<'v> (o, s)
     override __.Kind = PropertyKind.VarProperty
+#if FABLE_COMPILER
+    member this.AsVar = this :> IVarProperty
+#else
     override this.AsVar = this :> IVarProperty
+#endif
     member this.AsVarProperty = this :> IVarProperty<'v>
     member this.AsValue = this :> IValue<'v>
     override __.ToJson (v : 'v) =
@@ -60,11 +64,13 @@ and internal VarProperty<'v> private (owner, spec) =
                 None
     override this.Clone0 o k = this.AsVarProperty.Clone o k :> IProperty
     override this.SyncTo0 t = this.AsVarProperty.SyncTo (t :?> IVarProperty<'v>)
+#if !FABLE_COMPILER
     override this.ToVar<'v1> () =
         if typeof<'v> = typeof<'v1> then
             this.AsVar :?> IVarProperty<'v1>
         else
             this.CastFailed<IVarProperty<'v1>> ()
+#endif
     override this.ShouldSetValue (v : 'v) =
         this.Spec.Validator
         |> Option.map (fun validator ->
