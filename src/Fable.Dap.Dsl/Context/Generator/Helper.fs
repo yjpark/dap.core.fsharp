@@ -261,3 +261,8 @@ type G = CodeGeneratorHelper with
             "    static member Default () ="
             "        " + code
         ]
+    static member ToString (code : string) (lines : Lines) =
+        lines @ [
+            "    override this.ToString () ="
+            "        " + code
+        ]
