@@ -131,8 +131,9 @@ type PropertyKind =
     | ComboProperty
     | CustomProperty
 
-and PropertySpawner = IOwner -> Key -> IProperty
-and PropertySpawner<'p when 'p :> IProperty> = IOwner -> Key -> 'p
+//If use curried version here, fable will have issue
+and PropertySpawner = IOwner * Key -> IProperty
+and PropertySpawner<'p when 'p :> IProperty> = IOwner * Key -> 'p
 
 and IProperty =
     inherit IAspect
@@ -143,7 +144,7 @@ and IProperty =
     abstract Sealed : bool with get
     abstract WithJson : Json -> bool
     abstract OnChanged0 : IBus<PropertyChanged> with get
-    abstract Clone0 : IOwner -> Key -> IProperty
+    abstract Clone0 : IOwner * Key -> IProperty
     abstract SyncTo0 : IProperty -> unit
 
 and IPropertySpec<'p when 'p :> IProperty> =
@@ -176,7 +177,7 @@ and IVarProperty<'v> =
     abstract SetValue' : 'v -> bool
     abstract OnChanged : IBus<VarPropertyChanged<'v>> with get
     abstract SyncTo : IVarProperty<'v> -> unit
-    abstract Clone : IOwner -> Key -> IVarProperty<'v>
+    abstract Clone : IOwner * Key -> IVarProperty<'v>
 
 and IProperties =
     inherit IProperty
@@ -187,7 +188,7 @@ and IDictProperty =
 #if !FABLE_COMPILER
     abstract ElementType : Type with get
 #endif
-    abstract ElementSpawner : IOwner -> Key -> IProperty
+    abstract ElementSpawner : IOwner * Key -> IProperty
     abstract SealDict : unit -> unit
     abstract MapSealed : bool with get
     abstract Has : Key -> bool
@@ -206,7 +207,7 @@ and IDictProperty<'p when 'p :> IProperty> =
     abstract OnAdded : IBus<'p> with get
     abstract OnRemoved : IBus<'p> with get
     abstract SyncTo : IDictProperty<'p> -> unit
-    abstract Clone : IOwner -> Key -> IDictProperty<'p>
+    abstract Clone : IOwner * Key -> IDictProperty<'p>
 
 and PropertyMoved = {
     Luid : Luid
@@ -222,7 +223,7 @@ and IListProperty =
 #if !FABLE_COMPILER
     abstract ElementType : Type with get
 #endif
-    abstract ElementSpawner : IOwner -> Key -> IProperty
+    abstract ElementSpawner : IOwner * Key -> IProperty
     abstract SealList : unit -> unit
     abstract ListSealed : bool with get
     abstract Has : Index -> bool
@@ -246,7 +247,7 @@ and IListProperty<'p when 'p :> IProperty> =
     abstract OnAdded : IBus<'p * Index> with get
     abstract OnRemoved : IBus<'p * Index> with get
     abstract SyncTo : IListProperty<'p> -> unit
-    abstract Clone : IOwner -> Key -> IListProperty<'p>
+    abstract Clone : IOwner * Key -> IListProperty<'p>
 
 and IComboProperty =
     inherit IProperties
@@ -264,7 +265,7 @@ and IComboProperty =
     abstract AddCustom<'p when 'p :> ICustomProperty> : IPropertySpec<'p> -> 'p
     abstract OnAdded : IBus<IProperty> with get
     abstract SyncTo : IComboProperty -> unit
-    abstract Clone : IOwner -> Key -> IComboProperty
+    abstract Clone : IOwner * Key -> IComboProperty
 
 and ICustomProperty =
     inherit IProperty
@@ -277,7 +278,7 @@ and ICustomProperty<'p when 'p :> ICustomProperty> =
     inherit ICustomProperty
     abstract Self : 'p with get
     abstract SyncTo : 'p -> unit
-    abstract Clone : IOwner -> Key -> 'p
+    abstract Clone : IOwner * Key -> 'p
 
 type IChannelSpec =
     inherit IAspectSpec

@@ -19,7 +19,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
     let onRemoved = new Bus<'p * Index> (owner, sprintf "%s:OnRemoved" spec.Luid)
     let onAdded0 = new Bus<IProperty * Index> (owner, sprintf "%s:OnAdded0" spec.Luid)
     let onRemoved0 = new Bus<IProperty * Index> (owner, sprintf "%s:OnRemoved0" spec.Luid)
-    static member Create o (s : IPropertySpec<'p>) = new ListProperty<'p>(o, s)
+    static member Create (o, s : IPropertySpec<'p>) = new ListProperty<'p>(o, s)
     override __.Kind = PropertyKind.ListProperty
 #if FABLE_COMPILER
     member this.AsList = this :> IListProperty
@@ -51,7 +51,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
             logError owner "Properties:WithJson" "Decode_Has_Error" (E.encode 4 json)
         *)
         Some (value, ok)
-    override this.Clone0 o k = this.AsListProperty.Clone o k :> IProperty
+    override this.Clone0 (o, k) = this.AsListProperty.Clone (o, k) :> IProperty
     override this.SyncTo0 t = this.AsListProperty.SyncTo (t :?> IListProperty<'p>)
 #if !FABLE_COMPILER
     override this.ToList<'p1 when 'p1 :> IProperty> () =
@@ -80,7 +80,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
     member private this.Add (toIndex : ToIndex option) =
         let k = newSubKey ()
         let subSpec = spec.GetSubSpec k
-        let prop = subSpec.Spawner owner k
+        let prop = subSpec.Spawner (owner, k)
         let index =
             match toIndex with
             | None ->
@@ -161,9 +161,8 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
         member this.SyncTo other =
             //TODO
             ()
-        member this.Clone o k =
-            spec.ForClone k
-            |> ListProperty<'p>.Create o
+        member this.Clone (o, k) =
+            ListProperty<'p>.Create (o, spec.ForClone k)
             |> this.SetupClone (Some this.AsListProperty.SyncTo)
             |> fun clone ->
                 if listSealed then clone.AsListProperty.SealList ()
@@ -173,7 +172,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
 #if !FABLE_COMPILER
         member __.ElementType = typeof<'p>
 #endif
-        member __.ElementSpawner o k = spec.Spawner o k :> IProperty
+        member __.ElementSpawner (o, k) = spec.Spawner (o, k) :> IProperty
         member __.SealList () =
             if not listSealed then
                 listSealed <- true

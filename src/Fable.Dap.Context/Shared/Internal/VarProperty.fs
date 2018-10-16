@@ -23,8 +23,8 @@ type internal VarPropertySpec<'v> internal (luid, key, encoder', decoder', initV
         member __.Validator = validator
     interface IPropertySpec<IVarProperty<'v>> with
         member this.Spawner : PropertySpawner<IVarProperty<'v>> =
-            fun owner key ->
-                VarProperty<'v>.Create owner <| this.ForClone key
+            fun (owner, key) ->
+                VarProperty<'v>.Create (owner, this.ForClone key)
                 :> IVarProperty<'v>
 
 and IVarPropertySpec<'v> with
@@ -43,7 +43,7 @@ and IVarPropertySpec<'v> with
 and internal VarProperty<'v> private (owner, spec) =
     inherit Property<IVarPropertySpec<'v>, 'v> (owner, spec, spec.InitValue)
     let onChanged : Bus<VarPropertyChanged<'v>> = new Bus<VarPropertyChanged<'v>> (owner, sprintf "%s:OnValueChanged" spec.Luid)
-    static member Create o s = new VarProperty<'v> (o, s)
+    static member Create (o, s) = new VarProperty<'v> (o, s)
     override __.Kind = PropertyKind.VarProperty
 #if FABLE_COMPILER
     member this.AsVar = this :> IVarProperty
@@ -62,7 +62,7 @@ and internal VarProperty<'v> private (owner, spec) =
             | Error err ->
                 owner.Log <| tplPropertyError "Property:Decode_Failed" spec.Luid this.Value (E.encode 4 json, err)
                 None
-    override this.Clone0 o k = this.AsVarProperty.Clone o k :> IProperty
+    override this.Clone0 (o, k) = this.AsVarProperty.Clone (o, k) :> IProperty
     override this.SyncTo0 t = this.AsVarProperty.SyncTo (t :?> IVarProperty<'v>)
 #if !FABLE_COMPILER
     override this.ToVar<'v1> () =
@@ -94,9 +94,8 @@ and internal VarProperty<'v> private (owner, spec) =
         member __.OnChanged = onChanged.Publish
         member this.SyncTo (other : IVarProperty<'v>) =
             other.SetValue' this.Value |> ignore
-        member this.Clone o k =
-            spec.ForClone k
-            |> VarProperty<'v>.Create o
+        member this.Clone (o, k) =
+            VarProperty<'v>.Create (o, spec.ForClone k)
             |> this.SetupClone (Some this.AsVarProperty.SyncTo)
             :> IVarProperty<'v>
 #if FABLE_COMPILER

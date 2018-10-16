@@ -5,20 +5,17 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Internal
 
-let dict<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
-    Property.dictSpec<'p> key E.emptyObject spawner
-    |> DictProperty<'p>.Create owner
+let dict<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner, key : Key) =
+    DictProperty<'p>.Create (owner, Property.dictSpec<'p> key E.emptyObject spawner)
     :> IDictProperty<'p>
 
-let list<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
-    Property.listSpec<'p> key E.emptyList spawner
-    |> ListProperty<'p>.Create owner
+let list<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner, key : Key) =
+    ListProperty<'p>.Create (owner, Property.listSpec<'p> key E.emptyList spawner)
     :> IListProperty<'p>
 
-let combo (owner : IOwner) (key : Key) =
-    Property.comboSpec key <| E.object []
-    |> ComboProperty.Create owner
+let combo (owner : IOwner, key : Key) =
+    ComboProperty.Create (owner, Property.comboSpec key <| E.object [])
     :> IComboProperty
 
 let custom<'p when 'p :> IProperty> (spawner : PropertySpawner<'p>) (owner : IOwner) (key : Key) =
-    spawner owner key
+    spawner (owner, key)

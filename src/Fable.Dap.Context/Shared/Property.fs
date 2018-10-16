@@ -39,22 +39,22 @@ let decimalSpec key initValue validator =
 
 let bool owner key initValue validator =
     boolSpec key initValue validator
-    |> fun spec -> spec.Spawner owner key
+    |> fun spec -> spec.Spawner (owner, key)
 
 let string owner key initValue validator =
     stringSpec key initValue validator
-    |> fun spec -> spec.Spawner owner key
+    |> fun spec -> spec.Spawner (owner, key)
 
 let int owner key initValue validator =
     intSpec key initValue validator
-    |> fun spec -> spec.Spawner owner key
+    |> fun spec -> spec.Spawner (owner, key)
 
 #if !FABLE_COMPILER
 let long owner key initValue validator =
     longSpec key initValue validator
-    |> fun spec -> spec.Spawner owner key
+    |> fun spec -> spec.Spawner (owner, key)
 #endif
 
 let decimal owner key initValue validator =
     decimalSpec key initValue validator
-    |> fun spec -> spec.Spawner owner key
+    |> fun spec -> spec.Spawner (owner, key)

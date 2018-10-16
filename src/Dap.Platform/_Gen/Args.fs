@@ -11,14 +11,18 @@ open Dap.Context
 type ConsoleSinkArgs = {
     MinLevel : (* ConsoleSinkArgs *) LogLevel
 } with
-    static member Create minLevel
-            : ConsoleSinkArgs =
+    static member Create
+        (
+            ?minLevel : LogLevel
+        ) : ConsoleSinkArgs =
         {
             MinLevel = (* ConsoleSinkArgs *) minLevel
+                |> Option.defaultWith (fun () -> LogLevelWarning)
         }
     static member Default () =
-        ConsoleSinkArgs.Create
+        ConsoleSinkArgs.Create (
             LogLevelWarning (* ConsoleSinkArgs *) (* minLevel *)
+        )
     static member SetMinLevel ((* ConsoleSinkArgs *) minLevel : LogLevel) (this : ConsoleSinkArgs) =
         {this with MinLevel = minLevel}
     static member UpdateMinLevel ((* ConsoleSinkArgs *) update : LogLevel -> LogLevel) (this : ConsoleSinkArgs) =
@@ -76,18 +80,26 @@ type FileSinkArgs = {
     Path : (* FileSinkArgs *) string
     Rolling : (* FileSinkArgs *) RollingInterval option
 } with
-    static member Create minLevel path rolling
-            : FileSinkArgs =
+    static member Create
+        (
+            ?minLevel : LogLevel,
+            ?path : string,
+            ?rolling : RollingInterval option
+        ) : FileSinkArgs =
         {
             MinLevel = (* FileSinkArgs *) minLevel
+                |> Option.defaultWith (fun () -> LogLevelInformation)
             Path = (* FileSinkArgs *) path
+                |> Option.defaultWith (fun () -> "")
             Rolling = (* FileSinkArgs *) rolling
+                |> Option.defaultWith (fun () -> None)
         }
     static member Default () =
-        FileSinkArgs.Create
-            LogLevelInformation (* FileSinkArgs *) (* minLevel *)
-            "" (* FileSinkArgs *) (* path *)
+        FileSinkArgs.Create (
+            LogLevelInformation, (* FileSinkArgs *) (* minLevel *)
+            "", (* FileSinkArgs *) (* path *)
             None (* FileSinkArgs *) (* rolling *)
+        )
     static member SetMinLevel ((* FileSinkArgs *) minLevel : LogLevel) (this : FileSinkArgs) =
         {this with MinLevel = minLevel}
     static member SetPath ((* FileSinkArgs *) path : string) (this : FileSinkArgs) =
@@ -137,16 +149,22 @@ type LoggingArgs = {
     Console : (* LoggingArgs *) ConsoleSinkArgs option
     File : (* LoggingArgs *) FileSinkArgs option
 } with
-    static member Create console file
-            : LoggingArgs =
+    static member Create
+        (
+            ?console : ConsoleSinkArgs option,
+            ?file : FileSinkArgs option
+        ) : LoggingArgs =
         {
             Console = (* LoggingArgs *) console
+                |> Option.defaultWith (fun () -> None)
             File = (* LoggingArgs *) file
+                |> Option.defaultWith (fun () -> None)
         }
     static member Default () =
-        LoggingArgs.Create
-            None (* LoggingArgs *) (* console *)
+        LoggingArgs.Create (
+            None, (* LoggingArgs *) (* console *)
             None (* LoggingArgs *) (* file *)
+        )
     static member SetConsole ((* LoggingArgs *) console : ConsoleSinkArgs option) (this : LoggingArgs) =
         {this with Console = console}
     static member SetFile ((* LoggingArgs *) file : FileSinkArgs option) (this : LoggingArgs) =
@@ -186,16 +204,22 @@ type TickerArgs = {
     FrameRate : (* TickerArgs *) float
     AutoStart : (* TickerArgs *) bool
 } with
-    static member Create frameRate autoStart
-            : TickerArgs =
+    static member Create
+        (
+            ?frameRate : float,
+            ?autoStart : bool
+        ) : TickerArgs =
         {
             FrameRate = (* TickerArgs *) frameRate
+                |> Option.defaultWith (fun () -> 10.0)
             AutoStart = (* TickerArgs *) autoStart
+                |> Option.defaultWith (fun () -> true)
         }
     static member Default () =
-        TickerArgs.Create
-            10.0 (* TickerArgs *) (* frameRate *)
+        TickerArgs.Create (
+            10.0, (* TickerArgs *) (* frameRate *)
             true (* TickerArgs *) (* autoStart *)
+        )
     static member SetFrameRate ((* TickerArgs *) frameRate : float) (this : TickerArgs) =
         {this with FrameRate = frameRate}
     static member SetAutoStart ((* TickerArgs *) autoStart : bool) (this : TickerArgs) =

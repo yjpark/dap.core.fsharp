@@ -19,7 +19,7 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
             :> IPropertySpec
             |> Some
     abstract member Self : 'p with get
-    abstract member Spawn : IOwner -> Key -> 'p
+    abstract member Spawn : IOwner * Key -> 'p
     abstract member SyncTo : 'p -> unit
     member this.AsCustomProperty = this :> ICustomProperty<'p>
     member this.AsCustom = this.Self :> ICustomProperty
@@ -30,8 +30,8 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
     interface ICustomProperty<'p> with
         member this.Self = this.Self
         member this.SyncTo other = this.SyncTo other
-        member this.Clone o k =
-            this.Spawn o k
+        member this.Clone (o, k) =
+            this.Spawn (o, k)
             |> this.SetupClone<'p> (Some this.SyncTo)
             |> fun clone ->
                 if this.AsProperty.Sealed then
@@ -44,7 +44,7 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         member this.Sealed = this.Target.Sealed
         member this.WithJson json = this.Target.WithJson json
         member this.OnChanged0 = this.Target.OnChanged0
-        member this.Clone0 o k = this.AsCustomProperty.Clone o k :> IProperty
+        member this.Clone0 (o, k) = this.AsCustomProperty.Clone (o, k) :> IProperty
         member this.SyncTo0 t =
             let this' = this.AsProperty
             if this'.Kind <> t.Kind then
@@ -86,7 +86,7 @@ type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IP
     inherit Property<'spec, 'value> (owner, spec, value)
     // abstract members
     abstract member Self : 'p with get
-    abstract member Spawn : IOwner -> Key -> 'p
+    abstract member Spawn : IOwner * Key -> 'p
     abstract member SyncTo : 'p -> unit
     // virtual members
     abstract member SetupCloneBefore : 'p -> unit
@@ -101,13 +101,13 @@ type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IP
     override this.AsCustom = this.Self :> ICustomProperty
 #endif
     member this.AsCustomProperty = this :> ICustomProperty<'p>
-    override this.Clone0 o k = this.AsCustomProperty.Clone o k :> IProperty
+    override this.Clone0 (o, k) = this.AsCustomProperty.Clone (o, k) :> IProperty
     override this.SyncTo0 t = this.AsCustomProperty.SyncTo (t :?> 'p)
     interface ICustomProperty<'p> with
         member this.Self = this.Self
         member this.SyncTo other = this.SyncTo other
-        member this.Clone o k =
-            this.Spawn o k
+        member this.Clone (o, k) =
+            this.Spawn (o, k)
             |> this.SetupClone (Some this.SetupCloneBefore)
             |> fun clone ->
                 this.SetupCloneAfter clone

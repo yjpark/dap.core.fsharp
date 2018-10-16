@@ -70,7 +70,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
     // abstract members
     abstract member ToJson : 'value -> Json
     abstract member WithJson : 'value -> Json -> ('value * bool) option
-    abstract member Clone0 : IOwner -> Key -> IProperty
+    abstract member Clone0 : IOwner * Key -> IProperty
     abstract member SyncTo0 : IProperty -> unit
     // virtual members
     abstract member OnSealed : unit -> unit
@@ -123,7 +123,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
                     (this.SetValue v) && ok
                 )|> Option.defaultValue false
         member __.OnChanged0 = onChanged0.Publish
-        member this.Clone0 o k = this.Clone0 o k
+        member this.Clone0 (o, k) = this.Clone0 (o, k)
         member this.SyncTo0 t =
             if this.Kind <> t.Kind then
                 owner.Log <| tplPropertyError "Property:InValid_Kind" spec.Luid ver (this.Kind, t.Kind, t)

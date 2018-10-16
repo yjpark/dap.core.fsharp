@@ -20,7 +20,7 @@ type ContextSpec<'p when 'p :> IProperties> (kind, propertiesSpawner') =
     inherit ContextSpec (kind)
     let propertiesSpawner : PropertySpawner<'p> = propertiesSpawner'
     interface IContextSpec<'p> with
-        member __.SpawnProperties owner = propertiesSpawner owner PropertiesKey
+        member __.SpawnProperties owner = propertiesSpawner (owner, PropertiesKey)
 
 type DictContextSpec<'p when 'p :> IProperty> (kind, spawner) =
     inherit ContextSpec<IDictProperty<'p>> (kind, Properties.dict spawner)

@@ -56,7 +56,7 @@ type DurationStats with
         let opLog =
             if isSlow then
                 let stackTrace = getStackTrace ()
-                let opLog = OpLog.Create op msg startTime duration stackTrace
+                let opLog = OpLog.Create (op, msg, startTime, duration, stackTrace)
                 (slowOps.Add ()) .SetValue opLog
                 slowCount.SetValue (slowCount.Value + 1)
                 Some opLog
@@ -81,7 +81,7 @@ type FuncStats with
         None
     member this.AddFailedOp
             (msg : string) (startTime : Instant) (duration : Duration) (stackTrace) =
-        let opLog = OpLog.Create this.Spec.Key msg startTime duration stackTrace
+        let opLog = OpLog.Create (this.Spec.Key, msg, startTime, duration, stackTrace)
         (this.FailedOps.Add ()) .SetValue opLog
         this.FailedCount.SetValue (this.FailedCount.Value + 1)
         this.PendingCount.SetValue (this.PendingCount.Value - 1)

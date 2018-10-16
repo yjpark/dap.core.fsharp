@@ -16,7 +16,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
     let onRemoved = new Bus<'p> (owner, sprintf "%s:OnRemoved" spec.Luid)
     let onAdded0 = new Bus<IProperty> (owner, sprintf "%s:OnAdded0" spec.Luid)
     let onRemoved0 = new Bus<IProperty> (owner, sprintf "%s:OnRemoved0" spec.Luid)
-    static member Create o (s : IPropertySpec<'p>) = new DictProperty<'p>(o, s)
+    static member Create (o, s : IPropertySpec<'p>) = new DictProperty<'p>(o, s)
     override __.Kind = PropertyKind.DictProperty
 #if FABLE_COMPILER
     member this.AsMap = this :> IDictProperty
@@ -50,7 +50,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
             logError owner "Properties:WithJson" "Decode_Has_Error" (E.encode 4 json)
         *)
         Some (value, ok)
-    override this.Clone0 o k = this.AsDictProperty.Clone o k :> IProperty
+    override this.Clone0 (o, k) = this.AsDictProperty.Clone (o, k) :> IProperty
     override this.SyncTo0 t = this.AsDictProperty.SyncTo (t :?> IDictProperty<'p>)
 #if !FABLE_COMPILER
     override this.ToDict<'p1 when 'p1 :> IProperty> () =
@@ -70,7 +70,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
             failWith "Already_Sealed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Count tip
     member private this.Add (k : Key) =
         let subSpec = spec.GetSubSpec k
-        let prop = subSpec.Spawner owner k
+        let prop = subSpec.Spawner (owner, k)
         if (this.Value
             |> Map.add k prop
             |> this.SetValue) then
@@ -134,9 +134,8 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         member this.SyncTo other =
             //TODO
             ()
-        member this.Clone o k =
-            spec.ForClone k
-            |> DictProperty<'p>.Create o
+        member this.Clone (o, k) =
+            DictProperty<'p>.Create (o, spec.ForClone k)
             |> this.SetupClone (Some this.AsDictProperty.SyncTo)
             |> fun clone ->
                 if mapSealed then clone.AsDictProperty.SealDict ()
@@ -146,7 +145,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
 #if !FABLE_COMPILER
         member __.ElementType = typeof<'p>
 #endif
-        member __.ElementSpawner o k = spec.Spawner o k :> IProperty
+        member __.ElementSpawner (o, k) = spec.Spawner (o, k) :> IProperty
         member __.SealDict () =
             if not mapSealed then
                 mapSealed <- true

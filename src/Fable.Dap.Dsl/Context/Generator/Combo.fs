@@ -166,26 +166,39 @@ type RecordGenerator (meta : ComboMeta) =
         getComboHelper param (param.Name, meta)
     let getRecordMiddle (param : RecordParam) =
         let fields = meta.GetAllFields param.Name
-        let names =
-            fields
-            |> List.map (fun f -> f.Key.AsCodeVariableName)
-            |> String.concat " "
         let noDefault =
             fields
             |> List.exists (fun f -> f.InitValue = "")
         [
             yield sprintf "} with"
-            yield sprintf "    static member Create %s" names
-            yield sprintf "            : %s =" param.Name
+            yield sprintf "    static member Create"
+            yield sprintf "        ("
+            let mutable index = 0
+            for field in fields do
+                index <- index + 1
+                let comma = if index < fields.Length then "," else ""
+                if field.InitValue = "" then
+                    yield sprintf "            %s : %s%s" field.Key.AsCodeVariableName field.Type comma
+                else
+                    yield sprintf "            ?%s : %s%s" field.Key.AsCodeVariableName field.Type comma
+            yield sprintf "        ) : %s =" param.Name
             yield sprintf "        {"
             for field in fields do
-                yield sprintf "            %s = %s%s" field.Key.AsCodeMemberName field.CommentCode field.Key.AsCodeVariableName
+                if field.InitValue = "" then
+                    yield sprintf "            %s = %s%s" field.Key.AsCodeMemberName field.CommentCode field.Key.AsCodeVariableName
+                else
+                    yield sprintf "            %s = %s%s" field.Key.AsCodeMemberName field.CommentCode field.Key.AsCodeVariableName
+                    yield sprintf "                |> Option.defaultWith (fun () -> %s)" field.InitValue
             yield sprintf "        }"
             if not noDefault then
                 yield sprintf "    static member Default () ="
-                yield sprintf "        %s.Create" param.Name
+                yield sprintf "        %s.Create (" param.Name
+                index <- 0
                 for f in fields do
-                    yield sprintf "            %s %s(* %s *)" f.InitValue f.CommentCode f.Key.AsCodeVariableName
+                    index <- index + 1
+                    let comma = if index < fields.Length then "," else ""
+                    yield sprintf "            %s%s %s(* %s *)" f.InitValue comma f.CommentCode f.Key.AsCodeVariableName
+                yield sprintf "        )"
         ] @ (
             getSelfComboHelper param
         ) @ (
@@ -266,7 +279,7 @@ type ClassGenerator (meta : ComboMeta) =
                 yield "[<AbstractClass>]"
             yield sprintf "type %s (owner : IOwner, key : Key) =" param.Name
             yield sprintf "    inherit WrapProperties<%s, IComboProperty> ()" param.Name
-            yield sprintf "    let target = Properties.combo owner key"
+            yield sprintf "    let target = Properties.combo (owner, key)"
         ]
     let getClassMiddle (param : ClassParam) =
         [
@@ -275,12 +288,12 @@ type ClassGenerator (meta : ComboMeta) =
                 yield sprintf "        target.SealCombo ()"
             yield sprintf "        base.Setup (target)"
             yield sprintf "    )"
-            yield sprintf "    static member Create o k = new %s (o, k)" param.Name
-            yield sprintf "    static member Default () = %s.Create noOwner NoKey" param.Name
+            yield sprintf "    static member Create (o, k) = new %s (o, k)" param.Name
+            yield sprintf "    static member Default () = %s.Create (noOwner, NoKey)" param.Name
             yield sprintf "    static member AddToCombo key (combo : IComboProperty) ="
             yield sprintf "        combo.AddCustom<%s> (%s.Create, key)" param.Name param.Name
             yield sprintf "    override this.Self = this"
-            yield sprintf "    override __.Spawn o k = %s.Create o k" param.Name
+            yield sprintf "    override __.Spawn (o, k) = %s.Create (o, k)" param.Name
             yield sprintf "    override __.SyncTo t = target.SyncTo t.Target"
         ]
     let getFieldAdder (prop : IPropMeta) =

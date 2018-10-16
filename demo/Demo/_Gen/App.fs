@@ -84,24 +84,38 @@ and AppArgs = {
     Test : (* IAppPack *) int
     BackupTicker : (* IBackupPack *) TickerTypes.Args
 } with
-    static member Create scope setup ticker common test backupTicker
-            : AppArgs =
+    static member Create
+        (
+            ?scope : Scope,
+            ?setup : IApp -> unit,
+            ?ticker : TickerTypes.Args,
+            ?common : int,
+            ?test : int,
+            ?backupTicker : TickerTypes.Args
+        ) : AppArgs =
         {
             Scope = (* AppArgs *) scope
+                |> Option.defaultWith (fun () -> NoScope)
             Setup = (* AppArgs *) setup
+                |> Option.defaultWith (fun () -> ignore)
             Ticker = (* IServicesPack *) ticker
+                |> Option.defaultWith (fun () -> (TickerTypes.Args.Default ()))
             Common = (* ICommonPack *) common
+                |> Option.defaultWith (fun () -> 100)
             Test = (* IAppPack *) test
+                |> Option.defaultWith (fun () -> 100)
             BackupTicker = (* IBackupPack *) backupTicker
+                |> Option.defaultWith (fun () -> (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}"""))
         }
     static member Default () =
-        AppArgs.Create
-            NoScope (* AppArgs *) (* scope *)
-            ignore (* AppArgs *) (* setup *)
-            (TickerTypes.Args.Default ()) (* IServicesPack *) (* ticker *)
-            100 (* ICommonPack *) (* common *)
-            100 (* IAppPack *) (* test *)
+        AppArgs.Create (
+            NoScope, (* AppArgs *) (* scope *)
+            ignore, (* AppArgs *) (* setup *)
+            (TickerTypes.Args.Default ()), (* IServicesPack *) (* ticker *)
+            100, (* ICommonPack *) (* common *)
+            100, (* IAppPack *) (* test *)
             (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""") (* IBackupPack *) (* backupTicker *)
+        )
     static member SetScope ((* AppArgs *) scope : Scope) (this : AppArgs) =
         {this with Scope = scope}
     static member SetSetup ((* AppArgs *) setup : IApp -> unit) (this : AppArgs) =

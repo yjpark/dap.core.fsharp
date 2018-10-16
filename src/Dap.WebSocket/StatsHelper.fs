@@ -15,7 +15,7 @@ type TrafficStats with
         this.PendingCount.SetValue (this.PendingCount.Value - 1)
         None
     member this.AddFailedOp (bytes : int) (startTime : Instant) (duration : Duration) (stackTrace) =
-        let pktLog = PktLog.Create bytes startTime duration stackTrace
+        let pktLog = PktLog.Create (bytes, startTime, duration, stackTrace)
         (this.FailedPkts.Add ()) .SetValue pktLog
         this.FailedCount.SetValue (this.FailedCount.Value + 1)
         this.PendingCount.SetValue (this.PendingCount.Value - 1)
@@ -36,7 +36,7 @@ type TrafficStats with
         let slowPkt =
             if isSlow then
                 let stackTrace = getStackTrace ()
-                let pktLog = PktLog.Create bytes startTime duration stackTrace
+                let pktLog = PktLog.Create (bytes, startTime, duration, stackTrace)
                 (this.SlowPkts.Add ()) .SetValue pktLog
                 this.SlowCount.SetValue (this.SlowCount.Value + 1)
                 Some pktLog
@@ -58,5 +58,5 @@ type TrafficStats with
 type LinkStats with
     member this.AddStatus (runner : IRunner) (status : LinkStatus) =
         this.Status.SyncTo (this.StatusHistory.Add ())
-        this.Status.SetValue <| StatusLog.Create runner.Clock.Now' status
+        this.Status.SetValue <| StatusLog.Create (runner.Clock.Now', status)
         |> ignore

@@ -17,13 +17,13 @@ let custom<'p when 'p :> ICustomProperties> kind (spawner : PropertySpawner<'p>)
     new CustomContext<'p> (getLogging(), kind, spawner)
 
 let map0<'p when 'p :> IProperty> kind (spawner : PropertySpawner) =
-    fun o k -> spawner o k :?> 'p
+    fun (o, k) -> spawner (o, k) :?> 'p
     |> map<'p> kind
 
 let list0<'p when 'p :> IProperty> kind (spawner : PropertySpawner) =
-    fun o k -> spawner o k :?> 'p
+    fun (o, k) -> spawner (o, k) :?> 'p
     |> list<'p> kind
 
 let custom0<'p when 'p :> ICustomProperties> kind (spawner : PropertySpawner) =
-    fun o k -> spawner o k :?> 'p
+    fun (o, k) -> spawner (o, k) :?> 'p
     |> custom<'p> kind

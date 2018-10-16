@@ -32,4 +32,4 @@ type IPropertySpec<'p when 'p :> IProperty> with
         new PropertySpec<'p> (key, key, this.InitValue, this.Spawner)
         :> IPropertySpec<'p>
     member this.Spawn owner =
-        this.Spawner owner ((this :> IPropertySpec).Key)
+        this.Spawner (owner, this.Key)

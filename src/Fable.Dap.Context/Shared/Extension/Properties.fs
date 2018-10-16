@@ -6,7 +6,7 @@ open Dap.Context
 open Dap.Context.Internal
 
 type IComboProperty with
-    static member Default () = Properties.combo noOwner NoKey
+    static member Default () = Properties.combo (noOwner, NoKey)
 
 type IComboProperty with
     member this.AddDict<'p when 'p :> IProperty> (spawner, key) =
@@ -87,7 +87,7 @@ type IComboProperty with
         this.AddDecimal (key, initValue, None)
 
 type IDictProperty<'p when 'p :> IProperty> with
-    static member Default spawner = Properties.dict<'p> spawner noOwner NoKey
+    static member Default spawner = Properties.dict<'p> spawner (noOwner, NoKey)
 
 type IListProperty<'p when 'p :> IProperty> with
-    static member Default spawner = Properties.list<'p> spawner noOwner NoKey
+    static member Default spawner = Properties.list<'p> spawner (noOwner, NoKey)

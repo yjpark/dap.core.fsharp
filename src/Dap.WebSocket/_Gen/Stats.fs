@@ -15,20 +15,30 @@ type PktLog = {
     Duration : (* PktLog *) Duration
     StackTrace : (* PktLog *) string
 } with
-    static member Create bytes time duration stackTrace
-            : PktLog =
+    static member Create
+        (
+            ?bytes : int,
+            ?time : Instant,
+            ?duration : Duration,
+            ?stackTrace : string
+        ) : PktLog =
         {
             Bytes = (* PktLog *) bytes
+                |> Option.defaultWith (fun () -> 0)
             Time = (* PktLog *) time
+                |> Option.defaultWith (fun () -> (getNow' ()))
             Duration = (* PktLog *) duration
+                |> Option.defaultWith (fun () -> (decodeJsonString Duration.JsonDecoder """0:00:00:00"""))
             StackTrace = (* PktLog *) stackTrace
+                |> Option.defaultWith (fun () -> "")
         }
     static member Default () =
-        PktLog.Create
-            0 (* PktLog *) (* bytes *)
-            (getNow' ()) (* PktLog *) (* time *)
-            (decodeJsonString Duration.JsonDecoder """0:00:00:00""") (* PktLog *) (* duration *)
+        PktLog.Create (
+            0, (* PktLog *) (* bytes *)
+            (getNow' ()), (* PktLog *) (* time *)
+            (decodeJsonString Duration.JsonDecoder """0:00:00:00"""), (* PktLog *) (* duration *)
             "" (* PktLog *) (* stackTrace *)
+        )
     static member SetBytes ((* PktLog *) bytes : int) (this : PktLog) =
         {this with Bytes = bytes}
     static member SetTime ((* PktLog *) time : Instant) (this : PktLog) =
@@ -86,7 +96,7 @@ type PktLog = {
  *)
 type TrafficStats (owner : IOwner, key : Key) =
     inherit WrapProperties<TrafficStats, IComboProperty> ()
-    let target = Properties.combo owner key
+    let target = Properties.combo (owner, key)
     let slowCap = target.AddVar<(* TrafficStats *) Duration> (DurationFormat.Second.JsonEncoder, DurationFormat.Second.JsonDecoder, "slow_cap", DefaultPktSlowCap, None)
     let totalCount = target.AddVar<(* TrafficStats *) int> (E.int, D.int, "total_count", 0, None)
     let slowCount = target.AddVar<(* TrafficStats *) int> (E.int, D.int, "slow_count", 0, None)
@@ -99,12 +109,12 @@ type TrafficStats (owner : IOwner, key : Key) =
         target.SealCombo ()
         base.Setup (target)
     )
-    static member Create o k = new TrafficStats (o, k)
-    static member Default () = TrafficStats.Create noOwner NoKey
+    static member Create (o, k) = new TrafficStats (o, k)
+    static member Default () = TrafficStats.Create (noOwner, NoKey)
     static member AddToCombo key (combo : IComboProperty) =
         combo.AddCustom<TrafficStats> (TrafficStats.Create, key)
     override this.Self = this
-    override __.Spawn o k = TrafficStats.Create o k
+    override __.Spawn (o, k) = TrafficStats.Create (o, k)
     override __.SyncTo t = target.SyncTo t.Target
     member __.SlowCap (* TrafficStats *) : IVarProperty<Duration> = slowCap
     member __.TotalCount (* TrafficStats *) : IVarProperty<int> = totalCount
@@ -123,16 +133,22 @@ type StatusLog = {
     Time : (* StatusLog *) Instant
     Status : (* StatusLog *) LinkStatus
 } with
-    static member Create time status
-            : StatusLog =
+    static member Create
+        (
+            ?time : Instant,
+            ?status : LinkStatus
+        ) : StatusLog =
         {
             Time = (* StatusLog *) time
+                |> Option.defaultWith (fun () -> (getNow' ()))
             Status = (* StatusLog *) status
+                |> Option.defaultWith (fun () -> (LinkStatus.Default ()))
         }
     static member Default () =
-        StatusLog.Create
-            (getNow' ()) (* StatusLog *) (* time *)
+        StatusLog.Create (
+            (getNow' ()), (* StatusLog *) (* time *)
             (LinkStatus.Default ()) (* StatusLog *) (* status *)
+        )
     static member SetTime ((* StatusLog *) time : Instant) (this : StatusLog) =
         {this with Time = time}
     static member SetStatus ((* StatusLog *) status : LinkStatus) (this : StatusLog) =
@@ -172,7 +188,7 @@ type StatusLog = {
  *)
 type LinkStats (owner : IOwner, key : Key) =
     inherit WrapProperties<LinkStats, IComboProperty> ()
-    let target = Properties.combo owner key
+    let target = Properties.combo (owner, key)
     let status = target.AddVar<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status", (StatusLog.Default ()), None)
     let statusHistory = target.AddList<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status_history", (StatusLog.Default ()), None)
     let send = target.AddCustom<TrafficStats> (TrafficStats.Create, (* LinkStats *) "send")
@@ -181,12 +197,12 @@ type LinkStats (owner : IOwner, key : Key) =
         target.SealCombo ()
         base.Setup (target)
     )
-    static member Create o k = new LinkStats (o, k)
-    static member Default () = LinkStats.Create noOwner NoKey
+    static member Create (o, k) = new LinkStats (o, k)
+    static member Default () = LinkStats.Create (noOwner, NoKey)
     static member AddToCombo key (combo : IComboProperty) =
         combo.AddCustom<LinkStats> (LinkStats.Create, key)
     override this.Self = this
-    override __.Spawn o k = LinkStats.Create o k
+    override __.Spawn (o, k) = LinkStats.Create (o, k)
     override __.SyncTo t = target.SyncTo t.Target
     member __.Status (* LinkStats *) : IVarProperty<StatusLog> = status
     member __.StatusHistory (* LinkStats *) : IListProperty<IVarProperty<StatusLog>> = statusHistory

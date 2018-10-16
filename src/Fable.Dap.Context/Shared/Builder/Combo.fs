@@ -25,4 +25,4 @@ type Builder () =
 
 type ExtendBuilder (parent : IComboProperty) =
     inherit Builder ()
-    override __.Zero () = parent.Clone noOwner NoKey
+    override __.Zero () = parent.Clone (noOwner, NoKey)
