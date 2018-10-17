@@ -140,7 +140,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
             this.CheckChange <| sprintf "Remove: %d" i
             this.CheckIndex i
             this.Remove i
-        member this.Clear () =
+        member this.Clear' () =
             this.CheckChange "Clear"
             if this.Value.Length = 0 then
                 []

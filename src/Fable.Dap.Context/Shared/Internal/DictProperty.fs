@@ -114,7 +114,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         member this.Remove k =
             this.CheckChange <| sprintf "Remove: %s" k
             this.Remove k
-        member this.Clear () =
+        member this.Clear' () =
             this.CheckChange "Clear"
             if this.Value.Count = 0 then
                 Map.empty

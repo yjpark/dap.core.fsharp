@@ -8,13 +8,13 @@ type IConsole =
     inherit IContext
     abstract Stats : Stats with get
     abstract GetStats : IHandler<unit, Json> with get
-    abstract ClearLogs : IHandler<unit, unit> with get
+    abstract ClearStats : IHandler<unit, unit> with get
 
 [<AbstractClass>]
 type Console<'console when 'console :> IConsole> (kind : Kind, logging : ILogging, clock : IClock) as this =
     inherit CustomContext<'console, ContextSpec<Stats>, Stats> (logging, new ContextSpec<Stats>(kind, Stats.Create))
     let getStats = this.Handlers.AddUnitJson ("get_stats")
-    let clearLogs = this.Handlers.AddUnitUnit ("clear_logs")
+    let clearStats = this.Handlers.AddUnitUnit ("clear_logs")
     do (
         let stats = this.Properties
         stats.Task.SlowCap.SetValue DefaultTaskSlowCap
@@ -22,18 +22,18 @@ type Console<'console when 'console :> IConsole> (kind : Kind, logging : ILoggin
             stats.Time.SetValue (clock.Now')
             E.json this.Properties
         )
-        clearLogs.SetHandler (fun () ->
-            stats.Deliver.ClearLogs ()
-            stats.Process.ClearLogs ()
-            stats.Reply.ClearLogs ()
-            stats.Func.ClearLogs ()
-            stats.Task.ClearLogs ()
+        clearStats.SetHandler (fun () ->
+            stats.Deliver.ClearStats ()
+            stats.Process.ClearStats ()
+            stats.Reply.ClearStats ()
+            stats.Func.ClearStats ()
+            stats.Task.ClearStats ()
         )
     )
     member __.Stats = this.Properties
     member __.GetStats = getStats
-    member __.ClearLogs = clearLogs
+    member __.ClearStats = clearStats
     interface IConsole with
         member __.Stats = this.Stats
         member __.GetStats = this.GetStats
-        member __.ClearLogs = this.ClearLogs
+        member __.ClearStats = this.ClearStats

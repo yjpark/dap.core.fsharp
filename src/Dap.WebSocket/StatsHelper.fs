@@ -5,7 +5,7 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Platform
 
-let private tplSlowPktStats = LogEvent.Template5<string, Duration, int, string, string>(LogLevelWarning, "[{Section}] {Duration} {Bytes} ~> {Detail}\n{StackTrace}")
+let private tplSlowPktStats = LogEvent.Template5<string, Duration, int, string, string>(LogLevelInformation, "[{Section}] {Duration} {Bytes} ~> {Detail}\n{StackTrace}")
 
 type TrafficStats with
     member this.IncPendingCount () =
@@ -37,7 +37,6 @@ type TrafficStats with
             if isSlow then
                 let stackTrace = getStackTrace ()
                 let pktLog = PktLog.Create (bytes, startTime, duration, stackTrace)
-                (this.SlowPkts.Add ()) .SetValue pktLog
                 this.SlowCount.SetValue (this.SlowCount.Value + 1)
                 Some pktLog
             else
@@ -54,15 +53,14 @@ type TrafficStats with
             runner.Log <| tplSlowPktStats this.Spec.Key duration bytes (this.ToLogDetail ()) pktLog.StackTrace
         )
         (duration, slowPkt, failedPkt)
-    member this.ClearLogs () =
-        this.SlowPkts.Clear () |> ignore
-        this.FailedPkts.Clear () |> ignore
+    member this.ClearStats () =
+        this.FailedPkts.Clear ()
 
 type LinkStats with
     member this.AddStatus (runner : IRunner) (status : LinkStatus) =
         this.Status.SyncTo (this.StatusHistory.Add ())
         this.Status.SetValue <| StatusLog.Create (runner.Clock.Now', status)
         |> ignore
-    member this.ClearLogs () =
-        this.Send.ClearLogs ()
-        this.Receive.ClearLogs ()
+    member this.ClearStats () =
+        this.Send.ClearStats ()
+        this.Receive.ClearStats ()

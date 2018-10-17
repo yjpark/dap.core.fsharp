@@ -21,7 +21,6 @@ let TrafficStats =
         var (M.duration (DurationFormat.Second, "slow_cap", "DefaultPktSlowCap", ""))
         var (M.int "total_count")
         var (M.int "slow_count")
-        list (M.custom (<@ PktLog @>, "slow_pkts"))
         var (M.int "pending_count")
         var (M.int "succeed_count")
         var (M.int "failed_count")

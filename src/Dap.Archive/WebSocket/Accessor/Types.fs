@@ -89,9 +89,9 @@ type Part<'actorMsg, 'pkt when 'actorMsg :> IMsg> (param) =
     let mutable clientStats : LinkStats option = None
     override this.Runner = this
     override this.OnSetup () =
-        this.Agent.Console.ClearLogs.OnRequest.AddWatcher this.Agent.Console "ClientStats.ClearLogs" (fun _ ->
+        this.Agent.Console.ClearStats.OnRequest.AddWatcher this.Agent.Console "ClientStats.ClearStats" (fun _ ->
             clientStats
-            |> Option.iter (fun s -> s.ClearLogs ())
+            |> Option.iter (fun s -> s.ClearStats ())
         )
     static member Spawn (param) = new Part<'actorMsg, 'pkt> (param)
     member this.SetClientStats' (client : Client<'pkt>) =

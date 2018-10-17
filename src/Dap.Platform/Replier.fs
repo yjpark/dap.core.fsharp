@@ -11,10 +11,10 @@ let private tplAckReply = LogEvent.Template3<string, IReq, obj>(AckLogLevel, "[{
 let private tplNakReply = LogEvent.Template4<string, IReq, string, obj>(LogLevelError, "[{Section}] {Req} ~> {Err}: {Detail}") "Nak"
 
 let private tplAckCallback = LogEvent.Template4<string, Duration, IReq, obj>(AckLogLevel, "[{Section}] {Duration}<ms> {Req} ~> {Res}") "Ack"
-let private tplSlowAckCallback = LogEvent.Template4<string, Duration, IReq, obj>(LogLevelWarning, "[{Section}] {Duration} {Req} ~> {Res}") "Ack"
+let private tplSlowAckCallback = LogEvent.Template4<string, Duration, IReq, obj>(LogLevelInformation, "[{Section}] {Duration} {Req} ~> {Res}") "Ack"
 let private tplNakCallback = LogEvent.Template5<string, Duration, IReq, string, obj>(LogLevelError, "[{Section}] {Duration} {Req} ~> {Err}: {Detail}") "Nak"
 
-let private tplSlowStats = LogEvent.Template5<string, Duration, IReq, string, string>(LogLevelWarning, "[{Section}] {Duration} {Msg} ~> {Detail}\n{StackTrace}")
+let private tplSlowStats = LogEvent.Template5<string, Duration, IReq, string, string>(LogLevelInformation, "[{Section}] {Duration} {Msg} ~> {Detail}\n{StackTrace}")
 
 let ack (req : IReq) (res : 'res) =
     Ack (req, res)
@@ -42,7 +42,7 @@ let replyAfter (runner : IRunner) (callback : Callback<'res>) (reply' : Reply<'r
 type FuncStats with
     member this.AddReply (runner : 'runner when 'runner :> IRunner) (msg : string) (startTime : Instant) (reply : Reply<'res>) =
         let (duration, slowOp) =
-            DurationStats.AddOp' this.Spec.Key this.SlowCap this.TotalCount this.SlowCount this.SlowOps (fun () ->
+            DurationStats.AddOp' this.Spec.Key this.SlowCap this.TotalCount this.SlowCount (fun () ->
                 (System.Diagnostics.StackTrace(2)) .ToString()
             ) runner msg startTime
         let failedOp =

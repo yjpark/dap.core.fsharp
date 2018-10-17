@@ -18,7 +18,7 @@ type IRunnable<'initer, 'runner, 'args, 'model, 'msg>
 
 let private tplRunnableFailed = LogEvent.Template2WithException<string, obj>(LogLevelError, "[{Section}] {Msg} -> Failed")
 
-let private tplSlowStats = LogEvent.Template5<string, Duration, IMsg, string, string>(LogLevelWarning, "[{Section}] {Duration}<ms> {Msg} ~> {Detail}\n{StackTrace}")
+let private tplSlowStats = LogEvent.Template5<string, Duration, IMsg, string, string>(LogLevelInformation, "[{Section}] {Duration}<ms> {Msg} ~> {Detail}\n{StackTrace}")
 
 let internal start' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>)
                 (setState : 'model -> unit) : Cmd<'msg> =

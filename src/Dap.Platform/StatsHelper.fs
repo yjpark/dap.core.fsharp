@@ -8,8 +8,9 @@ type DurationStats with
     member this.ToLogDetail () =
         sprintf "[Total: %d, Slow: %d, SlowCap: %s]"
             this.TotalCount.Value this.SlowCount.Value (DurationFormat.Second.Format this.SlowCap.Value)
-    member this.ClearLogs () =
-        this.SlowOps.Clear () |> ignore
+    member this.ClearStats () =
+        this.TotalCount.SetValue 0
+        this.SlowCount.SetValue 0
 
 type FuncStats with
     member this.IncPendingCount () =
@@ -29,7 +30,11 @@ type FuncStats with
         sprintf "[Pending:%d, Succeed: %d, Failed: %d, Total: %d, Slow: %d, SlowCap: %s]"
             this.PendingCount.Value this.SucceedCount.Value this.FailedCount.Value
             this.TotalCount.Value this.SlowCount.Value (DurationFormat.Second.Format this.SlowCap.Value)
-    member this.ClearLogs () =
-        this.SlowOps.Clear () |> ignore
-        this.FailedOps.Clear () |> ignore
+    member this.ClearStats () =
+        this.TotalCount.SetValue 0
+        this.SlowCount.SetValue 0
+        this.PendingCount.SetValue 0
+        this.SucceedCount.SetValue 0
+        this.FailedCount.SetValue 0
+        this.FailedOps.Clear ()
 

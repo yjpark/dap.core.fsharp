@@ -7,10 +7,10 @@ open FSharp.Control.Tasks.V2
 open Dap.Prelude
 
 let private tplRunTaskSucceed = LogEvent.Template3<string, string, Duration>(AckLogLevel, "[{Section}] {Task} {Duration} ~> Succeed")
-let private tplSlowRunTaskSucceed = LogEvent.Template3<string, string, Duration>(LogLevelWarning, "[{Section}] {Task} {Duration} ~> Succeed")
+let private tplSlowRunTaskSucceed = LogEvent.Template3<string, string, Duration>(LogLevelInformation, "[{Section}] {Task} {Duration} ~> Succeed")
 let private tplRunTaskSucceed' = LogEvent.Template4<string, string, Duration, obj>(AckLogLevel, "[{Section}] {Task} {Duration} ~> Succeed: {Res}")
 let private tplRunTaskFailed = LogEvent.Template5<string, string, Duration, string, string>(LogLevelError, "[{Section}] {Task} {Duration} ~> Failed {Detail}\n{StackTrace}")
-let private tplSlowTaskStats = LogEvent.Template5<string, Duration, string, string, string>(LogLevelWarning, "[{Section}] {Duration} {Task} ~> {Detail}\n{StackTrace}")
+let private tplSlowTaskStats = LogEvent.Template5<string, Duration, string, string, string>(LogLevelInformation, "[{Section}] {Duration} {Task} ~> {Detail}\n{StackTrace}")
 
 let internal dispatchAsync' (dispatcher : IDispatcher<'msg>) (getMsg : Callback<'res> -> 'msg) : Task<'res> =
     let onDone = new TaskCompletionSource<'res>();

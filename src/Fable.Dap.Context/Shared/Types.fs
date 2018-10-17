@@ -203,7 +203,7 @@ and IDictProperty<'p when 'p :> IProperty> =
     abstract Get : Key -> 'p
     abstract Add : Key -> 'p
     abstract Remove : Key -> 'p option
-    abstract Clear : unit -> Map<Key, 'p>
+    abstract Clear' : unit -> Map<Key, 'p>
     abstract OnAdded : IBus<'p> with get
     abstract OnRemoved : IBus<'p> with get
     abstract SyncTo : IDictProperty<'p> -> unit
@@ -243,7 +243,7 @@ and IListProperty<'p when 'p :> IProperty> =
     abstract Add : unit -> 'p
     abstract Insert : ToIndex -> 'p
     abstract Remove : Index -> 'p option
-    abstract Clear : unit -> 'p list
+    abstract Clear' : unit -> 'p list
     abstract OnAdded : IBus<'p * Index> with get
     abstract OnRemoved : IBus<'p * Index> with get
     abstract SyncTo : IListProperty<'p> -> unit
@@ -450,9 +450,13 @@ module Extensions =
             match this.TryGet key with
             | Some p -> p
             | None -> this.Add key
+        member this.Clear () =
+            this.Clear' () |> ignore
     type IListProperty<'p when 'p :> IProperty> with
         member this.SyncWith (other : IListProperty<'p>) =
             other.SyncTo this
+        member this.Clear () =
+            this.Clear' () |> ignore
     type ICustomProperty<'p when 'p :> ICustomProperty> with
         member this.SyncWith (other : ICustomProperty<'p>) =
             other.SyncTo this.Self

@@ -113,7 +113,6 @@ type DurationStats (owner : IOwner, key : Key) =
     let slowCap = target'.AddVar<(* DurationStats *) Duration> (DurationFormat.Second.JsonEncoder, DurationFormat.Second.JsonDecoder, "slow_cap", DefaultSlowCap, None)
     let totalCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "total_count", 0, None)
     let slowCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "slow_count", 0, None)
-    let slowOps = target'.AddList<(* DurationStats *) OpLog> (OpLog.JsonEncoder, OpLog.JsonDecoder, "slow_ops", (OpLog.Default ()), None)
     do (
         target'.SealCombo ()
         base.Setup (target')
@@ -128,7 +127,6 @@ type DurationStats (owner : IOwner, key : Key) =
     member __.SlowCap (* DurationStats *) : IVarProperty<Duration> = slowCap
     member __.TotalCount (* DurationStats *) : IVarProperty<int> = totalCount
     member __.SlowCount (* DurationStats *) : IVarProperty<int> = slowCount
-    member __.SlowOps (* DurationStats *) : IListProperty<IVarProperty<OpLog>> = slowOps
 
 (*
  * Generated: <Class>
@@ -140,7 +138,6 @@ type FuncStats (owner : IOwner, key : Key) =
     let slowCap = target'.AddVar<(* DurationStats *) Duration> (DurationFormat.Second.JsonEncoder, DurationFormat.Second.JsonDecoder, "slow_cap", DefaultSlowCap, None)
     let totalCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "total_count", 0, None)
     let slowCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "slow_count", 0, None)
-    let slowOps = target'.AddList<(* DurationStats *) OpLog> (OpLog.JsonEncoder, OpLog.JsonDecoder, "slow_ops", (OpLog.Default ()), None)
     let pendingCount = target'.AddVar<(* FuncStats *) int> (E.int, D.int, "pending_count", 0, None)
     let succeedCount = target'.AddVar<(* FuncStats *) int> (E.int, D.int, "succeed_count", 0, None)
     let failedCount = target'.AddVar<(* FuncStats *) int> (E.int, D.int, "failed_count", 0, None)
@@ -159,7 +156,6 @@ type FuncStats (owner : IOwner, key : Key) =
     member __.SlowCap (* DurationStats *) : IVarProperty<Duration> = slowCap
     member __.TotalCount (* DurationStats *) : IVarProperty<int> = totalCount
     member __.SlowCount (* DurationStats *) : IVarProperty<int> = slowCount
-    member __.SlowOps (* DurationStats *) : IListProperty<IVarProperty<OpLog>> = slowOps
     member __.PendingCount (* FuncStats *) : IVarProperty<int> = pendingCount
     member __.SucceedCount (* FuncStats *) : IVarProperty<int> = succeedCount
     member __.FailedCount (* FuncStats *) : IVarProperty<int> = failedCount

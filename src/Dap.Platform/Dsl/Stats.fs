@@ -20,7 +20,6 @@ let DurationStats =
         var (M.duration (DurationFormat.Second, "slow_cap", "DefaultSlowCap", ""))
         var (M.int "total_count")
         var (M.int "slow_count")
-        list (M.custom (<@ OpLog @>, "slow_ops"))
     }
 
 let FuncStats =
