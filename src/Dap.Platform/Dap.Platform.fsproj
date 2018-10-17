@@ -27,6 +27,7 @@
     <Compile Include="_Gen/Args.fs" />
     <Compile Include="_Gen/ArgsBuilder.fs" />
     <Compile Include="_Gen/Stats.fs" />
+    <Compile Include="StatsHelper.fs" />
     <Compile Include="Console.fs" />
     <Compile Include="Runner.fs" />
     <Compile Include="Dispatcher.fs" />

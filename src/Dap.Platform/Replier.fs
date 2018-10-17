@@ -40,11 +40,11 @@ let replyAfter (runner : IRunner) (callback : Callback<'res>) (reply' : Reply<'r
     }
 
 type FuncStats with
-    member this.AddReply (runner : 'runner when 'runner :> IRunner) (msg : string) (startTime : Instant) (reply : Reply<'res>) =
+    member this.AddReply (clock : IClock) (msg : string) (startTime : Instant) (reply : Reply<'res>) =
         let (duration, slowOp) =
             DurationStats.AddOp' this.Spec.Key this.SlowCap this.TotalCount this.SlowCount this.SlowOps (fun () ->
                 (System.Diagnostics.StackTrace(2)) .ToString()
-            ) runner msg startTime
+            ) clock msg startTime
         let failedOp =
             match reply with
             | Ack (_req, _res) ->
@@ -62,7 +62,7 @@ let callback' (runner : 'runner when 'runner :> IRunner) onNak onAck : Callback<
             match r with
             | Ack (req, _res) -> req
             | Nak (req, _err, _detail) -> req
-        let (duration, slowOp, _failedOp) = stats.AddReply runner (req.GetType().Name) sendTime r
+        let (duration, slowOp, _failedOp) = stats.AddReply runner.Clock (req.GetType().Name) sendTime r
         slowOp
         |> Option.iter (fun opLog ->
             runner.Log <| tplSlowStats "Slow_Reply" duration req  (stats.ToLogDetail ()) opLog.StackTrace

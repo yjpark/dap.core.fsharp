@@ -54,9 +54,15 @@ type TrafficStats with
             runner.Log <| tplSlowPktStats this.Spec.Key duration bytes (this.ToLogDetail ()) pktLog.StackTrace
         )
         (duration, slowPkt, failedPkt)
+    member this.ClearLogs () =
+        this.SlowPkts.Clear () |> ignore
+        this.FailedPkts.Clear () |> ignore
 
 type LinkStats with
     member this.AddStatus (runner : IRunner) (status : LinkStatus) =
         this.Status.SyncTo (this.StatusHistory.Add ())
         this.Status.SetValue <| StatusLog.Create (runner.Clock.Now', status)
         |> ignore
+    member this.ClearLogs () =
+        this.Send.ClearLogs ()
+        this.Receive.ClearLogs ()
