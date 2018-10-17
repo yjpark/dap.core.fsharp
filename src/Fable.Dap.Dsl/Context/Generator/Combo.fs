@@ -279,14 +279,14 @@ type ClassGenerator (meta : ComboMeta) =
                 yield "[<AbstractClass>]"
             yield sprintf "type %s (owner : IOwner, key : Key) =" param.Name
             yield sprintf "    inherit WrapProperties<%s, IComboProperty> ()" param.Name
-            yield sprintf "    let target = Properties.combo (owner, key)"
+            yield sprintf "    let target' = Properties.combo (owner, key)"
         ]
     let getClassMiddle (param : ClassParam) =
         [
             yield sprintf "    do ("
             if param.IsFinal then
-                yield sprintf "        target.SealCombo ()"
-            yield sprintf "        base.Setup (target)"
+                yield sprintf "        target'.SealCombo ()"
+            yield sprintf "        base.Setup (target')"
             yield sprintf "    )"
             yield sprintf "    static member Create (o, k) = new %s (o, k)" param.Name
             yield sprintf "    static member Default () = %s.Create (noOwner, NoKey)" param.Name
@@ -294,7 +294,7 @@ type ClassGenerator (meta : ComboMeta) =
             yield sprintf "        combo.AddCustom<%s> (%s.Create, key)" param.Name param.Name
             yield sprintf "    override this.Self = this"
             yield sprintf "    override __.Spawn (o, k) = %s.Create (o, k)" param.Name
-            yield sprintf "    override __.SyncTo t = target.SyncTo t.Target"
+            yield sprintf "    override __.SyncTo t = target'.SyncTo t.Target"
         ]
     let getFieldAdder (prop : IPropMeta) =
         let varName = prop.Key.AsCodeVariableName
@@ -308,33 +308,33 @@ type ClassGenerator (meta : ComboMeta) =
             match prop.Variation with
             | FieldVariation.List ->
                 let prop = prop.ToVariant FieldVariation.Nothing
-                sprintf "    let %s = target.AddList<%s%s> (%s, %s, \"%s\", %s, %s)"
+                sprintf "    let %s = target'.AddList<%s%s> (%s, %s, \"%s\", %s, %s)"
                     varName prop.CommentCode prop.Type prop.Encoder prop.Decoder prop.Key prop.InitValue validator
             | FieldVariation.Dict ->
                 let prop = prop.ToVariant FieldVariation.Nothing
-                sprintf "    let %s = target.AddDict<%s%s> (%s, %s, \"%s\", %s, %s)"
+                sprintf "    let %s = target'.AddDict<%s%s> (%s, %s, \"%s\", %s, %s)"
                     varName prop.CommentCode prop.Type prop.Encoder prop.Decoder prop.Key prop.InitValue validator
             | FieldVariation.Option
             | FieldVariation.Nothing ->
-                sprintf "    let %s = target.AddVar<%s%s> (%s, %s, \"%s\", %s, %s)"
+                sprintf "    let %s = target'.AddVar<%s%s> (%s, %s, \"%s\", %s, %s)"
                     varName prop.CommentCode prop.Type prop.Encoder prop.Decoder prop.Key prop.InitValue validator
         | ComboProperty ->
             match prop.Variation with
             | Nothing ->
-                sprintf "    let %s = target.AddCombo %s(\"%s\")" varName prop.CommentCode prop.Key
+                sprintf "    let %s = target'.AddCombo %s(\"%s\")" varName prop.CommentCode prop.Key
 
             | List ->
-                sprintf "    let %s = target.AddComboList %s(\"%s\")" varName prop.CommentCode prop.Key
+                sprintf "    let %s = target'.AddComboList %s(\"%s\")" varName prop.CommentCode prop.Key
 
             | Dict ->
-                sprintf "    let %s = target.AddComboDict %s(\"%s\")" varName prop.CommentCode prop.Key
+                sprintf "    let %s = target'.AddComboDict %s(\"%s\")" varName prop.CommentCode prop.Key
 
             | _ ->
                 failWith "getFieldAdder: Unsupported_Combo" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
         | CustomProperty ->
             match prop.Variation with
             | Nothing ->
-                sprintf "    let %s = target.AddCustom<%s> (%s.Create, %s\"%s\")" varName prop.Type prop.Type prop.CommentCode prop.Key
+                sprintf "    let %s = target'.AddCustom<%s> (%s.Create, %s\"%s\")" varName prop.Type prop.Type prop.CommentCode prop.Key
             | _ ->
                 failWith "getFieldAdder: Unsupported_Custom" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
         | _ ->

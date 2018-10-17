@@ -109,14 +109,14 @@ type OpLog = {
  *)
 type DurationStats (owner : IOwner, key : Key) =
     inherit WrapProperties<DurationStats, IComboProperty> ()
-    let target = Properties.combo (owner, key)
-    let slowCap = target.AddVar<(* DurationStats *) Duration> (E.duration, D.duration, "slow_cap", noDuration, None)
-    let totalCount = target.AddVar<(* DurationStats *) int> (E.int, D.int, "total_count", 0, None)
-    let slowCount = target.AddVar<(* DurationStats *) int> (E.int, D.int, "slow_count", 0, None)
-    let slowOps = target.AddList<(* DurationStats *) OpLog> (OpLog.JsonEncoder, OpLog.JsonDecoder, "slow_ops", (OpLog.Default ()), None)
+    let target' = Properties.combo (owner, key)
+    let slowCap = target'.AddVar<(* DurationStats *) Duration> (E.duration, D.duration, "slow_cap", noDuration, None)
+    let totalCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "total_count", 0, None)
+    let slowCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "slow_count", 0, None)
+    let slowOps = target'.AddList<(* DurationStats *) OpLog> (OpLog.JsonEncoder, OpLog.JsonDecoder, "slow_ops", (OpLog.Default ()), None)
     do (
-        target.SealCombo ()
-        base.Setup (target)
+        target'.SealCombo ()
+        base.Setup (target')
     )
     static member Create (o, k) = new DurationStats (o, k)
     static member Default () = DurationStats.Create (noOwner, NoKey)
@@ -124,7 +124,7 @@ type DurationStats (owner : IOwner, key : Key) =
         combo.AddCustom<DurationStats> (DurationStats.Create, key)
     override this.Self = this
     override __.Spawn (o, k) = DurationStats.Create (o, k)
-    override __.SyncTo t = target.SyncTo t.Target
+    override __.SyncTo t = target'.SyncTo t.Target
     member __.SlowCap (* DurationStats *) : IVarProperty<Duration> = slowCap
     member __.TotalCount (* DurationStats *) : IVarProperty<int> = totalCount
     member __.SlowCount (* DurationStats *) : IVarProperty<int> = slowCount
@@ -136,18 +136,18 @@ type DurationStats (owner : IOwner, key : Key) =
  *)
 type FuncStats (owner : IOwner, key : Key) =
     inherit WrapProperties<FuncStats, IComboProperty> ()
-    let target = Properties.combo (owner, key)
-    let slowCap = target.AddVar<(* DurationStats *) Duration> (E.duration, D.duration, "slow_cap", noDuration, None)
-    let totalCount = target.AddVar<(* DurationStats *) int> (E.int, D.int, "total_count", 0, None)
-    let slowCount = target.AddVar<(* DurationStats *) int> (E.int, D.int, "slow_count", 0, None)
-    let slowOps = target.AddList<(* DurationStats *) OpLog> (OpLog.JsonEncoder, OpLog.JsonDecoder, "slow_ops", (OpLog.Default ()), None)
-    let pendingCount = target.AddVar<(* FuncStats *) int> (E.int, D.int, "pending_count", 0, None)
-    let succeedCount = target.AddVar<(* FuncStats *) int> (E.int, D.int, "succeed_count", 0, None)
-    let failedCount = target.AddVar<(* FuncStats *) int> (E.int, D.int, "failed_count", 0, None)
-    let failedOps = target.AddList<(* FuncStats *) OpLog> (OpLog.JsonEncoder, OpLog.JsonDecoder, "failed_ops", (OpLog.Default ()), None)
+    let target' = Properties.combo (owner, key)
+    let slowCap = target'.AddVar<(* DurationStats *) Duration> (E.duration, D.duration, "slow_cap", noDuration, None)
+    let totalCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "total_count", 0, None)
+    let slowCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "slow_count", 0, None)
+    let slowOps = target'.AddList<(* DurationStats *) OpLog> (OpLog.JsonEncoder, OpLog.JsonDecoder, "slow_ops", (OpLog.Default ()), None)
+    let pendingCount = target'.AddVar<(* FuncStats *) int> (E.int, D.int, "pending_count", 0, None)
+    let succeedCount = target'.AddVar<(* FuncStats *) int> (E.int, D.int, "succeed_count", 0, None)
+    let failedCount = target'.AddVar<(* FuncStats *) int> (E.int, D.int, "failed_count", 0, None)
+    let failedOps = target'.AddList<(* FuncStats *) OpLog> (OpLog.JsonEncoder, OpLog.JsonDecoder, "failed_ops", (OpLog.Default ()), None)
     do (
-        target.SealCombo ()
-        base.Setup (target)
+        target'.SealCombo ()
+        base.Setup (target')
     )
     static member Create (o, k) = new FuncStats (o, k)
     static member Default () = FuncStats.Create (noOwner, NoKey)
@@ -155,7 +155,7 @@ type FuncStats (owner : IOwner, key : Key) =
         combo.AddCustom<FuncStats> (FuncStats.Create, key)
     override this.Self = this
     override __.Spawn (o, k) = FuncStats.Create (o, k)
-    override __.SyncTo t = target.SyncTo t.Target
+    override __.SyncTo t = target'.SyncTo t.Target
     member __.SlowCap (* DurationStats *) : IVarProperty<Duration> = slowCap
     member __.TotalCount (* DurationStats *) : IVarProperty<int> = totalCount
     member __.SlowCount (* DurationStats *) : IVarProperty<int> = slowCount
@@ -170,15 +170,15 @@ type FuncStats (owner : IOwner, key : Key) =
  *)
 type Stats (owner : IOwner, key : Key) =
     inherit WrapProperties<Stats, IComboProperty> ()
-    let target = Properties.combo (owner, key)
-    let time = target.AddVar<(* Stats *) Instant> (E.instant, D.instant, "time", (getNow' ()), None)
-    let deliver = target.AddCustom<DurationStats> (DurationStats.Create, (* Stats *) "deliver")
-    let process' = target.AddCustom<DurationStats> (DurationStats.Create, (* Stats *) "process")
-    let reply = target.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "reply")
-    let func = target.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "func")
-    let task = target.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "task")
+    let target' = Properties.combo (owner, key)
+    let time = target'.AddVar<(* Stats *) Instant> (E.instant, D.instant, "time", (getNow' ()), None)
+    let deliver = target'.AddCustom<DurationStats> (DurationStats.Create, (* Stats *) "deliver")
+    let process' = target'.AddCustom<DurationStats> (DurationStats.Create, (* Stats *) "process")
+    let reply = target'.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "reply")
+    let func = target'.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "func")
+    let task = target'.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "task")
     do (
-        base.Setup (target)
+        base.Setup (target')
     )
     static member Create (o, k) = new Stats (o, k)
     static member Default () = Stats.Create (noOwner, NoKey)
@@ -186,7 +186,7 @@ type Stats (owner : IOwner, key : Key) =
         combo.AddCustom<Stats> (Stats.Create, key)
     override this.Self = this
     override __.Spawn (o, k) = Stats.Create (o, k)
-    override __.SyncTo t = target.SyncTo t.Target
+    override __.SyncTo t = target'.SyncTo t.Target
     member __.Time (* Stats *) : IVarProperty<Instant> = time
     member __.Deliver (* Stats *) : DurationStats = deliver
     member __.Process (* Stats *) : DurationStats = process'

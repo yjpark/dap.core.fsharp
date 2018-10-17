@@ -9,7 +9,7 @@ open Dap.Context.Internal
 type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
     let mutable spec : IPropertySpec option = None
     let mutable target : 't option = None
-    member __.Setup target' =
+    member __.Setup (target' : 't) =
         if target.IsSome then
             failWith "Already_Setup" (spec, target, target')
         target <- Some target'

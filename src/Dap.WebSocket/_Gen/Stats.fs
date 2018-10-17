@@ -96,18 +96,18 @@ type PktLog = {
  *)
 type TrafficStats (owner : IOwner, key : Key) =
     inherit WrapProperties<TrafficStats, IComboProperty> ()
-    let target = Properties.combo (owner, key)
-    let slowCap = target.AddVar<(* TrafficStats *) Duration> (DurationFormat.Second.JsonEncoder, DurationFormat.Second.JsonDecoder, "slow_cap", DefaultPktSlowCap, None)
-    let totalCount = target.AddVar<(* TrafficStats *) int> (E.int, D.int, "total_count", 0, None)
-    let slowCount = target.AddVar<(* TrafficStats *) int> (E.int, D.int, "slow_count", 0, None)
-    let slowPkts = target.AddList<(* TrafficStats *) PktLog> (PktLog.JsonEncoder, PktLog.JsonDecoder, "slow_pkts", (PktLog.Default ()), None)
-    let pendingCount = target.AddVar<(* TrafficStats *) int> (E.int, D.int, "pending_count", 0, None)
-    let succeedCount = target.AddVar<(* TrafficStats *) int> (E.int, D.int, "succeed_count", 0, None)
-    let failedCount = target.AddVar<(* TrafficStats *) int> (E.int, D.int, "failed_count", 0, None)
-    let failedPkts = target.AddList<(* TrafficStats *) PktLog> (PktLog.JsonEncoder, PktLog.JsonDecoder, "failed_pkts", (PktLog.Default ()), None)
+    let target' = Properties.combo (owner, key)
+    let slowCap = target'.AddVar<(* TrafficStats *) Duration> (DurationFormat.Second.JsonEncoder, DurationFormat.Second.JsonDecoder, "slow_cap", DefaultPktSlowCap, None)
+    let totalCount = target'.AddVar<(* TrafficStats *) int> (E.int, D.int, "total_count", 0, None)
+    let slowCount = target'.AddVar<(* TrafficStats *) int> (E.int, D.int, "slow_count", 0, None)
+    let slowPkts = target'.AddList<(* TrafficStats *) PktLog> (PktLog.JsonEncoder, PktLog.JsonDecoder, "slow_pkts", (PktLog.Default ()), None)
+    let pendingCount = target'.AddVar<(* TrafficStats *) int> (E.int, D.int, "pending_count", 0, None)
+    let succeedCount = target'.AddVar<(* TrafficStats *) int> (E.int, D.int, "succeed_count", 0, None)
+    let failedCount = target'.AddVar<(* TrafficStats *) int> (E.int, D.int, "failed_count", 0, None)
+    let failedPkts = target'.AddList<(* TrafficStats *) PktLog> (PktLog.JsonEncoder, PktLog.JsonDecoder, "failed_pkts", (PktLog.Default ()), None)
     do (
-        target.SealCombo ()
-        base.Setup (target)
+        target'.SealCombo ()
+        base.Setup (target')
     )
     static member Create (o, k) = new TrafficStats (o, k)
     static member Default () = TrafficStats.Create (noOwner, NoKey)
@@ -115,7 +115,7 @@ type TrafficStats (owner : IOwner, key : Key) =
         combo.AddCustom<TrafficStats> (TrafficStats.Create, key)
     override this.Self = this
     override __.Spawn (o, k) = TrafficStats.Create (o, k)
-    override __.SyncTo t = target.SyncTo t.Target
+    override __.SyncTo t = target'.SyncTo t.Target
     member __.SlowCap (* TrafficStats *) : IVarProperty<Duration> = slowCap
     member __.TotalCount (* TrafficStats *) : IVarProperty<int> = totalCount
     member __.SlowCount (* TrafficStats *) : IVarProperty<int> = slowCount
@@ -188,14 +188,14 @@ type StatusLog = {
  *)
 type LinkStats (owner : IOwner, key : Key) =
     inherit WrapProperties<LinkStats, IComboProperty> ()
-    let target = Properties.combo (owner, key)
-    let status = target.AddVar<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status", (StatusLog.Default ()), None)
-    let statusHistory = target.AddList<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status_history", (StatusLog.Default ()), None)
-    let send = target.AddCustom<TrafficStats> (TrafficStats.Create, (* LinkStats *) "send")
-    let receive = target.AddCustom<TrafficStats> (TrafficStats.Create, (* LinkStats *) "receive")
+    let target' = Properties.combo (owner, key)
+    let status = target'.AddVar<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status", (StatusLog.Default ()), None)
+    let statusHistory = target'.AddList<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status_history", (StatusLog.Default ()), None)
+    let send = target'.AddCustom<TrafficStats> (TrafficStats.Create, (* LinkStats *) "send")
+    let receive = target'.AddCustom<TrafficStats> (TrafficStats.Create, (* LinkStats *) "receive")
     do (
-        target.SealCombo ()
-        base.Setup (target)
+        target'.SealCombo ()
+        base.Setup (target')
     )
     static member Create (o, k) = new LinkStats (o, k)
     static member Default () = LinkStats.Create (noOwner, NoKey)
@@ -203,7 +203,7 @@ type LinkStats (owner : IOwner, key : Key) =
         combo.AddCustom<LinkStats> (LinkStats.Create, key)
     override this.Self = this
     override __.Spawn (o, k) = LinkStats.Create (o, k)
-    override __.SyncTo t = target.SyncTo t.Target
+    override __.SyncTo t = target'.SyncTo t.Target
     member __.Status (* LinkStats *) : IVarProperty<StatusLog> = status
     member __.StatusHistory (* LinkStats *) : IListProperty<IVarProperty<StatusLog>> = statusHistory
     member __.Send (* LinkStats *) : TrafficStats = send
