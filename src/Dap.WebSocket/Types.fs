@@ -73,7 +73,7 @@ and Agent<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq (pack,
     inherit PackAgent<ITickingPack, Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> (pack, param)
     let linkStats = base.Console.Stats.Target.AddCustom<LinkStats> (LinkStats.Create, "link")
     do (
-        base.Console.ClearLogs.OnRequest.AddWatcher linkStats.AsProperty.Owner "LinkStats.ClearLogs" (fun _ ->
+        base.Console.ClearLogs.OnRequest.AddWatcher base.Console "LinkStats.ClearLogs" (fun _ ->
             linkStats.ClearLogs ()
         )
     )

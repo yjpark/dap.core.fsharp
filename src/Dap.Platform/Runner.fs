@@ -43,11 +43,56 @@ let private tplSlowRunFuncSucceed = LogEvent.Template4<string, string, Duration,
 let private tplRunFuncFailed = LogEvent.Template3WithException<string, string, Duration>(LogLevelWarning, "[{Section}] {Func} {Duration} ~> Failed")
 let private tplSlowFuncStats = LogEvent.Template5<string, Duration, string, string, string>(LogLevelWarning, "[{Section}] {Duration} {Func} ~> {Detail}\n{StackTrace}")
 
+type DurationStats with
+    static member AddOp' (op : string)
+            (slowCap : IVarProperty<Duration>)
+            (totalCount : IVarProperty<int>)
+            (slowCount : IVarProperty<int>)
+            (slowOps : IListProperty<IVarProperty<OpLog>>)
+            (getStackTrace : unit -> string)
+            (runner : 'runner when 'runner :> IRunner) (msg : string) (startTime : Instant) =
+        let (time, duration) = runner.Clock.CalcDuration' startTime
+        let isSlow = duration > slowCap.Value
+        let opLog =
+            if isSlow then
+                let stackTrace = getStackTrace ()
+                let opLog = OpLog.Create (op, msg, startTime, duration, stackTrace)
+                (slowOps.Add ()) .SetValue opLog
+                slowCount.SetValue (slowCount.Value + 1)
+                Some opLog
+            else
+                None
+        totalCount.SetValue (totalCount.Value + 1)
+        (duration, opLog)
+    member this.AddOp (runner : 'runner when 'runner :> IRunner) (msg : string) (startTime : Instant) =
+        DurationStats.AddOp' this.Spec.Key this.SlowCap this.TotalCount this.SlowCount this.SlowOps (fun () ->
+            (System.Diagnostics.StackTrace(2)) .ToString()
+        ) runner msg startTime
+
+type FuncStats with
+    member this.AddResult (runner : 'runner when 'runner :> IRunner) (msg : string) (startTime : Instant) (result : Result<'res, exn>) =
+        let (duration, slowOp) =
+            DurationStats.AddOp' this.Spec.Key this.SlowCap this.TotalCount this.SlowCount this.SlowOps (fun () ->
+                match result with
+                | Ok _res ->
+                    (System.Diagnostics.StackTrace(2)) .ToString()
+                | Result.Error e ->
+                    sprintf "%s\n%s" e.Message e.StackTrace
+            ) runner msg startTime
+        let failedOp =
+            match result with
+            | Ok _res ->
+                this.AddSucceedOp ()
+            | Result.Error e ->
+                let stackTrace = sprintf "%s\n%s" e.Message e.StackTrace
+                this.AddFailedOp msg startTime duration stackTrace
+        (duration, slowOp, failedOp)
+
 let private logRunResult (runner : 'runner when 'runner :> IRunner)
             (msg : string) (startTime : Instant) (result : Result<'res, exn>) =
     let stats = runner.Console0.Stats.Func
     let op = stats.Spec.Key
-    let (duration, slowOp, _failedOp) = stats.AddResult runner.Clock msg startTime result
+    let (duration, slowOp, _failedOp) = stats.AddResult runner msg startTime result
     slowOp
     |> Option.iter (fun opLog ->
         runner.Log <| tplSlowFuncStats ("Slow_" + op) duration msg (stats.ToLogDetail ()) opLog.StackTrace

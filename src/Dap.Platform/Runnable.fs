@@ -53,7 +53,7 @@ let trackDeliverDuration (runnable : IRunnable<'initer, 'runner, 'args, 'model, 
         (fromTime : Instant)
         (msg : 'msg) : unit =
     let stats = runnable.Console0.Stats.Deliver
-    let (duration, slowOpLog) = stats.AddOp runnable.Clock platform fromTime
+    let (duration, slowOpLog) = stats.AddOp runnable platform fromTime
     slowOpLog
     |> Option.iter (fun opLog ->
         runnable.Log <| tplSlowStats "Slow_Deliver" duration msg (stats.ToLogDetail ()) opLog.StackTrace
@@ -74,7 +74,7 @@ let internal process' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'ms
         setState model
         (runner :> ITaskManager).StartPendingTasks () |> ignore
         let stats = runnable.Console0.Stats.Process
-        let (duration, slowOpLog) = stats.AddOp runnable.Clock "" time
+        let (duration, slowOpLog) = stats.AddOp runnable "" time
         slowOpLog
         |> Option.iter (fun opLog ->
             runnable.Log <| tplSlowStats "Slow_Process" duration msg (stats.ToLogDetail ()) opLog.StackTrace

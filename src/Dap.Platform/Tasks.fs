@@ -30,7 +30,7 @@ let private logRunResult (runner : IRunner) (msg : string) (startTime : Instant)
         match result with
         | Some e -> Error e
         | None -> Ok ()
-    let (duration, slowOp, failedOp) = stats.AddResult runner.Clock msg startTime result'
+    let (duration, slowOp, failedOp) = stats.AddResult runner msg startTime result'
     slowOp
     |> Option.iter (fun opLog ->
         runner.Log <| tplSlowTaskStats ("Slow_" + op) duration msg (stats.ToLogDetail ()) opLog.StackTrace
