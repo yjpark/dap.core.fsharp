@@ -87,13 +87,12 @@ let DoSend pkt callback =
 type Part<'actorMsg, 'pkt when 'actorMsg :> IMsg> (param) =
     inherit BasePart<'actorMsg, Part<'actorMsg, 'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>> (param)
     let mutable clientStats : LinkStats option = None
-    do (
-        base.Agent.Console.ClearLogs.OnRequest.AddWatcher base.Agent.Console "ClientStats.ClearLogs" (fun _ ->
+    override this.Runner = this
+    override this.OnSetup () =
+        this.Agent.Console.ClearLogs.OnRequest.AddWatcher this.Agent.Console "ClientStats.ClearLogs" (fun _ ->
             clientStats
             |> Option.iter (fun s -> s.ClearLogs ())
         )
-    )
-    override this.Runner = this
     static member Spawn (param) = new Part<'actorMsg, 'pkt> (param)
     member this.SetClientStats' (client : Client<'pkt>) =
         this.Agent.Console.Stats.Target.AddLink (client.LinkStats, "client") |> ignore

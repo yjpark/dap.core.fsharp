@@ -16,12 +16,13 @@ type Console<'console when 'console :> IConsole> (kind : Kind, logging : ILoggin
     let getStats = this.Handlers.AddUnitJson ("get_stats")
     let clearLogs = this.Handlers.AddUnitUnit ("clear_logs")
     do (
+        let stats = this.Properties
+        stats.Task.SlowCap.SetValue DefaultTaskSlowCap
         getStats.SetHandler (fun () ->
-            this.Properties.Time.SetValue (clock.Now')
+            stats.Time.SetValue (clock.Now')
             E.json this.Properties
         )
         clearLogs.SetHandler (fun () ->
-            let stats = this.Properties
             stats.Deliver.ClearLogs ()
             stats.Process.ClearLogs ()
             stats.Reply.ClearLogs ()

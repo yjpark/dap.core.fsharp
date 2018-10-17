@@ -14,7 +14,13 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
             failWith "Already_Setup" (spec, target, target')
         target <- Some target'
         spec <-
+        #if FABLE_COMPILER
+            //ComboProperty.ToJson will throw "StackTrace: TypeError: Cannot read property 'tail' of undefined"
+            //Hacky workaround ATM
+            let initValue = E.emptyObject
+        #else
             let initValue = target'.ToJson ()
+        #endif
             new PropertySpec (target'.Spec0.Luid, target'.Spec0.Key, initValue)
             :> IPropertySpec
             |> Some

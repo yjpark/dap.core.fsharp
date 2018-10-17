@@ -52,6 +52,8 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
     member this.AsPart = this :> IPart<'actorMsg, 'args, 'model, 'msg, 'req, 'evt>
     //IRunner<'runner>
     abstract member Runner : 'runner with get
+    abstract member OnSetup : unit -> unit
+    default __.OnSetup () = ()
     member this.RunFunc (func : Func<'runner, 'res>) = runFunc' this.Runner func
     member this.AddTask (onFailed : OnFailed<'runner>) (getTask : GetTask<'runner, unit>) = addTask' this.Runner onFailed getTask
     member this.RunTask (onFailed : OnFailed<'runner>) (getTask : GetTask<'runner, unit>) = runTask' this.Runner onFailed getTask
@@ -91,6 +93,7 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
                 this.AddTask ignoreOnFailed (fun _ -> task {
                     cmd |> List.iter (fun m -> m <| dispatch' this)
                 })
+            this.OnSetup ()
     interface IDispatcher<'msg> with
         member __.Dispatch = dispatch
         member __.SetDispatch dispatch' = dispatch <- Some dispatch'
