@@ -29,7 +29,7 @@ type internal ComboProperty (owner, spec) =
         let mutable ok = true
         value
         |> List.iter (fun prop ->
-            match tryCastJson (D.field prop.Spec0.Key D.value) json with
+            match tryCastJson (D.field prop.Spec0.Key D.json) json with
             | Ok propJson ->
                 let oneOk = prop.WithJson propJson
                 if not oneOk then

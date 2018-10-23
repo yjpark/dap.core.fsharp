@@ -38,7 +38,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
         value
         |> Map.toList
         |> List.iter (fun (k, prop) ->
-            match tryCastJson (D.field k D.value) json with
+            match tryCastJson (D.field k D.json) json with
             | Ok json ->
                 let oneOk = prop.WithJson json
                 if not oneOk then

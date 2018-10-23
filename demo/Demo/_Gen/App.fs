@@ -10,6 +10,9 @@ open Dap.Platform
 
 module TickerTypes = Dap.Platform.Ticker.Types
 
+(*
+ * Generated: <Pack>
+ *)
 type IServicesPackArgs =
     abstract Ticker : TickerTypes.Args with get
 
@@ -18,6 +21,9 @@ type IServicesPack =
     abstract Args : IServicesPackArgs with get
     abstract Ticker : TickerTypes.Agent with get
 
+(*
+ * Generated: <Pack>
+ *)
 type ICommonPackArgs =
     inherit IServicesPackArgs
     abstract Common : int with get
@@ -29,6 +35,9 @@ type ICommonPack =
     abstract Args : ICommonPackArgs with get
     abstract AsServicesPack : IServicesPack with get
 
+(*
+ * Generated: <Pack>
+ *)
 type IAppPackArgs =
     inherit ICommonPackArgs
     inherit IServicesPackArgs
@@ -44,6 +53,9 @@ type IAppPack =
     abstract AsCommonPack : ICommonPack with get
     abstract AsServicesPack : IServicesPack with get
 
+(*
+ * Generated: <Pack>
+ *)
 type IBackupPackArgs =
     inherit ICommonPackArgs
     abstract BackupTicker : TickerTypes.Args with get
@@ -55,6 +67,10 @@ type IBackupPack =
     abstract Args : IBackupPackArgs with get
     abstract BackupTicker : TickerTypes.Agent with get
     abstract AsCommonPack : ICommonPack with get
+
+(*
+ * Generated: <App>
+ *)
 
 type AppKinds () =
     static member Ticker (* IServicesPack *) = "Ticker"
@@ -128,16 +144,6 @@ and AppArgs = {
         {this with Test = test}
     static member SetBackupTicker ((* IBackupPack *) backupTicker : TickerTypes.Args) (this : AppArgs) =
         {this with BackupTicker = backupTicker}
-    static member UpdateScope ((* AppArgs *) update : Scope -> Scope) (this : AppArgs) =
-        this |> AppArgs.SetScope (update this.Scope)
-    static member UpdateTicker ((* IServicesPack *) update : TickerTypes.Args -> TickerTypes.Args) (this : AppArgs) =
-        this |> AppArgs.SetTicker (update this.Ticker)
-    static member UpdateCommon ((* ICommonPack *) update : int -> int) (this : AppArgs) =
-        this |> AppArgs.SetCommon (update this.Common)
-    static member UpdateTest ((* IAppPack *) update : int -> int) (this : AppArgs) =
-        this |> AppArgs.SetTest (update this.Test)
-    static member UpdateBackupTicker ((* IBackupPack *) update : TickerTypes.Args -> TickerTypes.Args) (this : AppArgs) =
-        this |> AppArgs.SetBackupTicker (update this.BackupTicker)
     static member JsonEncoder : JsonEncoder<AppArgs> =
         fun (this : AppArgs) ->
             E.object [
@@ -200,12 +206,27 @@ type AppArgsBuilder () =
     [<CustomOperation("scope")>]
     member __.Scope (target : AppArgs, (* AppArgs *) scope : Scope) =
         target.WithScope scope
+    [<CustomOperation("Setup")>]
+    member __.Setup (target : AppArgs, (* AppArgs *) setup : IApp -> unit) =
+        target.WithSetup setup
     [<CustomOperation("ticker")>]
     member __.Ticker (target : AppArgs, (* IServicesPack *) ticker : TickerTypes.Args) =
         target.WithTicker ticker
+    [<CustomOperation("common")>]
+    member __.Common (target : AppArgs, (* ICommonPack *) common : int) =
+        target.WithCommon common
+    [<CustomOperation("test")>]
+    member __.Test (target : AppArgs, (* IAppPack *) test : int) =
+        target.WithTest test
+    [<CustomOperation("backup_ticker")>]
+    member __.BackupTicker (target : AppArgs, (* IBackupPack *) backupTicker : TickerTypes.Args) =
+        target.WithBackupTicker backupTicker
 
 let app_args = AppArgsBuilder ()
 
+(*
+ * Generated: <App>
+ *)
 type App (logging : ILogging, args : AppArgs) as this =
     let env = Env.live MailboxPlatform logging args.Scope
     let mutable setupError : exn option = None
@@ -218,11 +239,11 @@ type App (logging : ILogging, args : AppArgs) as this =
             let! (* IBackupPack *) backupTicker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args.BackupTicker) AppKinds.BackupTicker AppKeys.BackupTicker
             backupTicker <- Some backupTicker'
             do! this.SetupAsync' ()
-            logInfo env "App.setupAsync" "Setup_Succeed" (E.encodeJson 4 args)
+            logInfo env "App.setupAsync" "Setup_Succeed" (encodeJson 4 args)
             args.Setup this.AsApp
         with e ->
             setupError <- Some e
-            logException env "App.setupAsync" "Setup_Failed" (E.encodeJson 4 args) e
+            logException env "App.setupAsync" "Setup_Failed" (encodeJson 4 args) e
             raise e
     }
     do (

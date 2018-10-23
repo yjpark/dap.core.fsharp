@@ -55,7 +55,7 @@ let compile segments =
                     G.LooseJsonRecord (<@ OpLog @>)
                     G.FinalClass (<@ DurationStats @>)
                     G.FinalClass (<@ FuncStats @>)
-                    G.BaseClass (<@ Stats @>)
+                    G.Class (<@ Stats @>)
                 ]
             )
         )

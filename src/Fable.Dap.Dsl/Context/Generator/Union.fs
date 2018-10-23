@@ -8,7 +8,7 @@ open Dap.Context
 open Dap.Context.Meta
 open Dap.Context.Generator.Util
 
-type UnionGenerator (meta : CaseMeta list) =
+type UnionGenerator (meta : UnionMeta) =
     let getUnionHeader (param : UnionParam) =
         [
             yield sprintf "type %s =" param.Name
@@ -44,7 +44,7 @@ type UnionGenerator (meta : CaseMeta list) =
                 |> List.map (fun f -> f.Key.AsCodeVariableName)
                 |> String.concat ", "
                 |> sprintf " (%s)"
-        let createKind = if meta.Length = 1 then "" else case.Kind
+        let createKind = if meta.Cases.Length = 1 then "" else case.Kind
         [
             sprintf "    static member Create%s %s : %s =" createKind names param.Name
             sprintf "        %s%s" case.Kind values
@@ -53,7 +53,7 @@ type UnionGenerator (meta : CaseMeta list) =
         [
             sprintf "with"
         ] @ (
-            meta
+            meta.Cases
             |> List.map ^<| getCaseCreate param
             |> List.concat
         ) @ (
@@ -61,7 +61,7 @@ type UnionGenerator (meta : CaseMeta list) =
                 [
                     sprintf "    static member JsonSpec' : CaseSpec<%s> list =" param.Name
                     sprintf "        ["
-                ] @ (meta |> List.map (getCaseSpec param) |> List.concat)
+                ] @ (meta.Cases |> List.map (getCaseSpec param) |> List.concat)
                 @ [
                     sprintf "        ]"
                     sprintf "    static member JsonEncoder = E.union %s.JsonSpec'" param.Name
@@ -74,8 +74,8 @@ type UnionGenerator (meta : CaseMeta list) =
             else
                 []
         )
-    let getFieldDefinition (field : IFieldMeta) =
-        sprintf "%s : %s" field.Key.AsCodeVariableName field.Type
+    let getFieldDefinition (field : FieldMeta) =
+        sprintf "%s : %s" field.Key.AsCodeVariableName field.ValueType
     let getCaseDefinition (case : CaseMeta) =
         let fields =
             if case.Fields.Length = 0 then
@@ -90,6 +90,6 @@ type UnionGenerator (meta : CaseMeta list) =
         member __.Generate param =
             [
                 getUnionHeader param
-                meta |> List.map getCaseDefinition
+                meta.Cases |> List.map getCaseDefinition
                 getUnionMiddle param
             ]|> List.concat

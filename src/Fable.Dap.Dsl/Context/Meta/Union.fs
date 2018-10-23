@@ -8,43 +8,39 @@ open Dap.Context
 open Dap.Context.Meta.Util
 
 [<AbstractClass>]
-type FieldsBuilder<'fields, 'field> () =
-    inherit MetaBuilder<'fields> ()
-    abstract AddField : 'field -> 'fields -> 'fields
-    abstract AddVariant : FieldVariation -> 'field -> 'fields -> 'fields
+type FieldsBuilder<'meta> () =
+    inherit MetaBuilder<'meta> ()
+    abstract AddField : FieldMeta -> 'meta -> 'meta
     [<CustomOperation("var")>]
-    member this.Var (fields : 'fields, field : 'field) =
-        fields |> this.AddField field
+    member this.Var (meta : 'meta, field : FieldMeta) =
+        meta |> this.AddField field
     [<CustomOperation("option")>]
-    member this.Option (fields : 'fields, field : 'field) =
-        fields |> this.AddVariant FieldVariation.Option field
+    member this.Option (meta : 'meta, field : FieldMeta) =
+        let field = field.ToVariant FieldVariation.Option
+        meta |> this.AddField field
     [<CustomOperation("list")>]
-    member this.List (fields : 'fields, field : 'field) =
-        fields |> this.AddVariant FieldVariation.List field
+    member this.List (meta : 'meta, field : FieldMeta) =
+        let field = field.ToVariant FieldVariation.List
+        meta |> this.AddField field
     [<CustomOperation("dict")>]
-    member this.Dict (fields : 'fields, field : 'field) =
-        fields |> this.AddVariant FieldVariation.Dict field
+    member this.Dict (meta : 'meta, field : FieldMeta) =
+        let field = field.ToVariant FieldVariation.Dict
+        meta |> this.AddField field
 
 type FieldsBuilder () =
-    inherit FieldsBuilder<IFieldMeta list, IFieldMeta> ()
+    inherit FieldsBuilder<FieldMeta list> ()
     override __.Zero () = []
     override __.AddField field fields =
         fields @ [field]
 
-    override this.AddVariant variation field fields =
-        fields
-        |> this.AddField ^<| field.ToVariant0 variation
-
-type CasesBuilder () =
-    inherit MetaBuilder<CaseMeta list> ()
-    override __.Zero () = []
-    member __.AddCase (cases : CaseMeta list) (case : CaseMeta) =
-        cases @ [case]
+type Builder () =
+    inherit MetaBuilder<UnionMeta> ()
+    override __.Zero () = UnionMeta.Create []
     [<CustomOperation("case")>]
-    member this.Case (cases : CaseMeta list, kind, fields : IFieldMeta list) =
+    member this.Case (meta : UnionMeta, kind, fields : FieldMeta list) =
         CaseMeta.Create kind fields
-        |> this.AddCase cases
+        |> meta.AddCase
     [<CustomOperation("kind")>]
-    member this.Kind (cases : CaseMeta list, kind) =
+    member this.Kind (meta : UnionMeta, kind) =
         CaseMeta.Create kind []
-        |> this.AddCase cases
+        |> meta.AddCase

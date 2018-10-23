@@ -70,7 +70,7 @@ let doBuilderTest (env : IEnv) : unit =
         })
     }
     logWarn book "Test" "Book.copied" (book.AsCombo.Properties.Get "copies")
-    logWarn book "Test" "Init" (E.encodeJson 4 book)
+    logWarn book "Test" "Init" (encodeJson 4 book)
     let copies =
         book.Properties.AsCombo.Get "copies"
         :?> IVarProperty<int>
@@ -79,7 +79,7 @@ let doBuilderTest (env : IEnv) : unit =
     )
     copies.SetValue 0
     |> ignore
-    logWarn book "Test" "Updated" (E.encodeJson 4 book)
+    logWarn book "Test" "Updated" (encodeJson 4 book)
     let pub = context "Publisher" {
         properties (publisher {
             name "a new publisher"
@@ -88,17 +88,17 @@ let doBuilderTest (env : IEnv) : unit =
     }
     let context = pub.ToCustom<PublisherProperty> ()
     logWarn pub "Test" "Publisher_Context" context.Properties.Name.Value
-    logWarn pub "Test" "Publisher_Context" (E.encodeJson 4 pub)
+    logWarn pub "Test" "Publisher_Context" (encodeJson 4 pub)
  *)
 
     (*
 let doJsonTest (env : IEnv) =
     let s = Demo.Types.Status.CreatePublished "Test" 2001 (Some 100)
-    let s = E.encodeJson 0 s
+    let s = encodeJson 0 s
     logWarn env "Test" "Encode_Status" s
     let s = decodeJson Demo.Types.Status.JsonDecoder s
     logWarn env "Test" "Decode_Status" s
-    let s = E.encodeJson 0 s
+    let s = encodeJson 0 s
     logWarn env "Test" "Decode_Status" s
     *)
 
@@ -114,8 +114,8 @@ let doCustomCloneTest (logger : ILogger) =
             publisher "Some One"
             books b
         }
-    logWarn logger "Test" "Original" <| E.encodeJson 4 a
-    logWarn logger "Test" "Clone" <| E.encodeJson 4 ^<| a.AsProperty.Clone0 (noOwner, "Clone")
+    logWarn logger "Test" "Original" <| encodeJson 4 a
+    logWarn logger "Test" "Clone" <| encodeJson 4 ^<| a.AsProperty.Clone0 (noOwner, "Clone")
 
 type App with
     static member CreateAsync (logging : ILogging, args : AppArgs) =

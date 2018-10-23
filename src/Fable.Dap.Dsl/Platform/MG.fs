@@ -6,105 +6,59 @@ open Dap.Context
 open Dap.Context.Meta
 
 type M with
-    static member kind (key, initValue) =
-        M.string (key, initValue, "")
+    static member kind (key, ?value : Kind, ?validator : string) =
+        let value = value |> Option.defaultValue "NoKind"
+        M.basic ("string", key, value, ?validator=validator)
+        |> fun m -> m.ToAlias "Kind"
+    static member key (key, ?value : Key, ?validator : string) =
+        let value = value |> Option.defaultValue "NoKey"
+        M.basic ("string", key, value, ?validator=validator)
+        |> fun m -> m.ToAlias "Key"
+    static member ident (key, ?value : string, ?validator : string) =
+        let value = value |> Option.defaultValue "noIdent"
+        M.basic ("ident", key, value, ?validator=validator)
+        |> fun m -> m.ToAlias "Ident"
 
 type M with
-    static member key (key, initValue) =
-        M.string (key, initValue, "")
-
-type M with
-    static member ident (key, initValue : string, validator) =
-        PropMeta.Create "Ident" "E.ident" "D.ident" "S.ident" VarProperty
-            key initValue validator
-    static member ident (key, initValue) =
-        M.ident (key, initValue, "")
-    static member ident (key) =
-        M.ident (key, "noIdent")
-
-type M with
-    static member dateTime (key, initValue : string, validator) =
-        PropMeta.Create "System.DateTime" "E.dateTime" "D.dateTime" "S.dateTime" VarProperty
-            key initValue validator
-    static member dateTime (key, initValue) =
-        M.dateTime (key, initValue, "")
-    static member dateTime (key) =
-        M.dateTime (key, "System.DateTime.UtcNow")
-
-type M with
-    static member instant (key, initValue : string, validator) =
-        PropMeta.Create "Instant" "E.instant" "D.instant" "S.instant" VarProperty
-            key initValue validator
-    static member instant (key, initValue) =
-        M.instant (key, initValue, "")
-    static member instant (key) =
-        M.instant (key, "(getNow' ())")
-
+    static member dateTime (key, ?value : string, ?validator : string) =
+        let value = value |> Option.defaultValue "System.DateTime.UtcNow"
+        M.basic ("dateTime", key, value, ?validator=validator)
+        |> fun m -> m.ToAlias "System.DateTime"
+    static member instant (key, ?value : string, ?validator : string) =
+        let value = value |> Option.defaultValue "(getNow' ())"
+        M.basic ("instant", key, value, ?validator=validator)
+        |> fun m -> m.ToAlias "Instant"
 #if !FABLE_COMPILER
-type M with
-    static member instant (format : InstantFormat, key, initValue : string, validator) =
-        let (encoder, decoder, spec) =
-            match format with
-            | InstantFormat.Custom pattern ->
-                (
-                    sprintf "(InstantFormat.Custom %s).JsonEncoder" pattern,
-                    sprintf "(InstantFormat.Custom %s).JsonDecoder" pattern,
-                    sprintf "(InstantFormat.Custom %s).JsonSpec" pattern
-                )
-            | _ ->
-                let kind = Union.getKind format
-                (
-                    sprintf "InstantFormat.%s.JsonEncoder" kind,
-                    sprintf "InstantFormat.%s.JsonDecoder" kind,
-                    sprintf "InstantFormat.%s.JsonSpec" kind
-                )
-        PropMeta.Create "Instant" encoder decoder spec VarProperty
-            key initValue validator
-    static member instant (format : InstantFormat, key, initValue) =
-        M.instant (format, key, initValue, "")
-    static member instant (format : InstantFormat, key) =
-        M.instant (format, key, "(getNow' ())")
+    static member instant (format : InstantFormat, key, ?value : string, ?validator : string) =
+        let value = value |> Option.defaultValue "(getNow' ())"
+        match format with
+        | InstantFormat.Custom pattern ->
+            sprintf "(InstantFormat.Custom %s)" pattern
+        | _ ->
+            sprintf "InstantFormat.%s" <| Union.getKind format
+        |> fun t -> FieldMeta.CreateCustom t key value validator
+        |> fun m -> m.ToAlias "Instant"
 #endif
 
 type M with
-    static member duration (key, initValue : string, validator) =
-        PropMeta.Create "Duration" "E.duration" "D.duration" "S.duration" VarProperty
-            key initValue validator
-    static member duration (key) =
-        M.duration (key, "noDuration", "")
+    static member duration (key, ?value : string, ?validator : string) =
+        let value = value |> Option.defaultValue "noDuration"
+        M.basic ("duration", key, value, ?validator=validator)
+        |> fun m -> m.ToAlias "Duration"
 #if !FABLE_COMPILER
-    static member duration (key, initValue : Duration, validator) =
-        let initValue = jsonInitValue "Duration" E.duration initValue
-        M.duration (key, initValue, validator)
-    static member duration (key, initValue : Duration) =
-        M.duration (key, initValue, "")
-#endif
-
-#if !FABLE_COMPILER
-type M with
-    static member duration (format : DurationFormat, key, initValue : string, validator) =
-        let (encoder, decoder, spec) =
-            match format with
-            | DurationFormat.Custom pattern ->
-                (
-                    sprintf "(DurationFormat.Custom %s).JsonEncoder" pattern,
-                    sprintf "(DurationFormat.Custom %s).JsonDecoder" pattern,
-                    sprintf "(DurationFormat.Custom %s).JsonSpec" pattern
-                )
-            | _ ->
-                let kind = Union.getKind format
-                (
-                    sprintf "DurationFormat.%s.JsonEncoder" kind,
-                    sprintf "DurationFormat.%s.JsonDecoder" kind,
-                    sprintf "DurationFormat.%s.JsonSpec" kind
-                )
-        PropMeta.Create "Duration" encoder decoder spec VarProperty
-            key initValue validator
-    static member duration (format : DurationFormat, key, initValue : Duration, validator) =
-        let initValue = jsonInitValue "Duration" E.duration initValue
-        M.duration (format, key, initValue, validator)
-    static member duration (format : DurationFormat, key, initValue : Duration) =
-        M.duration (format, key, initValue, "")
-    static member duration (format : DurationFormat, key) =
-        M.duration (format, key, noDuration)
+    static member duration (key, value : Duration, ?validator : string) =
+        M.duration (key, "", ?validator = validator)
+        |> fun m -> m.WithValue (E.duration value)
+    static member duration (format : DurationFormat, key, ?value : string, ?validator : string) =
+        let value = value |> Option.defaultValue "noDuration"
+        match format with
+        | DurationFormat.Custom pattern ->
+            sprintf "(DurationFormat.Custom %s)" pattern
+        | _ ->
+            sprintf "DurationFormat.%s" <| Union.getKind format
+        |> fun t -> FieldMeta.CreateCustom t key value validator
+        |> fun m -> m.ToAlias "Duration"
+    static member duration (format : DurationFormat, key, value : Duration, ?validator : string) =
+        M.duration (format, key, "", ?validator = validator)
+        |> fun m -> m.WithValue (E.duration value)
 #endif

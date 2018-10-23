@@ -10,131 +10,246 @@ type MetaBuilder<'obj> () =
     member this.Yield (_ : 'a) = this.Zero ()
     abstract Zero : unit -> 'obj
 
+[<Literal>]
+let NoEncoder = ""
+
+[<Literal>]
+let NoDecoder = ""
+
+[<Literal>]
+let NoSpec = ""
+
+[<Literal>]
+let NoInitValue = ""
+
+[<Literal>]
+let NoValidator = ""
+
+[<RequireQualifiedAccess>]
+type FieldType =
+    | Coded of string
+    | Basic of string
+    | Custom of string
+    | Property of string
+    | Alias of FieldType * string
+with
+    static member CreateCoded t : FieldType = Coded t
+    static member CreateBasic t : FieldType = Basic t
+    static member CreateCustom t : FieldType = Custom t
+    static member CreateProperty t : FieldType = Property t
+    member this.ToAlias alias : FieldType =
+        match this with
+        | Alias (t, _a) -> t.ToAlias alias
+        | _ -> Alias (this, alias)
+    member this.Encoder =
+        match this with
+        | Coded t -> NoEncoder
+        | Basic t -> sprintf "E.%s" t
+        | Custom t -> sprintf "%s.JsonEncoder" t
+        | Property t -> NoEncoder
+        | Alias (t, _a) -> t.Encoder
+    member this.Decoder =
+        match this with
+        | Coded t -> NoDecoder
+        | Basic t -> sprintf "D.%s" t
+        | Custom t -> sprintf "%s.JsonDecoder" t
+        | Property t -> NoDecoder
+        | Alias (t, _a) -> t.Decoder
+    member this.Spec =
+        match this with
+        | Coded t -> NoSpec
+        | Basic t -> sprintf "S.%s" t
+        | Custom t -> sprintf "%s.JsonSpec" t
+        | Property t -> NoSpec
+        | Alias (t, _a) -> t.Spec
+    member this.ValueType =
+        match this with
+        | Coded t -> t
+        | Basic t -> t
+        | Custom t -> t
+        | Property t -> t
+        | Alias (_t, a) -> a
+    member this.PropType' (alias : string option) =
+        match this with
+        | Coded t -> sprintf "IVarProperty<%s>" (defaultArg alias t)
+        | Basic t -> sprintf "IVarProperty<%s>" (defaultArg alias t)
+        | Custom t -> sprintf "IVarProperty<%s>" (defaultArg alias t)
+        | Property t -> t
+        | Alias (t, a) -> t.PropType' (Some a)
+    member this.PropType =
+        match this with
+        | Alias (t, a) -> t.PropType' (Some a)
+        | _ -> this.PropType' None
+
+[<RequireQualifiedAccess>]
 type FieldVariation =
-    | Nothing
+    | NoVariation
     | Option
     | List
     | Dict
 with
-    member this.Decorator : string option =
+    member this.Encoder (f : FieldType) =
+        let encoder = f.Encoder
+        if encoder = NoEncoder then
+            NoEncoder
+        else
+            match this with
+            | NoVariation -> encoder
+            | Option -> sprintf "(E.option %s)" encoder
+            | List -> sprintf "(E.list %s)" encoder
+            | Dict -> sprintf "(E.dict %s)" encoder
+    member this.Decoder (f : FieldType) =
+        let decoder = f.Decoder
+        if decoder = NoDecoder then
+            NoDecoder
+        else
+            match this with
+            | NoVariation -> decoder
+            | Option -> sprintf "(D.option %s)" decoder
+            | List -> sprintf "(D.list %s)" decoder
+            | Dict -> sprintf "(D.dict %s)" decoder
+    member this.Spec (f : FieldType) =
+        let spec = f.Spec
+        if spec = NoSpec then
+            NoSpec
+        else
+            match this with
+            | NoVariation -> spec
+            | Option -> sprintf "(S.option (%s, %s))" f.Encoder f.Decoder
+            | List -> sprintf "(S.list (%s, %s))" f.Encoder f.Decoder
+            | Dict -> sprintf "(S.dict (%s, %s))" f.Encoder f.Decoder
+    member this.ValueType (f : FieldType) =
+        let t = f.ValueType
         match this with
-        | Nothing -> None
-        | Option -> Some "option"
-        | List -> Some "list"
-        | Dict -> Some "dict"
-    member this.DecorateType type' =
+        | NoVariation -> t
+        | Option -> sprintf "%s option" t
+        | List -> sprintf "%s list" t
+        | Dict -> sprintf "Map<string, %s>" t
+    member this.PropType (f : FieldType) =
+        let t = f.PropType
         match this with
-        | Dict ->
-            sprintf "Map<string, %s>" type'
-        | _ ->
-            this.Decorator
-            |> Option.map (fun decorator -> sprintf "%s %s" type' decorator)
-            |> Option.defaultValue type'
-    member this.DecorateEncoder encoder =
-        this.Decorator
-        |> Option.map (fun decorator -> sprintf "(E.%s %s)" decorator encoder)
-        |> Option.defaultValue encoder
-    member this.DecorateDecoder decoder =
-        this.Decorator
-        |> Option.map (fun decorator -> sprintf "(D.%s %s)" decorator decoder)
-        |> Option.defaultValue decoder
-    member this.DecorateSpec encoder decoder spec =
-        this.Decorator
-        |> Option.map (fun decorator -> sprintf "(S.%s (%s, %s))" decorator encoder decoder)
-        |> Option.defaultValue spec
-    member this.DecorateInitValue initValue =
+        | NoVariation -> t
+        | Option -> t
+        | List -> sprintf "IListProperty<%s>" t
+        | Dict -> sprintf "IDictProperty<%s>" t
+    member this.InitValue initValue =
         match this with
-        | Nothing -> initValue
+        | NoVariation -> initValue
         | Option -> "None"
         | List -> "[]"
         | Dict -> "Map.empty"
 
-type IFieldMeta =
-    abstract Type' : string with get
-    abstract Encoder' : string with get
-    abstract Decoder' : string with get
-    abstract Type : string with get
-    abstract Encoder : string with get
-    abstract Decoder : string with get
-    abstract Spec : string with get
-    abstract Key : string with get
-    abstract Variation : FieldVariation with get
-    abstract Comment : string option with get
-    abstract ToVariant0 : FieldVariation -> IFieldMeta
-
-type IPropMeta =
-    inherit IFieldMeta
-    abstract Kind : PropertyKind with get
-    abstract InitValue : string with get
-    abstract Validator : string with get
-    abstract ToVariant : FieldVariation -> IPropMeta
-    abstract WithComment : string option -> IPropMeta
-
-type PropMeta = {
-    Type : string
-    Encoder : string
-    Decoder : string
-    Spec : string
-    Kind : PropertyKind
-    Key : string
-    InitValue : string
-    Validator : string
+type FieldMeta = {
+    Type : FieldType
+    Key : Key
+    Value : string
+    Validator : string option
     Variation : FieldVariation
     Comment : string option
 } with
-    static member Create type' encoder decoder spec kind key initValue validator =
+    static member Create' t key value validator : FieldMeta =
         {
-            Type = type'
-            Encoder = encoder
-            Decoder = decoder
-            Spec = spec
-            Kind = kind
+            Type = t
             Key = key
-            InitValue = initValue
+            Value = value
             Validator = validator
-            Variation = Nothing
+            Variation = FieldVariation.NoVariation
             Comment = None
         }
-    static member CreateCombo key =
-        PropMeta.Create "IComboProperty" "" "" "" PropertyKind.ComboProperty key "" ""
+    static member CreateCoded t key value validator : FieldMeta =
+            FieldMeta.Create' (FieldType.CreateCoded t) key value validator
+    static member CreateBasic t key value validator : FieldMeta =
+            FieldMeta.Create' (FieldType.CreateBasic t) key value validator
+    static member CreateCustom t key value validator : FieldMeta =
+            FieldMeta.Create' (FieldType.CreateCustom t) key value validator
+    static member CreateProperty t key value validator : FieldMeta =
+            FieldMeta.Create' (FieldType.CreateProperty t) key value validator
+    member this.AsString =
+        sprintf "<%A> %A [%s]" this.Type this.Variation this.Key
     member this.ToAlias alias =
-        {this with Type = alias}
+        {this with Type = this.Type.ToAlias alias}
     member this.ToVariant variation =
-        match this.Kind with
-        | VarProperty ->
+        match this.Variation with
+        | FieldVariation.NoVariation ->
             {this with Variation = variation}
-        | ComboProperty
-        | CustomProperty ->
-            match variation with
-            | FieldVariation.List
-            | FieldVariation.Dict ->
-                {this with Variation = variation}
-            | _ ->
-                failWith "Unsupported" <| sprintf "%A<%s> %A" this.Kind this.Type variation
         | _ ->
-            failWith "Unsupported" <| sprintf "%A<%s> %A" this.Kind this.Type variation
-    interface IFieldMeta with
-        member this.Type' = this.Type
-        member this.Encoder' = this.Encoder
-        member this.Decoder' = this.Decoder
-        member this.Type = this.Variation.DecorateType this.Type
-        member this.Encoder = this.Variation.DecorateEncoder this.Encoder
-        member this.Decoder = this.Variation.DecorateDecoder this.Decoder
-        member this.Spec = this.Variation.DecorateSpec this.Encoder this.Decoder this.Spec
-        member this.Key = this.Key
-        member this.Variation = this.Variation
-        member this.Comment = this.Comment
-        member this.ToVariant0 variation = this.ToVariant variation :> IFieldMeta
-    interface IPropMeta with
-        member this.Kind = this.Kind
-        member this.InitValue = this.Variation.DecorateInitValue this.InitValue
-        member this.Validator = this.Validator
-        member this.ToVariant variation = this.ToVariant variation :> IPropMeta
-        member this.WithComment comment = {this with Comment = comment} :> IPropMeta
+            failWith "ToVariant" <| sprintf "%s -> %A" this.AsString variation
+    member this.WithValue (value : string) =
+        {this with Value = value}
+    member this.WithValue (value : Json) =
+    #if FABLE_COMPILER
+        // this can't be called in Fable generators, since encoder calls js code
+        failWith "Fable:WithValue" <| sprintf "%s -> %s" this.AsString ^<| value.ToString ()
+    #else
+        let json = E.encode 0 value
+        let decoder = this.Decoder
+        if decoder = NoDecoder then
+            failWith "WithValue" <| sprintf "%s -> %s" this.AsString json
+        else
+            if json.StartsWith "\"" then
+                sprintf "(decodeJsonString %s \"\"%s\"\")" this.Decoder json
+            else
+                sprintf "(decodeJsonValue %s \"\"\"%s\"\"\")" this.Decoder json
+            |> fun value -> {this with Value = value}
+    #endif
+    member this.WithValidator validator =
+        {this with Validator = validator}
+    member this.WithComment comment =
+        {this with Comment = comment}
+    member this.Encoder = this.Variation.Encoder this.Type
+    member this.Decoder = this.Variation.Decoder this.Type
+    member this.Spec = this.Variation.Spec this.Type
+    member this.ValueType = this.Variation.ValueType this.Type
+    member this.PropType = this.Variation.PropType this.Type
+    member this.InitValue = this.Variation.InitValue this.Value
+    member this.CommentCode =
+        this.Comment
+        |> Option.map (fun comment -> sprintf "(* %s *) " comment)
+        |> Option.defaultValue ""
+    member this.AddPropCode =
+        let validator =
+            match this.Validator with
+            | None ->
+                "None"
+            | Some validator ->
+                if validator = NoValidator then
+                    "None"
+                else
+                    sprintf "Some %s" validator
+        let propType = this.Type.PropType
+        let isVar = propType.StartsWith ("IVarProperty<")
+        let isCombo = propType = "IComboProperty"
+        match this.Variation with
+        | FieldVariation.NoVariation
+        | FieldVariation.Option ->
+            if isVar then
+                sprintf "AddVar<%s%s> (%s, %s, \"%s\", %s, %s)"
+                    this.CommentCode this.Type.ValueType this.Encoder this.Decoder this.Key this.Value validator
+            elif isCombo then
+                sprintf "AddCombo%s (\"%s\")"
+                    this.CommentCode this.Key
+            else
+                sprintf "AddCustom<%s%s> (%s.Create, \"%s\")"
+                    this.CommentCode propType propType this.Key
+
+        | FieldVariation.List ->
+            if isVar then
+                sprintf "AddList<%s%s> (%s, %s, \"%s\", %s, %s)"
+                    this.CommentCode this.Type.ValueType this.Type.Encoder this.Type.Decoder this.Key this.Value validator
+            else
+                sprintf "AddList<%s%s> (%s.Create, \"%s\")"
+                    this.CommentCode propType propType this.Key
+        | FieldVariation.Dict ->
+            if isVar then
+                sprintf "AddDict<%s%s> (%s, %s, \"%s\", %s, %s)"
+                    this.CommentCode this.Type.ValueType this.Type.Encoder this.Type.Decoder this.Key this.Value validator
+            else
+                sprintf "AddDict<%s%s> (%s.Create, \"%s\")"
+                    this.CommentCode propType propType this.Key
 
 type ComboMeta = {
     Parents : (string * ComboMeta) list
-    Fields : IPropMeta list
+    Fields : FieldMeta list
 } with
     static member Create parents fields =
         {
@@ -146,7 +261,7 @@ type ComboMeta = {
 
 type CaseMeta = {
     Kind : string
-    Fields : IFieldMeta list
+    Fields : FieldMeta list
 } with
     static member Create kind fields =
         {
@@ -154,152 +269,45 @@ type CaseMeta = {
             Fields = fields
         }
 
-type UnionFieldMeta = {
-    Kind : string
+type UnionMeta = {
     Cases : CaseMeta list
-    Key : string
-    Variation : FieldVariation
 } with
-    static member Create kind cases key =
+    static member Create cases =
         {
-            Kind = kind
             Cases = cases
-            Key = key
-            Variation = Nothing
         }
-    interface IFieldMeta with
-        member this.Type' = this.Kind
-        member this.Encoder' = this.Kind + ".JsonEncoder"
-        member this.Decoder' = this.Kind + ".JsonDecoder"
-        member this.Type =
-            this.Variation.DecorateType this.Kind
-        member this.Encoder =
-            this.Kind + ".JsonEncoder"
-            |> this.Variation.DecorateEncoder
-        member this.Decoder =
-            this.Kind + ".JsonDecoder"
-            |> this.Variation.DecorateDecoder
-        member this.Spec =
-            this.Kind + ".JsonSpec"
-            |> this.Variation.DecorateSpec (this.Kind + ".JsonEncoder") (this.Kind + ".JsonDecoder")
-        member this.Key = this.Key
-        member this.Variation = this.Variation
-        member this.Comment = None
-        member this.ToVariant0 variation =
-            {this with Variation = variation}
-            :> IFieldMeta
+    member this.AddCase case =
+        {this with Cases = this.Cases @ [case]}
 
-type UnionPropMeta = {
-    Kind : string
-    Cases : CaseMeta list
-    Key : string
-    InitValue : string
-    Validator : string
-    Variation : FieldVariation
-} with
-    static member Create kind cases key initValue validator =
-        {
-            Kind = kind
-            Cases = cases
-            Key = key
-            InitValue = initValue
-            Validator = validator
-            Variation = Nothing
-        }
-    interface IFieldMeta with
-        member this.Type' = this.Kind
-        member this.Encoder' = this.Kind + ".JsonEncoder"
-        member this.Decoder' = this.Kind + ".JsonDecoder"
-        member this.Type =
-            this.Variation.DecorateType this.Kind
-        member this.Encoder =
-            this.Kind + ".JsonEncoder"
-            |> this.Variation.DecorateEncoder
-        member this.Decoder =
-            this.Kind + ".JsonDecoder"
-            |> this.Variation.DecorateDecoder
-        member this.Spec =
-            this.Kind + ".JsonSpec"
-            |> this.Variation.DecorateSpec (this.Kind + ".JsonEncoder") (this.Kind + ".JsonDecoder")
-        member this.Key = this.Key
-        member this.Variation = this.Variation
-        member this.Comment = None
-        member this.ToVariant0 variation =
-            {this with Variation = variation}
-            :> IFieldMeta
-    interface IPropMeta with
-        member __.Kind = VarProperty
-        member this.InitValue = this.Variation.DecorateInitValue this.InitValue
-        member this.Validator = this.Validator
-        member this.ToVariant variation =
-            {this with Variation = variation}
-            :> IPropMeta
-        member this.WithComment _comment = this :> IPropMeta
+type FieldMeta with
+    static member SetFallbackComment (name : string) (this : FieldMeta) =
+        match this.Comment with
+        | Some _ -> this
+        | None -> this.WithComment (Some name)
+    member this.EncoderCall =
+        if this.Encoder = NoEncoder then
+            failWith "EncoderCall" this.AsString
+        else
+            sprintf "%s " this.Encoder
 
-[<AutoOpen>]
-module Extensions =
-    type IPropMeta with
-        static member SetFallbackComment (name : string) (this : IPropMeta) =
-            match this.Comment with
-            | Some _ -> this
-            | None -> this.WithComment (Some name)
-        member this.EncoderCall =
-            if this.Encoder = "" then
-                ""
-            else
-                sprintf "%s " this.Encoder
-        member this.PropType =
-            match this.Kind with
-            | VarProperty ->
-                match this.Variation with
-                | FieldVariation.List ->
-                    sprintf "IListProperty<IVarProperty<%s>>" this.Type'
-                | FieldVariation.Dict ->
-                    sprintf "IDictProperty<IVarProperty<%s>>" this.Type'
-                | FieldVariation.Option ->
-                    sprintf "IVarProperty<%s>" this.Type
-                | FieldVariation.Nothing ->
-                    sprintf "IVarProperty<%s>" this.Type
-            | ComboProperty ->
-                match this.Variation with
-                | FieldVariation.Nothing ->
-                    sprintf "IComboProperty"
-                | FieldVariation.List ->
-                    sprintf "IListProperty<IComboProperty>"
-                | FieldVariation.Dict ->
-                    sprintf "IDictProperty<IComboProperty>"
-                | FieldVariation.Option ->
-                    failWith "IPropMeta.PropType: Unsupported_Combo" <| sprintf "%A<%s> %A" this.Kind this.Type this.Variation
-            | CustomProperty ->
-                match this.Variation with
-                | FieldVariation.Nothing ->
-                    sprintf "%s" this.Type
-                | _ ->
-                    failWith "IPropMeta.PropType: Unsupported_Custom" <| sprintf "%A<%s> %A" this.Kind this.Type this.Variation
-            | _ ->
-                failWith "IPropMeta.PropType: Unsupported" <| sprintf "%A<%s> %A" this.Kind this.Type this.Variation
-        member this.CommentCode =
-            this.Comment
-            |> Option.map (fun comment -> sprintf "(* %s *) " comment)
-            |> Option.defaultValue ""
-    type ComboMeta with
-        member this.GetAllFields' (name : string, names' : Set<string>) : Set<string> * (IPropMeta list) =
-            if names' |> Set.contains name then
-                (names', [])
-            else
-                let mutable names = names' |> Set.add name
-                let mutable fields = []
-                for (parentName, parentMeta) in this.Parents do
-                    let (parentNames, parentFields) = parentMeta.GetAllFields' (parentName, names)
-                    names <-
-                        names
-                        |> Set.union parentNames
-                    fields <- fields @ parentFields
-                (names,
-                    this.Fields
-                    |> List.map ^<| IPropMeta.SetFallbackComment name
-                    |> List.append fields
-                )
-        member this.GetAllFields (name : string) =
-            this.GetAllFields' (name, Set.empty)
-            |> snd
+type ComboMeta with
+    member this.GetAllFields' (name : string, names' : Set<string>) : Set<string> * (FieldMeta list) =
+        if names' |> Set.contains name then
+            (names', [])
+        else
+            let mutable names = names' |> Set.add name
+            let mutable fields = []
+            for (parentName, parentMeta) in this.Parents do
+                let (parentNames, parentFields) = parentMeta.GetAllFields' (parentName, names)
+                names <-
+                    names
+                    |> Set.union parentNames
+                fields <- fields @ parentFields
+            (names,
+                this.Fields
+                |> List.map ^<| FieldMeta.SetFallbackComment name
+                |> List.append fields
+            )
+    member this.GetAllFields (name : string) =
+        this.GetAllFields' (name, Set.empty)
+        |> snd

@@ -18,8 +18,7 @@ open Dap.Prelude
 
 type E = JsonEncodeHelper with
     static member encode (indent : int) (json : Json) = TE.toString indent json
-    static member encodeJson (indent : int) (json : IJson) = TE.toString indent <| json.ToJson ()
-    static member json (json : IJson) = json.ToJson ()
+    static member json : JsonEncoder<Json> = id
     static member union<'u> (spec : CaseSpec<'u> list
         #if FABLE_COMPILER
             , [<Inject>] ?resolver: ITypeResolver<'u>
@@ -59,7 +58,6 @@ type E = JsonEncodeHelper with
         #endif
             |> JsonKind |> JsonKind.JsonEncoder
     static member unit : JsonEncoder<unit> = fun () -> TE.nil
-    static member value : JsonEncoder<Json> = id
     static member long = TE.int64
     static member array (encoder : JsonEncoder<'a>) (v : 'a []) =
         v |> Array.map encoder |> TE.array
@@ -371,7 +369,7 @@ type S = JsonSpecHelper with
     #else
         FieldSpec.Create<'v list> (E.list encoder, D.list decoder)
     #endif
-    static member json = FieldSpec.Create<Json> (id, D.value)
+    static member json = FieldSpec.Create<Json> (id, D.json)
     static member bool = FieldSpec.Create<bool> (E.bool, D.bool)
     static member int = FieldSpec.Create<int> (E.int, D.int)
     static member long = FieldSpec.Create<int64> (E.long, D.long)

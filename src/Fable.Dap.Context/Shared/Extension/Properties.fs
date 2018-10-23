@@ -6,6 +6,7 @@ open Dap.Context
 open Dap.Context.Internal
 
 type IComboProperty with
+    static member Create = Properties.combo
     static member Default () = Properties.combo (noOwner, NoKey)
 
 type IComboProperty with

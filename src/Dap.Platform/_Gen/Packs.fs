@@ -10,6 +10,9 @@ open Dap.Platform
 
 module TickerTypes = Dap.Platform.Ticker.Types
 
+(*
+ * Generated: <Pack>
+ *)
 type ITickingPackArgs =
     abstract Ticker : TickerTypes.Args with get
 

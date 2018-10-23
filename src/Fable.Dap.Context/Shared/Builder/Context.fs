@@ -16,7 +16,7 @@ type Builder (kind : Kind) =
         let propertiesType = properties.GetType()
         let logError tip =
             let err = sprintf "<%s> %s" propertiesType.FullName tip
-            logError context "ContextBuilder.Properties" err (E.encodeJson 4 properties)
+            logError context "ContextBuilder.Properties" err (encodeJson 4 properties)
         let syncProperties = fun (syncTo : 'p -> unit) (context : IContext<'p>) ->
             syncTo context.Properties
             context :> IContext

@@ -25,8 +25,6 @@ type ConsoleSinkArgs = {
         )
     static member SetMinLevel ((* ConsoleSinkArgs *) minLevel : LogLevel) (this : ConsoleSinkArgs) =
         {this with MinLevel = minLevel}
-    static member UpdateMinLevel ((* ConsoleSinkArgs *) update : LogLevel -> LogLevel) (this : ConsoleSinkArgs) =
-        this |> ConsoleSinkArgs.SetMinLevel (update this.MinLevel)
     static member JsonEncoder : JsonEncoder<ConsoleSinkArgs> =
         fun (this : ConsoleSinkArgs) ->
             E.object [
@@ -106,12 +104,6 @@ type FileSinkArgs = {
         {this with Path = path}
     static member SetRolling ((* FileSinkArgs *) rolling : RollingInterval option) (this : FileSinkArgs) =
         {this with Rolling = rolling}
-    static member UpdateMinLevel ((* FileSinkArgs *) update : LogLevel -> LogLevel) (this : FileSinkArgs) =
-        this |> FileSinkArgs.SetMinLevel (update this.MinLevel)
-    static member UpdatePath ((* FileSinkArgs *) update : string -> string) (this : FileSinkArgs) =
-        this |> FileSinkArgs.SetPath (update this.Path)
-    static member UpdateRolling ((* FileSinkArgs *) update : RollingInterval option -> RollingInterval option) (this : FileSinkArgs) =
-        this |> FileSinkArgs.SetRolling (update this.Rolling)
     static member JsonEncoder : JsonEncoder<FileSinkArgs> =
         fun (this : FileSinkArgs) ->
             E.object [
@@ -169,10 +161,6 @@ type LoggingArgs = {
         {this with Console = console}
     static member SetFile ((* LoggingArgs *) file : FileSinkArgs option) (this : LoggingArgs) =
         {this with File = file}
-    static member UpdateConsole ((* LoggingArgs *) update : ConsoleSinkArgs option -> ConsoleSinkArgs option) (this : LoggingArgs) =
-        this |> LoggingArgs.SetConsole (update this.Console)
-    static member UpdateFile ((* LoggingArgs *) update : FileSinkArgs option -> FileSinkArgs option) (this : LoggingArgs) =
-        this |> LoggingArgs.SetFile (update this.File)
     static member JsonEncoder : JsonEncoder<LoggingArgs> =
         fun (this : LoggingArgs) ->
             E.object [
@@ -224,10 +212,6 @@ type TickerArgs = {
         {this with FrameRate = frameRate}
     static member SetAutoStart ((* TickerArgs *) autoStart : bool) (this : TickerArgs) =
         {this with AutoStart = autoStart}
-    static member UpdateFrameRate ((* TickerArgs *) update : float -> float) (this : TickerArgs) =
-        this |> TickerArgs.SetFrameRate (update this.FrameRate)
-    static member UpdateAutoStart ((* TickerArgs *) update : bool -> bool) (this : TickerArgs) =
-        this |> TickerArgs.SetAutoStart (update this.AutoStart)
     static member JsonEncoder : JsonEncoder<TickerArgs> =
         fun (this : TickerArgs) ->
             E.object [

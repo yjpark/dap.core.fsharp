@@ -20,7 +20,7 @@ type Console<'console when 'console :> IConsole> (kind : Kind, logging : ILoggin
         stats.Task.SlowCap.SetValue DefaultTaskSlowCap
         getStats.SetHandler (fun () ->
             stats.Time.SetValue (clock.Now')
-            E.json this.Properties
+            toJson this.Properties
         )
         clearStats.SetHandler (fun () ->
             stats.Deliver.ClearStats ()

@@ -62,7 +62,7 @@ let private doSend (req : IRequest) (model : Model) : Model =
             Time = dateTimeUtcNow ()
             Id = Guid.NewGuid().ToString()
             Kind = Const.KindReq
-            Payload = E.json req
+            Payload = toJson req
         }
         encoded <- Some pkt
         match model.Args.Link.Send (req, pkt) with

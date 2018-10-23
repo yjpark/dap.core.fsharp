@@ -28,7 +28,7 @@ type private ArgsGenerator (meta : AppMeta) =
             let initValue = sprintf "(%s.Default ())" name
             M.custom (name, key, initValue)
         | CodeArgs (name, code) ->
-            M.hardcoded (name, key, code)
+            M.coded (name, key, code)
         |> M.comment packName
     let getServiceArgsMeta packName (service : ServiceMeta) =
         getArgsMeta packName service.Args <| sprintf "%s%s" service.Key service.Kind
@@ -59,7 +59,7 @@ type private ArgsGenerator (meta : AppMeta) =
         M.custom ("Scope", "scope", "NoScope")
         |> M.comment ^<| sprintf "%sArgs" param.Name
     let getSetupMeta (param : AppParam) =
-        M.hardcoded (sprintf "I%s -> unit" param.Name, "Setup", "ignore")
+        M.coded (sprintf "I%s -> unit" param.Name, "Setup", "ignore")
         |> M.comment ^<| sprintf "%sArgs" param.Name
     let getServiceArgsMember (packName : string) (service : ServiceMeta) =
         let name = sprintf "%s%s" service.Key service.Kind
@@ -110,13 +110,12 @@ type private ArgsGenerator (meta : AppMeta) =
         |> fun fields ->
             let argsMeta =
                 (getScopeMeta param) :: (getSetupMeta param) :: fields
-                |> List.map (fun f -> f :> IPropMeta)
                 |> ComboMeta.Create []
             clearProcessedPacks ()
             [
                 RecordParam.Create kind true true
                 |> fun p -> {p with InGroup = true}
-                |> generate argsMeta getRecordGenerator
+                |> generate (new Combo.RecordGenerator (argsMeta))
                 meta.Packs |> List.map (getPackArgsMembers []) |> List.concat
                 [""]
                 G.ValueBuilder (kind, argsMeta)
@@ -388,11 +387,11 @@ type ClassGenerator (meta : AppMeta) =
             meta.Packs |> List.map (getFablePackSetups param []) |> List.concat
             [
                 sprintf "            this.Setup' ()"
-                sprintf "            logInfo env \"%s.setup\" \"Setup_Succeed\" (E.encodeJson 4 args)" param.Name
+                sprintf "            logInfo env \"%s.setup\" \"Setup_Succeed\" (encodeJson 4 args)" param.Name
                 sprintf "            args.Setup this.As%s" param.Name
                 sprintf "        with e ->"
                 sprintf "            setupError <- Some e"
-                sprintf "            logException env \"%s.setup\" \"Setup_Failed\" (E.encodeJson 4 args) e" param.Name
+                sprintf "            logException env \"%s.setup\" \"Setup_Failed\" (encodeJson 4 args) e" param.Name
                 sprintf "    do ("
                 sprintf "        setup ()"
                 sprintf "    )"
@@ -407,11 +406,11 @@ type ClassGenerator (meta : AppMeta) =
             meta.Packs |> List.map (getPackSetups param []) |> List.concat
             [
                 sprintf "            do! this.SetupAsync' ()"
-                sprintf "            logInfo env \"%s.setupAsync\" \"Setup_Succeed\" (E.encodeJson 4 args)" param.Name
+                sprintf "            logInfo env \"%s.setupAsync\" \"Setup_Succeed\" (encodeJson 4 args)" param.Name
                 sprintf "            args.Setup this.As%s" param.Name
                 sprintf "        with e ->"
                 sprintf "            setupError <- Some e"
-                sprintf "            logException env \"%s.setupAsync\" \"Setup_Failed\" (E.encodeJson 4 args) e" param.Name
+                sprintf "            logException env \"%s.setupAsync\" \"Setup_Failed\" (encodeJson 4 args) e" param.Name
                 sprintf "            raise e"
                 sprintf "    }"
                 sprintf "    do ("

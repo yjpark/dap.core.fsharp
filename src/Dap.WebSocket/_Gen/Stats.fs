@@ -28,7 +28,7 @@ type PktLog = {
             Time = (* PktLog *) time
                 |> Option.defaultWith (fun () -> (getNow' ()))
             Duration = (* PktLog *) duration
-                |> Option.defaultWith (fun () -> (decodeJsonString Duration.JsonDecoder """0:00:00:00"""))
+                |> Option.defaultWith (fun () -> noDuration)
             StackTrace = (* PktLog *) stackTrace
                 |> Option.defaultWith (fun () -> "")
         }
@@ -36,7 +36,7 @@ type PktLog = {
         PktLog.Create (
             0, (* PktLog *) (* bytes *)
             (getNow' ()), (* PktLog *) (* time *)
-            (decodeJsonString Duration.JsonDecoder """0:00:00:00"""), (* PktLog *) (* duration *)
+            noDuration, (* PktLog *) (* duration *)
             "" (* PktLog *) (* stackTrace *)
         )
     static member SetBytes ((* PktLog *) bytes : int) (this : PktLog) =
@@ -47,14 +47,6 @@ type PktLog = {
         {this with Duration = duration}
     static member SetStackTrace ((* PktLog *) stackTrace : string) (this : PktLog) =
         {this with StackTrace = stackTrace}
-    static member UpdateBytes ((* PktLog *) update : int -> int) (this : PktLog) =
-        this |> PktLog.SetBytes (update this.Bytes)
-    static member UpdateTime ((* PktLog *) update : Instant -> Instant) (this : PktLog) =
-        this |> PktLog.SetTime (update this.Time)
-    static member UpdateDuration ((* PktLog *) update : Duration -> Duration) (this : PktLog) =
-        this |> PktLog.SetDuration (update this.Duration)
-    static member UpdateStackTrace ((* PktLog *) update : string -> string) (this : PktLog) =
-        this |> PktLog.SetStackTrace (update this.StackTrace)
     static member JsonEncoder : JsonEncoder<PktLog> =
         fun (this : PktLog) ->
             E.object [
@@ -71,7 +63,7 @@ type PktLog = {
                 Time = get.Optional.Field (* PktLog *) "time" D.instant
                     |> Option.defaultValue (getNow' ())
                 Duration = get.Optional.Field (* PktLog *) "duration" DurationFormat.Second.JsonDecoder
-                    |> Option.defaultValue (decodeJsonString Duration.JsonDecoder """0:00:00:00""")
+                    |> Option.defaultValue noDuration
                 StackTrace = get.Optional.Field (* PktLog *) "stack_trace" D.string
                     |> Option.defaultValue ""
             }
@@ -151,10 +143,6 @@ type StatusLog = {
         {this with Time = time}
     static member SetStatus ((* StatusLog *) status : LinkStatus) (this : StatusLog) =
         {this with Status = status}
-    static member UpdateTime ((* StatusLog *) update : Instant -> Instant) (this : StatusLog) =
-        this |> StatusLog.SetTime (update this.Time)
-    static member UpdateStatus ((* StatusLog *) update : LinkStatus -> LinkStatus) (this : StatusLog) =
-        this |> StatusLog.SetStatus (update this.Status)
     static member JsonEncoder : JsonEncoder<StatusLog> =
         fun (this : StatusLog) ->
             E.object [
@@ -189,8 +177,8 @@ type LinkStats (owner : IOwner, key : Key) =
     let target' = Properties.combo (owner, key)
     let status = target'.AddVar<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status", (StatusLog.Default ()), None)
     let statusHistory = target'.AddList<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status_history", (StatusLog.Default ()), None)
-    let send = target'.AddCustom<TrafficStats> (TrafficStats.Create, (* LinkStats *) "send")
-    let receive = target'.AddCustom<TrafficStats> (TrafficStats.Create, (* LinkStats *) "receive")
+    let send = target'.AddCustom<(* LinkStats *) TrafficStats> (TrafficStats.Create, "send")
+    let receive = target'.AddCustom<(* LinkStats *) TrafficStats> (TrafficStats.Create, "receive")
     do (
         target'.SealCombo ()
         base.Setup (target')

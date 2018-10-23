@@ -28,7 +28,8 @@ type StubGenerator (meta : StubMeta) =
         |> function
             | [] ->
                 failWith "Invalid_Stub" "No_Requests"
-            | reqMeta ->
+            | cases ->
+                let reqMeta = UnionMeta.Create cases
                 G.JsonUnion ("Req", reqMeta)
                 @ [
                     "    interface IRequest with"
@@ -39,7 +40,8 @@ type StubGenerator (meta : StubMeta) =
         |> List.map ^<| getCaseMeta "evt"
         |> function
             | [] -> []
-            | evtMeta ->
+            | cases ->
+                let evtMeta = UnionMeta.Create cases
                 G.JsonUnion ("Evt", evtMeta)
                 @ [
                     "    interface IEvent with"

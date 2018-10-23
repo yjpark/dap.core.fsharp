@@ -11,7 +11,7 @@ type IChannels with
         |> this.Add<'evt>
 
 type IChannels with
-    member this.AddJson key = this.Add<Json> (E.value, D.value, key)
+    member this.AddJson key = this.Add<Json> (E.json, D.json, key)
     member this.AddUnit key = this.Add<unit> (E.unit, D.unit, key)
     member this.AddBool key = this.Add<bool> (E.bool, D.bool, key)
     member this.AddString key = this.Add<string> (E.string, D.string, key)

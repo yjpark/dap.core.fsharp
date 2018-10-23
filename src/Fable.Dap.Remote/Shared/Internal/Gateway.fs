@@ -63,7 +63,7 @@ let private doSendEvent (evt : IEvent) (model : Model) : Model =
             Time = dateTimeUtcNow ()
             Id = Guid.NewGuid().ToString()
             Kind = Const.KindEvt
-            Payload = E.json evt
+            Payload = toJson evt
         }
     with e ->
         logException model.Args.Logger "Send_Event" "Encode_Failed" evt e
@@ -75,15 +75,15 @@ let private doSendResponse (requestId : PacketId) (res : Result<IResult, HubReas
         let (kind, payload) =
             match res with
             | Ok res ->
-                (Const.KindRes, E.json res)
+                (Const.KindRes, toJson res)
             | Error reason ->
                 match reason with
                 | HubNak nak ->
-                    (Const.KindNak, E.json nak)
+                    (Const.KindNak, toJson nak)
                 | HubError err ->
-                    (Const.KindErr, E.json err)
+                    (Const.KindErr, toJson err)
                 | HubException exn ->
-                    (Const.KindExn, E.json exn)
+                    (Const.KindExn, toJson exn)
         pkt <- Some {
             Time = dateTimeUtcNow ()
             Id = requestId

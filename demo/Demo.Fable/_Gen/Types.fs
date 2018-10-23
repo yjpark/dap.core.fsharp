@@ -26,24 +26,26 @@ type Publisher = {
     Name : (* IPublisher *) string
     Year : (* IPublisher *) int
 } with
-    static member Create name year
-            : Publisher =
+    static member Create
+        (
+            ?name : string,
+            ?year : int
+        ) : Publisher =
         {
             Name = (* IPublisher *) name
+                |> Option.defaultWith (fun () -> "")
             Year = (* IPublisher *) year
+                |> Option.defaultWith (fun () -> 0)
         }
     static member Default () =
-        Publisher.Create
-            "" (* IPublisher *) (* name *)
+        Publisher.Create (
+            "", (* IPublisher *) (* name *)
             0 (* IPublisher *) (* year *)
+        )
     static member SetName ((* IPublisher *) name : string) (this : Publisher) =
         {this with Name = name}
     static member SetYear ((* IPublisher *) year : int) (this : Publisher) =
         {this with Year = year}
-    static member UpdateName ((* IPublisher *) update : string -> string) (this : Publisher) =
-        this |> Publisher.SetName (update this.Name)
-    static member UpdateYear ((* IPublisher *) update : int -> int) (this : Publisher) =
-        this |> Publisher.SetYear (update this.Year)
     static member JsonEncoder : JsonEncoder<Publisher> =
         fun (this : Publisher) ->
             E.object [
@@ -79,21 +81,21 @@ type Publisher = {
  *)
 type Author (owner : IOwner, key : Key) =
     inherit WrapProperties<Author, IComboProperty> ()
-    let target = Properties.combo owner key
-    let name = target.AddVar<(* IPerson *) string> (E.string, D.string, "name", "", None)
-    let age = target.AddVar<(* IPerson *) int> (E.int, D.int, "age", 0, None)
-    let publisher = target.AddVar<(* Author *) string> (E.string, D.string, "publisher", "", None)
+    let target' = Properties.combo (owner, key)
+    let name = target'.AddVar<(* IPerson *) string> (E.string, D.string, "name", "", None)
+    let age = target'.AddVar<(* IPerson *) int> (E.int, D.int, "age", 0, None)
+    let publisher = target'.AddVar<(* Author *) string> (E.string, D.string, "publisher", "", None)
     do (
-        target.SealCombo ()
-        base.Setup (target)
+        target'.SealCombo ()
+        base.Setup (target')
     )
-    static member Create o k = new Author (o, k)
-    static member Default () = Author.Create noOwner NoKey
+    static member Create (o, k) = new Author (o, k)
+    static member Default () = Author.Create (noOwner, NoKey)
     static member AddToCombo key (combo : IComboProperty) =
         combo.AddCustom<Author> (Author.Create, key)
     override this.Self = this
-    override __.Spawn o k = Author.Create o k
-    override __.SyncTo t = target.SyncTo t.Target
+    override __.Spawn (o, k) = Author.Create (o, k)
+    override __.SyncTo t = target'.SyncTo t.Target
     member __.Name (* IPerson *) : IVarProperty<string> = name
     member __.Age (* IPerson *) : IVarProperty<int> = age
     member __.Publisher (* Author *) : IVarProperty<string> = publisher

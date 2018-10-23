@@ -27,6 +27,11 @@ type JsonEncoder<'json> = 'json -> Json
 type IJson =
     abstract ToJson : unit -> Json
 
+let toJson (json : IJson) = json.ToJson ()
+
+let encodeJson (indent : int) (json : IJson) =
+    TE.toString indent <| json.ToJson ()
+
 [<AutoOpen>]
 module Extensions =
     type IJson with

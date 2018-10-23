@@ -8,27 +8,26 @@ open Dap.Context
 open Dap.Context.Meta.Util
 
 type Builder (parents : (string * ComboMeta) list) =
-    inherit Union.FieldsBuilder<ComboMeta, IPropMeta> ()
+    inherit Union.FieldsBuilder<ComboMeta> ()
     new (parents' : Expr<ComboMeta> list) =
         let parents' =
             parents'
             |> List.map unquotePropertyGetExpr
         Builder (parents')
     override __.Zero () = ComboMeta.Create parents []
-    override __.AddField field fields =
-        fields.AddField field
+    override __.AddField field meta =
+        meta.AddField field
 
-    override __.AddVariant variation field fields =
-        field.ToVariant variation
-        |> fields.AddField
     [<CustomOperation("nothing")>]
     member __.Nothing (meta : ComboMeta, ()) =
         meta
     [<CustomOperation("prop")>]
-    member __.Prop (meta : ComboMeta, prop : PropMeta) =
-        match prop.Kind with
-        | VarProperty ->
-            {prop with Kind = PropertyKind.CustomProperty}
+    member __.Prop (meta : ComboMeta, prop : FieldMeta) =
+        match prop.Type with
+        | FieldType.Property _ ->
+            meta.AddField prop
+        | FieldType.Custom t ->
+            let prop = FieldMeta.CreateProperty t prop.Key prop.Value prop.Validator
+            meta.AddField prop
         | _ ->
-            prop
-        |> meta.AddField
+            failWith "Prop" prop.AsString

@@ -53,16 +53,6 @@ type OpLog = {
         {this with Duration = duration}
     static member SetStackTrace ((* OpLog *) stackTrace : string) (this : OpLog) =
         {this with StackTrace = stackTrace}
-    static member UpdateOp ((* OpLog *) update : string -> string) (this : OpLog) =
-        this |> OpLog.SetOp (update this.Op)
-    static member UpdateMsg ((* OpLog *) update : string -> string) (this : OpLog) =
-        this |> OpLog.SetMsg (update this.Msg)
-    static member UpdateTime ((* OpLog *) update : Instant -> Instant) (this : OpLog) =
-        this |> OpLog.SetTime (update this.Time)
-    static member UpdateDuration ((* OpLog *) update : Duration -> Duration) (this : OpLog) =
-        this |> OpLog.SetDuration (update this.Duration)
-    static member UpdateStackTrace ((* OpLog *) update : string -> string) (this : OpLog) =
-        this |> OpLog.SetStackTrace (update this.StackTrace)
     static member JsonEncoder : JsonEncoder<OpLog> =
         fun (this : OpLog) ->
             E.object [
@@ -168,11 +158,11 @@ type Stats (owner : IOwner, key : Key) =
     inherit WrapProperties<Stats, IComboProperty> ()
     let target' = Properties.combo (owner, key)
     let time = target'.AddVar<(* Stats *) Instant> (E.instant, D.instant, "time", (getNow' ()), None)
-    let deliver = target'.AddCustom<DurationStats> (DurationStats.Create, (* Stats *) "deliver")
-    let process' = target'.AddCustom<DurationStats> (DurationStats.Create, (* Stats *) "process")
-    let reply = target'.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "reply")
-    let func = target'.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "func")
-    let task = target'.AddCustom<FuncStats> (FuncStats.Create, (* Stats *) "task")
+    let deliver = target'.AddCustom<(* Stats *) DurationStats> (DurationStats.Create, "deliver")
+    let process' = target'.AddCustom<(* Stats *) DurationStats> (DurationStats.Create, "process")
+    let reply = target'.AddCustom<(* Stats *) FuncStats> (FuncStats.Create, "reply")
+    let func = target'.AddCustom<(* Stats *) FuncStats> (FuncStats.Create, "func")
+    let task = target'.AddCustom<(* Stats *) FuncStats> (FuncStats.Create, "task")
     do (
         base.Setup (target')
     )

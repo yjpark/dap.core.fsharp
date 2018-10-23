@@ -13,6 +13,18 @@ open Dap.Platform
 let pack (parents : Expr<PackMeta> list) = new Pack.Builder (parents)
 let live = new App.Builder ("Env.live", "MailboxPlatform")
 
+let jsonInitValue (type' : string) (encoder : JsonEncoder<'args>) (args : 'args) =
+#if FABLE_COMPILER
+    // this can't be called in Fable generators, since encoder calls js code
+    failWith "Fable:jsonInitValue" <| sprintf "%s -> %s" type' ^<| args.ToString ()
+#else
+    let json = E.encode 0 <| encoder args
+    if json.StartsWith "\"" then
+        sprintf "(decodeJsonString %s.JsonDecoder \"\"%s\"\")" type' json
+    else
+        sprintf "(decodeJsonValue %s.JsonDecoder \"\"\"%s\"\"\")" type' json
+#endif
+
 let jsonCodeArgs (type' : string) (encoder : JsonEncoder<'args>) (args : 'args) =
     args
     |> jsonInitValue type' encoder
@@ -22,24 +34,21 @@ type M with
     static member noArgs = CodeArgs "NoArgs" "NoArgs"
 
 type M with
-    static member service (aliases : ModuleAlias list, args : ArgsMeta, type' : string, spec : string, kind : Kind, key : Key) =
+    static member service (aliases : ModuleAlias list, args : ArgsMeta, type' : string, spec : string, kind : Kind, ?key : Key) =
+        let key = defaultArg key NoKey
         ServiceMeta.Create aliases args type' spec None kind key
-    static member service (aliases : ModuleAlias list, args : ArgsMeta, type' : string, spec : string, kind : Kind) =
-        M.service (aliases, args, type', spec, kind, NoKey)
 
 type M with
     static member spawner (aliases : ModuleAlias list, args : ArgsMeta, type' : string, spec : string, kind : Kind) =
         SpawnerMeta.Create aliases args type' spec None kind
 
 type M with
-    static member jsonArgs (aliases : ModuleAlias list, name : string, key : Key) =
+    static member jsonArgs (aliases : ModuleAlias list, name : string, ?key : Key) =
+        let key = defaultArg key name.AsCodeVariableName
         ExtraArgsMeta.Create aliases (JsonArgs name) key
-    static member jsonArgs (aliases : ModuleAlias list, expr, key : Key) =
+    static member jsonArgs (aliases : ModuleAlias list, expr, ?key : Key) =
         let (name, _meta) = unquotePropertyGetExpr expr
-        M.jsonArgs (aliases, name, key)
-    static member jsonArgs (aliases : ModuleAlias list, expr) =
-        let (name, _meta) = unquotePropertyGetExpr expr
-        M.jsonArgs (aliases, name, name.AsCodeVariableName)
+        M.jsonArgs (aliases, name, ?key = key)
 
 type M with
     static member codeArgs (aliases : ModuleAlias list, name : string, code : string, key : Key) =
@@ -59,16 +68,14 @@ type M with
     static member stateSpawner (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind) =
         let (name, spawner) = unquotePropertyGetExpr expr
         M.stateSpawner (aliases, name, spawner, kind)
-    static member stateService (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind, key : Key) =
+    static member stateService (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind, ?key : Key) =
+        let key = defaultArg key NoKey
         M.stateSpawner (aliases, name, spawner, kind)
         |> fun s -> s.ToService key
-    static member stateService (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind) =
-        M.stateService (aliases, name, spawner, kind, NoKey)
-    static member stateService (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind, key : Key) =
+    static member stateService (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind, ?key : Key) =
+        let key = defaultArg key NoKey
         M.stateSpawner (aliases, expr, kind)
         |> fun s -> s.ToService key
-    static member stateService (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind) =
-        M.stateService (aliases, expr, kind, NoKey)
 
 type M with
     static member contextSpawner (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind) =
@@ -80,13 +87,11 @@ type M with
     static member contextSpawner (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind) =
         let (name, spawner) = unquotePropertyGetExpr expr
         M.contextSpawner (aliases, name, spawner, kind)
-    static member contextService (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind, key : Key) =
+    static member contextService (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind, ?key : Key) =
+        let key = defaultArg key NoKey
         M.contextSpawner (aliases, name, spawner, kind)
         |> fun s -> s.ToService key
-    static member contextService (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind) =
-        M.contextService (aliases, name, spawner, kind, NoKey)
-    static member contextService (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind, key : Key) =
+    static member contextService (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind, ?key : Key) =
+        let key = defaultArg key NoKey
         M.contextSpawner (aliases, expr, kind)
         |> fun s -> s.ToService key
-    static member contextService (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind) =
-        M.contextService (aliases, expr, kind, NoKey)

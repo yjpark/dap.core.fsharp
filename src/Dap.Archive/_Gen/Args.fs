@@ -18,16 +18,14 @@ type RecorderArgs = {
         ) : RecorderArgs =
         {
             FlushInterval = (* RecorderArgs *) flushInterval
-                |> Option.defaultWith (fun () -> (decodeJsonString Duration.JsonDecoder """0:00:00:30"""))
+                |> Option.defaultWith (fun () -> (decodeJsonString D.duration """0:00:00:30"""))
         }
     static member Default () =
         RecorderArgs.Create (
-            (decodeJsonString Duration.JsonDecoder """0:00:00:30""") (* RecorderArgs *) (* flushInterval *)
+            (decodeJsonString D.duration """0:00:00:30""") (* RecorderArgs *) (* flushInterval *)
         )
     static member SetFlushInterval ((* RecorderArgs *) flushInterval : Duration) (this : RecorderArgs) =
         {this with FlushInterval = flushInterval}
-    static member UpdateFlushInterval ((* RecorderArgs *) update : Duration -> Duration) (this : RecorderArgs) =
-        this |> RecorderArgs.SetFlushInterval (update this.FlushInterval)
     static member JsonEncoder : JsonEncoder<RecorderArgs> =
         fun (this : RecorderArgs) ->
             E.object [
@@ -37,7 +35,7 @@ type RecorderArgs = {
         D.object (fun get ->
             {
                 FlushInterval = get.Optional.Field (* RecorderArgs *) "flush_interval" D.duration
-                    |> Option.defaultValue (decodeJsonString Duration.JsonDecoder """0:00:00:30""")
+                    |> Option.defaultValue (decodeJsonString D.duration """0:00:00:30""")
             }
         )
     static member JsonSpec =

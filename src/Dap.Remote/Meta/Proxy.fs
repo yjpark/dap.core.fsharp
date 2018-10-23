@@ -8,7 +8,10 @@ open Dap.Platform
 open Dap.Platform.Meta
 
 type M with
-    static member packetClientSpawner (logTraffic : bool, bufferSize : int, refreshInterval : Duration) =
+    static member packetClientSpawner (?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration) =
+        let logTraffic = defaultArg logTraffic true
+        let bufferSize = defaultArg bufferSize Dap.WebSocket.Const.DefaultBufferSize
+        let refreshInterval = defaultArg refreshInterval Dap.WebSocket.Const.DefaultRefreshInterval
         let refreshInterval = jsonInitValue "Duration" E.duration refreshInterval
         let alias = "PacketClient", "Dap.Remote.WebSocketProxy.PacketClient"
         let args = "PacketClient.Args"
@@ -19,11 +22,12 @@ type M with
         let spec = "Dap.WebSocket.Internal.Logic.spec"
         let kind = Dap.Remote.WebSocketProxy.PacketClient.Kind
         M.spawner ([alias], args, type', spec, kind)
-    static member packetClientSpawner (logTraffic : bool) =
-        M.packetClientSpawner(logTraffic, Dap.WebSocket.Const.DefaultBufferSize, Dap.WebSocket.Const.DefaultRefreshInterval)
 
 type M with
-    static member packetConnSpawner (logTraffic : bool, bufferSize : int, refreshInterval : Duration) =
+    static member packetConnSpawner (?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration) =
+        let logTraffic = defaultArg logTraffic true
+        let bufferSize = defaultArg bufferSize Dap.WebSocket.Const.DefaultBufferSize
+        let refreshInterval = defaultArg refreshInterval Dap.WebSocket.Const.DefaultRefreshInterval
         let refreshInterval = jsonInitValue "Duration" E.duration refreshInterval
         let alias = "PacketConn", "Dap.Remote.WebSocketGateway.PacketConn"
         let args = "PacketConn.Args"
@@ -34,11 +38,11 @@ type M with
         let spec = "Dap.WebSocket.Internal.Logic.spec"
         let kind = Dap.Remote.WebSocketGateway.PacketConn.Kind
         M.spawner ([alias], args, type', spec, kind)
-    static member packetConnSpawner (logTraffic : bool) =
-        M.packetConnSpawner(logTraffic, Dap.WebSocket.Const.DefaultBufferSize, Dap.WebSocket.Const.DefaultRefreshInterval)
 
 type M with
-    static member proxySpawner (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool, kind : Kind) =
+    static member proxySpawner (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, ?logTraffic : bool, ?kind : Kind) =
+        let logTraffic = defaultArg logTraffic true
+        let kind = defaultArg kind Dap.Remote.WebSocketProxy.Proxy.Kind
         let retryDelay =
             retryDelay
             |> Option.map (fun d -> sprintf "(Some %f<second>)" d)
@@ -51,14 +55,7 @@ type M with
         let type' = sprintf "Proxy.Proxy<%s>" reqResEvt
         let spec = "Dap.Remote.Proxy.Logic.Logic.spec"
         M.spawner (alias :: aliases, args, type', spec, kind)
-    static member proxySpawner (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool) =
-        let kind = Dap.Remote.WebSocketProxy.Proxy.Kind
-        M.proxySpawner (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, kind)
-    static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool, kind : Kind, key : Key) =
-        M.proxySpawner (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, kind)
+    static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, ?logTraffic : bool, ?kind : Kind, ?key : Key) =
+        let key = defaultArg key NoKey
+        M.proxySpawner (aliases, reqResEvt, stubSpec, url, retryDelay, ?logTraffic = logTraffic, ?kind = kind)
         |> fun s -> s.ToService key
-    static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool, key : Key) =
-        let kind = Dap.Remote.WebSocketProxy.Proxy.Kind
-        M.proxyService (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, kind, key)
-    static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool) =
-        M.proxyService (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, NoKey)

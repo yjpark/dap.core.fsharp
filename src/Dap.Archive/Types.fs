@@ -48,7 +48,7 @@ type Meta<'extra> when 'extra :> IJson = {
                 "key", E.string this.Key
                 "version", E.int this.Version
                 "length", E.int this.Length
-                "extra", E.json this.Extra
+                "extra", toJson this.Extra
                 "begin_time", (E.option E.instant) this.BeginTime
                 "end_time", (E.option E.instant) this.EndTime
                 "memo", (E.option E.string) this.Memo
