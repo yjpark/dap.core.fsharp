@@ -74,6 +74,7 @@ type M with
         let value = defaultArg value 0L
         let value = sprintf "%sL" (value.ToString ())
         M.basic ("long", key, value, ?validator=validator)
+        |> fun m -> m.ToAlias "int64"
     static member float (key, ?value : float, ?validator : string) =
         let value = defaultArg value 0.0
         let value = sprintf "%s" (value.ToString ())
@@ -92,6 +93,7 @@ type M with
     static member json (key, ?value : Json, ?validator : string) =
         let value = defaultArg value E.nil
         M.basic ("json", key, "", ?validator=validator)
+        |> fun m -> m.ToAlias "Json"
         |> fun m -> m.WithValue (value)
     static member guid (key, ?value : string, ?validator : string) =
         let value = defaultArg value "(System.Guid.NewGuid().ToString())"
