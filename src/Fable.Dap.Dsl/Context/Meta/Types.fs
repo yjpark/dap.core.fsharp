@@ -126,13 +126,18 @@ with
         | List -> sprintf "%s list" t
         | Dict -> sprintf "Map<string, %s>" t
     member this.PropType (f : FieldType) =
-        let t = f.PropType
+        let propType = f.PropType
         match this with
-        | NoVariation -> t
-        | Option -> t
-        | List -> sprintf "IListProperty<%s>" t
-        | Dict -> sprintf "IDictProperty<%s>" t
-    member this.InitValue initValue =
+        | NoVariation -> propType
+        | Option ->
+            let isVar = propType.StartsWith ("IVarProperty<")
+            if isVar then
+                sprintf "IVarProperty<%s>" <| this.ValueType f
+            else
+                failWith "PropType:Not_Supported" <| sprintf "<%A> %A" f this
+        | List -> sprintf "IListProperty<%s>" propType
+        | Dict -> sprintf "IDictProperty<%s>" propType
+    member this.InitValue (_f : FieldType) (initValue : string) =
         match this with
         | NoVariation -> initValue
         | Option -> "None"
@@ -201,7 +206,7 @@ type FieldMeta = {
     member this.Spec = this.Variation.Spec this.Type
     member this.ValueType = this.Variation.ValueType this.Type
     member this.PropType = this.Variation.PropType this.Type
-    member this.InitValue = this.Variation.InitValue this.Value
+    member this.InitValue = this.Variation.InitValue this.Type this.Value
     member this.CommentCode =
         this.Comment
         |> Option.map (fun comment -> sprintf "(* %s *) " comment)
@@ -220,18 +225,22 @@ type FieldMeta = {
         let isVar = propType.StartsWith ("IVarProperty<")
         let isCombo = propType = "IComboProperty"
         match this.Variation with
-        | FieldVariation.NoVariation
-        | FieldVariation.Option ->
+        | FieldVariation.NoVariation ->
             if isVar then
                 sprintf "AddVar<%s%s> (%s, %s, \"%s\", %s, %s)"
-                    this.CommentCode this.Type.ValueType this.Encoder this.Decoder this.Key this.Value validator
+                    this.CommentCode this.Type.ValueType this.Type.Encoder this.Type.Decoder this.Key this.Value validator
             elif isCombo then
                 sprintf "AddCombo%s (\"%s\")"
                     this.CommentCode this.Key
             else
                 sprintf "AddCustom<%s%s> (%s.Create, \"%s\")"
                     this.CommentCode propType propType this.Key
-
+        | FieldVariation.Option ->
+            if isVar then
+                sprintf "AddVar<%s%s> (%s, %s, \"%s\", %s, %s)"
+                    this.CommentCode this.ValueType this.Encoder this.Decoder this.Key this.InitValue "None" //TODO: Convert validator properly
+            else
+                failWith "AddPropCode" this.AsString
         | FieldVariation.List ->
             if isVar then
                 sprintf "AddList<%s%s> (%s, %s, \"%s\", %s, %s)"
