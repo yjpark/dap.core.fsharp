@@ -258,7 +258,7 @@ type RecordGenerator (meta : ComboMeta) =
             ]|> List.concat
 
 type ClassGenerator (meta : ComboMeta) =
-    let getClassHeader (param : ClassParam) =
+    let getClassHeader (param : ComboParam) =
         [
             if param.IsAbstract then
                 yield "[<AbstractClass>]"
@@ -266,7 +266,7 @@ type ClassGenerator (meta : ComboMeta) =
             yield sprintf "    inherit WrapProperties<%s, IComboProperty> ()" param.Name
             yield sprintf "    let target' = Properties.combo (owner, key)"
         ]
-    let getClassMiddle (param : ClassParam) =
+    let getClassMiddle (param : ComboParam) =
         [
             yield sprintf "    do ("
             if param.IsFinal then
@@ -285,7 +285,7 @@ type ClassGenerator (meta : ComboMeta) =
         let varName = prop.Key.AsCodeVariableName
         sprintf "    let %s = target'.%s" varName prop.AddPropCode
 
-    let rec getComboAdder (param : ClassParam) ((name, combo) : string * ComboMeta) =
+    let rec getComboAdder (param : ComboParam) ((name, combo) : string * ComboMeta) =
         if didInterfaceProcessed name then
             []
         else
@@ -299,13 +299,13 @@ type ClassGenerator (meta : ComboMeta) =
                 |> List.map ^<| FieldMeta.SetFallbackComment name
                 |> List.map getFieldAdder
             )
-    let rec getSelfComboAdder (param : ClassParam) =
+    let rec getSelfComboAdder (param : ComboParam) =
         clearProcessedInterfaces ()
         getComboAdder param (param.Name, meta)
     let getFieldMember (prop : FieldMeta) =
         sprintf "    member __.%s %s: %s = %s"
             prop.Key.AsCodeMemberName prop.CommentCode prop.PropType prop.Key.AsCodeVariableName
-    let rec getComboMember (param : ClassParam) ((name, combo) : string * ComboMeta) =
+    let rec getComboMember (param : ComboParam) ((name, combo) : string * ComboMeta) =
         if didInterfaceProcessed name then
             []
         else
@@ -319,10 +319,10 @@ type ClassGenerator (meta : ComboMeta) =
                 |> List.map ^<| FieldMeta.SetFallbackComment name
                 |> List.map getFieldMember
             )
-    let rec getSelfComboMember (param : ClassParam) =
+    let rec getSelfComboMember (param : ComboParam) =
         clearProcessedInterfaces ()
         getComboMember param (param.Name, meta)
-    interface IGenerator<ClassParam> with
+    interface IGenerator<ComboParam> with
         member __.Generate param =
             [
                 getClassHeader param

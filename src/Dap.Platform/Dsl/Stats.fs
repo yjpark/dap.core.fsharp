@@ -40,15 +40,22 @@ let Stats =
         prop (M.custom (<@ FuncStats @>, "task"))
     }
 
+let Console =
+    context <@ Stats @> {
+        handler (M.unit "get_stats") (M.json response)
+        handler (M.unit "clear_stats") (M.unit response)
+    }
+
 let compile segments =
     [
         G.File (segments, ["_Gen"; "Stats.fs"],
             G.AutoOpenModule ("Dap.Platform.Stats",
                 [
                     G.LooseJsonRecord (<@ OpLog @>)
-                    G.FinalClass (<@ DurationStats @>)
-                    G.FinalClass (<@ FuncStats @>)
-                    G.Class (<@ Stats @>)
+                    G.FinalCombo (<@ DurationStats @>)
+                    G.FinalCombo (<@ FuncStats @>)
+                    G.Combo (<@ Stats @>)
+                    G.Context (<@ Console @>)
                 ]
             )
         )

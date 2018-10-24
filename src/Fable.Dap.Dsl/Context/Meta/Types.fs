@@ -363,3 +363,43 @@ type UnionMeta = {
             this.InitValue
             |> convertInitValue name
             |> Option.defaultValue NoInitValue
+
+type ChannelMeta = {
+    Evt : FieldMeta
+} with
+    static member Create evt =
+        {
+            Evt = evt
+        }
+
+type HandlerMeta = {
+    Req : FieldMeta
+    Res : FieldMeta
+    Handler : string list
+} with
+    static member Create req res =
+        {
+            Req = req
+            Res = res
+            Handler = []
+        }
+
+type ContextMeta = {
+    Kind : Kind option
+    Properties : string * ComboMeta
+    Channels : ChannelMeta list
+    Handlers : HandlerMeta list
+} with
+    static member Create properties =
+        {
+            Kind = None
+            Properties = properties
+            Channels = []
+            Handlers = []
+        }
+    member this.AddChannel channel =
+        {this with Channels = this.Channels @ [channel]}
+    member this.AddHandler handler =
+        {this with Handlers = this.Handlers @ [handler]}
+    member this.IsAbstract =
+        this.Handlers.Length > 0

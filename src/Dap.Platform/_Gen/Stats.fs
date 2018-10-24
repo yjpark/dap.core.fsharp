@@ -94,7 +94,7 @@ type OpLog = {
         this |> OpLog.SetStackTrace stackTrace
 
 (*
- * Generated: <Class>
+ * Generated: <Combo>
  *     IsFinal
  *)
 type DurationStats (owner : IOwner, key : Key) =
@@ -119,7 +119,7 @@ type DurationStats (owner : IOwner, key : Key) =
     member __.SlowCount (* DurationStats *) : IVarProperty<int> = slowCount
 
 (*
- * Generated: <Class>
+ * Generated: <Combo>
  *     IsFinal
  *)
 type FuncStats (owner : IOwner, key : Key) =
@@ -152,7 +152,7 @@ type FuncStats (owner : IOwner, key : Key) =
     member __.FailedOps (* FuncStats *) : IListProperty<IVarProperty<OpLog>> = failedOps
 
 (*
- * Generated: <Class>
+ * Generated: <Combo>
  *)
 type Stats (owner : IOwner, key : Key) =
     inherit WrapProperties<Stats, IComboProperty> ()
@@ -179,3 +179,29 @@ type Stats (owner : IOwner, key : Key) =
     member __.Reply (* Stats *) : FuncStats = reply
     member __.Func (* Stats *) : FuncStats = func
     member __.Task (* Stats *) : FuncStats = task
+
+(*
+ * Generated: <Context>
+ *)
+type IConsole =
+    inherit IContext
+    abstract Stats : Stats with get
+    abstract GetStats : IHandler<unit, Json> with get
+    abstract ClearStats : IHandler<unit, unit> with get
+
+(*
+ * Generated: <Context>
+ *)
+[<AbstractClass>]
+type BaseConsole<'context when 'context :> IConsole> (kind : Kind, logging : ILogging) =
+    inherit CustomContext<'context, ContextSpec<Stats>, Stats> (logging, new ContextSpec<Stats>(kind, Stats.Create))
+    let getStats = base.Handlers.Add<unit, Json> (E.unit, D.unit, E.json, D.json, "get_stats")
+    let clearStats = base.Handlers.Add<unit, unit> (E.unit, D.unit, E.unit, D.unit, "clear_stats")
+    member this.Stats : Stats = this.Properties
+    member __.GetStats : IHandler<unit, Json> = getStats
+    member __.ClearStats : IHandler<unit, unit> = clearStats
+    interface IConsole with
+        member this.Stats : Stats = this.Properties
+        member __.GetStats : IHandler<unit, Json> = getStats
+        member __.ClearStats : IHandler<unit, unit> = clearStats
+    member this.AsConsole = this :> IConsole

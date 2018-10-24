@@ -109,3 +109,7 @@ let standardizeModuleLines (lines : string list) =
         |> addEmptyLine
         |> removeMultipleEmptyLine
     cleanup opens @ cleanup aliases @ removeMultipleEmptyLine lines
+
+let indentLines (lines : string list) =
+    lines
+    |> List.map (fun line -> "    " + line)

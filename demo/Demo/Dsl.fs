@@ -83,7 +83,7 @@ let compile segments =
                     G.ValueInterface <@ IPublisher @>
                     G.ComboInterface <@ IPerson @>
                     G.LooseJsonRecord <@ Publisher @>
-                    G.FinalClass <@ Author @>
+                    G.FinalCombo <@ Author @>
                     G.JsonUnion <@ Status @>
                 ]
             )

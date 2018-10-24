@@ -81,7 +81,7 @@ type UnionParam = {
                     yield "IsJson"
             ] |> String.concat ", "
 
-type ClassParam = {
+type ComboParam = {
     Name : string
     IsAbstract : bool
     IsFinal : bool
@@ -93,7 +93,7 @@ type ClassParam = {
             IsFinal = isFinal
         }
     interface IParam with
-        member __.Category = "Class"
+        member __.Category = "Combo"
         member this.Name = this.Name
         member this.Desc =
             [
@@ -125,6 +125,18 @@ type BuilderParam = {
             match this.Type with
             | ComboBuilder -> "ComboBuilder"
             | ValueBuilder -> "ValueBuilder"
+        member this.Name = this.Name
+        member this.Desc = ""
+
+type ContextParam = {
+    Name : string
+} with
+    static member Create name : ContextParam =
+        {
+            Name = name
+        }
+    interface IParam with
+        member __.Category = "Context"
         member this.Name = this.Name
         member this.Desc = ""
 

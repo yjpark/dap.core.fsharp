@@ -1,43 +1,29 @@
 [<RequireQualifiedAccess>]
 module Dap.Context.Meta.Context
 
-open System.Reflection
+open Microsoft.FSharp.Quotations
 
 open Dap.Prelude
 open Dap.Context
+open Dap.Context.Meta.Util
 
-(*
-type Builder (kind : Kind) =
-    inherit ObjBuilder<IContext> ()
+type Builder (properties : string * ComboMeta) =
+    inherit MetaBuilder<ContextMeta> ()
+    new (properties' : Expr<ComboMeta>) =
+        let properties' =
+            unquotePropertyGetExpr properties'
+        Builder (properties')
     override __.Zero () =
-        IContext.Default kind
+        ContextMeta.Create properties
 
-    [<CustomOperation("properties")>]
-    member __.Properties (context: IContext, properties : IProperties) =
-        let propertiesType = properties.GetType()
-        let logError tip =
-            let err = sprintf "<%s> %s" propertiesType.FullName tip
-            logError context "ContextBuilder.Properties" err (encodeJson 4 properties)
-        let syncProperties = fun (syncTo : 'p -> unit) (context : IContext<'p>) ->
-            syncTo context.Properties
-            context :> IContext
-        let newContext = fun (method : string) (paramType : System.Type) (spawner : PropertySpawner) ->
-            typeof<ComboContext>.DeclaringType.GetMethod method
-            |> fun x -> x.MakeGenericMethod [| paramType |]
-            |> fun x ->
-                x.Invoke (null, [| kind ; spawner |])
-                :?> IContext
-        match properties with
-        | :? IComboProperty as properties ->
-            Context.combo kind
-            |> syncProperties properties.SyncTo
-        | :? IDictProperty as properties ->
-            newContext "map0" properties.ElementType properties.ElementSpawner
-        | :? IListProperty as properties ->
-            newContext "list0" properties.ElementType properties.ElementSpawner
-        | :? ICustomProperties as properties ->
-            newContext "custom0" propertiesType properties.Clone0
-        | _ ->
-            logError "Not_Support"
-            context
-*)
+    [<CustomOperation("kind")>]
+    member __.Kind (context: ContextMeta, kind : Kind) =
+        {context with Kind = Some kind}
+    [<CustomOperation("channel")>]
+    member __.Channel (context: ContextMeta, evt : FieldMeta) =
+        ChannelMeta.Create evt
+        |> context.AddChannel
+    [<CustomOperation("handler")>]
+    member __.Handler (context: ContextMeta, req : FieldMeta, res : FieldMeta) =
+        HandlerMeta.Create req res
+        |> context.AddHandler

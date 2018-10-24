@@ -7,19 +7,16 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Meta.Util
 
+let union = new Union.Builder ()
+let fields = new Union.FieldsBuilder ()
+
 let extend (parents : Expr<ComboMeta> list) = new Combo.Builder (parents)
 let combo = extend []
 
-//let context kind = new Context.Builder (kind)
+[<Literal>]
+let response = "response"
 
-(*
-let list<'p when 'p :> IProperty> spawner = new List.Builder<'p> (spawner)
-let list0 spawner = new List.Builder<IProperty> (spawner)
-*)
-
-
-let union = Union.Builder ()
-let fields = new Union.FieldsBuilder ()
+let context (properties : Expr<ComboMeta>) = new Context.Builder (properties)
 
 type M = MetaBuilderHelper with
     static member coded (t : string, key, value : string, ?validator : string) =
@@ -54,10 +51,20 @@ type M with
         field.WithComment <| Some comment
 
 type M with
+    static member option (field : FieldMeta) =
+        field.ToVariant FieldVariation.Option
+    static member list (field : FieldMeta) =
+        field.ToVariant FieldVariation.List
+    static member dict (field : FieldMeta) =
+        field.ToVariant FieldVariation.Dict
+
+type M with
     static member combo (key : string) =
         M.custom ("IComboProperty", key, "")
 
 type M with
+    static member unit (key) =
+        M.basic ("unit", key, "()")
     static member string (key, ?value : string, ?validator : string) =
         let value = defaultArg value ""
         let value = sprintf "\"%s\"" value

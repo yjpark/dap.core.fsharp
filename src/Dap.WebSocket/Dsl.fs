@@ -48,9 +48,9 @@ let compile segments =
                 [
                     G.PlatformOpens
                     G.LooseJsonRecord (<@ PktLog @>)
-                    G.FinalClass (<@ TrafficStats @>)
+                    G.FinalCombo (<@ TrafficStats @>)
                     G.LooseJsonRecord (<@ StatusLog @>)
-                    G.FinalClass (<@ LinkStats @>)
+                    G.FinalCombo (<@ LinkStats @>)
                 ]
             )
         )

@@ -149,22 +149,22 @@ type G with
         G.Union (expr, isJson = true)
 
 type G with
-    static member Class (name, meta : ComboMeta, ?isAbstract : bool, ?isFinal : bool) =
+    static member Combo (name, meta : ComboMeta, ?isAbstract : bool, ?isFinal : bool) =
         let isAbstract = defaultArg isAbstract false
         let isFinal = defaultArg isFinal false
-        ClassParam.Create name isAbstract isFinal
+        ComboParam.Create name isAbstract isFinal
         |> generate (new Combo.ClassGenerator (meta))
-    static member Class (expr : Expr<ComboMeta>, ?isAbstract : bool, ?isFinal : bool) =
+    static member Combo (expr : Expr<ComboMeta>, ?isAbstract : bool, ?isFinal : bool) =
         let (name, meta) = unquotePropertyGetExpr expr
-        G.Class (name, meta, ?isAbstract = isAbstract, ?isFinal = isFinal)
-    static member AbstractClass (name, meta : ComboMeta) =
-        G.Class (name, meta, isAbstract = true)
-    static member AbstractClass (expr : Expr<ComboMeta>) =
-        G.Class (expr, isAbstract = true)
-    static member FinalClass (name, meta : ComboMeta) =
-        G.Class (name, meta, isFinal = true)
-    static member FinalClass (expr : Expr<ComboMeta>) =
-        G.Class (expr, isFinal = true)
+        G.Combo (name, meta, ?isAbstract = isAbstract, ?isFinal = isFinal)
+    static member AbstractCombo (name, meta : ComboMeta) =
+        G.Combo (name, meta, isAbstract = true)
+    static member AbstractCombo (expr : Expr<ComboMeta>) =
+        G.Combo (expr, isAbstract = true)
+    static member FinalCombo (name, meta : ComboMeta) =
+        G.Combo (name, meta, isFinal = true)
+    static member FinalCombo (expr : Expr<ComboMeta>) =
+        G.Combo (expr, isFinal = true)
 
 type G with
     static member ComboBuilder (name, kind, key, meta) =
@@ -198,6 +198,33 @@ type G with
         let (kind, meta) = unquotePropertyGetExpr expr
         let key = kind.AsCodeJsonKey
         G.ValueBuilder (kind, key, meta)
+
+type G with
+    static member ContextInterface (name, meta : ContextMeta) =
+        ContextParam.Create name
+        |> generate (new Context.InterfaceGenerator (meta))
+    static member ContextInterface (expr : Expr<ContextMeta>) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        G.ContextInterface (name, meta)
+
+type G with
+    static member ContextClass (name, meta : ContextMeta) =
+        ContextParam.Create name
+        |> generate (new Context.ClassGenerator (meta))
+    static member ContextClass (expr : Expr<ContextMeta>) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        G.ContextClass (name, meta)
+
+type G with
+    static member Context (name, meta : ContextMeta) =
+        [
+            G.ContextInterface (name, meta)
+            [""]
+            G.ContextClass (name, meta)
+        ]|> List.concat
+    static member Context (expr : Expr<ContextMeta>) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        G.Context (name, meta)
 
 type G with
     static member AsDisplay (code : string) (lines : Lines) =
