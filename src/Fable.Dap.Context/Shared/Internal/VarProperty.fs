@@ -54,7 +54,7 @@ and internal VarProperty<'v> private (owner, spec) =
     member this.AsValue = this :> IValue<'v>
     override __.ToJson (v : 'v) =
         spec.Encoder v
-    override this.WithJson _value json =
+    override this.LoadJson' _value json =
         tryCastJson spec.Decoder json
         |> function
             | Ok v ->

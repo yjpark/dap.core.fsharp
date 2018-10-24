@@ -31,7 +31,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         |> List.map (fun (k, prop) ->
             k, prop.ToJson ()
         )|> E.object
-    override __.WithJson value json =
+    override __.LoadJson' value json =
         let mutable ok = true
         (* TODO
         value
@@ -39,7 +39,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         |> List.iter (fun (k, prop) ->
             match tryCastJson (D.field k D.json) json with
             | Ok json ->
-                let oneOk = prop.WithJson json
+                let oneOk = prop.LoadJson' json
                 if not oneOk then
                     ok <- false
             | Error err ->
@@ -47,7 +47,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
                 owner.Log <| tplPropertyError "Properties:Decode_Field_Failed" key (prop.ToJson ()) err
         )
         if not ok then
-            logError owner "Properties:WithJson" "Decode_Has_Error" (E.encode 4 json)
+            logError owner "Properties:LoadJson'" "Decode_Has_Error" (E.encode 4 json)
         *)
         Some (value, ok)
     override this.Clone0 (o, k) = this.AsDictProperty.Clone (o, k) :> IProperty

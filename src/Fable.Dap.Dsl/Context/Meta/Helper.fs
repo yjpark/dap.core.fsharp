@@ -29,14 +29,20 @@ type M = MetaBuilderHelper with
     static member custom (t : string, key, value : string, ?validator : string) =
         FieldMeta.CreateCustom t key value validator
 
+let private getInitValue (value : string option) (name : string) (meta : ICustomMeta) =
+    value
+    |> Option.defaultWith (fun () ->
+        meta.GetInitValue name
+    )
+
 type M with
     static member custom (expr : Expr<UnionMeta>, key, ?value : string, ?validator : string) =
-        let value = defaultArg value ""
-        let (t, _meta) = unquotePropertyGetExpr expr
+        let (t, meta) = unquotePropertyGetExpr expr
+        let value = getInitValue value t meta
         FieldMeta.CreateCustom t key value validator
     static member custom (expr : Expr<ComboMeta>, key, ?value : string, ?validator : string) =
-        let (t, _meta) = unquotePropertyGetExpr expr
-        let value = defaultArg value <| sprintf "(%s.Default ())" t
+        let (t, meta) = unquotePropertyGetExpr expr
+        let value = getInitValue value t meta
         FieldMeta.CreateCustom t key value validator
 
 type M with

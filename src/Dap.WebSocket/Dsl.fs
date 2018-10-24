@@ -30,7 +30,7 @@ let TrafficStats =
 let StatusLog =
     combo {
         var (M.instant "time")
-        var (M.custom ("LinkStatus", "status"))
+        var (M.custom ("LinkStatus", "status", "LinkStatus.Unknown"))
     }
 
 let LinkStats =

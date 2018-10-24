@@ -13,7 +13,7 @@ type IContext with
             setup clone
         )
         let clone' = clone :> IContext
-        this.Properties.ToJson () |> clone'.Properties.WithJson |> ignore
+        this.Properties.ToJson () |> clone'.Properties.LoadJson' |> ignore
         if this.Properties.Sealed then clone'.Properties.Seal ()
         clone
 

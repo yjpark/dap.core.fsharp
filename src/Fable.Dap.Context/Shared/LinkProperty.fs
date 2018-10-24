@@ -23,8 +23,8 @@ type LinkProperty<'t when 't :> IProperty> (target : 't, owner, key) =
     override __.Spawn (o, k) = LinkProperty<'t>.Create target (o, k)
     override __.SyncTo other = target.SyncTo0 other.Value
     override __.ToJson value = value.ToJson ()
-    override __.WithJson value json =
-        (value :> IProperty) .WithJson json |> ignore
+    override __.LoadJson' value json =
+        (value :> IProperty) .LoadJson' json |> ignore
         None
 
 type IComboProperty with

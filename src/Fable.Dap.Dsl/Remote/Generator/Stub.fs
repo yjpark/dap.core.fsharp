@@ -21,7 +21,7 @@ type StubGenerator (meta : StubMeta) =
     let getCaseMeta (key : string) (field : StubFieldMeta) =
         let kind = getFieldKind field
         let type' = sprintf "%s%s" field.Type key.AsCodeMemberName
-        CaseMeta.Create kind [M.custom (type', key)]
+        CaseMeta.Create kind [M.custom (type', key, NoInitValue)]
     let getReq (_param : StubParam) =
         meta.Req
         |> List.map ^<| getCaseMeta "req"

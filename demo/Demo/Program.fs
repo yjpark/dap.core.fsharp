@@ -164,7 +164,7 @@ let main _argv =
     |> Async.AwaitTask |> Async.RunSynchronously |> ignore
     let stats = app.Ticker.Console.GetStats.Handle ()
     logWarn app.Env "Ticker" "Stats" (E.encode 4 stats)
-    app.Ticker.Console.Stats.AsProperty.WithJson stats |> ignore
+    app.Ticker.Console.Stats.AsProperty.LoadJson' stats |> ignore
 
     //doJsonTest env
     //doBuilderTest env

@@ -142,7 +142,7 @@ and IProperty =
     abstract Spec0 : IPropertySpec with get
     abstract Seal : unit -> unit
     abstract Sealed : bool with get
-    abstract WithJson : Json -> bool
+    abstract LoadJson' : Json -> bool
     abstract OnChanged0 : IBus<PropertyChanged> with get
     abstract Clone0 : IOwner * Key -> IProperty
     abstract SyncTo0 : IProperty -> unit
@@ -429,6 +429,8 @@ module Extensions =
         static member Create (luid) =
             IOwner.Create (getLogging(), luid)
     type IProperty with
+        member this.LoadJson (json : Json) =
+            this.LoadJson' json |> ignore
         member this.SyncWith0 (other : IProperty) =
             other.SyncTo0 this
     type IComboProperty with

@@ -211,6 +211,15 @@ type FieldMeta = {
         this.Comment
         |> Option.map (fun comment -> sprintf "(* %s *) " comment)
         |> Option.defaultValue ""
+    static member SetFallbackComment (name : string) (this : FieldMeta) =
+        match this.Comment with
+        | Some _ -> this
+        | None -> this.WithComment (Some name)
+    member this.EncoderCall =
+        if this.Encoder = NoEncoder then
+            failWith "EncoderCall" this.AsString
+        else
+            sprintf "%s " this.Encoder
     member this.AddPropCode =
         let validator =
             match this.Validator with
@@ -256,50 +265,36 @@ type FieldMeta = {
                 sprintf "AddDict<%s%s> (%s.Create, \"%s\")"
                     this.CommentCode propType propType this.Key
 
+type ICustomMeta =
+    abstract GetInitValue : string -> string
+
+let private convertInitValue (name : string) (initValue : string option) =
+    initValue
+    |> Option.map (fun initValue ->
+        if initValue.StartsWith "."
+            || initValue.StartsWith "(." then
+            sprintf "%s%s" name initValue
+        else
+            initValue
+    )
+
 type ComboMeta = {
     Parents : (string * ComboMeta) list
     Fields : FieldMeta list
+    InitValue : string option
 } with
     static member Create parents fields =
         {
             Parents = parents
             Fields = fields
+            InitValue = None
         }
+    static member SetInitValue initValue (this : ComboMeta) =
+        {this with InitValue = initValue}
+    member this.WithInitValue initValue =
+        this |> ComboMeta.SetInitValue initValue
     member this.AddField field =
         {this with Fields = this.Fields @ [field]}
-
-type CaseMeta = {
-    Kind : string
-    Fields : FieldMeta list
-} with
-    static member Create kind fields =
-        {
-            Kind = kind
-            Fields = fields
-        }
-
-type UnionMeta = {
-    Cases : CaseMeta list
-} with
-    static member Create cases =
-        {
-            Cases = cases
-        }
-    member this.AddCase case =
-        {this with Cases = this.Cases @ [case]}
-
-type FieldMeta with
-    static member SetFallbackComment (name : string) (this : FieldMeta) =
-        match this.Comment with
-        | Some _ -> this
-        | None -> this.WithComment (Some name)
-    member this.EncoderCall =
-        if this.Encoder = NoEncoder then
-            failWith "EncoderCall" this.AsString
-        else
-            sprintf "%s " this.Encoder
-
-type ComboMeta with
     member this.GetAllFields' (name : string, names' : Set<string>) : Set<string> * (FieldMeta list) =
         if names' |> Set.contains name then
             (names', [])
@@ -320,3 +315,51 @@ type ComboMeta with
     member this.GetAllFields (name : string) =
         this.GetAllFields' (name, Set.empty)
         |> snd
+    member this.HasDefault' (fields : FieldMeta list) =
+        let noDefault =
+            fields
+            |> List.exists (fun f -> f.InitValue = NoInitValue)
+        not noDefault
+    member this.HasDefault (name : string) =
+        this.HasDefault' <| this.GetAllFields name
+    interface ICustomMeta with
+        member this.GetInitValue (name : string) =
+            this.InitValue
+            |> convertInitValue name
+            |> Option.defaultWith (fun () ->
+                if this.HasDefault name then
+                    sprintf "(%s.Default ())" name
+                else
+                    NoInitValue
+            )
+
+type CaseMeta = {
+    Kind : string
+    Fields : FieldMeta list
+} with
+    static member Create kind fields =
+        {
+            Kind = kind
+            Fields = fields
+        }
+
+type UnionMeta = {
+    Cases : CaseMeta list
+    InitValue : string option
+} with
+    static member Create cases =
+        {
+            Cases = cases
+            InitValue = None
+        }
+    static member SetInitValue initValue (this : UnionMeta) =
+        {this with InitValue = initValue}
+    member this.WithInitValue initValue =
+        this |> UnionMeta.SetInitValue initValue
+    member this.AddCase case =
+        {this with Cases = this.Cases @ [case]}
+    interface ICustomMeta with
+        member this.GetInitValue (name : string) =
+            this.InitValue
+            |> convertInitValue name
+            |> Option.defaultValue NoInitValue

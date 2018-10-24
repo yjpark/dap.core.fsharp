@@ -69,7 +69,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
     let onChanged0 : Bus<PropertyChanged> = new Bus<PropertyChanged> (owner, sprintf "%s:OnChanged0" spec.Luid)
     // abstract members
     abstract member ToJson : 'value -> Json
-    abstract member WithJson : 'value -> Json -> ('value * bool) option
+    abstract member LoadJson' : 'value -> Json -> ('value * bool) option
     abstract member Clone0 : IOwner * Key -> IProperty
     abstract member SyncTo0 : IProperty -> unit
     // virtual members
@@ -113,12 +113,12 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
                 sealed' <- true
                 this.OnSealed ()
         member __.Sealed = sealed'
-        member this.WithJson json =
+        member this.LoadJson' json =
             if sealed' then
                 owner.Log <| tplPropertyError "Property:Already_Sealed" spec.Luid ver (value, E.encode 4 json)
                 false
             else
-                this.WithJson value json
+                this.LoadJson' value json
                 |> Option.map (fun (v, ok) ->
                     (this.SetValue v) && ok
                 )|> Option.defaultValue false

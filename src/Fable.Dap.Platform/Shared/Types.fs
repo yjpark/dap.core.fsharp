@@ -206,6 +206,5 @@ with
         D.kindStr<LinkStatus> ()
     static member JsonSpec =
         FieldSpec.Create<LinkStatus> (LinkStatus.JsonEncoder, LinkStatus.JsonDecoder)
-    static member Default () = Unknown
     interface IJson with
         member this.ToJson () = LinkStatus.JsonEncoder this

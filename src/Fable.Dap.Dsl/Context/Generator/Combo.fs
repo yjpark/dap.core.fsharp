@@ -154,9 +154,6 @@ type RecordGenerator (meta : ComboMeta) =
         getComboHelper param (param.Name, meta)
     let getRecordMiddle (param : RecordParam) =
         let fields = meta.GetAllFields param.Name
-        let noDefault =
-            fields
-            |> List.exists (fun f -> f.InitValue = "")
         [
             yield sprintf "} with"
             yield sprintf "    static member Create"
@@ -178,7 +175,7 @@ type RecordGenerator (meta : ComboMeta) =
                     yield sprintf "            %s = %s%s" field.Key.AsCodeMemberName field.CommentCode field.Key.AsCodeVariableName
                     yield sprintf "                |> Option.defaultWith (fun () -> %s)" field.InitValue
             yield sprintf "        }"
-            if not noDefault then
+            if meta.HasDefault' fields then
                 yield sprintf "    static member Default () ="
                 yield sprintf "        %s.Create (" param.Name
                 index <- 0
@@ -287,44 +284,6 @@ type ClassGenerator (meta : ComboMeta) =
     let getFieldAdder (prop : FieldMeta) =
         let varName = prop.Key.AsCodeVariableName
         sprintf "    let %s = target'.%s" varName prop.AddPropCode
-        (*
-        match prop.Kind with
-        | VarProperty ->
-            match prop.Variation with
-            | FieldVariation.List ->
-                let prop = prop.ToVariant FieldVariation.Nothing
-                sprintf "    let %s = target'.AddList<%s%s> (%s, %s, \"%s\", %s, %s)"
-                    varName prop.CommentCode prop.PropType prop.Encoder prop.Decoder prop.Key prop.InitValue validator
-            | FieldVariation.Dict ->
-                let prop = prop.ToVariant FieldVariation.Nothing
-                sprintf "    let %s = target'.AddDict<%s%s> (%s, %s, \"%s\", %s, %s)"
-                    varName prop.CommentCode prop.PropType prop.Encoder prop.Decoder prop.Key prop.InitValue validator
-            | FieldVariation.Option
-            | FieldVariation.Nothing ->
-                sprintf "    let %s = target'.AddVar<%s%s> (%s, %s, \"%s\", %s, %s)"
-                    varName prop.CommentCode prop.ValueType prop.Encoder prop.Decoder prop.Key prop.InitValue validator
-        | ComboProperty ->
-            match prop.Variation with
-            | Nothing ->
-                sprintf "    let %s = target'.AddCombo %s(\"%s\")" varName prop.CommentCode prop.Key
-
-            | List ->
-                sprintf "    let %s = target'.AddComboList %s(\"%s\")" varName prop.CommentCode prop.Key
-
-            | Dict ->
-                sprintf "    let %s = target'.AddComboDict %s(\"%s\")" varName prop.CommentCode prop.Key
-
-            | _ ->
-                failWith "getFieldAdder: Unsupported_Combo" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
-        | CustomProperty ->
-            match prop.Variation with
-            | Nothing ->
-                sprintf "    let %s = target'.AddCustom<%s> (%s.Create, %s\"%s\")" varName prop.Type prop.Type prop.CommentCode prop.Key
-            | _ ->
-                failWith "getFieldAdder: Unsupported_Custom" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
-        | _ ->
-            failWith "getFieldAdder: Unsupported" <| sprintf "%A<%s> %s %A" prop.Kind prop.Type prop.Key prop.Variation
-        *)
 
     let rec getComboAdder (param : ClassParam) ((name, combo) : string * ComboMeta) =
         if didInterfaceProcessed name then

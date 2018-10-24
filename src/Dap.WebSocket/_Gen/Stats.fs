@@ -132,12 +132,12 @@ type StatusLog = {
             Time = (* StatusLog *) time
                 |> Option.defaultWith (fun () -> (getNow' ()))
             Status = (* StatusLog *) status
-                |> Option.defaultWith (fun () -> (LinkStatus.Default ()))
+                |> Option.defaultWith (fun () -> LinkStatus.Unknown)
         }
     static member Default () =
         StatusLog.Create (
             (getNow' ()), (* StatusLog *) (* time *)
-            (LinkStatus.Default ()) (* StatusLog *) (* status *)
+            LinkStatus.Unknown (* StatusLog *) (* status *)
         )
     static member SetTime ((* StatusLog *) time : Instant) (this : StatusLog) =
         {this with Time = time}
@@ -155,7 +155,7 @@ type StatusLog = {
                 Time = get.Optional.Field (* StatusLog *) "time" D.instant
                     |> Option.defaultValue (getNow' ())
                 Status = get.Optional.Field (* StatusLog *) "status" LinkStatus.JsonDecoder
-                    |> Option.defaultValue (LinkStatus.Default ())
+                    |> Option.defaultValue LinkStatus.Unknown
             }
         )
     static member JsonSpec =
