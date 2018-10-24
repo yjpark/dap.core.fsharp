@@ -87,6 +87,21 @@ type WrapProperties<'p, 't when 'p :> ICustomProperty and 't :> IProperties> () 
     interface ICustomProperties with
         member this.Count = this.Target.Count
 
+type NoProperties (owner : IOwner, key : Key) =
+    inherit WrapProperties<NoProperties, IComboProperty> ()
+    let target' = Properties.combo (owner, key)
+    do (
+        target'.SealCombo ()
+        base.Setup (target')
+    )
+    static member Create (o, k) = new NoProperties (o, k)
+    static member Default () = NoProperties.Create (noOwner, NoKey)
+    static member AddToCombo key (combo : IComboProperty) =
+        combo.AddCustom<NoProperties> (NoProperties.Create, key)
+    override this.Self = this
+    override __.Spawn (o, k) = NoProperties.Create (o, k)
+    override __.SyncTo t = target'.SyncTo t.Target
+
 [<AbstractClass>]
 type CustomProperty<'p, 'spec, 'value when 'p :> ICustomProperty and 'spec :> IPropertySpec> (owner, spec, value) =
     inherit Property<'spec, 'value> (owner, spec, value)

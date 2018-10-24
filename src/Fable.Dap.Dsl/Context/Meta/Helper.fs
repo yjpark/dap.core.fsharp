@@ -18,6 +18,11 @@ let response = "response"
 
 let context (properties : Expr<ComboMeta>) = new Context.Builder (properties)
 
+let NoProperties =
+    combo {
+        nothing ()
+    }
+
 type M = MetaBuilderHelper with
     static member coded (t : string, key, value : string, ?validator : string) =
         FieldMeta.CreateCoded t key value validator
