@@ -22,12 +22,15 @@ let generate<'param when 'param :> IParam> (generator : IGenerator<'param>) (par
     generator.Generate param
     |> List.append ^<| getHeader false param
 
+let concatSections (sections : Lines list) =
+    sections
+    |> List.map (fun section ->
+        "" :: section
+    )|> List.concat
+
 type internal ModuleGenerator (sections : Lines list) =
     member __.Generate (param : ModuleParam) : Lines =
-        sections
-        |> List.map (fun section ->
-            "" :: section
-        )|> List.concat
+        concatSections sections
         |> standardizeModuleLines
         |> List.append [
             if param.AutoOpen then
