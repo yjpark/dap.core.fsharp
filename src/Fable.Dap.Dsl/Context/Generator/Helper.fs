@@ -227,6 +227,21 @@ type G with
         G.Context (name, meta)
 
 type G with
+    static member Feature (generator : string option -> Lines, features : string list) =
+        let features = (features |> List.map Some) @ [None]
+        let mutable isFirst = true
+        features
+        |> List.map (fun feature ->
+            match feature with
+            | Some f ->
+                let op = if isFirst then "if" else "elif"
+                isFirst <- false
+                sprintf "#%s %s" op f
+            | None -> "#else"
+            :: (generator feature)
+        )|> List.concat
+
+type G with
     static member AsDisplay (code : string) (lines : Lines) =
         """[<StructuredFormatDisplay("{AsDisplay}")>]"""
         :: lines @ [
