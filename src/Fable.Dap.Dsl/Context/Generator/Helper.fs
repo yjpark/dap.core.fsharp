@@ -236,7 +236,7 @@ type G with
             | Some f ->
                 let op = if isFirst then "if" else "elif"
                 isFirst <- false
-                sprintf "#%s %s" op f
+                sprintf "#%s %s" op <| featureToSwitch f
             | None -> "#else"
             :: (generator feature)
         )|> List.concat
