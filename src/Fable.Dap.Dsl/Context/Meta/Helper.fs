@@ -18,10 +18,12 @@ let response = "response"
 
 let context (properties : Expr<ComboMeta>) = new Context.Builder (properties)
 
-let NoProperties =
+let private NoProperties =
     combo {
         nothing ()
     }
+
+let emptyContext = context (<@ NoProperties @>)
 
 type M = MetaBuilderHelper with
     static member coded (t : string, key, value : string, ?validator : string) =
