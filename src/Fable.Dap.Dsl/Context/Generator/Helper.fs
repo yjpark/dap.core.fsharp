@@ -243,6 +243,7 @@ type G with
             | None -> "#else"
             :: (generator feature)
         )|> List.concat
+        |> fun lines -> lines @ ["#endif"]
 
 type G with
     static member AsDisplay (code : string) (lines : Lines) =
