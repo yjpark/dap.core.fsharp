@@ -27,7 +27,12 @@ type Builder (parents : (string * ComboMeta) list) =
         | FieldType.Property _ ->
             meta.AddField prop
         | FieldType.Custom t ->
-            let prop = FieldMeta.CreateProperty t prop.Key prop.Value prop.Validator
+            let value =
+                if prop.Value <> NoInitValue then
+                    prop.Value
+                else
+                    sprintf "(%s.Default ())" t
+            let prop = FieldMeta.CreateProperty t prop.Key value prop.Validator
             meta.AddField prop
         | _ ->
             failWith "Prop" prop.AsString

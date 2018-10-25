@@ -51,10 +51,38 @@ let private toJsonKey (kind : string) =
     |> String.concat "_"
     |> fun s -> s.Replace ("'", "")
 
+let private toClassName (name : string) =
+    if name.Length <= 1 then
+        name
+    else
+        let className =
+            if name.StartsWith("I") then
+                name.Substring (1, name.Length - 1)
+            else
+                name
+        if System.Char.IsUpper (className.[0]) then
+            className
+        else
+            name
+
+let private toInterfaceName (name : string) =
+    if name.Length <= 1 then
+        "I" + name
+    elif name.StartsWith("I") then
+        let className = name.Substring (1, name.Length - 1)
+        if System.Char.IsUpper (className.[0]) then
+            name
+        else
+            "I" + name
+    else
+        "I" + name
+
 type System.String with
     member this.AsCodeMemberName = toMemberName this
     member this.AsCodeVariableName = toVariableName this
     member this.AsCodeJsonKey = toJsonKey this
+    member this.AsCodeClassName = toClassName this
+    member this.AsCodeInterfaceName = toInterfaceName this
 
 let removeDuplicatedLines (filter : string -> bool) (lines : string list) =
     lines

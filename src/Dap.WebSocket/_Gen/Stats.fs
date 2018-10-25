@@ -17,10 +17,10 @@ type PktLog = {
 } with
     static member Create
         (
-            ?bytes : int,
-            ?time : Instant,
-            ?duration : Duration,
-            ?stackTrace : string
+            ?bytes : (* PktLog *) int,
+            ?time : (* PktLog *) Instant,
+            ?duration : (* PktLog *) Duration,
+            ?stackTrace : (* PktLog *) string
         ) : PktLog =
         {
             Bytes = (* PktLog *) bytes
@@ -34,10 +34,10 @@ type PktLog = {
         }
     static member Default () =
         PktLog.Create (
-            0, (* PktLog *) (* bytes *)
-            (getNow' ()), (* PktLog *) (* time *)
-            noDuration, (* PktLog *) (* duration *)
-            "" (* PktLog *) (* stackTrace *)
+            (* PktLog *) bytes = 0,
+            (* PktLog *) time = (getNow' ()),
+            (* PktLog *) duration = noDuration,
+            (* PktLog *) stackTrace = ""
         )
     static member SetBytes ((* PktLog *) bytes : int) (this : PktLog) =
         {this with Bytes = bytes}
@@ -83,7 +83,7 @@ type PktLog = {
         this |> PktLog.SetStackTrace stackTrace
 
 (*
- * Generated: <Class>
+ * Generated: <Combo>
  *     IsFinal
  *)
 type TrafficStats (owner : IOwner, key : Key) =
@@ -125,8 +125,8 @@ type StatusLog = {
 } with
     static member Create
         (
-            ?time : Instant,
-            ?status : LinkStatus
+            ?time : (* StatusLog *) Instant,
+            ?status : (* StatusLog *) LinkStatus
         ) : StatusLog =
         {
             Time = (* StatusLog *) time
@@ -136,8 +136,8 @@ type StatusLog = {
         }
     static member Default () =
         StatusLog.Create (
-            (getNow' ()), (* StatusLog *) (* time *)
-            LinkStatus.Unknown (* StatusLog *) (* status *)
+            (* StatusLog *) time = (getNow' ()),
+            (* StatusLog *) status = LinkStatus.Unknown
         )
     static member SetTime ((* StatusLog *) time : Instant) (this : StatusLog) =
         {this with Time = time}
@@ -169,7 +169,7 @@ type StatusLog = {
         this |> StatusLog.SetStatus status
 
 (*
- * Generated: <Class>
+ * Generated: <Combo>
  *     IsFinal
  *)
 type LinkStats (owner : IOwner, key : Key) =

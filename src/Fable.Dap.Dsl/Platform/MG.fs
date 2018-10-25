@@ -60,5 +60,5 @@ type M with
         |> fun m -> m.ToAlias "Duration"
     static member duration (format : DurationFormat, key, value : Duration, ?validator : string) =
         M.duration (format, key, "", ?validator = validator)
-        |> fun m -> m.WithValue (E.duration value)
+        |> fun m -> m.WithValue (format.JsonEncoder value)
 #endif

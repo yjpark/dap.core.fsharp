@@ -7,7 +7,7 @@ open Dap.Platform
 open Dap.Platform.Meta
 
 type M with
-    static member textClientSpawner (encoding : string, kind : Kind, ?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration) =
+    static member textClient (encoding : string, kind : Kind, ?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration, ?key : Key) =
         let logTraffic = defaultArg logTraffic true
         let bufferSize = defaultArg bufferSize Dap.WebSocket.Const.DefaultBufferSize
         let refreshInterval = defaultArg refreshInterval Dap.WebSocket.Const.DefaultRefreshInterval
@@ -18,13 +18,13 @@ type M with
             |> CodeArgs "TextClient.Args"
         let type' = "TextClient.Agent"
         let spec = "Dap.WebSocket.Internal.Logic.spec"
-        M.spawner ([alias], args, type', spec, kind)
-    static member utf8TextClientSpawner (?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration, ?kind : Kind) =
+        M.agent (args, type', spec, kind, ?key = key, aliases = [alias])
+    static member utf8TextClient (?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration, ?kind : Kind, ?key : Key) =
         let kind = defaultArg kind Dap.WebSocket.Client.TextClient.Utf8Kind
-        M.textClientSpawner ("System.Text.Encoding.UTF8", kind, ?logTraffic = logTraffic, ?bufferSize = bufferSize, ?refreshInterval = refreshInterval)
+        M.textClient ("System.Text.Encoding.UTF8", kind, ?logTraffic = logTraffic, ?bufferSize = bufferSize, ?refreshInterval = refreshInterval, ?key = key)
 
 type M with
-    static member textConnSpawner (encoding : string, kind : Kind, ?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration) =
+    static member textConn (encoding : string, kind : Kind, ?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration, ?key : Key) =
         let logTraffic = defaultArg logTraffic true
         let bufferSize = defaultArg bufferSize Dap.WebSocket.Const.DefaultBufferSize
         let refreshInterval = defaultArg refreshInterval Dap.WebSocket.Const.DefaultRefreshInterval
@@ -36,7 +36,7 @@ type M with
             |> CodeArgs args
         let type' = "TextConn.Agent"
         let spec = "Dap.WebSocket.Internal.Logic.spec"
-        M.spawner ([alias], args, type', spec, kind)
-    static member utf8TextConnSpawner (?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration, ?kind : Kind) =
+        M.agent (args, type', spec, kind, ?key = key, aliases = [alias])
+    static member utf8TextConn (?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration, ?kind : Kind, ?key : Key) =
         let kind = defaultArg kind Dap.WebSocket.Conn.TextConn.Utf8Kind
-        M.textConnSpawner ("System.Text.Encoding.UTF8", kind, ?logTraffic = logTraffic, ?bufferSize = bufferSize, ?refreshInterval = refreshInterval)
+        M.textConn ("System.Text.Encoding.UTF8", kind, ?logTraffic = logTraffic, ?bufferSize = bufferSize, ?refreshInterval = refreshInterval, ?key = key)

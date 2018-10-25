@@ -10,11 +10,11 @@ type Console<'console when 'console :> IConsole> (kind : Kind, logging : ILoggin
     do (
         let stats = base.Properties
         stats.Task.SlowCap.SetValue DefaultTaskSlowCap
-        base.GetStats.SetHandler (fun () ->
+        base.GetStats.SetupHandler (fun () ->
             stats.Time.SetValue (clock.Now')
             toJson stats
         )
-        base.ClearStats.SetHandler (fun () ->
+        base.ClearStats.SetupHandler (fun () ->
             stats.Deliver.ClearStats ()
             stats.Process.ClearStats ()
             stats.Reply.ClearStats ()

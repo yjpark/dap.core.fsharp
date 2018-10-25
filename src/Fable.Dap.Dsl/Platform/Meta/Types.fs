@@ -38,7 +38,7 @@ with
 let CodeArgs name code =
     CodeArgs (name, code)
 
-type ServiceMeta = {
+type AgentMeta = {
     Aliases : ModuleAlias list
     Args : ArgsMeta
     Type : string
@@ -58,26 +58,6 @@ type ServiceMeta = {
             Key = key
         }
 
-type SpawnerMeta = {
-    Aliases : ModuleAlias list
-    Args : ArgsMeta
-    Type : string
-    Spec : string
-    Pack : string option
-    Kind : Kind
-} with
-    static member Create aliases args type' spec pack kind =
-        {
-            Aliases = aliases
-            Args = args
-            Type = type'
-            Spec = spec
-            Pack = pack
-            Kind = kind
-        }
-    member this.ToService key : ServiceMeta =
-        ServiceMeta.Create this.Aliases this.Args this.Type this.Spec this.Pack this.Kind key
-
 type ExtraArgsMeta = {
     Aliases : ModuleAlias list
     Args : ArgsMeta
@@ -92,8 +72,8 @@ type ExtraArgsMeta = {
 
 type PackMeta = {
     Parents : (string * PackMeta) list
-    Services : ServiceMeta list
-    Spawners : SpawnerMeta list
+    Services : AgentMeta list
+    Spawners : AgentMeta list
     ExtraArgs : ExtraArgsMeta list
 } with
     static member Create parents services spawners extraArgs =

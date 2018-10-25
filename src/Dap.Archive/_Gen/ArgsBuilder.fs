@@ -15,4 +15,4 @@ type RecorderArgsBuilder () =
     member __.FlushInterval (target : RecorderArgs, (* RecorderArgs *) flushInterval : Duration) =
         target.WithFlushInterval flushInterval
 
-let recorder_args = RecorderArgsBuilder ()
+let recorder_args = new RecorderArgsBuilder ()

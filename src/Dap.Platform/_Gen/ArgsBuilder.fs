@@ -7,32 +7,46 @@ open Dap.Context.Builder
 (*
  * Generated: <ValueBuilder>
  *)
-type ConsoleSinkArgsBuilder () =
+type ConsoleSinkArgsBuilder
+        (
+            minLevel : (* ConsoleSinkArgsBuilder *) LogLevel
+        ) =
     inherit ObjBuilder<ConsoleSinkArgs> ()
-    override __.Zero () = ConsoleSinkArgs.Default ()
+    override __.Zero () =
+        ConsoleSinkArgs.Create (
+            minLevel = (* ConsoleSinkArgsBuilder *) minLevel
+        )
     [<CustomOperation("min_level")>]
     member __.MinLevel (target : ConsoleSinkArgs, (* ConsoleSinkArgs *) minLevel : LogLevel) =
         target.WithMinLevel minLevel
 
-let console_sink_args = ConsoleSinkArgsBuilder ()
+let console_sink_args minLevel =
+    new ConsoleSinkArgsBuilder (minLevel)
 
 (*
  * Generated: <ValueBuilder>
  *)
-type FileSinkArgsBuilder () =
+type FileSinkArgsBuilder
+        (
+            path : (* FileSinkArgsBuilder *) string
+        ) =
     inherit ObjBuilder<FileSinkArgs> ()
-    override __.Zero () = FileSinkArgs.Default ()
-    [<CustomOperation("min_level")>]
-    member __.MinLevel (target : FileSinkArgs, (* FileSinkArgs *) minLevel : LogLevel) =
-        target.WithMinLevel minLevel
+    override __.Zero () =
+        FileSinkArgs.Create (
+            path = (* FileSinkArgsBuilder *) path
+        )
     [<CustomOperation("path")>]
     member __.Path (target : FileSinkArgs, (* FileSinkArgs *) path : string) =
         target.WithPath path
+    [<CustomOperation("min_level")>]
+    member __.MinLevel (target : FileSinkArgs, (* FileSinkArgs *) minLevel : LogLevel) =
+        target.WithMinLevel minLevel
     [<CustomOperation("rolling")>]
     member __.Rolling (target : FileSinkArgs, (* FileSinkArgs *) rolling : RollingInterval option) =
         target.WithRolling rolling
 
-let file_sink_args = FileSinkArgsBuilder ()
+let file_sink_args path =
+    new FileSinkArgsBuilder (path)
 
 (*
  * Generated: <ValueBuilder>
@@ -47,7 +61,7 @@ type LoggingArgsBuilder () =
     member __.File (target : LoggingArgs, (* LoggingArgs *) file : FileSinkArgs option) =
         target.WithFile file
 
-let logging_args = LoggingArgsBuilder ()
+let logging_args = new LoggingArgsBuilder ()
 
 (*
  * Generated: <ValueBuilder>
@@ -62,4 +76,4 @@ type TickerArgsBuilder () =
     member __.AutoStart (target : TickerArgs, (* TickerArgs *) autoStart : bool) =
         target.WithAutoStart autoStart
 
-let ticker_args = TickerArgsBuilder ()
+let ticker_args = new TickerArgsBuilder ()

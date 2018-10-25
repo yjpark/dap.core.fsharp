@@ -13,16 +13,11 @@ type ConsoleSinkArgs = {
 } with
     static member Create
         (
-            ?minLevel : LogLevel
+            minLevel : (* ConsoleSinkArgs *) LogLevel
         ) : ConsoleSinkArgs =
         {
             MinLevel = (* ConsoleSinkArgs *) minLevel
-                |> Option.defaultWith (fun () -> LogLevelWarning)
         }
-    static member Default () =
-        ConsoleSinkArgs.Create (
-            LogLevelWarning (* ConsoleSinkArgs *) (* minLevel *)
-        )
     static member SetMinLevel ((* ConsoleSinkArgs *) minLevel : LogLevel) (this : ConsoleSinkArgs) =
         {this with MinLevel = minLevel}
     static member JsonEncoder : JsonEncoder<ConsoleSinkArgs> =
@@ -33,8 +28,7 @@ type ConsoleSinkArgs = {
     static member JsonDecoder : JsonDecoder<ConsoleSinkArgs> =
         D.object (fun get ->
             {
-                MinLevel = get.Optional.Field (* ConsoleSinkArgs *) "min_level" LogLevel.JsonDecoder
-                    |> Option.defaultValue LogLevelWarning
+                MinLevel = get.Required.Field (* ConsoleSinkArgs *) "min_level" LogLevel.JsonDecoder
             }
         )
     static member JsonSpec =
@@ -74,50 +68,41 @@ with
  *     IsJson, IsLoose
  *)
 type FileSinkArgs = {
-    MinLevel : (* FileSinkArgs *) LogLevel
     Path : (* FileSinkArgs *) string
+    MinLevel : (* FileSinkArgs *) LogLevel
     Rolling : (* FileSinkArgs *) RollingInterval option
 } with
     static member Create
         (
-            ?minLevel : LogLevel,
-            ?path : string,
-            ?rolling : RollingInterval option
+            path : (* FileSinkArgs *) string,
+            ?minLevel : (* FileSinkArgs *) LogLevel,
+            ?rolling : (* FileSinkArgs *) RollingInterval
         ) : FileSinkArgs =
         {
+            Path = (* FileSinkArgs *) path
             MinLevel = (* FileSinkArgs *) minLevel
                 |> Option.defaultWith (fun () -> LogLevelInformation)
-            Path = (* FileSinkArgs *) path
-                |> Option.defaultWith (fun () -> "")
             Rolling = (* FileSinkArgs *) rolling
-                |> Option.defaultWith (fun () -> None)
         }
-    static member Default () =
-        FileSinkArgs.Create (
-            LogLevelInformation, (* FileSinkArgs *) (* minLevel *)
-            "", (* FileSinkArgs *) (* path *)
-            None (* FileSinkArgs *) (* rolling *)
-        )
-    static member SetMinLevel ((* FileSinkArgs *) minLevel : LogLevel) (this : FileSinkArgs) =
-        {this with MinLevel = minLevel}
     static member SetPath ((* FileSinkArgs *) path : string) (this : FileSinkArgs) =
         {this with Path = path}
+    static member SetMinLevel ((* FileSinkArgs *) minLevel : LogLevel) (this : FileSinkArgs) =
+        {this with MinLevel = minLevel}
     static member SetRolling ((* FileSinkArgs *) rolling : RollingInterval option) (this : FileSinkArgs) =
         {this with Rolling = rolling}
     static member JsonEncoder : JsonEncoder<FileSinkArgs> =
         fun (this : FileSinkArgs) ->
             E.object [
-                "min_level", LogLevel.JsonEncoder (* FileSinkArgs *) this.MinLevel
                 "path", E.string (* FileSinkArgs *) this.Path
+                "min_level", LogLevel.JsonEncoder (* FileSinkArgs *) this.MinLevel
                 "rolling", (E.option RollingInterval.JsonEncoder) (* FileSinkArgs *) this.Rolling
             ]
     static member JsonDecoder : JsonDecoder<FileSinkArgs> =
         D.object (fun get ->
             {
+                Path = get.Required.Field (* FileSinkArgs *) "path" D.string
                 MinLevel = get.Optional.Field (* FileSinkArgs *) "min_level" LogLevel.JsonDecoder
                     |> Option.defaultValue LogLevelInformation
-                Path = get.Optional.Field (* FileSinkArgs *) "path" D.string
-                    |> Option.defaultValue ""
                 Rolling = get.Optional.Field (* FileSinkArgs *) "rolling" RollingInterval.JsonDecoder
             }
         )
@@ -126,10 +111,10 @@ type FileSinkArgs = {
     interface IJson with
         member this.ToJson () = FileSinkArgs.JsonEncoder this
     interface IObj
-    member this.WithMinLevel ((* FileSinkArgs *) minLevel : LogLevel) =
-        this |> FileSinkArgs.SetMinLevel minLevel
     member this.WithPath ((* FileSinkArgs *) path : string) =
         this |> FileSinkArgs.SetPath path
+    member this.WithMinLevel ((* FileSinkArgs *) minLevel : LogLevel) =
+        this |> FileSinkArgs.SetMinLevel minLevel
     member this.WithRolling ((* FileSinkArgs *) rolling : RollingInterval option) =
         this |> FileSinkArgs.SetRolling rolling
 
@@ -143,20 +128,14 @@ type LoggingArgs = {
 } with
     static member Create
         (
-            ?console : ConsoleSinkArgs option,
-            ?file : FileSinkArgs option
+            ?console : (* LoggingArgs *) ConsoleSinkArgs,
+            ?file : (* LoggingArgs *) FileSinkArgs
         ) : LoggingArgs =
         {
             Console = (* LoggingArgs *) console
-                |> Option.defaultWith (fun () -> None)
             File = (* LoggingArgs *) file
-                |> Option.defaultWith (fun () -> None)
         }
-    static member Default () =
-        LoggingArgs.Create (
-            None, (* LoggingArgs *) (* console *)
-            None (* LoggingArgs *) (* file *)
-        )
+    static member Default () = LoggingArgs.Create ()
     static member SetConsole ((* LoggingArgs *) console : ConsoleSinkArgs option) (this : LoggingArgs) =
         {this with Console = console}
     static member SetFile ((* LoggingArgs *) file : FileSinkArgs option) (this : LoggingArgs) =
@@ -194,8 +173,8 @@ type TickerArgs = {
 } with
     static member Create
         (
-            ?frameRate : float,
-            ?autoStart : bool
+            ?frameRate : (* TickerArgs *) float,
+            ?autoStart : (* TickerArgs *) bool
         ) : TickerArgs =
         {
             FrameRate = (* TickerArgs *) frameRate
@@ -203,11 +182,7 @@ type TickerArgs = {
             AutoStart = (* TickerArgs *) autoStart
                 |> Option.defaultWith (fun () -> true)
         }
-    static member Default () =
-        TickerArgs.Create (
-            10.0, (* TickerArgs *) (* frameRate *)
-            true (* TickerArgs *) (* autoStart *)
-        )
+    static member Default () = TickerArgs.Create ()
     static member SetFrameRate ((* TickerArgs *) frameRate : float) (this : TickerArgs) =
         {this with FrameRate = frameRate}
     static member SetAutoStart ((* TickerArgs *) autoStart : bool) (this : TickerArgs) =

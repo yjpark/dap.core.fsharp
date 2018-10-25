@@ -389,6 +389,9 @@ type ContextMeta = {
     Properties : string * ComboMeta
     Channels : ChannelMeta list
     Handlers : HandlerMeta list
+#if !FABLE_COMPILER
+    AsyncHandlers : HandlerMeta list
+#endif
 } with
     static member Create properties =
         {
@@ -396,10 +399,20 @@ type ContextMeta = {
             Properties = properties
             Channels = []
             Handlers = []
+    #if !FABLE_COMPILER
+            AsyncHandlers = []
+    #endif
         }
     member this.AddChannel channel =
         {this with Channels = this.Channels @ [channel]}
     member this.AddHandler handler =
         {this with Handlers = this.Handlers @ [handler]}
+#if !FABLE_COMPILER
+    member this.AddAsyncHandler handler =
+        {this with AsyncHandlers = this.AsyncHandlers @ [handler]}
+#endif
     member this.IsAbstract =
         this.Handlers.Length > 0
+#if !FABLE_COMPILER
+            || this.AsyncHandlers.Length > 0
+#endif

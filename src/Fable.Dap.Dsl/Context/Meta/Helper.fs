@@ -54,6 +54,8 @@ type M with
         {field with Key = key}
     static member comment (comment : string) (field : FieldMeta) =
         field.WithComment <| Some comment
+    static member required (field : FieldMeta) =
+        {field with Value = NoInitValue}
 
 type M with
     static member option (field : FieldMeta) =
@@ -65,7 +67,7 @@ type M with
 
 type M with
     static member combo (key : string) =
-        M.custom ("IComboProperty", key, "")
+        M.custom ("IComboProperty", key, NoInitValue)
 
 type M with
     static member unit (key) =

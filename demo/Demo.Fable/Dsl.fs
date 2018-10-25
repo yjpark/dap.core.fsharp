@@ -44,11 +44,12 @@ let Status =
 
 let IClientPack =
     pack [] {
-        add (M.proxyService (
+        add (M.proxy (
                 [("UserHubTypes", "Demo.UserHub.Types")],
                 "UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt", "UserHubTypes.StubSpec",
-                "(getWebSocketUri \"ws_user\")", Some 5.0<second>, true,
-                "UserStub", NoKey
+                uri = "(getWebSocketUri \"ws_user\")",
+                retryDelay = 5.0<second>,
+                kind = "UserStub"
             ))
     }
 

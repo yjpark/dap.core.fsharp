@@ -8,9 +8,10 @@ open Dap.Platform
 open Dap.Platform.Meta
 
 type M with
-    static member gatewaySpawner (aliases : ModuleAlias list, reqEvt : string, hubSpec : string, ?logTraffic : bool, ?kind : Kind) =
+    static member gateway (reqEvt : string, hubSpec : string, ?logTraffic : bool, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
         let logTraffic = defaultArg logTraffic true
         let kind = defaultArg kind Dap.Remote.WebSocketGateway.Gateway.Kind
+        let aliases = defaultArg aliases []
         let alias = "Gateway", "Dap.Remote.WebSocketGateway.Gateway"
         let args = sprintf "Gateway.Args<%s>" reqEvt
         let args =
@@ -18,4 +19,4 @@ type M with
             |> CodeArgs args
         let type' = "Gateway.Gateway"
         let spec = "Dap.Remote.WebSocketGateway.Logic.spec"
-        M.spawner (alias :: aliases, args, type', spec, kind)
+        M.agent (args, type', spec, kind, ?key = key, aliases = alias :: aliases)

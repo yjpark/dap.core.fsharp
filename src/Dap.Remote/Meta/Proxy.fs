@@ -8,7 +8,7 @@ open Dap.Platform
 open Dap.Platform.Meta
 
 type M with
-    static member packetClientSpawner (?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration) =
+    static member packetClient (?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration, ?key : Key) =
         let logTraffic = defaultArg logTraffic true
         let bufferSize = defaultArg bufferSize Dap.WebSocket.Const.DefaultBufferSize
         let refreshInterval = defaultArg refreshInterval Dap.WebSocket.Const.DefaultRefreshInterval
@@ -21,10 +21,10 @@ type M with
         let type' = "PacketClient.Agent"
         let spec = "Dap.WebSocket.Internal.Logic.spec"
         let kind = Dap.Remote.WebSocketProxy.PacketClient.Kind
-        M.spawner ([alias], args, type', spec, kind)
+        M.agent (args, type', spec, kind, ?key = key, aliases = [alias])
 
 type M with
-    static member packetConnSpawner (?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration) =
+    static member packetConn (?logTraffic : bool, ?bufferSize : int, ?refreshInterval : Duration, ?key : Key) =
         let logTraffic = defaultArg logTraffic true
         let bufferSize = defaultArg bufferSize Dap.WebSocket.Const.DefaultBufferSize
         let refreshInterval = defaultArg refreshInterval Dap.WebSocket.Const.DefaultRefreshInterval
@@ -37,16 +37,17 @@ type M with
         let type' = "PacketConn.Agent"
         let spec = "Dap.WebSocket.Internal.Logic.spec"
         let kind = Dap.Remote.WebSocketGateway.PacketConn.Kind
-        M.spawner ([alias], args, type', spec, kind)
+        M.agent (args, type', spec, kind, ?key = key, aliases = [alias])
 
 type M with
-    static member proxySpawner (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, ?logTraffic : bool, ?kind : Kind) =
+    static member proxy (reqResEvt : string, stubSpec : string, url : string, ?retryDelay : float<second>, ?logTraffic : bool, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
         let logTraffic = defaultArg logTraffic true
         let kind = defaultArg kind Dap.Remote.WebSocketProxy.Proxy.Kind
         let retryDelay =
             retryDelay
             |> Option.map (fun d -> sprintf "(Some %f<second>)" d)
             |> Option.defaultValue "None"
+        let aliases = defaultArg aliases []
         let alias = "Proxy", "Dap.Remote.WebSocketProxy.Proxy"
         let args = sprintf "Proxy.Args<%s>" reqResEvt
         let args =
@@ -54,8 +55,4 @@ type M with
             |> CodeArgs args
         let type' = sprintf "Proxy.Proxy<%s>" reqResEvt
         let spec = "Dap.Remote.Proxy.Logic.Logic.spec"
-        M.spawner (alias :: aliases, args, type', spec, kind)
-    static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, ?logTraffic : bool, ?kind : Kind, ?key : Key) =
-        let key = defaultArg key NoKey
-        M.proxySpawner (aliases, reqResEvt, stubSpec, url, retryDelay, ?logTraffic = logTraffic, ?kind = kind)
-        |> fun s -> s.ToService key
+        M.agent (args, type', spec, kind, ?key = key, aliases = alias :: aliases)

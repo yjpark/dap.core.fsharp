@@ -12,4 +12,4 @@ type M with
         let args = JsonArgs "EventRecorder.Args"
         let type' = "EventRecorder.Agent"
         let spec = "EventRecorder.spec"
-        M.spawner ([alias], args, type', spec, kind)
+        M.agent (args, type', spec, kind, aliases = [alias])

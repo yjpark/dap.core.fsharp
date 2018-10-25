@@ -4,6 +4,7 @@ module Dap.Platform.Tasks
 open System.Threading
 open System.Threading.Tasks
 open FSharp.Control.Tasks.V2
+
 open Dap.Prelude
 
 let private tplRunTaskSucceed = LogEvent.Template3<string, string, Duration>(AckLogLevel, "[{Section}] {Task} {Duration} ~> Succeed")

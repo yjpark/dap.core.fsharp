@@ -87,6 +87,11 @@ let ChannelsKey = "_C_"
 [<Literal>]
 let HandlersKey = "_H_"
 
+#if !FABLE_COMPILER
+[<Literal>]
+let AsyncHandlersKey = "_A_"
+#endif
+
 let noOwner = new Owner (getLogging (), "<noOwner>") :> IOwner
 
 type IAspect =
@@ -376,7 +381,7 @@ type RequestHandled<'req, 'res> = {
 type IHandler<'req, 'res> =
     inherit IHandler
     abstract Spec : IHandlerSpec<'req, 'res> with get
-    abstract SetHandler' : ('req -> 'res) -> unit
+    abstract SetupHandler' : ('req -> 'res) -> unit
     abstract Handle : 'req -> 'res
     abstract OnRequest : IBus<RequestReceived<'req, 'res>> with get
     abstract OnResponse : IBus<RequestHandled<'req, 'res>> with get
@@ -391,6 +396,38 @@ and IHandlers =
     abstract Get : Key -> IHandler
     abstract Add<'req, 'res> : IHandlerSpec<'req, 'res> -> IHandler<'req, 'res>
     abstract OnAdded : IBus<IHandler> with get
+
+#if !FABLE_COMPILER
+type IAsyncHandler =
+    inherit IAspect
+    abstract Spec0 : IHandlerSpec with get
+    abstract Seal : unit -> unit
+    abstract Sealed : bool with get
+    abstract Muted : bool with get
+    abstract SetMuted : bool -> unit
+    abstract Handle0 : Json -> Task<Json>
+    abstract OnRequest0 : IBus<RequestReceived> with get
+    abstract OnResponse0 : IBus<RequestHandled> with get
+
+type IAsyncHandler<'req, 'res> =
+    inherit IAsyncHandler
+    abstract Spec : IHandlerSpec<'req, 'res> with get
+    abstract SetupHandler' : ('req -> Task<'res>) -> unit
+    abstract Handle : 'req -> Task<'res>
+    abstract OnRequest : IBus<RequestReceived<'req, 'res>> with get
+    abstract OnResponse : IBus<RequestHandled<'req, 'res>> with get
+
+and IAsyncHandlers =
+    inherit IAspect
+    inherit IValue<IAsyncHandler list>
+    abstract Seal : unit -> unit
+    abstract Sealed : bool with get
+    abstract TryGet : Key -> IAsyncHandler option
+    abstract Has : Key -> bool
+    abstract Get : Key -> IAsyncHandler
+    abstract Add<'req, 'res> : IHandlerSpec<'req, 'res> -> IAsyncHandler<'req, 'res>
+    abstract OnAdded : IBus<IAsyncHandler> with get
+#endif
 
 type IContextSpec =
     abstract Kind : Kind with get
@@ -408,6 +445,9 @@ type IContext =
     abstract Properties : IProperties with get
     abstract Channels : IChannels with get
     abstract Handlers : IHandlers with get
+#if !FABLE_COMPILER
+    abstract AsyncHandlers : IAsyncHandlers with get
+#endif
     abstract Clone0 : ILogging -> IContext
 
 type IContext<'p when 'p :> IProperties> =
@@ -463,6 +503,12 @@ module Extensions =
         member this.SyncWith (other : ICustomProperty<'p>) =
             other.SyncTo this.Self
     type IHandler<'req, 'res> with
-        member this.SetHandler (handler : 'req -> 'res) =
-            this.SetHandler' handler
+        member this.SetupHandler (handler : 'req -> 'res) =
+            this.SetupHandler' handler
             this.Seal ()
+#if !FABLE_COMPILER
+    type IAsyncHandler<'req, 'res> with
+        member this.SetupHandler (handler : 'req -> Task<'res>) =
+            this.SetupHandler' handler
+            this.Seal ()
+#endif

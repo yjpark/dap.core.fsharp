@@ -47,7 +47,7 @@ let Status =
 
 let IServicesPack =
     pack [] {
-        add (M.tickerService ())
+        add (M.ticker ())
     }
 
 let backupTickerArgs =
@@ -61,12 +61,12 @@ let ICommonPack =
     }
 let IBackupPack =
     pack [ <@ ICommonPack @> ] {
-        add (M.tickerService (backupTickerArgs, "Backup"))
+        add (M.ticker (backupTickerArgs, "Backup"))
     }
 
 let IAppPack =
     pack [ <@ ICommonPack @> ; <@ IServicesPack @> ] {
-        //register (M.spawner ("TestArgs", "TestAgent", "Test", "test"))
+        //register (M.agent ("TestArgs", "TestAgent", "Test", "test"))
         extra (M.codeArgs ([], "int", "100", "test"))
     }
 

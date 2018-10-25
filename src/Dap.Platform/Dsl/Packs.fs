@@ -10,7 +10,7 @@ open Dap.Platform.Generator
 
 let ITickingPack =
     pack [] {
-        add (M.tickerService ())
+        add (M.ticker ())
     }
 
 let compile segments =

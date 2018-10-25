@@ -26,12 +26,15 @@
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Channels.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Handler.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Handlers.fs" />
+    <Compile Include="Internal/AsyncHandler.fs" />
+    <Compile Include="Internal/AsyncHandlers.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Internal/Context.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Property.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Properties.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Extension/Properties.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Extension/Channels.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Extension/Handlers.fs" />
+    <Compile Include="Extension/AsyncHandlers.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/CustomProperty.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/LinkProperty.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/ContextSpec.fs" />

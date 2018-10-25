@@ -30,9 +30,9 @@ type private ArgsGenerator (meta : AppMeta) =
         | CodeArgs (name, code) ->
             M.coded (name, key, code)
         |> M.comment packName
-    let getServiceArgsMeta packName (service : ServiceMeta) =
+    let getServiceArgsMeta packName (service : AgentMeta) =
         getArgsMeta packName service.Args <| sprintf "%s%s" service.Key service.Kind
-    let getSpawnerArgsMeta packName (spawner : SpawnerMeta) =
+    let getSpawnerArgsMeta packName (spawner : AgentMeta) =
         getArgsMeta packName spawner.Args spawner.Kind
     let getExtraArgsMeta packName (args : ExtraArgsMeta) =
         getArgsMeta packName args.Args args.Key
@@ -61,11 +61,11 @@ type private ArgsGenerator (meta : AppMeta) =
     let getSetupMeta (param : AppParam) =
         M.coded (sprintf "I%s -> unit" param.Name, "Setup", "ignore")
         |> M.comment ^<| sprintf "%sArgs" param.Name
-    let getServiceArgsMember (packName : string) (service : ServiceMeta) =
+    let getServiceArgsMember (packName : string) (service : AgentMeta) =
         let name = sprintf "%s%s" service.Key service.Kind
         let name = name.AsCodeMemberName
         sprintf "        member this.%s (* %s *) : %s = this.%s" (getArgsMemberName name) packName service.Args.Type name
-    let getSpawnerArgsMember (packName : string) (spawner : SpawnerMeta) =
+    let getSpawnerArgsMember (packName : string) (spawner : AgentMeta) =
         let name = spawner.Kind.AsCodeMemberName
         sprintf "        member this.%s (* %s *) : %s = this.%s" (getArgsMemberName name) packName spawner.Args.Type name
     let getExtraArgsMember (packName : string) (args : ExtraArgsMeta) =
@@ -142,11 +142,11 @@ type InterfaceGenerator (meta : AppMeta) =
         sprintf "    inherit %s" name
     let getPackAs ((name, _package) : string * PackMeta) =
         sprintf "    abstract %s : %s with get" (getAsPackName name) name
-    let getServiceKind (packName : string) (service : ServiceMeta) =
+    let getServiceKind (packName : string) (service : AgentMeta) =
         let kind = service.Kind.AsCodeMemberName
         let name = sprintf "%s%s" service.Key.AsCodeMemberName kind
         sprintf "    static member %s (* %s *) = \"%s\"" name packName kind
-    let getSpawnerKind (packName : string) (spawner : SpawnerMeta) =
+    let getSpawnerKind (packName : string) (spawner : AgentMeta) =
         let kind = spawner.Kind.AsCodeMemberName
         sprintf "    static member %s (* %s *) = \"%s\"" kind packName kind
     let rec getPackKinds (names : string list) ((name, package) : string * PackMeta) =
@@ -178,7 +178,7 @@ type InterfaceGenerator (meta : AppMeta) =
                     ""
                     sprintf "type %sKinds () =" param.Name
                 ] @ lines
-    let getServiceKey (packName : string) (service : ServiceMeta) =
+    let getServiceKey (packName : string) (service : AgentMeta) =
         let key = service.Key.AsCodeMemberName
         let name = sprintf "%s%s" key service.Kind.AsCodeMemberName
         sprintf "    static member %s (* %s *) = \"%s\"" name packName key
@@ -233,7 +233,7 @@ type ClassGenerator (meta : AppMeta) =
     #endif
             yield sprintf "    let mutable setupError : exn option = None"
         ]
-    let getServiceField (packName : string) (service : ServiceMeta) =
+    let getServiceField (packName : string) (service : AgentMeta) =
         let name = sprintf "%s%s" service.Key.AsCodeMemberName service.Kind.AsCodeMemberName
         [
             sprintf "    let mutable (* %s *) %s : %s option = None" packName name.AsCodeVariableName service.Type
@@ -252,10 +252,10 @@ type ClassGenerator (meta : AppMeta) =
                 |> List.map ^<| getServiceField name
                 |> List.concat
             )
-    let getServiceMember (packName : string) (service : ServiceMeta) =
+    let getServiceMember (packName : string) (service : AgentMeta) =
         let name = sprintf "%s%s" service.Key.AsCodeMemberName service.Kind.AsCodeMemberName
         sprintf "        member __.%s (* %s *) : %s = %s |> Option.get" name packName service.Type name.AsCodeVariableName
-    let getSpawnerMember (packName : string) (spawner : SpawnerMeta) =
+    let getSpawnerMember (packName : string) (spawner : AgentMeta) =
         let kind = spawner.Kind.AsCodeMemberName
         [
             sprintf "        member __.Get%sAsync (key : Key) (* %s *) : Task<%s * bool> = task {" kind packName spawner.Type
@@ -297,13 +297,13 @@ type ClassGenerator (meta : AppMeta) =
         pack
         |> Option.map ^<| (fun name -> sprintf "this.%s " <| getAsPackName name)
         |> Option.defaultValue ""
-    let getServiceSetter (service : ServiceMeta) (varName : string) =
+    let getServiceSetter (service : AgentMeta) (varName : string) =
         //TODO: Maybe find some better way for whether need to do cast (alias not working properly yet)
         if service.Type.StartsWith ("IAgent") then
             sprintf "            %s <- Some (%s' :> %s)" varName varName service.Type
         else
             sprintf "            %s <- Some %s'" varName varName
-    let getFableServiceSetup (param : AppParam) (packName : string) (service : ServiceMeta) =
+    let getFableServiceSetup (param : AppParam) (packName : string) (service : AgentMeta) =
         let kind = service.Kind.AsCodeMemberName
         let key = service.Key.AsCodeMemberName
         let name = sprintf "%s%s" key kind
@@ -313,7 +313,7 @@ type ClassGenerator (meta : AppMeta) =
                 packName varName service.Spec (getPackArgs service.Pack) name param.Name name param.Name name
             yield getServiceSetter service varName
         ]
-    let getFableSpawnerSetup (param : AppParam) (packName : string) (spawner : SpawnerMeta) =
+    let getFableSpawnerSetup (param : AppParam) (packName : string) (spawner : AgentMeta) =
         let kind = spawner.Kind.AsCodeMemberName
         [
             sprintf "            //env |> Env.register (%s (* %s *) %sargs.%s) %sKinds.%s"
@@ -337,7 +337,7 @@ type ClassGenerator (meta : AppMeta) =
                 |> List.map ^<| getFableSpawnerSetup param name
                 |> List.concat
             )
-    let getServiceSetup (param : AppParam) (packName : string) (service : ServiceMeta) =
+    let getServiceSetup (param : AppParam) (packName : string) (service : AgentMeta) =
         let kind = service.Kind.AsCodeMemberName
         let key = service.Key.AsCodeMemberName
         let name = sprintf "%s%s" key kind
@@ -347,7 +347,7 @@ type ClassGenerator (meta : AppMeta) =
                 packName varName service.Spec (getPackArgs service.Pack) name param.Name name param.Name name
             yield getServiceSetter service varName
         ]
-    let getSpawnerSetup (param : AppParam) (packName : string) (spawner : SpawnerMeta) =
+    let getSpawnerSetup (param : AppParam) (packName : string) (spawner : AgentMeta) =
         let kind = spawner.Kind.AsCodeMemberName
         [
             sprintf "            do! env |> Env.registerAsync (%s (* %s *) %sargs.%s) %sKinds.%s"

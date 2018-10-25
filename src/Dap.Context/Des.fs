@@ -16,14 +16,14 @@ let private createDes (key : string) =
     des.IV <- Array.create<byte> (des.BlockSize / 8) 0uy
     des
 
-let encrypt (key : string) (content : string) =
+let encrypt (key : string) (content : string) : string =
     let des = createDes key
     let ct = des.CreateEncryptor ()
     let input = Encoding.UTF8.GetBytes (content)
     let output = ct.TransformFinalBlock (input, 0, input.Length)
     Convert.ToBase64String (output)
 
-let decrypt (runner : ILogger) (key : string) (content : string) =
+let decrypt (runner : ILogger) (key : string) (content : string) : string option =
     try
         let des = createDes key
         let ct = des.CreateDecryptor ()

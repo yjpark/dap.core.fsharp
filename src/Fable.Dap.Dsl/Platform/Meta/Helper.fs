@@ -34,64 +34,50 @@ type M with
     static member noArgs = CodeArgs "NoArgs" "NoArgs"
 
 type M with
-    static member service (aliases : ModuleAlias list, args : ArgsMeta, type' : string, spec : string, kind : Kind, ?key : Key) =
+    static member agent (args : ArgsMeta, type' : string, spec : string, kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
         let key = defaultArg key NoKey
-        ServiceMeta.Create aliases args type' spec None kind key
+        let aliases = defaultArg aliases []
+        AgentMeta.Create aliases args type' spec None kind key
 
 type M with
-    static member spawner (aliases : ModuleAlias list, args : ArgsMeta, type' : string, spec : string, kind : Kind) =
-        SpawnerMeta.Create aliases args type' spec None kind
-
-type M with
-    static member jsonArgs (aliases : ModuleAlias list, name : string, ?key : Key) =
+    static member jsonArgs (name : string, ?key : Key, ?aliases : ModuleAlias list) =
         let key = defaultArg key name.AsCodeVariableName
+        let aliases = defaultArg aliases []
         ExtraArgsMeta.Create aliases (JsonArgs name) key
-    static member jsonArgs (aliases : ModuleAlias list, expr, ?key : Key) =
+    static member jsonArgs (expr, ?key : Key, ?aliases : ModuleAlias list) =
         let (name, _meta) = unquotePropertyGetExpr expr
-        M.jsonArgs (aliases, name, ?key = key)
+        M.jsonArgs (name, ?key = key, ?aliases = aliases)
 
 type M with
-    static member codeArgs (aliases : ModuleAlias list, name : string, code : string, key : Key) =
+    static member codeArgs (name : string, code : string, key : Key, ?aliases : ModuleAlias list) =
+        let aliases = defaultArg aliases []
         ExtraArgsMeta.Create aliases (CodeArgs name code) key
 
-    static member codeArgs (aliases : ModuleAlias list, expr : Expr<string>, key : Key) =
+    static member codeArgs (expr : Expr<string>, key : Key, ?aliases : ModuleAlias list) =
         let (name, code) = unquotePropertyGetExpr expr
-        M.codeArgs (aliases, name, code, key)
+        M.codeArgs (name, code, key, ?aliases = aliases)
 
 type M with
-    static member stateSpawner (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind) =
+    static member state (name : string, ?spawner : string, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let spawner = defaultArg spawner <| sprintf "%s.AddToAgent" name.AsCodeClassName
+        let kind = defaultArg kind name.AsCodeClassName
+        let aliases = defaultArg aliases []
         let alias = "State", "Dap.Platform.State"
         let args = CodeArgs (sprintf "State.Args<%s>" name) spawner
         let type' = sprintf "State.Agent<%s>" name
         let spec = "Dap.Platform.State.spec"
-        M.spawner (alias :: aliases, args, type', spec, kind)
-    static member stateSpawner (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind) =
-        let (name, spawner) = unquotePropertyGetExpr expr
-        M.stateSpawner (aliases, name, spawner, kind)
-    static member stateService (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind, ?key : Key) =
-        let key = defaultArg key NoKey
-        M.stateSpawner (aliases, name, spawner, kind)
-        |> fun s -> s.ToService key
-    static member stateService (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind, ?key : Key) =
-        let key = defaultArg key NoKey
-        M.stateSpawner (aliases, expr, kind)
-        |> fun s -> s.ToService key
+        M.agent (args, type', spec, kind, ?key = key, aliases = alias :: aliases)
 
 type M with
-    static member contextSpawner (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind) =
+    static member context (name : string, ?spawner : string, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let spawner = defaultArg spawner <| sprintf "%s.AddToAgent" name.AsCodeClassName
+        let kind = defaultArg kind name.AsCodeClassName
+        let aliases = defaultArg aliases []
         let alias = "Context", "Dap.Platform.Context"
         let args = CodeArgs (sprintf "Context.Args<%s>" name) spawner
         let type' = sprintf "Context.Agent<%s>" name
         let spec = "Dap.Platform.Context.spec"
-        M.spawner (alias :: aliases, args, type', spec, kind)
-    static member contextSpawner (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind) =
-        let (name, spawner) = unquotePropertyGetExpr expr
-        M.contextSpawner (aliases, name, spawner, kind)
-    static member contextService (aliases : ModuleAlias list, name : string, spawner : string, kind : Kind, ?key : Key) =
-        let key = defaultArg key NoKey
-        M.contextSpawner (aliases, name, spawner, kind)
-        |> fun s -> s.ToService key
-    static member contextService (aliases : ModuleAlias list, expr : Expr<string>, kind : Kind, ?key : Key) =
-        let key = defaultArg key NoKey
-        M.contextSpawner (aliases, expr, kind)
-        |> fun s -> s.ToService key
+        M.agent (args, type', spec, kind, ?key = key, aliases = alias :: aliases)
+    static member context (expr : Expr<ContextMeta>, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        M.context (name.AsCodeInterfaceName, ?kind = kind, ?key = key, ?aliases = aliases)

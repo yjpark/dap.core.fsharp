@@ -8,7 +8,7 @@ open Dap.Platform
 
 let ConsoleSinkArgs =
     combo {
-        var (M.custom ("LogLevel", "min_level", "LogLevelWarning"))
+        var (M.required (M.custom ("LogLevel", "min_level", "LogLevelWarning")))
     }
 
 let RollingInterval =
@@ -19,8 +19,8 @@ let RollingInterval =
 
 let FileSinkArgs =
     combo {
+        var (M.required (M.string ("path")))
         var (M.custom ("LogLevel", "min_level", "LogLevelInformation"))
-        var (M.string ("path"))
         option (M.custom (<@ RollingInterval @>, "rolling"))
     }
 

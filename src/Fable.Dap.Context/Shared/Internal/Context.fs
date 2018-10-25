@@ -24,6 +24,9 @@ type BaseContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<'p> and '
     let properties : 'p = spec.SpawnProperties owner
     let channels : IChannels = new Channels (owner, AspectSpec.Create0 ChannelsKey) :> IChannels
     let handlers : IHandlers = new Handlers (owner, AspectSpec.Create0 HandlersKey) :> IHandlers
+#if !FABLE_COMPILER
+    let asyncHandlers : IAsyncHandlers = new AsyncHandlers (owner, AspectSpec.Create0 AsyncHandlersKey) :> IAsyncHandlers
+#endif
     // abstract members
     abstract member Self : 'c with get
     abstract member Spawn : ILogging -> 'c
@@ -39,6 +42,9 @@ type BaseContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<'p> and '
     member __.Properties = properties
     member __.Channels = channels
     member __.Handlers = handlers
+#if !FABLE_COMPILER
+    member __.AsyncHandlers = asyncHandlers
+#endif
     member this.AsContext = this :> IContext<'c, 's, 'p>
     member this.AsContext0 = this :> IContext
     member this.AsOwner = this :> IOwner
@@ -65,6 +71,9 @@ type BaseContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<'p> and '
         member __.Properties = properties :> IProperties
         member __.Channels = channels
         member __.Handlers = handlers
+    #if !FABLE_COMPILER
+        member __.AsyncHandlers = asyncHandlers
+    #endif
         member this.Clone0 l = this.AsContext.Clone l :> IContext
     interface IUnsafeContext with
         member this.ToContext<'c1 when 'c1 :> IContext> () = this :> IContext :?> 'c1

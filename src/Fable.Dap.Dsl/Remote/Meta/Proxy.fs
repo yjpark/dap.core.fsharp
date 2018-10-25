@@ -8,11 +8,14 @@ open Dap.Platform
 open Dap.Platform.Meta
 
 type M with
-    static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool, kind : Kind, key : Key) =
+    static member proxy (reqResEvt : string, stubSpec : string, url : string, ?retryDelay : float<second>, ?logTraffic : bool, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let logTraffic = defaultArg logTraffic true
+        let kind = defaultArg kind Dap.Remote.WebSocketProxy.Proxy.Kind
         let retryDelay =
             retryDelay
             |> Option.map (fun d -> sprintf "(Some %f<second>)" d)
             |> Option.defaultValue "None"
+        let aliases = defaultArg aliases []
         let alias = "Proxy", "Dap.Remote.WebSocketProxy.Proxy"
         let args = sprintf "Proxy.Args<%s>" reqResEvt
         let args =
@@ -20,8 +23,4 @@ type M with
             |> CodeArgs args
         let type' = sprintf "Proxy.Proxy<%s>" reqResEvt
         let spec = "Dap.Remote.Proxy.Logic.Logic.spec"
-        M.service (alias :: aliases, args, type', spec, kind, key)
-    static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool, key : Key) =
-        M.proxyService (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, Dap.Remote.WebSocketProxy.Proxy.Kind, key)
-    static member proxyService (aliases : ModuleAlias list, reqResEvt : string, stubSpec : string, url : string, retryDelay : float<second> option, logTraffic : bool) =
-        M.proxyService (aliases, reqResEvt, stubSpec, url, retryDelay, logTraffic, NoKey)
+        M.agent (args, type', spec, kind, ?key = key, aliases = alias :: aliases)

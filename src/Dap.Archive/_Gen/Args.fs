@@ -14,7 +14,7 @@ type RecorderArgs = {
 } with
     static member Create
         (
-            ?flushInterval : Duration
+            ?flushInterval : (* RecorderArgs *) Duration
         ) : RecorderArgs =
         {
             FlushInterval = (* RecorderArgs *) flushInterval
@@ -22,7 +22,7 @@ type RecorderArgs = {
         }
     static member Default () =
         RecorderArgs.Create (
-            (decodeJsonString D.duration """0:00:00:30""") (* RecorderArgs *) (* flushInterval *)
+            (* RecorderArgs *) flushInterval = (decodeJsonString D.duration """0:00:00:30""")
         )
     static member SetFlushInterval ((* RecorderArgs *) flushInterval : Duration) (this : RecorderArgs) =
         {this with FlushInterval = flushInterval}

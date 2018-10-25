@@ -17,11 +17,11 @@ type OpLog = {
 } with
     static member Create
         (
-            ?op : string,
-            ?msg : string,
-            ?time : Instant,
-            ?duration : Duration,
-            ?stackTrace : string
+            ?op : (* OpLog *) string,
+            ?msg : (* OpLog *) string,
+            ?time : (* OpLog *) Instant,
+            ?duration : (* OpLog *) Duration,
+            ?stackTrace : (* OpLog *) string
         ) : OpLog =
         {
             Op = (* OpLog *) op
@@ -35,14 +35,7 @@ type OpLog = {
             StackTrace = (* OpLog *) stackTrace
                 |> Option.defaultWith (fun () -> "")
         }
-    static member Default () =
-        OpLog.Create (
-            "", (* OpLog *) (* op *)
-            "", (* OpLog *) (* msg *)
-            (getNow' ()), (* OpLog *) (* time *)
-            noDuration, (* OpLog *) (* duration *)
-            "" (* OpLog *) (* stackTrace *)
-        )
+    static member Default () = OpLog.Create ()
     static member SetOp ((* OpLog *) op : string) (this : OpLog) =
         {this with Op = op}
     static member SetMsg ((* OpLog *) msg : string) (this : OpLog) =
@@ -184,7 +177,7 @@ type Stats (owner : IOwner, key : Key) =
  * Generated: <Context>
  *)
 type IConsole =
-    inherit IContext
+    inherit IContext<Stats>
     abstract Stats : Stats with get
     abstract GetStats : IHandler<unit, Json> with get
     abstract ClearStats : IHandler<unit, unit> with get

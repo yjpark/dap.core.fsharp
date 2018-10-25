@@ -13,10 +13,10 @@ let private aliasesToLines (aliases : (string * string) list) =
         sprintf "module %s = %s" (fst alias) (snd alias)
     )
 
-let private getServiceAliases (service : ServiceMeta) =
+let private getServiceAliases (service : AgentMeta) =
     aliasesToLines service.Aliases
 
-let private getSpawnerAliases (spawner : SpawnerMeta) =
+let private getSpawnerAliases (spawner : AgentMeta) =
     aliasesToLines spawner.Aliases
 
 let private getExtraArgsAliases (args : ExtraArgsMeta) =
@@ -66,10 +66,10 @@ type InterfaceGenerator (meta : PackMeta) =
         [
             sprintf "type %sArgs =" param.Name
         ]
-    let getArgsServiceMember (service : ServiceMeta) =
+    let getArgsServiceMember (service : AgentMeta) =
         let name = sprintf "%s%s" service.Key service.Kind
         sprintf "    abstract %s : %s with get" (getArgsMemberName name) service.Args.Type
-    let getArgsSpawnerMember (spawner : SpawnerMeta) =
+    let getArgsSpawnerMember (spawner : AgentMeta) =
         sprintf "    abstract %s : %s with get" (getArgsMemberName spawner.Kind) spawner.Args.Type
     let getArgsExtraMember (args : ExtraArgsMeta) =
         sprintf "    abstract %s : %s with get" (getArgsMemberName args.Key) args.Args.Type
@@ -88,10 +88,10 @@ type InterfaceGenerator (meta : PackMeta) =
             yield sprintf "    abstract Args : %sArgs with get" param.Name
         #endif
         ]
-    let getServiceMember (service : ServiceMeta) =
+    let getServiceMember (service : AgentMeta) =
         let name = sprintf "%s%s" service.Key service.Kind
         sprintf "    abstract %s : %s with get" name.AsCodeMemberName service.Type
-    let getSpawnerMember (spawner : SpawnerMeta) =
+    let getSpawnerMember (spawner : AgentMeta) =
         let kind = spawner.Kind.AsCodeMemberName
         sprintf "    abstract Get%sAsync : Key -> Task<%s * bool>" kind spawner.Type
     let getParentInherit ((name, _package) : string * PackMeta) =

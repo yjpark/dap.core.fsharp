@@ -53,7 +53,7 @@ type FileSinkArgs with
             addDailyFileSink this.Path this.MinLevel
         | Some RollingInterval.Hourly ->
             addHourlyFileSink this.Path this.MinLevel
-    member this.LogFolder = System.IO.Path.GetDirectoryName this.Path
+    member this.LogFolder : string = System.IO.Path.GetDirectoryName this.Path
 
 type LoggingArgs with
     member this.CreateLogging () : SerilogLogging =
@@ -75,11 +75,10 @@ type LoggingArgs with
         this.File
         |> Option.map (fun x -> x.WithMinLevel minLevel)
         |> this.WithFile
-    member this.LogFolder =
+    member this.LogFolder : string option =
         this.File
         |> Option.map (fun x -> x.LogFolder)
-        |> Option.defaultValue ""
-    member this.WithFileName filename =
+    member this.WithFilename filename =
         this.File
         |> Option.map (fun x ->
             x.WithPath <| System.IO.Path.Combine (x.LogFolder, filename)

@@ -162,28 +162,24 @@ type RecordGenerator (meta : ComboMeta) =
             for field in fields do
                 index <- index + 1
                 let comma = if index < fields.Length then "," else ""
-                if field.InitValue = "" then
-                    yield sprintf "            %s : %s%s" field.Key.AsCodeVariableName field.ValueType comma
+                if field.InitValue = NoInitValue then
+                    yield sprintf "            %s : %s%s%s" field.Key.AsCodeVariableName field.CommentCode field.ValueType comma
+                elif field.Variation = FieldVariation.Option then
+                    yield sprintf "            ?%s : %s%s%s" field.Key.AsCodeVariableName field.CommentCode field.Type.ValueType comma
                 else
-                    yield sprintf "            ?%s : %s%s" field.Key.AsCodeVariableName field.ValueType comma
+                    yield sprintf "            ?%s : %s%s%s" field.Key.AsCodeVariableName field.CommentCode field.ValueType comma
             yield sprintf "        ) : %s =" param.Name
             yield sprintf "        {"
             for field in fields do
-                if field.InitValue = "" then
+                if field.InitValue = NoInitValue
+                    || field.Variation = FieldVariation.Option then
                     yield sprintf "            %s = %s%s" field.Key.AsCodeMemberName field.CommentCode field.Key.AsCodeVariableName
                 else
                     yield sprintf "            %s = %s%s" field.Key.AsCodeMemberName field.CommentCode field.Key.AsCodeVariableName
                     yield sprintf "                |> Option.defaultWith (fun () -> %s)" field.InitValue
             yield sprintf "        }"
             if meta.HasDefault' fields then
-                yield sprintf "    static member Default () ="
-                yield sprintf "        %s.Create (" param.Name
-                index <- 0
-                for f in fields do
-                    index <- index + 1
-                    let comma = if index < fields.Length then "," else ""
-                    yield sprintf "            %s%s %s(* %s *)" f.InitValue comma f.CommentCode f.Key.AsCodeVariableName
-                yield sprintf "        )"
+                yield sprintf "    static member Default () = %s.Create ()" param.Name
         ] @ (
             getSelfComboHelper param
         ) @ (
@@ -336,16 +332,52 @@ type ClassGenerator (meta : ComboMeta) =
 
 type BuilderGenerator (meta : ComboMeta) =
     let getBuilderHeader (param : BuilderParam) =
-        [
-            yield sprintf "type %s () =" param.Name
-            yield sprintf "    inherit ObjBuilder<%s> ()" param.Kind
-            yield sprintf "    override __.Zero () = %s.Default ()" param.Kind
-        ]
+        let requiredFields =
+            meta.GetAllFields param.Name
+            |> List.filter (fun f -> f.InitValue = NoInitValue)
+        if requiredFields.Length = 0 then
+            [
+                yield sprintf "type %s () =" param.Name
+                yield sprintf "    inherit ObjBuilder<%s> ()" param.Kind
+                yield sprintf "    override __.Zero () = %s.Default ()" param.Kind
+            ]
+        else
+            [
+                yield sprintf "type %s" param.Name
+                yield sprintf "        ("
+                let mutable index = 0
+                for field in requiredFields do
+                    index <- index + 1
+                    let comma = if index < requiredFields.Length then "," else ""
+                    yield sprintf "            %s : %s%s%s" field.Key.AsCodeVariableName field.CommentCode field.ValueType comma
+                yield sprintf "        ) ="
+                yield sprintf "    inherit ObjBuilder<%s> ()" param.Kind
+                yield sprintf "    override __.Zero () ="
+                yield sprintf "        %s.Create (" param.Kind
+                index <- 0
+                for field in requiredFields do
+                    index <- index + 1
+                    let comma = if index < requiredFields.Length then "," else ""
+                    yield sprintf "            %s = %s%s%s" field.Key.AsCodeVariableName field.CommentCode field.Key.AsCodeVariableName comma
+                yield sprintf "        )"
+            ]
     let getBuilderFooter (param : BuilderParam) =
-        [
-            yield sprintf ""
-            yield sprintf "let %s = %s ()" param.Key param.Name
-        ]
+        let requiredFieldNames =
+            meta.GetAllFields param.Name
+            |> List.filter (fun f -> f.InitValue = NoInitValue)
+            |> List.map (fun f -> f.Key.AsCodeVariableName)
+        if requiredFieldNames.Length = 0 then
+            [
+                sprintf ""
+                sprintf "let %s = new %s ()" param.Key param.Name
+            ]
+        else
+            let names = requiredFieldNames |> String.concat " "
+            [
+                sprintf ""
+                sprintf "let %s %s =" param.Key <| String.concat " " requiredFieldNames
+                sprintf "    new %s (%s)" param.Name <| String.concat ", " requiredFieldNames
+            ]
     let getComboSetter (prop : FieldMeta) =
         let memberName = prop.Key.AsCodeMemberName
         let varName = prop.Key.AsCodeVariableName

@@ -17,11 +17,11 @@ type OpLog = {
 } with
     static member Create
         (
-            ?op : string,
-            ?msg : string,
-            ?time : Instant,
-            ?duration : Duration,
-            ?stackTrace : string
+            ?op : (* OpLog *) string,
+            ?msg : (* OpLog *) string,
+            ?time : (* OpLog *) Instant,
+            ?duration : (* OpLog *) Duration,
+            ?stackTrace : (* OpLog *) string
         ) : OpLog =
         {
             Op = (* OpLog *) op
@@ -37,11 +37,11 @@ type OpLog = {
         }
     static member Default () =
         OpLog.Create (
-            "", (* OpLog *) (* op *)
-            "", (* OpLog *) (* msg *)
-            (getNow' ()), (* OpLog *) (* time *)
-            noDuration, (* OpLog *) (* duration *)
-            "" (* OpLog *) (* stackTrace *)
+            (* OpLog *) op = "",
+            (* OpLog *) msg = "",
+            (* OpLog *) time = (getNow' ()),
+            (* OpLog *) duration = noDuration,
+            (* OpLog *) stackTrace = ""
         )
     static member SetOp ((* OpLog *) op : string) (this : OpLog) =
         {this with Op = op}
@@ -94,7 +94,7 @@ type OpLog = {
         this |> OpLog.SetStackTrace stackTrace
 
 (*
- * Generated: <Class>
+ * Generated: <Combo>
  *     IsFinal
  *)
 type DurationStats (owner : IOwner, key : Key) =
@@ -119,7 +119,7 @@ type DurationStats (owner : IOwner, key : Key) =
     member __.SlowCount (* DurationStats *) : IVarProperty<int> = slowCount
 
 (*
- * Generated: <Class>
+ * Generated: <Combo>
  *     IsFinal
  *)
 type FuncStats (owner : IOwner, key : Key) =
@@ -152,7 +152,7 @@ type FuncStats (owner : IOwner, key : Key) =
     member __.FailedOps (* FuncStats *) : IListProperty<IVarProperty<OpLog>> = failedOps
 
 (*
- * Generated: <Class>
+ * Generated: <Combo>
  *)
 type Stats (owner : IOwner, key : Key) =
     inherit WrapProperties<Stats, IComboProperty> ()
