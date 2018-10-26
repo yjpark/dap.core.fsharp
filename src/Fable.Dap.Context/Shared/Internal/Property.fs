@@ -69,7 +69,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
     let onChanged0 : Bus<PropertyChanged> = new Bus<PropertyChanged> (owner, sprintf "%s:OnChanged0" spec.Luid)
     // abstract members
     abstract member ToJson : 'value -> Json
-    abstract member LoadJson' : 'value -> Json -> ('value * bool) option
+    abstract member LoadJson' : 'value -> Json -> (bool * 'value option)
     abstract member Clone0 : IOwner * Key -> IProperty
     abstract member SyncTo0 : IProperty -> unit
     // virtual members
@@ -118,10 +118,10 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
                 owner.Log <| tplPropertyError "Property:Already_Sealed" spec.Luid ver (value, E.encode 4 json)
                 false
             else
-                this.LoadJson' value json
-                |> Option.map (fun (v, ok) ->
-                    (this.SetValue v) && ok
-                )|> Option.defaultValue false
+                let (ok, newValue) = this.LoadJson' value json
+                newValue
+                |> Option.map (fun v -> (this.SetValue v) && ok)
+                |> Option.defaultValue ok
         member __.OnChanged0 = onChanged0.Publish
         member this.Clone0 (o, k) = this.Clone0 (o, k)
         member this.SyncTo0 t =

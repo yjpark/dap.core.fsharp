@@ -26,21 +26,22 @@ type internal ComboProperty (owner, spec) =
             prop.Spec0.Key, prop.ToJson ()
         )|> E.object
     override this.LoadJson' value json =
-        let mutable ok = true
+        let mutable failedProps : IProperty list = []
         value
         |> List.iter (fun prop ->
             match tryCastJson (D.field prop.Spec0.Key D.json) json with
             | Ok propJson ->
                 let oneOk = prop.LoadJson' propJson
                 if not oneOk then
-                    ok <- false
+                    failedProps <- prop :: failedProps
             | Error err ->
-                ok <- false
+                failedProps <- prop :: failedProps
                 owner.Log <| tplPropertyError "ComboProperty:Decode_Field_Failed" prop.Spec0.Key (prop.ToJson ()) err
         )
-        if not ok then
+        if failedProps.Length > 0 then
             logError owner "ComboProperty:LoadJson'" "Decode_Has_Error" (E.encode 4 json)
-        Some (value, ok)
+            logError owner "ComboProperty:LoadJson'" (sprintf "Failed_Properties: [%d]" failedProps.Length) (failedProps |> List.map (fun p -> (p.Spec0, p)))
+        (failedProps.Length = 0, None)
     override this.Clone0 (o, k) = this.AsCombo.Clone (o, k) :> IProperty
     override this.SyncTo0 t = this.AsCombo.SyncTo (t :?> IComboProperty)
     override this.OnSealed () =

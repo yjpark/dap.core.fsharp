@@ -12,6 +12,8 @@ type internal AspectSpec internal (luid', key') =
     static member Create0 key =
         new AspectSpec (key, key)
         :> IAspectSpec
+    override this.ToString () =
+        sprintf "[AspectSpec:K='%s',L='%s']" key luid
     interface IAspectSpec with
         member __.Luid = luid
         member __.Key = key
@@ -34,6 +36,8 @@ type internal PropertySpec internal (luid, key, initValue') =
     static member Create1 key initValue =
         new PropertySpec (key, key, initValue)
         :> IPropertySpec
+    override this.ToString () =
+        sprintf "[PropertySpec:K='%s',L='%s',V='%s']" key luid <| initValue.ToString ()
     interface IPropertySpec with
         member __.InitValue = initValue
 
@@ -57,6 +61,12 @@ type internal ChannelSpec<'evt> internal (luid, key, encoder', decoder') =
     static member Create key encoder decoder =
         new ChannelSpec<'evt> (key, key, encoder, decoder)
         :> IChannelSpec<'evt>
+    override this.ToString () =
+#if FABLE_COMPILER
+        sprintf "[ChannelSpec<_>:K='%s',L='%s']" key luid
+#else
+        sprintf "[ChannelSpec<%s>:K='%s',L='%s']" typeof<'evt>.FullName key luid
+#endif
     interface IChannelSpec<'evt> with
         member __.Encoder = encoder
         member __.Decoder = decoder
@@ -86,6 +96,12 @@ type internal HandlerSpec<'req, 'res> internal (luid, key, reqEncoder', reqDecod
     static member Create key qe qd se sd=
         new HandlerSpec<'req, 'res> (key, key, qe, qd, se, sd)
         :> IHandlerSpec<'req, 'res>
+    override this.ToString () =
+#if FABLE_COMPILER
+        sprintf "[HandlerSpec<_,_>:K='%s',L='%s']" key luid
+#else
+        sprintf "[HandlerSpec<%s,%s>:K='%s',L='%s']" typeof<'req>.FullName typeof<'res>.FullName key luid
+#endif
     interface IHandlerSpec<'req, 'res> with
         member __.ReqEncoder = reqEncoder
         member __.ReqDecoder = reqDecoder

@@ -49,7 +49,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         if not ok then
             logError owner "Properties:LoadJson'" "Decode_Has_Error" (E.encode 4 json)
         *)
-        Some (value, ok)
+        (ok, None)
     override this.Clone0 (o, k) = this.AsDictProperty.Clone (o, k) :> IProperty
     override this.SyncTo0 t = this.AsDictProperty.SyncTo (t :?> IDictProperty<'p>)
 #if !FABLE_COMPILER

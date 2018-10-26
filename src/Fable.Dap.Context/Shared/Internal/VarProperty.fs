@@ -16,6 +16,12 @@ type internal VarPropertySpec<'v> internal (luid, key, encoder', decoder', initV
     static member Create key encoder decoder initValue validator =
         new VarPropertySpec<'v> (key, key, encoder, decoder, initValue, validator)
         :> IVarPropertySpec<'v>
+    override this.ToString () =
+#if FABLE_COMPILER
+        sprintf "[VarPropertySpec<_>:K='%s',L='%s',V='%A']" key luid initValue
+#else
+        sprintf "[VarPropertySpec<%s>:K='%s',L='%s',V='%A']" typeof<'v>.FullName key luid initValue
+#endif
     interface IVarPropertySpec<'v> with
         member __.Encoder = encoder
         member __.Decoder = decoder
@@ -58,10 +64,10 @@ and internal VarProperty<'v> private (owner, spec) =
         tryCastJson spec.Decoder json
         |> function
             | Ok v ->
-                Some (v, true)
+                (true, Some v)
             | Error err ->
                 owner.Log <| tplPropertyError "Property:Decode_Failed" spec.Luid this.Value (E.encode 4 json, err)
-                None
+                (false, None)
     override this.Clone0 (o, k) = this.AsVarProperty.Clone (o, k) :> IProperty
     override this.SyncTo0 t = this.AsVarProperty.SyncTo (t :?> IVarProperty<'v>)
 #if !FABLE_COMPILER
