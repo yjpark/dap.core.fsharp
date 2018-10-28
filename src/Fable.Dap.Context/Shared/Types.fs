@@ -16,11 +16,14 @@ type Guid = string  //Global Unique ID
 let newGuid () : Guid =
     (System.Guid.NewGuid ()) .ToString ()
 
+let newLuid () : Guid =
+    (System.Guid.NewGuid ()) .ToString ()
+
 type Kind = string
 type Key = string
 type Index = int
 
-let newLuid' kind =
+let newLuidOfKind' kind =
     let mutable nexts : Map<string, int> = Map.empty
     let calc = fun () ->
         nexts
@@ -39,8 +42,8 @@ let newLuid' kind =
     lock locker calc
 #endif
 
-let newLuid kind =
-    newLuid' kind
+let newLuidOfKind kind =
+    newLuidOfKind' kind
     |> sprintf "%s:%d" kind
 
 type IObj = interface end
@@ -195,7 +198,7 @@ and IDictProperty =
 #endif
     abstract ElementSpawner : IOwner * Key -> IProperty
     abstract SealDict : unit -> unit
-    abstract MapSealed : bool with get
+    abstract DictSealed : bool with get
     abstract Has : Key -> bool
     abstract OnAdded0 : IBus<IProperty> with get
     abstract OnRemoved0 : IBus<IProperty> with get
@@ -215,7 +218,7 @@ and IDictProperty<'p when 'p :> IProperty> =
     abstract Clone : IOwner * Key -> IDictProperty<'p>
 
 and PropertyMoved = {
-    Luid : Luid
+    Spec : IPropertySpec
     Old : Index
     New : Index
 }
@@ -247,7 +250,7 @@ and IListProperty<'p when 'p :> IProperty> =
     abstract Get : Index -> 'p
     abstract Add : unit -> 'p
     abstract Insert : ToIndex -> 'p
-    abstract Remove : Index -> 'p option
+    abstract Remove : Index -> 'p
     abstract Clear' : unit -> 'p list
     abstract OnAdded : IBus<'p * Index> with get
     abstract OnRemoved : IBus<'p * Index> with get

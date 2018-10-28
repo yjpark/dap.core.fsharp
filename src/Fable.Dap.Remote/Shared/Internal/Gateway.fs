@@ -61,7 +61,7 @@ let private doSendEvent (evt : IEvent) (model : Model) : Model =
     try
         pkt <- Some {
             Time = dateTimeUtcNow ()
-            Id = Guid.NewGuid().ToString()
+            Id = newGuid ()
             Kind = Const.KindEvt
             Payload = toJson evt
         }

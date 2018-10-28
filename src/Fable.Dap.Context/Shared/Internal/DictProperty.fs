@@ -11,11 +11,17 @@ open Dap.Context.Internal.Property
 
 type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
     inherit Property<IPropertySpec<'p>, Map<Key, 'p>> (owner, spec, Map.empty)
-    let mutable mapSealed : bool = false
+    let mutable dictSealed : bool = false
     let onAdded = new Bus<'p> (owner, sprintf "%s:OnAdded" spec.Luid)
     let onRemoved = new Bus<'p> (owner, sprintf "%s:OnRemoved" spec.Luid)
     let onAdded0 = new Bus<IProperty> (owner, sprintf "%s:OnAdded0" spec.Luid)
     let onRemoved0 = new Bus<IProperty> (owner, sprintf "%s:OnRemoved0" spec.Luid)
+    let triggerAdded (prop : 'p) =
+        onAdded.Trigger prop
+        onAdded0.Trigger (prop :> IProperty)
+    let triggerRemoved (prop : 'p) =
+        onRemoved.Trigger prop
+        onRemoved0.Trigger (prop :> IProperty)
     static member Create (o, s : IPropertySpec<'p>) = new DictProperty<'p>(o, s)
     override __.Kind = PropertyKind.DictProperty
 #if FABLE_COMPILER
@@ -31,25 +37,52 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         |> List.map (fun (k, prop) ->
             k, prop.ToJson ()
         )|> E.object
-    override __.LoadJson' value json =
-        let mutable ok = true
-        (* TODO
-        value
-        |> Map.toList
-        |> List.iter (fun (k, prop) ->
-            match tryCastJson (D.field k D.json) json with
-            | Ok json ->
-                let oneOk = prop.LoadJson' json
-                if not oneOk then
-                    ok <- false
-            | Error err ->
-                ok <- false
-                owner.Log <| tplPropertyError "Properties:Decode_Field_Failed" key (prop.ToJson ()) err
-        )
-        if not ok then
-            logError owner "Properties:LoadJson'" "Decode_Has_Error" (E.encode 4 json)
-        *)
-        (ok, None)
+    override this.DoLoadJson value json =
+        if json.IsObject then
+            let mutable failedFields : (Key * string) list = []
+            let mutable failedProps : 'p list = []
+            let oldValue = this.Value
+            let newValue : Map<Key, 'p> =
+                json.ToObjectKeys ()
+                |> Seq.choose (fun k ->
+                    match tryCastJson (D.field k D.json) json with
+                    | Ok propJson ->
+                        let prop =
+                            Map.tryFind k oldValue
+                            |> Option.defaultWith (fun () ->
+                                let subSpec = spec.GetSubSpec k
+                                subSpec.Spawner (owner, k)
+                            )
+                        if not (prop.LoadJson' propJson) then
+                            failedProps <- prop :: failedProps
+                        Some (k, prop)
+                    | Error err ->
+                        failedFields <- (k, err) :: failedFields
+                        logPropError this "DoLoadJson" "Decode_Field_Failed" (k, err)
+                        None
+                )|> Map.ofSeq
+            let ok = failedFields.Length = 0 && failedProps.Length = 0
+            if not ok then
+                logPropError this "DoLoadJson" "Decode_Got_Error" (E.encode 4 json)
+                if failedFields.Length > 0 then
+                    logPropError this "DoLoadJson" (sprintf "Failed_Fields: [%d]" failedFields.Length) failedProps
+                if failedProps.Length > 0 then
+                    logPropError this "DoLoadJson" (sprintf "Failed_Properties: [%d]" failedProps.Length)
+                        (failedProps |> List.map (fun p -> (p.Spec0, p)))
+            if this.SetValue newValue then
+                oldValue
+                |> Map.toList
+                |> List.filter (fun (k, _prop) -> not (Map.containsKey k newValue))
+                |> List.iter (fun (_k, prop) -> triggerRemoved prop)
+                newValue
+                |> Map.toList
+                |> List.filter (fun (k, _prop) -> not (Map.containsKey k oldValue))
+                |> List.iter (fun (_k, prop) -> triggerAdded prop)
+                (ok, None)
+            else
+                (false, None)
+        else
+            (false, None)
     override this.Clone0 (o, k) = this.AsDictProperty.Clone (o, k) :> IProperty
     override this.SyncTo0 t = this.AsDictProperty.SyncTo (t :?> IDictProperty<'p>)
 #if !FABLE_COMPILER
@@ -60,13 +93,13 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
             this.CastFailed<IDictProperty<'p1>> ()
 #endif
     override this.OnSealed () =
-        mapSealed <- true
+        dictSealed <- true
         this.Value
         |> Map.iter (fun _key prop ->
             prop.Seal ()
         )
     member private this.CheckChange tip =
-        if mapSealed then
+        if dictSealed then
             failWith "Already_Sealed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Count tip
     member private this.Add (k : Key) =
         let subSpec = spec.GetSubSpec k
@@ -74,9 +107,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         if (this.Value
             |> Map.add k prop
             |> this.SetValue) then
-            let prop' = prop :> IProperty
-            onAdded.Trigger prop
-            onAdded0.Trigger prop'
+            triggerAdded prop
             prop
         else
             failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Count prop.Spec0.Key
@@ -87,8 +118,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
             if (this.Value
                 |> Map.remove k
                 |> this.SetValue) then
-                onRemoved.Trigger prop
-                onRemoved0.Trigger (prop :> IProperty)
+                triggerRemoved prop
                 prop
             else
                 failWith "Remove_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Count prop.Spec0.Key
@@ -132,13 +162,18 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
         member __.OnAdded = onAdded.Publish
         member __.OnRemoved = onRemoved.Publish
         member this.SyncTo other =
-            //TODO
-            ()
+            other.Clear ()
+            this.Value
+            |> Map.iter (fun key prop ->
+                prop.SyncTo0 <| other.GetOrAdd key
+            )
+            if dictSealed
+                then other.SealDict ()
         member this.Clone (o, k) =
             DictProperty<'p>.Create (o, spec.ForClone k)
             |> this.SetupClone (Some this.AsDictProperty.SyncTo)
             |> fun clone ->
-                if mapSealed then clone.AsDictProperty.SealDict ()
+                if dictSealed then clone.AsDictProperty.SealDict ()
                 clone
             :> IDictProperty<'p>
     interface IDictProperty with
@@ -147,9 +182,9 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
 #endif
         member __.ElementSpawner (o, k) = spec.Spawner (o, k) :> IProperty
         member __.SealDict () =
-            if not mapSealed then
-                mapSealed <- true
-        member __.MapSealed = mapSealed
+            if not dictSealed then
+                dictSealed <- true
+        member __.DictSealed = dictSealed
         member this.Has k =
             (this.AsDictProperty.TryGet k).IsSome
         member __.OnAdded0 = onAdded0.Publish

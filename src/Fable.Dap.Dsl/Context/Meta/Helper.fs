@@ -112,10 +112,10 @@ type M with
         |> fun m -> m.ToAlias "Json"
         |> fun m -> m.WithValue (value)
     static member guid (key, ?value : string, ?validator : string) =
-        let value = defaultArg value "(System.Guid.NewGuid().ToString())"
+        let value = defaultArg value "(newGuid ())"
         M.basic ("string", key, value, ?validator=validator)
         |> fun m -> m.ToAlias "Guid"
     static member luid (key, ?value : string, ?validator : string) =
-        let value = defaultArg value "(System.Guid.NewGuid().ToString())"
+        let value = defaultArg value "(newLuid ())"
         M.basic ("string", key, value, ?validator=validator)
         |> fun m -> m.ToAlias "Luid"

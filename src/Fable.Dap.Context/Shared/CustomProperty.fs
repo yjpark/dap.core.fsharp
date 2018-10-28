@@ -2,6 +2,7 @@
 module Dap.Context.CustomProperty
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Context.Unsafe
 open Dap.Context.Internal
 
@@ -52,12 +53,11 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         member this.OnChanged0 = this.Target.OnChanged0
         member this.Clone0 (o, k) = this.AsCustomProperty.Clone (o, k) :> IProperty
         member this.SyncTo0 t =
-            let this' = this.AsProperty
-            if this'.Kind <> t.Kind then
-                this'.Owner.Log <| tplPropertyError "Property:InValid_Kind" this'.Spec0.Luid this'.Ver (this'.Kind, t.Kind, t)
+            if this.AsProperty.Kind <> t.Kind then
+                logPropError this "SyncTo0" "Invalid_Kind" t
         #if !FABLE_COMPILER
             elif this.GetType () <> t.GetType () then
-                this'.Owner.Log <| tplPropertyError "Property:InValid_Type" this'.Spec0.Luid this'.Ver (this.GetType (), t.GetType (), t)
+                logPropError this "SyncTo0" "Invalid_Kind" t
         #endif
             else
                 this.SyncTo (t :?> 'p)

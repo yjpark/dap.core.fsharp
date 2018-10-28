@@ -14,7 +14,8 @@ type Luid = ContextTypes.Luid
 type Guid = ContextTypes.Guid
 
 let newGuid () = ContextTypes.newGuid ()
-let newLuid kind = ContextTypes.newLuid kind
+let newLuid () = ContextTypes.newLuid ()
+let newLuidOfKind kind = ContextTypes.newLuidOfKind kind
 
 type Kind = ContextTypes.Kind
 type Key = ContextTypes.Key
@@ -40,7 +41,7 @@ let NoScope = ""
 
 let private calVersion scope kind key =
     sprintf "%s:%s:%s" scope kind key
-    |> newLuid'
+    |> ContextTypes.newLuidOfKind'
 
 [<StructuredFormatDisplay("{AsDisplay}")>]
 type Ident = {

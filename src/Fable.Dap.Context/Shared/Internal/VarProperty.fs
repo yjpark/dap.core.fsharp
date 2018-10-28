@@ -60,13 +60,13 @@ and internal VarProperty<'v> private (owner, spec) =
     member this.AsValue = this :> IValue<'v>
     override __.ToJson (v : 'v) =
         spec.Encoder v
-    override this.LoadJson' _value json =
+    override this.DoLoadJson _value json =
         tryCastJson spec.Decoder json
         |> function
             | Ok v ->
                 (true, Some v)
             | Error err ->
-                owner.Log <| tplPropertyError "Property:Decode_Failed" spec.Luid this.Value (E.encode 4 json, err)
+                logPropError this "DoLoadJson" "Decode_Failed" (this.Value, E.encode 4 json, err)
                 (false, None)
     override this.Clone0 (o, k) = this.AsVarProperty.Clone (o, k) :> IProperty
     override this.SyncTo0 t = this.AsVarProperty.SyncTo (t :?> IVarProperty<'v>)
@@ -82,7 +82,7 @@ and internal VarProperty<'v> private (owner, spec) =
         |> Option.map (fun validator ->
             let valid = validator.Check this.AsValue v
             if not valid then
-                owner.Log <| tplPropertyDebug "Property:Invalid_Value" spec.Luid this.Value (v, validator)
+                logPropDebug this "ShouldSetValue" "Validator_Denied" (this.Value, v, validator)
             valid
         )|> Option.defaultValue true
     override this.OnValueChanged (old : 'v) =

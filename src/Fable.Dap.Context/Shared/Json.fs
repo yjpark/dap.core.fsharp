@@ -20,6 +20,7 @@ type Json = JToken
 #endif
 
 open Dap.Prelude
+open Newtonsoft.Json.Linq
 
 type JsonDecoder<'json> = TD.Decoder<'json>
 type JsonEncoder<'json> = 'json -> Json
@@ -38,17 +39,17 @@ module Extensions =
         member this.EncodeJson (indent : int) =
             TE.toString indent <| this.ToJson ()
 
-let tryDecodeJson (decoder : JsonDecoder<'res>) (pkt : string) =
+let tryDecodeJson (decoder : JsonDecoder<'res>) (pkt : string) : Result<'res, string> =
     TD.fromString decoder pkt
 
-let decodeJson (decoder : JsonDecoder<'res>) (pkt : string) =
+let decodeJson (decoder : JsonDecoder<'res>) (pkt : string) : 'res =
     tryDecodeJson decoder pkt
     |> Result.get
 
-let tryCastJson (decoder : JsonDecoder<'res>) (json : Json) =
+let tryCastJson (decoder : JsonDecoder<'res>) (json : Json) : Result<'res, string> =
     TD.fromValue "" decoder json
 
-let castJson (decoder : JsonDecoder<'res>) (json : Json) =
+let castJson (decoder : JsonDecoder<'res>) (json : Json) : 'res =
     tryCastJson decoder json
     |> Result.get
 
@@ -155,7 +156,8 @@ type Object with
     member this.IsNaN = JsonHelpers.isNaN this
     member this.IsDefined = JsonHelpers.isDefined this
     member this.IsFunction = JsonHelpers.isFunction this
-    member this.ObjectKeys = JsonHelpers.objectKeys this
+    member this.ToArrayValue () = JsonHelpers.asArray this |> List.toSeq
+    member this.ToObjectKeys () : string seq = JsonHelpers.objectKeys this
 #else
 type JToken with
     static member JsonDecoder : JsonDecoder<JToken> = TD.value
@@ -170,7 +172,7 @@ type JToken with
     member this.IsNull = (this.Type = JTokenType.Null)
     member this.IsDate = (this.Type = JTokenType.Date)
     member this.IsTimeSpan = (this.Type = JTokenType.TimeSpan)
-    member this.ToArrayValue () =
+    member this.ToArrayValue () : Json seq =
         if this.IsArray then
             this.Value<JArray>().Values()
         else
@@ -182,6 +184,13 @@ type JToken with
             this.ToString ()
         else
             ""
+    member this.ToObjectKeys () : string seq =
+        if this.Type = JTokenType.Object then
+            this.Value<JObject>().Properties ()
+            |> Seq.map (fun p -> p.Name)
+        else
+            []
+            |> List.toSeq
 #endif
     member this.EncodeJson (indent : int) =
         TE.toString indent this

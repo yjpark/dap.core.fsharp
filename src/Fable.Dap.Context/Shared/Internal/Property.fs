@@ -7,10 +7,6 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Unsafe
 
-let internal tplPropertyDebug = LogEvent.Template4<string, Luid, obj, obj>(LogLevelDebug, "[{Section}] {Spec} {Value} {Detail}")
-let internal tplPropertyInfo = LogEvent.Template4<string, Luid, obj, obj>(LogLevelInformation, "[{Section}] {Spec} {Value} {Detail}")
-let internal tplPropertyError = LogEvent.Template4<string, Luid, obj, obj>(LogLevelError, "[{Section}] {Spec} {Value} {Detail}")
-
 [<AbstractClass>]
 type UnsafeProperty internal (owner') =
     let owner : IOwner = owner'
@@ -69,7 +65,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
     let onChanged0 : Bus<PropertyChanged> = new Bus<PropertyChanged> (owner, sprintf "%s:OnChanged0" spec.Luid)
     // abstract members
     abstract member ToJson : 'value -> Json
-    abstract member LoadJson' : 'value -> Json -> (bool * 'value option)
+    abstract member DoLoadJson : 'value -> Json -> (bool * 'value option)
     abstract member Clone0 : IOwner * Key -> IProperty
     abstract member SyncTo0 : IProperty -> unit
     // virtual members
@@ -85,7 +81,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
     member __.Sealed = sealed'
     member internal this.SetValue v =
         if sealed' then
-            owner.Log <| tplPropertyError "Property:Already_Sealed" spec.Luid ver (value, v)
+            logPropError this "SetValue" "Already_Sealed" (value, v)
             false
         else
             if this.ShouldSetValue v then
@@ -104,6 +100,12 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
                 true
             else
                 false
+    override this.ToString () =
+#if FABLE_COMPILER
+        sprintf "[%s:Spec=%s,Ver=%d%s]" (base.ToString ()) (spec.ToString ()) ver (if sealed' then ",Sealed" else "")
+#else
+        sprintf "[<%s>:Spec=%s,Ver=%d%s]" (this.GetType().FullName) (spec.ToString ()) ver (if sealed' then ",Sealed" else "")
+#endif
     member this.AsProperty = this :> IProperty
     interface IProperty with
         member this.Kind = this.Kind
@@ -115,10 +117,10 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
         member __.Sealed = sealed'
         member this.LoadJson' json =
             if sealed' then
-                owner.Log <| tplPropertyError "Property:Already_Sealed" spec.Luid ver (value, E.encode 4 json)
+                logPropError this "LoadJson'" "Already_Sealed" (value, E.encode 4 json)
                 false
             else
-                let (ok, newValue) = this.LoadJson' value json
+                let (ok, newValue) = this.DoLoadJson value json
                 newValue
                 |> Option.map (fun v -> (this.SetValue v) && ok)
                 |> Option.defaultValue ok
@@ -126,10 +128,10 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
         member this.Clone0 (o, k) = this.Clone0 (o, k)
         member this.SyncTo0 t =
             if this.Kind <> t.Kind then
-                owner.Log <| tplPropertyError "Property:InValid_Kind" spec.Luid ver (this.Kind, t.Kind, t)
+                logPropError this "SyncTo0" "InValid_Kind" t
         #if !FABLE_COMPILER
             elif this.GetType () <> t.GetType () then
-                owner.Log <| tplPropertyError "Property:InValid_Type" spec.Luid ver (this.GetType (), t.GetType (), t)
+                logPropError this "SyncTo0" "InValid_Kind" t
         #endif
             else
                 this.SyncTo0 t

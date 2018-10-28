@@ -60,7 +60,7 @@ let private doSend (req : IRequest) (model : Model) : Model =
     try
         let pkt = {
             Time = dateTimeUtcNow ()
-            Id = Guid.NewGuid().ToString()
+            Id = newGuid ()
             Kind = Const.KindReq
             Payload = toJson req
         }

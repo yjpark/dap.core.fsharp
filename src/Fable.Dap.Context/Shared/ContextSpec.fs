@@ -11,7 +11,7 @@ open Dap.Context
 [<AbstractClass>]
 type ContextSpec (kind') =
     let kind : Kind = kind'
-    let luid = newLuid kind
+    let luid = newLuidOfKind kind
     interface IContextSpec with
         member __.Kind = kind
         member __.Luid = luid

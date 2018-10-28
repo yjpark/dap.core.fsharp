@@ -63,6 +63,7 @@
 			"concat",
 			"hardcoded",
 			"inited",
+			"iteri",
 			"printfn",
 			"sprintf",
 			"typeof"
