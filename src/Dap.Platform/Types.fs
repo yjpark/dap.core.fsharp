@@ -143,7 +143,7 @@ and AgentEvt =
 with interface IEvt
 
 type IPack =
-    inherit ILogger
+    inherit IRunner
     abstract Env : IEnv with get
 
 and IPackAgent<'pack when 'pack :> IPack> =

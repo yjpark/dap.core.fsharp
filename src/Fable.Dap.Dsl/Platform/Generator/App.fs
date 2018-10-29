@@ -208,8 +208,23 @@ type InterfaceGenerator (meta : AppMeta) =
                     ""
                     sprintf "type %sKeys () =" param.Name
                 ] @ lines
+    let getGuiInterface (param : AppParam) =
+        [
+            sprintf "    abstract GuiContext : SynchronizationContext with get"
+            sprintf "    abstract RunGuiTask : OnFailed<I%s> -> GetTask<I%s, unit> -> unit" param.Name param.Name
+            sprintf "    abstract RunGuiFunc : Func<I%s, unit> -> unit" param.Name
+        ]
     interface IGenerator<AppParam> with
         member this.Generate param =
+            let extra =
+            #if FABLE_COMPILER
+                []
+            #else
+                if param.IsGui then
+                    getGuiInterface param
+                else
+                    []
+            #endif
             [
                 getAliases meta
                 getKinds param
@@ -218,6 +233,7 @@ type InterfaceGenerator (meta : AppMeta) =
                 meta.Packs |> List.map getPackInherit
                 getInterfaceFooter param
                 meta.Packs |> List.map getPackAs
+                extra
                 [""]
                 (new ArgsGenerator (meta)) .Generate param
             ]|> List.concat
@@ -420,20 +436,43 @@ type ClassGenerator (meta : AppMeta) =
         ]|> List.concat
     let getClassMiddle (param : AppParam) =
         [
-    #if FABLE_COMPILER
+        #if FABLE_COMPILER
             sprintf "    abstract member Setup' : unit -> unit"
             sprintf "    default __.Setup' () = ()"
-    #else
+        #else
             sprintf "    abstract member SetupAsync' : unit -> Task<unit>"
             sprintf "    default __.SetupAsync' () = task {"
             sprintf "        return ()"
             sprintf "    }"
-    #endif
+        #endif
             sprintf "    member __.Args : %sArgs = args" param.Name
             sprintf "    member __.Env : IEnv = env"
             sprintf "    member __.SetupError : exn option = setupError"
             sprintf "    interface ILogger with"
             sprintf "        member __.Log m = env.Log m"
+            sprintf "    interface IRunner<I%s> with" param.Name
+            sprintf "        member __.Runner = this.As%s" param.Name
+            sprintf "        member __.RunFunc func = runFunc' this func"
+            sprintf "        member __.AddTask onFailed getTask = addTask' this onFailed getTask"
+            sprintf "        member __.RunTask onFailed getTask = runTask' this onFailed getTask"
+        #if !FABLE_COMPILER
+        #endif
+            sprintf "    interface IRunner with"
+            sprintf "        member __.Clock = env.Clock"
+        #if !FABLE_COMPILER
+            sprintf "        member __.Console0 = env.Console0"
+            sprintf "        member __.RunFunc0 func = runFunc' this func"
+            sprintf "        member __.AddTask0 onFailed getTask = addTask' this onFailed getTask"
+            sprintf "        member __.RunTask0 onFailed getTask = runTask' this onFailed getTask"
+            sprintf "    interface ITaskManager with"
+            sprintf "        member __.StartTask task = env.StartTask task"
+            sprintf "        member __.ScheduleTask task = env.ScheduleTask task"
+            sprintf "        member __.PendingTasksCount = env.PendingTasksCount"
+            sprintf "        member __.StartPendingTasks () = env.StartPendingTasks ()"
+            sprintf "        member __.ClearPendingTasks () = env.ClearPendingTasks ()"
+            sprintf "        member __.RunningTasksCount = env.RunningTasksCount"
+            sprintf "        member __.CancelRunningTasks () = env.CancelRunningTasks ()"
+        #endif
             sprintf "    interface IPack with"
             sprintf "        member __.Env : IEnv = env"
         ]
@@ -446,6 +485,23 @@ type ClassGenerator (meta : AppMeta) =
         [
             sprintf "    member __.As%s = this :> I%s" param.Name param.Name
         ]
+    let getGuiFields (param : AppParam) =
+        [
+            "    let guiContext = System.Threading.SynchronizationContext.Current"
+        ]
+    let getGuiMembers (param : AppParam) =
+        [
+            sprintf "        member __.GuiContext = guiContext"
+            sprintf "        member __.RunGuiTask (onFailed : OnFailed<I%s>) (getTask : GetTask<I%s, unit>) : unit =" param.Name param.Name
+            sprintf "            (this :> IRunner<I%s>).RunTask onFailed (fun _ -> task {" param.Name
+            sprintf "                do! Async.SwitchToContext(guiContext)"
+            sprintf "                runTask' this onFailed getTask"
+            sprintf "            })"
+            sprintf "        member __.RunGuiFunc (func : Func<I%s, unit>) : unit =" param.Name
+            sprintf "            this.As%s.RunGuiTask ignoreOnFailed (fun _ -> task {" param.Name
+            sprintf "                runFunc' this func |> ignore"
+            sprintf "            })"
+        ]
     interface IGenerator<AppParam> with
         member this.Generate param =
             [
@@ -454,6 +510,10 @@ type ClassGenerator (meta : AppMeta) =
                 clearProcessedPacks ()
                 yield meta.Packs |> List.map getPackFields |> List.concat
                 clearProcessedPacks ()
+            #if !FABLE_COMPILER
+                if param.IsGui then
+                    yield getGuiFields param
+            #endif
             #if FABLE_COMPILER
                 yield getFablePrivateSetup param
             #else
@@ -466,5 +526,10 @@ type ClassGenerator (meta : AppMeta) =
                 yield getClassFooter param
                 clearProcessedPacks ()
                 yield meta.Packs |> List.map getPackAs
+            #if !FABLE_COMPILER
+                if param.IsGui then
+                    yield getGuiMembers param
+            #endif
+
                 yield getClassEnd param
             ]|> List.concat

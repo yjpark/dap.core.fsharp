@@ -48,7 +48,7 @@ and IAgent<'args, 'model, 'msg, 'req, 'evt> when 'msg :> IMsg and 'req :> IReq a
 type AgentEvt = NoEvt
 
 type IPack =
-    inherit ILogger
+    inherit IRunner
     abstract Env : IEnv with get
 
 and IPackAgent<'pack when 'pack :> IPack> =

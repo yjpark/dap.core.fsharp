@@ -18,31 +18,45 @@ type G with
         G.PackInterface (name, meta)
 
 type G with
-    static member AppInterface (name, meta : AppMeta) =
-        AppParam.Create name
+    static member AppInterface (name, meta : AppMeta, ?isGui : bool) =
+        let isGui = defaultArg isGui false
+        AppParam.Create name isGui
         |> generate (new App.InterfaceGenerator (meta))
-    static member AppInterface (expr : Expr<AppMeta>) =
+    static member AppInterface (expr : Expr<AppMeta>, ?isGui : bool) =
         let (name, meta) = unquotePropertyGetExpr expr
-        G.AppInterface (name, meta)
+        G.AppInterface (name, meta, ?isGui = isGui)
+    static member GuiAppInterface (name, meta : AppMeta) =
+        G.AppInterface (name, meta, isGui = true)
+    static member GuiAppInterface (expr : Expr<AppMeta>) =
+        G.AppInterface (expr, isGui = true)
 
 type G with
-    static member AppClass (name, meta : AppMeta) =
-        AppParam.Create name
+    static member AppClass (name, meta : AppMeta, ?isGui : bool) =
+        let isGui = defaultArg isGui false
+        AppParam.Create name isGui
         |> generate (new App.ClassGenerator (meta))
-    static member AppClass (expr : Expr<AppMeta>) =
+    static member AppClass (expr : Expr<AppMeta>, ?isGui : bool) =
         let (name, meta) = unquotePropertyGetExpr expr
-        G.AppClass (name, meta)
+        G.AppClass (name, meta, ?isGui = isGui)
+    static member GuiAppClass (name, meta : AppMeta) =
+        G.AppClass (name, meta, isGui = true)
+    static member GuiAppClass (expr : Expr<AppMeta>) =
+        G.AppClass (expr, isGui = true)
 
 type G with
-    static member App (name, meta : AppMeta) =
+    static member App (name, meta : AppMeta, ?isGui : bool) =
         [
-            G.AppInterface (name, meta)
+            G.AppInterface (name, meta, ?isGui = isGui)
             [""]
-            G.AppClass (name, meta)
+            G.AppClass (name, meta, ?isGui = isGui)
         ]|> List.concat
-    static member App (expr : Expr<AppMeta>) =
+    static member App (expr : Expr<AppMeta>, ?isGui : bool) =
         let (name, meta) = unquotePropertyGetExpr expr
-        G.App (name, meta)
+        G.App (name, meta, ?isGui = isGui)
+    static member GuiApp (name, meta : AppMeta) =
+        G.App (name, meta, isGui = true)
+    static member GuiApp (expr : Expr<AppMeta>) =
+        G.App (expr, isGui = true)
 
 type G with
     static member PlatformOpens =
@@ -62,6 +76,7 @@ type G with
     static member PackOpens =
         [
 #if !FABLE_COMPILER
+            "open System.Threading"
             "open System.Threading.Tasks"
             "open FSharp.Control.Tasks.V2"
 #endif
