@@ -211,6 +211,7 @@ type InterfaceGenerator (meta : AppMeta) =
     let getGuiInterface (param : AppParam) =
         [
             sprintf "    abstract GuiContext : SynchronizationContext with get"
+            sprintf "    abstract GetGuiTask : GetTask<I%s, 'res> -> Task<'res>" param.Name
             sprintf "    abstract RunGuiTask : OnFailed<I%s> -> GetTask<I%s, unit> -> unit" param.Name param.Name
             sprintf "    abstract RunGuiFunc : Func<I%s, unit> -> unit" param.Name
         ]
@@ -492,11 +493,12 @@ type ClassGenerator (meta : AppMeta) =
     let getGuiMembers (param : AppParam) =
         [
             sprintf "        member __.GuiContext = guiContext"
+            sprintf "        member __.GetGuiTask (getTask : GetTask<I%s, 'res>) : Task<'res> = task {" param.Name
+            sprintf "            do! Async.SwitchToContext(guiContext)"
+            sprintf "            return! getTask this"
+            sprintf "        }"
             sprintf "        member __.RunGuiTask (onFailed : OnFailed<I%s>) (getTask : GetTask<I%s, unit>) : unit =" param.Name param.Name
-            sprintf "            (this :> IRunner<I%s>).RunTask onFailed (fun _ -> task {" param.Name
-            sprintf "                do! Async.SwitchToContext(guiContext)"
-            sprintf "                runTask' this onFailed getTask"
-            sprintf "            })"
+            sprintf "            (this :> IRunner<IApp>).RunTask onFailed (fun _ -> this.AsApp.GetGuiTask getTask)"
             sprintf "        member __.RunGuiFunc (func : Func<I%s, unit>) : unit =" param.Name
             sprintf "            this.As%s.RunGuiTask ignoreOnFailed (fun _ -> task {" param.Name
             sprintf "                runFunc' this func |> ignore"
