@@ -520,8 +520,6 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "                do! Async.SwitchToContext (this.AsApp.GuiContext)"
             sprintf "                return! Async.AwaitTask (getTask this)"
             sprintf "            }"
-            }
-
             sprintf "        }"
             sprintf "        member __.RunGuiTask (onFailed : OnFailed<I%s>) (getTask : GetTask<I%s, unit>) : unit =" param.Name param.Name
             sprintf "            (this :> IRunner<IApp>).RunTask onFailed (fun _ -> this.AsApp.GetGuiTask getTask)"
