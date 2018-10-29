@@ -20,7 +20,6 @@ type Json = JToken
 #endif
 
 open Dap.Prelude
-open Newtonsoft.Json.Linq
 
 type JsonDecoder<'json> = TD.Decoder<'json>
 type JsonEncoder<'json> = 'json -> Json
@@ -139,7 +138,7 @@ module JsonHelpers =
     let inline asInt (o: obj): int = unbox o
     let inline asFloat (o: obj): float = unbox o
     let inline asString (o: obj): string = unbox o
-    let inline asArray (o: obj): obj[] = unbox o
+    let inline asArray (o: obj): obj [] = unbox o
 
 type Object with
     (*
@@ -156,7 +155,7 @@ type Object with
     member this.IsNaN = JsonHelpers.isNaN this
     member this.IsDefined = JsonHelpers.isDefined this
     member this.IsFunction = JsonHelpers.isFunction this
-    member this.ToArrayValue () = JsonHelpers.asArray this |> List.toSeq
+    member this.ToArrayValue () = JsonHelpers.asArray this |> Array.toSeq
     member this.ToObjectKeys () : string seq = JsonHelpers.objectKeys this
 #else
 type JToken with
