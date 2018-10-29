@@ -516,8 +516,12 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "            | Some guiContext' -> guiContext'"
             sprintf "            | None -> failWith \"GuiContext_Not_Setup\" this"
             sprintf "        member __.GetGuiTask (getTask : GetTask<I%s, 'res>) : Task<'res> = task {" param.Name
-            sprintf "            do! Async.SwitchToContext (this.As%s.GuiContext)" param.Name
-            sprintf "            return! getTask this"
+            sprintf "            return! async {"
+            sprintf "                do! Async.SwitchToContext (this.AsApp.GuiContext)"
+            sprintf "                return! Async.AwaitTask (getTask this)"
+            sprintf "            }"
+            }
+
             sprintf "        }"
             sprintf "        member __.RunGuiTask (onFailed : OnFailed<I%s>) (getTask : GetTask<I%s, unit>) : unit =" param.Name param.Name
             sprintf "            (this :> IRunner<IApp>).RunTask onFailed (fun _ -> this.AsApp.GetGuiTask getTask)"
