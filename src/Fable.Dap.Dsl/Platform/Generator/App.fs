@@ -488,13 +488,35 @@ type ClassGenerator (meta : AppMeta) =
         ]
     let getGuiFields (param : AppParam) =
         [
-            "    let guiContext = System.Threading.SynchronizationContext.Current"
+            "    let mutable guiContext : SynchronizationContext option = None"
+        ]
+    let getGuiSetup (param : AppParam) =
+        (*
+         * Don't know why but if set guiContext with SynchronizationContext.Current
+         * here in the base class, it's always null, even though the thread is actual
+         * the proper one, guess it's some timing issue.
+         * (under GtkSharp, not 100% sure with other platform)
+         * Current solution is to call `base.SetupGuiContext' ()` in sub classes' do
+         * block, which can get proper value.
+         *)
+        [
+            "    member __.SetupGuiContext' () ="
+            "        match guiContext with"
+            "        | Some guiContext' ->"
+            "            failWith \"GuiContext_Already_Setup\" guiContext'"
+            "        | None ->"
+            "            let guiContext' = SynchronizationContext.Current"
+            "            guiContext <- Some guiContext'"
+            "            logInfo env \"SetupGuiContext'\" \"Succeed\" guiContext'"
         ]
     let getGuiMembers (param : AppParam) =
         [
-            sprintf "        member __.GuiContext = guiContext"
+            sprintf "        member __.GuiContext ="
+            sprintf "            match guiContext with"
+            sprintf "            | Some guiContext' -> guiContext'"
+            sprintf "            | None -> failWith \"GuiContext_Not_Setup\" this"
             sprintf "        member __.GetGuiTask (getTask : GetTask<I%s, 'res>) : Task<'res> = task {" param.Name
-            sprintf "            do! Async.SwitchToContext(guiContext)"
+            sprintf "            do! Async.SwitchToContext (this.As%s.GuiContext)" param.Name
             sprintf "            return! getTask this"
             sprintf "        }"
             sprintf "        member __.RunGuiTask (onFailed : OnFailed<I%s>) (getTask : GetTask<I%s, unit>) : unit =" param.Name param.Name
@@ -522,6 +544,10 @@ type ClassGenerator (meta : AppMeta) =
                 yield getPrivateSetup param
             #endif
                 yield getExtraNews param
+            #if !FABLE_COMPILER
+                if param.IsGui then
+                    yield getGuiSetup param
+            #endif
                 yield getClassMiddle param
                 clearProcessedPacks ()
                 yield meta.Packs |> List.map (getPackMembers []) |> List.concat
