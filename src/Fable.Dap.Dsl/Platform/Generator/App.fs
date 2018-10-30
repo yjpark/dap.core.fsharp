@@ -506,8 +506,11 @@ type ClassGenerator (meta : AppMeta) =
             "            failWith \"GuiContext_Already_Setup\" guiContext'"
             "        | None ->"
             "            let guiContext' = SynchronizationContext.Current"
-            "            guiContext <- Some guiContext'"
-            "            logInfo env \"SetupGuiContext'\" \"Succeed\" guiContext'"
+            "            if guiContext' =? null then"
+            "                logError env \"SetupGuiContext'\" \"Failed\" guiContext'"
+            "            else"
+            "                guiContext <- Some guiContext'"
+            "                logInfo env \"SetupGuiContext'\" \"Succeed\" guiContext'"
         ]
     let getGuiMembers (param : AppParam) =
         [
