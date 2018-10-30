@@ -132,6 +132,7 @@ type InterfaceGenerator (meta : AppMeta) =
         [
             sprintf ""
             sprintf "type I%s =" param.Name
+            sprintf "    inherit IRunner<I%s> =" param.Name
             sprintf "    inherit IPack"
         ]
     let getInterfaceFooter (param : AppParam) =
@@ -208,24 +209,8 @@ type InterfaceGenerator (meta : AppMeta) =
                     ""
                     sprintf "type %sKeys () =" param.Name
                 ] @ lines
-    let getGuiInterface (param : AppParam) =
-        [
-            sprintf "    abstract GuiContext : SynchronizationContext with get"
-            sprintf "    abstract GetGuiTask : GetTask<I%s, 'res> -> Task<'res>" param.Name
-            sprintf "    abstract RunGuiTask : OnFailed<I%s> -> GetTask<I%s, unit> -> unit" param.Name param.Name
-            sprintf "    abstract RunGuiFunc : Func<I%s, unit> -> unit" param.Name
-        ]
     interface IGenerator<AppParam> with
         member this.Generate param =
-            let extra =
-            #if FABLE_COMPILER
-                []
-            #else
-                if param.IsGui then
-                    getGuiInterface param
-                else
-                    []
-            #endif
             [
                 getAliases meta
                 getKinds param
@@ -234,7 +219,6 @@ type InterfaceGenerator (meta : AppMeta) =
                 meta.Packs |> List.map getPackInherit
                 getInterfaceFooter param
                 meta.Packs |> List.map getPackAs
-                extra
                 [""]
                 (new ArgsGenerator (meta)) .Generate param
             ]|> List.concat
@@ -486,33 +470,6 @@ type ClassGenerator (meta : AppMeta) =
         [
             sprintf "    member __.As%s = this :> I%s" param.Name param.Name
         ]
-    let getGuiFields (param : AppParam) =
-        [
-        ]
-    let getGuiSetup (param : AppParam) =
-        (*
-         * Don't know why but if set guiContext with SynchronizationContext.Current
-         * here in the base class, it's always null, even though the thread is actual
-         * the proper one, guess it's some timing issue.
-         * (under GtkSharp, not 100% sure with other platform)
-         * Current solution is to call `base.SetupGuiContext' ()` in sub classes' do
-         * block, which can get proper value.
-         *)
-        [
-            "    member __.SetupGuiContext' () = setupGuiContext' this"
-        ]
-    let getGuiMembers (param : AppParam) =
-        [
-            sprintf "        member __.GuiContext = getGuiContext ()"
-            sprintf "        member __.GetGuiTask (getTask : GetTask<I%s, 'res>) : Task<'res> =" param.Name
-            sprintf "            getGuiTask (fun () -> getTask this)"
-            sprintf "        member __.RunGuiTask (onFailed : OnFailed<I%s>) (getTask : GetTask<I%s, unit>) : unit =" param.Name param.Name
-            sprintf "            (this :> IRunner<IApp>).RunTask onFailed (fun _ -> this.AsApp.GetGuiTask getTask)"
-            sprintf "        member __.RunGuiFunc (func : Func<I%s, unit>) : unit =" param.Name
-            sprintf "            this.As%s.RunGuiTask ignoreOnFailed (fun _ -> task {" param.Name
-            sprintf "                runFunc' this func |> ignore"
-            sprintf "            })"
-        ]
     interface IGenerator<AppParam> with
         member this.Generate param =
             [
@@ -521,30 +478,17 @@ type ClassGenerator (meta : AppMeta) =
                 clearProcessedPacks ()
                 yield meta.Packs |> List.map getPackFields |> List.concat
                 clearProcessedPacks ()
-            #if !FABLE_COMPILER
-                if param.IsGui then
-                    yield getGuiFields param
-            #endif
             #if FABLE_COMPILER
                 yield getFablePrivateSetup param
             #else
                 yield getPrivateSetup param
             #endif
                 yield getExtraNews param
-            #if !FABLE_COMPILER
-                if param.IsGui then
-                    yield getGuiSetup param
-            #endif
                 yield getClassMiddle param
                 clearProcessedPacks ()
                 yield meta.Packs |> List.map (getPackMembers []) |> List.concat
                 yield getClassFooter param
                 clearProcessedPacks ()
                 yield meta.Packs |> List.map getPackAs
-            #if !FABLE_COMPILER
-                if param.IsGui then
-                    yield getGuiMembers param
-            #endif
-
                 yield getClassEnd param
             ]|> List.concat

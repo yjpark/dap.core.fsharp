@@ -17,18 +17,12 @@ type PackParam = {
 
 type AppParam = {
     Name : string
-    IsGui : bool
 } with
-    static member Create name isGui : AppParam =
+    static member Create name : AppParam =
         {
             Name = name
-            IsGui = isGui
         }
     interface IParam with
         member __.Category = "App"
         member this.Name = this.Name
-        member this.Desc =
-            [
-                if this.IsGui then
-                    yield "IsGui"
-            ] |> String.concat ", "
+        member this.Desc = ""
