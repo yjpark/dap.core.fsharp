@@ -6,6 +6,7 @@ open System.Threading.Tasks
 open FSharp.Control.Tasks.V2
 
 open Dap.Prelude
+open Dap.Context
 
 let private tplRunTaskSucceed = LogEvent.Template3<string, string, Duration>(AckLogLevel, "[{Section}] {Task} {Duration} ~> Succeed")
 let private tplSlowRunTaskSucceed = LogEvent.Template3<string, string, Duration>(LogLevelInformation, "[{Section}] {Task} {Duration} ~> Succeed")
@@ -153,3 +154,35 @@ let syncTask (task : System.Threading.Tasks.Task<'res>) =
     task
     |> Async.AwaitTask
     |> Async.RunSynchronously
+
+let mutable private guiContext : SynchronizationContext option = None
+
+let setupGuiContext' (logger : ILogger) =
+    match guiContext with
+    | Some guiContext' ->
+        failWith "guiContext_Already_Setup" guiContext'
+    | None ->
+        let guiContext' = SynchronizationContext.Current
+        if guiContext' =? null then
+            logError logger "setupGuiContext'" "Failed" guiContext'
+        else
+            guiContext <- Some guiContext'
+            logInfo logger "setupGuiContext'" "Succeed" guiContext'
+
+let getGuiContext () = guiContext |> Option.get
+
+let getGuiTask (getTask : unit -> Task<'res>) : Task<'res> = task {
+    return! async {
+        do! Async.SwitchToContext (getGuiContext ())
+        return! Async.AwaitTask (getTask ())
+    }
+}
+
+type IAsyncHandler<'req, 'res>  with
+    member this.SetupGuiHandler' (handler' : 'req -> Task<'res>) =
+        fun (req : 'req) ->
+            getGuiTask (fun () -> handler' req)
+        |> this.SetupHandler'
+    member this.SetupGuiHandler (handler : 'req -> Task<'res>) =
+        this.SetupGuiHandler' handler
+        this.Seal ()

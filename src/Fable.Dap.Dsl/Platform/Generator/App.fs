@@ -488,7 +488,6 @@ type ClassGenerator (meta : AppMeta) =
         ]
     let getGuiFields (param : AppParam) =
         [
-            "    let mutable guiContext : SynchronizationContext option = None"
         ]
     let getGuiSetup (param : AppParam) =
         (*
@@ -500,30 +499,13 @@ type ClassGenerator (meta : AppMeta) =
          * block, which can get proper value.
          *)
         [
-            "    member __.SetupGuiContext' () ="
-            "        match guiContext with"
-            "        | Some guiContext' ->"
-            "            failWith \"GuiContext_Already_Setup\" guiContext'"
-            "        | None ->"
-            "            let guiContext' = SynchronizationContext.Current"
-            "            if guiContext' =? null then"
-            "                logError env \"SetupGuiContext'\" \"Failed\" guiContext'"
-            "            else"
-            "                guiContext <- Some guiContext'"
-            "                logInfo env \"SetupGuiContext'\" \"Succeed\" guiContext'"
+            "    member __.SetupGuiContext' () = setupGuiContext' this"
         ]
     let getGuiMembers (param : AppParam) =
         [
-            sprintf "        member __.GuiContext ="
-            sprintf "            match guiContext with"
-            sprintf "            | Some guiContext' -> guiContext'"
-            sprintf "            | None -> failWith \"GuiContext_Not_Setup\" this"
-            sprintf "        member __.GetGuiTask (getTask : GetTask<I%s, 'res>) : Task<'res> = task {" param.Name
-            sprintf "            return! async {"
-            sprintf "                do! Async.SwitchToContext (this.AsApp.GuiContext)"
-            sprintf "                return! Async.AwaitTask (getTask this)"
-            sprintf "            }"
-            sprintf "        }"
+            sprintf "        member __.GuiContext = getGuiContext ()"
+            sprintf "        member __.GetGuiTask (getTask : GetTask<I%s, 'res>) : Task<'res> =" param.Name
+            sprintf "            getGuiTask (fun () -> getTask this)"
             sprintf "        member __.RunGuiTask (onFailed : OnFailed<I%s>) (getTask : GetTask<I%s, unit>) : unit =" param.Name param.Name
             sprintf "            (this :> IRunner<IApp>).RunTask onFailed (fun _ -> this.AsApp.GetGuiTask getTask)"
             sprintf "        member __.RunGuiFunc (func : Func<I%s, unit>) : unit =" param.Name
