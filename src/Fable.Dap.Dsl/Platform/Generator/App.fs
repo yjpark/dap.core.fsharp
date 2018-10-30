@@ -132,7 +132,7 @@ type InterfaceGenerator (meta : AppMeta) =
         [
             sprintf ""
             sprintf "type I%s =" param.Name
-            sprintf "    inherit IRunner<I%s> =" param.Name
+            sprintf "    inherit IRunner<I%s>" param.Name
             sprintf "    inherit IPack"
         ]
     let getInterfaceFooter (param : AppParam) =
