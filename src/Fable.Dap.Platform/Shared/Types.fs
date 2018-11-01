@@ -209,3 +209,8 @@ with
         FieldSpec.Create<LinkStatus> (LinkStatus.JsonEncoder, LinkStatus.JsonDecoder)
     interface IJson with
         member this.ToJson () = LinkStatus.JsonEncoder this
+
+type IFeature =
+    inherit IContext
+
+type IFallback = interface end

@@ -32,6 +32,7 @@
     <Compile Include="Platform/Generator/Types.fs" />
     <Compile Include="Platform/Generator/Pack.fs" />
     <Compile Include="Platform/Generator/App.fs" />
+    <Compile Include="Platform/Generator/Feature.fs" />
     <Compile Include="Platform/Generator/Helper.fs" />
     <Compile Include="WebSocket/Meta.fs" />
     <Compile Include="Remote/Meta/Proxy.fs" />

@@ -8,11 +8,6 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Unsafe
 
-type IFeature =
-    inherit IContext
-
-type IFallback = interface end
-
 let private typeIObj = typeof<IObj>
 let private typeILogger = typeof<ILogger>
 let private typeIOwner = typeof<IOwner>

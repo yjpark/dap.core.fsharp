@@ -41,9 +41,9 @@ type InterfaceGenerator (meta : ContextMeta) =
     let getAsyncHandlers (param : ContextParam) =
         meta.AsyncHandlers
         |> List.map ^<| getAsyncHandler param
+#endif
     abstract member GetExtraInherits : ContextParam -> Lines
     default __.GetExtraInherits (_param : ContextParam) = []
-#endif
     interface IGenerator<ContextParam> with
         member this.Generate param =
             [
