@@ -76,13 +76,16 @@ let getFeatures () =
         features <- Some <| loadFeatures ()
     features.Value
 
-let addToAgent<'feature when 'feature :> IFeature> (agent : IAgent) : 'feature =
+let create<'feature when 'feature :> IFeature> (logging : ILogging) : 'feature =
     let kind = getKind typeof<'feature>
     getFeatures ()
     |> Map.tryFind kind
     |> function
         | Some type' ->
-            Activator.CreateInstance (type', [| (agent.Env.Logging :> obj) |])
+            Activator.CreateInstance (type', [| (logging :> obj) |])
             :?> 'feature
         | None ->
-            failWith "Feature.AddToAgent" kind
+            failWith "Feature.create" kind
+
+let addToAgent<'feature when 'feature :> IFeature> (agent : IAgent) : 'feature =
+    create<'feature> agent.Env.Logging
