@@ -230,25 +230,6 @@ type G with
         G.Context (name, meta)
 
 type G with
-    static member Feature (generator : string option -> Lines, feature : string) =
-        [
-            sprintf "#if %s" <| featureToSwitch feature
-        ] @ (generator (Some feature)) @ [
-            "#else"
-        ] @ (generator None) @ [
-            "#endif"
-        ]
-    static member Feature (generator : string option -> Lines, features : string list) =
-        features
-        |> List.map (fun feature ->
-            [
-                sprintf "#if %s" <| featureToSwitch feature
-            ] @ (generator (Some feature)) @ [
-                "#endif"
-            ]
-        )|> List.concat
-
-type G with
     static member AsDisplay (code : string) (lines : Lines) =
         """[<StructuredFormatDisplay("{AsDisplay}")>]"""
         :: lines @ [

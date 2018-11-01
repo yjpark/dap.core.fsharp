@@ -1,8 +1,6 @@
 [<RequireQualifiedAccess>]
 module Dap.Context.Generator.Context
 
-open System.Reflection
-
 open Dap.Prelude
 open Dap.Context
 open Dap.Context.Meta
@@ -17,6 +15,9 @@ type InterfaceGenerator (meta : ContextMeta) =
     let getInterfaceHeader (param : ContextParam) =
         [
             sprintf "type I%s =" param.Name
+        ]
+    let getInherits (param : ContextParam) =
+        [
             sprintf "    inherit IContext<%s>" meta.PropsType
         ]
     let getProperties (_param : ContextParam) =
@@ -40,11 +41,15 @@ type InterfaceGenerator (meta : ContextMeta) =
     let getAsyncHandlers (param : ContextParam) =
         meta.AsyncHandlers
         |> List.map ^<| getAsyncHandler param
+    abstract member GetExtraInherits : ContextParam -> Lines
+    default __.GetExtraInherits (_param : ContextParam) = []
 #endif
     interface IGenerator<ContextParam> with
         member this.Generate param =
             [
                 getInterfaceHeader param
+                this.GetExtraInherits param
+                getInherits param
                 getProperties param
                 getChannels param
                 getHandlers param
@@ -110,12 +115,13 @@ type ClassGenerator (meta : ContextMeta) =
             []
         else
             [
-                yield sprintf "    static member AddToAgent (agent : IAgent) ="
+                yield sprintf "    static member Create (?logging : ILogging) ="
+                yield sprintf "        let logging = logging |> Option.defaultWith (fun () -> getLogging ())"
                 match meta.Kind with
                 | None ->
-                    yield sprintf "        new %s (kind, agent.Env.Logging) :> I%s" param.Name param.Name
+                    yield sprintf "        new %s (kind, logging)" param.Name
                 | Some _kind ->
-                    yield sprintf "        new %s (agent.Env.Logging) :> I%s" param.Name param.Name
+                    yield sprintf "        new %s (logging)" param.Name
                 yield sprintf "    override this.Self = this"
                 match meta.Kind with
                 | None ->
@@ -154,6 +160,8 @@ type ClassGenerator (meta : ContextMeta) =
             yield sprintf "    member this.As%s = this :> I%s" param.Name param.Name
 
         ]
+    abstract member GetExtraInterfaces : ContextParam -> Lines
+    default __.GetExtraInterfaces (_param : ContextParam) = []
     interface IGenerator<ContextParam> with
         member this.Generate param =
             [
@@ -177,5 +185,6 @@ type ClassGenerator (meta : ContextMeta) =
             #if !FABLE_COMPILER
                 getAsyncHandlersMember param |> indentLines
             #endif
+                this.GetExtraInterfaces param
                 getClassFooter param
             ]|> List.concat

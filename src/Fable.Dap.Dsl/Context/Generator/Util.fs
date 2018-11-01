@@ -141,6 +141,3 @@ let standardizeModuleLines (lines : string list) =
 let indentLines (lines : string list) =
     lines
     |> List.map (fun line -> "    " + line)
-
-let featureToSwitch (feature : string) =
-    (feature.ToUpper ()) .Replace (".", "_")

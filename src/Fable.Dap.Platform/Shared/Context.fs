@@ -29,3 +29,6 @@ let private update : Update<Agent<'context>, 'context, Msg> =
 let spec<'context when 'context : not struct and 'context :> IContext> (args) =
     new ActorSpec<Agent<'context>, Args<'context>, 'context, Msg, Req, Evt>
         (Agent<'context>.Spawn, args, noWrapReq, noCastEvt, init, update)
+
+let addToAgent<'context when 'context : not struct and 'context :> IContext> (create : ILogging -> 'context) (agent : IAgent) =
+    create agent.Env.Logging

@@ -4,8 +4,9 @@ module Dap.Platform.Generator.Helper
 open Microsoft.FSharp.Quotations
 
 open Dap.Prelude
-open Dap.Context.Generator
+open Dap.Context.Meta
 open Dap.Context.Meta.Util
+open Dap.Context.Generator
 open Dap.Platform.Meta
 open System
 
@@ -43,6 +44,33 @@ type G with
     static member App (expr : Expr<AppMeta>) =
         let (name, meta) = unquotePropertyGetExpr expr
         G.App (name, meta)
+
+type G with
+    static member FeatureInterface (name, meta : ContextMeta) =
+        ContextParam.Create name
+        |> generate (new Feature.InterfaceGenerator (meta))
+    static member FeatureInterface (expr : Expr<ContextMeta>) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        G.FeatureInterface (name, meta)
+
+type G with
+    static member FeatureClass (name, meta : ContextMeta) =
+        ContextParam.Create name
+        |> generate (new Feature.ClassGenerator (meta))
+    static member FeatureClass (expr : Expr<ContextMeta>) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        G.FeatureClass (name, meta)
+
+type G with
+    static member Feature (name, meta : ContextMeta) =
+        [
+            G.FeatureInterface (name, meta)
+            [""]
+            G.FeatureClass (name, meta)
+        ]|> List.concat
+    static member Feature (expr : Expr<ContextMeta>) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        G.Feature (name, meta)
 
 type G with
     static member PlatformOpens =

@@ -57,9 +57,15 @@ type M with
         let (name, code) = unquotePropertyGetExpr expr
         M.codeArgs (name, code, key, ?aliases = aliases)
 
+let private getDefaultContextSpawner (name : string) =
+    if name.AsCodeClassName = name then
+        sprintf "(Context.addToAgent %s.Create)" name
+    else
+        sprintf "(fun (agent : IAgent) -> %s.Create agent.Env.Logging :> %s)" name.AsCodeClassName name
+
 type M with
     static member state (name : string, ?spawner : string, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
-        let spawner = defaultArg spawner <| sprintf "%s.AddToAgent" name.AsCodeClassName
+        let spawner = defaultArg spawner <| getDefaultContextSpawner name
         let kind = defaultArg kind name.AsCodeClassName
         let aliases = defaultArg aliases []
         let alias = "State", "Dap.Platform.State"
@@ -70,7 +76,7 @@ type M with
 
 type M with
     static member context (name : string, ?spawner : string, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
-        let spawner = defaultArg spawner <| sprintf "%s.AddToAgent" name.AsCodeClassName
+        let spawner = defaultArg spawner <| getDefaultContextSpawner name
         let kind = defaultArg kind name.AsCodeClassName
         let aliases = defaultArg aliases []
         let alias = "Context", "Dap.Platform.Context"
@@ -81,3 +87,11 @@ type M with
     static member context (expr : Expr<ContextMeta>, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
         let (name, meta) = unquotePropertyGetExpr expr
         M.context (name.AsCodeInterfaceName, ?kind = kind, ?key = key, ?aliases = aliases)
+
+type M with
+    static member feature (name : string, ?spawner : string, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let spawner = defaultArg spawner <| sprintf "Feature.addToAgent<%s>" name
+        M.context (name, spawner = spawner, ?kind = kind, ?key = key, ?aliases = aliases)
+    static member feature (expr : Expr<ContextMeta>, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        M.feature (name.AsCodeInterfaceName, ?kind = kind, ?key = key, ?aliases = aliases)

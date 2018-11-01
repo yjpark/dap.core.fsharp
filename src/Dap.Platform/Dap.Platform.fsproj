@@ -49,6 +49,7 @@
     <Compile Include="Env.fs" />
     <Compile Include="MailboxPlatform.fs" />
     <Compile Include="Helper.fs" />
+    <Compile Include="Feature.fs" />
     <Compile Include="Ticker/Types.fs" />
     <Compile Include="Ticker/Logic.fs" />
     <Compile Include="Registry/Types.fs" />
@@ -58,6 +59,7 @@
     <Compile Include="../Fable.Dap.Dsl/Platform/Meta/App.fs" />
     <Compile Include="../Fable.Dap.Dsl/Platform/Meta/Helper.fs" />
     <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Types.fs" />
+    <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Feature.fs" />
     <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Pack.fs" />
     <Compile Include="../Fable.Dap.Dsl/Platform/Generator/App.fs" />
     <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Helper.fs" />
