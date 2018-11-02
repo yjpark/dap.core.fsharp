@@ -51,13 +51,20 @@ let private addFeature (features : Map<string, Type>) ((kind, type') : string * 
         elif isFallback type' then
             features
         else
-            logError (getLogger "addFeature") "Feature_Conflicted" kind (oldType, type')
+            logError (getLogger "Feature") "Feature_Conflicted" kind (oldType, type')
             Map.add kind type' features
+
+let private tryLoadTypes (assembly : Assembly) =
+    try
+        assembly.GetTypes ()
+    with e ->
+        logWarn (getLogger "Feature") "LoadType_Failed" assembly.FullName (e)
+        [| |]
 
 let private loadFeatures () : Map<string, Type> =
     AppDomain.CurrentDomain.GetAssemblies ()
     |> Array.map (fun assembly ->
-        assembly.GetTypes ()
+        tryLoadTypes assembly
         |> Array.filter (fun t ->
             isFeature t
                 && not t.IsInterface
