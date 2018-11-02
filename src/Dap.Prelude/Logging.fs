@@ -5,6 +5,12 @@ open System
 open System.IO
 open Serilog
 
+[<Literal>]
+let UseJsonFormatter = false
+
+[<Literal>]
+let TextOutputTemplate = "{Timestamp:HH:mm:ss.fff} {Level:u3} <{Context}> {Message:lj}{NewLine}{Exception}"
+
 type ILogger = Dap.Prelude.Logging.ILogger
 
 type LogLevel with
@@ -131,7 +137,7 @@ let addConsoleSink (minimumLevel : LogLevel) : AddSink =
         let theme = Serilog.Sinks.SystemConsole.Themes.AnsiConsoleTheme.Code
         Serilog.ConsoleLoggerConfigurationExtensions.Console(config.WriteTo,
             restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
-            outputTemplate = "{Timestamp:HH:mm:ss.fff} {Level:u3} <{Context}> {Message:lj}{NewLine}{Exception}",
+            outputTemplate = TextOutputTemplate,
             theme = theme)
 
 let private checkDirectory (path : string) =
@@ -139,28 +145,30 @@ let private checkDirectory (path : string) =
     if not dirInfo.Exists then
         dirInfo.Create();
 
-let addFileSink (path : string) (minimumLevel : LogLevel) : AddSink =
-    checkDirectory path
-    fun config ->
-        Serilog.FileLoggerConfigurationExtensions.File(config.WriteTo,
-            Serilog.Formatting.Compact.CompactJsonFormatter(),
-            path,
-            restrictedToMinimumLevel = minimumLevel.ToSerilogLevel)
-
 let addRollingFileSink (rollingInterval : RollingInterval) (path : string) (minimumLevel : LogLevel) : AddSink =
     checkDirectory path
     fun config ->
-        Serilog.FileLoggerConfigurationExtensions.File(config.WriteTo,
-            Serilog.Formatting.Compact.CompactJsonFormatter(),
-            path,
-            restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
-            rollingInterval = rollingInterval)
+        if UseJsonFormatter then
+            Serilog.FileLoggerConfigurationExtensions.File(config.WriteTo,
+                Serilog.Formatting.Compact.CompactJsonFormatter(),
+                path,
+                restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
+                rollingInterval = rollingInterval)
+        else
+            Serilog.FileLoggerConfigurationExtensions.File(config.WriteTo,
+                path,
+                outputTemplate = TextOutputTemplate,
+                restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
+                rollingInterval = rollingInterval)
 
 let addDailyFileSink : string -> LogLevel -> AddSink =
     addRollingFileSink RollingInterval.Day
 
 let addHourlyFileSink : string -> LogLevel -> AddSink =
     addRollingFileSink RollingInterval.Hour
+
+let addFileSink : string -> LogLevel -> AddSink =
+    addRollingFileSink RollingInterval.Infinite
 
 let addSeqSink (uri : string) (minimumLevel : LogLevel) : AddSink =
     fun config ->
