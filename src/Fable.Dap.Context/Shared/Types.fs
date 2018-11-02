@@ -23,6 +23,8 @@ type Kind = string
 type Key = string
 type Index = int
 
+let private newLuidOfKindLock = obj ()
+
 let newLuidOfKind' kind =
     let mutable nexts : Map<string, int> = Map.empty
     let calc = fun () ->
@@ -38,8 +40,7 @@ let newLuidOfKind' kind =
 #if FABLE_COMPILER
     calc ()
 #else
-    let locker = obj ()
-    lock locker calc
+    lock newLuidOfKindLock calc
 #endif
 
 let newLuidOfKind kind =

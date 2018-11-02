@@ -41,7 +41,7 @@ let private getFeatureKinds (type' : Type) =
             && (t.GetGenericArguments ()) .Length = 0
     )|> Array.map getKind
 
-let private addFeature (features : Map<string, Type>) ((kind, type') : string * Type) : Map<string, Type> =
+let private addFeature (logger : ILogger) (features : Map<string, Type>) ((kind, type') : string * Type) : Map<string, Type> =
     match Map.tryFind kind features with
     | None ->
         Map.add kind type' features
@@ -51,48 +51,65 @@ let private addFeature (features : Map<string, Type>) ((kind, type') : string * 
         elif isFallback type' then
             features
         else
-            logError (getLogger "Feature") "Feature_Conflicted" kind (oldType, type')
+            logError logger "Conflicted" kind (oldType, type')
             Map.add kind type' features
 
-let private tryLoadTypes (assembly : Assembly) =
+let private tryLoadTypes (logger : ILogger) (assembly : Assembly) =
     try
         assembly.GetTypes ()
     with e ->
-        logWarn (getLogger "Feature") "LoadType_Failed" assembly.FullName (e)
+        logWarn logger "LoadTypes_Failed" assembly.FullName (e)
         [| |]
 
-let private loadFeatures () : Map<string, Type> =
+let logFeatures (logger : ILogger) (features : Map<string, Type>) =
+    logWarn logger "Total_Loaded" (sprintf "[%d]" features.Count) ()
+    features
+    |> Map.iter (fun kind type' ->
+        logWarn logger "Loaded" (sprintf "<%s>" kind) type'.FullName
+    )
+
+let private loadFeatures (logging : ILogging) : Map<string, Type> =
+    let logger = logging.GetLogger "LoadFeatures"
     AppDomain.CurrentDomain.GetAssemblies ()
     |> Array.map (fun assembly ->
-        tryLoadTypes assembly
+        logInfo logger "Assembly" assembly.FullName (assembly.CodeBase)
+        tryLoadTypes logger assembly
         |> Array.filter (fun t ->
             isFeature t
                 && not t.IsInterface
                 && not t.IsAbstract
         )|> Array.map (fun type' ->
+            logInfo logger "Type" type'.FullName (getFeatureKinds type')
             getFeatureKinds type'
             |> Array.map (fun kind ->
                 (kind, type')
             )
         )|> Array.concat
     )|> Array.concat
-    |> Array.fold addFeature Map.empty
+    |> Array.fold (addFeature logger) Map.empty
+    |> fun features -> logFeatures logger features ; features
 
-let getFeatures () =
-    if features.IsNone then
-        features <- Some <| loadFeatures ()
-    features.Value
+let private getFeaturesLock = obj ()
+
+let getFeatures (logging : ILogging) =
+    let exec = fun () ->
+        if features.IsNone then
+            features <- Some <| loadFeatures logging
+        features.Value
+    lock getFeaturesLock exec
+
 
 let create<'feature when 'feature :> IFeature> (logging : ILogging) : 'feature =
     let kind = getKind typeof<'feature>
-    getFeatures ()
+    let notLoaded = features.IsNone
+    getFeatures logging
     |> Map.tryFind kind
     |> function
         | Some type' ->
             Activator.CreateInstance (type', [| (logging :> obj) |])
             :?> 'feature
         | None ->
-            failWith "Feature.create" kind
+            failWith "Feature_Not_Found" kind
 
 let addToAgent<'feature when 'feature :> IFeature> (agent : IAgent) : 'feature =
     create<'feature> agent.Env.Logging
