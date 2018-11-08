@@ -3,7 +3,6 @@ module Dap.Platform.Helper
 
 open System.IO
 open Dap.Prelude
-open Serilog
 
 let inline addFutureCmd (delay : float<second>) (msg : 'msg) (runner : ^runner) ((model, cmd) : 'model * Cmd<'msg>) : 'model * Cmd<'msg> =
     let interval = 1000.0 * (float delay)
@@ -43,6 +42,8 @@ let calcSha256Sum2WithSalt (salt : string) (content : string) : string =
 type ConsoleSinkArgs with
     member this.ToAddSink () =
         addConsoleSink this.MinLevel
+    static member ConsoleProvider (this : ConsoleSinkArgs) =
+        this.ToAddSink ()
 
 type FileSinkArgs with
     member this.ToAddSink () =
@@ -53,13 +54,35 @@ type FileSinkArgs with
             addDailyFileSink this.Path this.MinLevel
         | Some RollingInterval.Hourly ->
             addHourlyFileSink this.Path this.MinLevel
-    member this.LogFolder : string = System.IO.Path.GetDirectoryName this.Path
+    member this.Folder : string = System.IO.Path.GetDirectoryName this.Path
+    member this.Filename : string = System.IO.Path.GetFileName this.Path
+    member this.WithFolder (folder : string, ?noTimestamp : bool) =
+        let noTimestamp = defaultArg noTimestamp false
+        if noTimestamp then
+            System.IO.Path.Combine (folder, this.Filename)
+        else
+            let timestamp = getNow' () |> instantToText
+            let timestamp = timestamp.Replace (":", "_")
+            System.IO.Path.Combine (folder, timestamp, this.Filename)
+        |> this.WithPath
+    member this.WithFilename (filename : string) =
+        System.IO.Path.Combine (this.Folder, filename)
+        |> this.WithPath
 
 type LoggingArgs with
-    member this.CreateLogging () : SerilogLogging =
+    static member CreateBoth (logFile : string, ?fileMinLevel : LogLevel, ?fileRollingInterval : RollingInterval, ?consoleMinLevel : LogLevel) : LoggingArgs =
+        let consoleMinLevel = defaultArg consoleMinLevel LogLevelWarning
+        let fileMinLevel = defaultArg fileMinLevel LogLevelInformation
+        let fileRollingInterval = defaultArg fileRollingInterval RollingInterval.Daily
+        LoggingArgs.Create (
+            console = ConsoleSinkArgs.Create (consoleMinLevel),
+            file = FileSinkArgs.Create (logFile, fileMinLevel, fileRollingInterval)
+        )
+    member this.ToSerilogLogging (?consoleProvider : ConsoleSinkArgs -> AddSink) : SerilogLogging =
+        let consoleProvider = defaultArg consoleProvider ConsoleSinkArgs.ConsoleProvider
         [
             if this.Console.IsSome then
-                yield this.Console.Value.ToAddSink ()
+                yield consoleProvider this.Console.Value
             if this.File.IsSome then
                 yield this.File.Value.ToAddSink ()
         ]|> (fun sinks ->
@@ -67,19 +90,11 @@ type LoggingArgs with
                 failWith "LoggingArgs" "No_Sinks"
             sinks
         )|> setupSerilog
-    member this.WithConsoleMinLevel minLevel =
-        this.Console
-        |> Option.map (fun x -> x.WithMinLevel minLevel)
-        |> this.WithConsole
-    member this.WithFileMinLevel minLevel =
+    member this.WithFolder (folder : string, ?noTimestamp : bool) =
         this.File
-        |> Option.map (fun x -> x.WithMinLevel minLevel)
+        |> Option.map (fun f -> f.WithFolder (folder, ?noTimestamp = noTimestamp))
         |> this.WithFile
-    member this.LogFolder : string option =
+    member this.WithFilename (filename : string) =
         this.File
-        |> Option.map (fun x -> x.LogFolder)
-    member this.WithFilename filename =
-        this.File
-        |> Option.map (fun x ->
-            x.WithPath <| System.IO.Path.Combine (x.LogFolder, filename)
-        )|> this.WithFile
+        |> Option.map (fun f -> f.WithFilename (filename))
+        |> this.WithFile

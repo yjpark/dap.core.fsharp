@@ -49,6 +49,7 @@
     <Compile Include="Env.fs" />
     <Compile Include="MailboxPlatform.fs" />
     <Compile Include="Helper.fs" />
+    <Compile Include="Runtime.fs" />
     <Compile Include="Feature.fs" />
     <Compile Include="Ticker/Types.fs" />
     <Compile Include="Ticker/Logic.fs" />

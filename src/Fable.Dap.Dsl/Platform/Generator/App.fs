@@ -375,7 +375,7 @@ type ClassGenerator (meta : AppMeta) =
     let getExtraNews (param : AppParam) =
         [
         #if !FABLE_COMPILER
-            yield sprintf "    new (loggingArgs : LoggingArgs, a : %sArgs) = new %s (loggingArgs.CreateLogging (), a)" param.Name param.Name
+            yield sprintf "    new (loggingArgs : LoggingArgs, a : %sArgs) = new %s (Runtime.CreateLogging loggingArgs, a)" param.Name param.Name
             yield sprintf "    new (a : %sArgs) = new %s (getLogging (), a)" param.Name param.Name
         #endif
         ]
