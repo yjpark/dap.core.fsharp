@@ -30,6 +30,9 @@ type internal Env (logging', scope', clock') =
 let spawn (spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt>) kind key (env : IEnv) =
     Agent.spawn spec <| AgentParam.Create env kind key
 
+let create logging scope clock =
+    new Env (logging, scope, clock) :> IEnv
+
 let live logging scope =
-    new Env (logging, scope, RealClock()) :> IEnv
+    create logging scope <| RealClock ()
 

@@ -228,7 +228,7 @@ type ClassGenerator (meta : AppMeta) =
         [
     #if FABLE_COMPILER
             yield sprintf "type %s (logging : ILogging, args : %sArgs) =" param.Name param.Name
-            yield sprintf "    let env = %s logging args.Scope" meta.Kind
+            yield sprintf "    let env = Env.create logging args.Scope (%s ())" meta.Clock
     #else
             yield sprintf "type %s (param : EnvParam, args : %sArgs) =" param.Name param.Name
             yield sprintf "    let env = Env.create param"
