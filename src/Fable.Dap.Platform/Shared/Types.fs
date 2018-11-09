@@ -216,3 +216,13 @@ type IFeature =
 type IFallback = interface end
 
 type IOverride = interface end
+
+type INeedSetup =
+    abstract SetupResult : Result<bool, exn> option
+    abstract Setup : unit -> unit
+
+#if !FABLE_COMPILER
+type INeedSetupAsync =
+    abstract SetupResult : Result<bool, exn> option
+    abstract SetupAsync : unit -> Task<unit>
+#endif

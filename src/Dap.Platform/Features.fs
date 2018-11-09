@@ -12,7 +12,7 @@ let AppRunnerKind = "AppRunner"
 
 type IAppRunner =
     inherit IFeature
-    abstract Start : IApp<'app> -> unit
+    abstract Start<'app when 'app :> IPack and 'app :> INeedSetupAsync> : 'app -> unit
 
 [<AbstractClass>]
 type BasePlatform (logging : ILogging) =
@@ -24,12 +24,12 @@ type BasePlatform (logging : ILogging) =
 [<AbstractClass>]
 type BaseAppRunner (logging : ILogging) =
     inherit EmptyContext (logging, AppRunnerKind)
-    abstract member Start : IApp<'app> -> unit
+    abstract member Start<'app when 'app :> IPack and 'app :> INeedSetupAsync> : 'app -> unit
     interface IAppRunner with
         member this.Start app = this.Start app
 
 type AppRunner (logging) =
     inherit BaseAppRunner (logging)
     override this.Start app =
-        app.RunTask raiseOnFailed (fun _ -> app.SetupAsync ())
+        app.Env.RunTask0 raiseOnFailed (fun _ -> app.SetupAsync ())
     interface IFallback
