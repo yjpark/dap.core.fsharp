@@ -450,7 +450,7 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "       member this.SetupResult = this.SetupResult"
             sprintf "        member this.Setup () = this.Setup ()"
         #else
-            sprintf "    interface INetSetupAsync with"
+            sprintf "    interface INeedSetupAsync with"
             sprintf "       member this.SetupResult = this.SetupResult"
             sprintf "        member this.SetupAsync () = this.SetupAsync ()"
         #endif
