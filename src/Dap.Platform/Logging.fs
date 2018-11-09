@@ -48,10 +48,10 @@ type LocalLoggingProvider (logging : ILogging) =
     override this.CreateLogging (args : LoggingArgs) =
         let newArgs = args.WithFolder("log")
         let logging = newArgs.ToSerilogLogging ()
-        logInfo logging "NetCoreRuntime" "CreateLogging" (encodeJson 4 newArgs)
+        logInfo logging "LocalLoggingProvider" "CreateLogging" (encodeJson 4 newArgs)
         if newArgs.File.IsSome then
             let note = sprintf "%s -> %s", args.File.Value.Folder, newArgs.File.Value.Folder
-            logInfo logging "NetCoreRuntime" "Folder_Updated" note
+            logInfo logging "LocalLoggingProvider" "Folder_Updated" note
         logging :> ILogging
     interface IFallback
 
