@@ -23,6 +23,7 @@ and OnReplyFailed<'runner, 'res when 'runner :> IRunner> =
     IReq -> Callback<'res> -> 'runner -> exn -> unit
 
 type IPlatform =
+    inherit IFeature
     abstract Start : IRunnable<'initer, 'runner, 'args, 'model, 'msg> -> unit
 
 and EnvParam = {
@@ -150,6 +151,11 @@ and IPackAgent<'pack when 'pack :> IPack> =
     inherit IAgent
     abstract Pack : 'pack with get
 
+type IApp<'app when 'app :> IPack> =
+    inherit IRunner<'app>
+    inherit IPack
+    abstract SetupAsync : unit -> Task<unit>
+
 let DoQuit (forceQuit : bool) callback =
     DoQuit (forceQuit, callback)
 
@@ -170,4 +176,3 @@ let DoGetAgent (kind : Kind) (key : Key) callback =
 
 let DoStop (forceStop : bool) callback =
     DoStop (forceStop, callback)
-

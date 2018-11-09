@@ -214,3 +214,5 @@ type IFeature =
     inherit IContext
 
 type IFallback = interface end
+
+type IOverride = interface end

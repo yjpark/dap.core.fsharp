@@ -27,4 +27,4 @@ type AuthorBuilder () =
         target.Books.SyncWith books
         target
 
-let author = AuthorBuilder ()
+let author = new AuthorBuilder ()

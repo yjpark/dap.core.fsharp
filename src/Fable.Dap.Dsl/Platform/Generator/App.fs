@@ -132,7 +132,7 @@ type InterfaceGenerator (meta : AppMeta) =
         [
             sprintf ""
             sprintf "type I%s =" param.Name
-            sprintf "    inherit IRunner<I%s>" param.Name
+            sprintf "    inherit IApp<I%s>" param.Name
             sprintf "    inherit IPack"
         ]
     let getInterfaceFooter (param : AppParam) =
@@ -226,11 +226,12 @@ type InterfaceGenerator (meta : AppMeta) =
 type ClassGenerator (meta : AppMeta) =
     let getClassHeader (param : AppParam) =
         [
-            yield sprintf "type %s (logging : ILogging, args : %sArgs) as this =" param.Name param.Name
     #if FABLE_COMPILER
+            yield sprintf "type %s (logging : ILogging, args : %sArgs) =" param.Name param.Name
             yield sprintf "    let env = %s logging args.Scope" meta.Kind
     #else
-            yield sprintf "    let env = %s %s logging args.Scope" meta.Kind meta.Platform
+            yield sprintf "type %s (param : EnvParam, args : %sArgs) =" param.Name param.Name
+            yield sprintf "    let env = Env.create param"
     #endif
             yield sprintf "    let mutable setupError : exn option = None"
         ]
@@ -265,7 +266,7 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "        }"
         ]
     let getPackAs ((name, package) : string * PackMeta) =
-        sprintf "        member __.%s = this.%s" (getAsPackName name) (getAsPackName name)
+        sprintf "        member this.%s = this.%s" (getAsPackName name) (getAsPackName name)
     let rec getPackMembers (names : string list) ((name, package) : string * PackMeta) =
         if didPackProcessed name then
             []
@@ -279,7 +280,7 @@ type ClassGenerator (meta : AppMeta) =
             ) @ [
                 yield sprintf "    interface %s with" name
             #if !FABLE_COMPILER
-                yield sprintf "        member __.Args = this.Args.%sArgs" <| getAsPackName name
+                yield sprintf "        member this.Args = this.Args.%sArgs" <| getAsPackName name
             #endif
             ] @ (
                 package.Services
@@ -292,7 +293,7 @@ type ClassGenerator (meta : AppMeta) =
                 package.Parents
                 |> List.map getPackAs
             ) @ [
-                sprintf "    member __.%s = this :> %s" (getAsPackName name) name
+                sprintf "    member this.%s = this :> %s" (getAsPackName name) name
             ]
     let getPackArgs (pack : string option) =
         pack
@@ -375,14 +376,23 @@ type ClassGenerator (meta : AppMeta) =
     let getExtraNews (param : AppParam) =
         [
         #if !FABLE_COMPILER
-            yield sprintf "    new (loggingArgs : LoggingArgs, a : %sArgs) = new %s (Runtime.CreateLogging loggingArgs, a)" param.Name param.Name
-            yield sprintf "    new (a : %sArgs) = new %s (getLogging (), a)" param.Name param.Name
+            yield sprintf "    new (logging : ILogging, a : %sArgs) =" param.Name
+            if meta.Platform.IsSome then
+                yield sprintf "        let platform = new %s (logging)" meta.Platform.Value
+            else
+                yield sprintf "        let platform = Feature.create<IPlatform> logging"
+            yield sprintf "        let clock = new %s ()" meta.Clock
+            yield sprintf "        %s (Env.param platform logging a.Scope clock, a)" param.Name
+            yield sprintf "    new (loggingArgs : LoggingArgs, a : %sArgs) =" param.Name
+            yield sprintf "        %s (Feature.createLogging loggingArgs, a)" param.Name
+            yield sprintf "    new (a : %sArgs) =" param.Name
+            yield sprintf "        %s (getLogging (), a)" param.Name
         #endif
         ]
-    let getFablePrivateSetup (param : AppParam) =
+    let getFableSetup (param : AppParam) =
         [
             [
-                sprintf "    let setup () : unit ="
+                sprintf "    member this.Setup () : unit ="
                 sprintf "        try"
             ]
             meta.Packs |> List.map (getFablePackSetups param []) |> List.concat
@@ -393,15 +403,12 @@ type ClassGenerator (meta : AppMeta) =
                 sprintf "        with e ->"
                 sprintf "            setupError <- Some e"
                 sprintf "            logException env \"%s.setup\" \"Setup_Failed\" (encodeJson 4 args) e" param.Name
-                sprintf "    do ("
-                sprintf "        setup ()"
-                sprintf "    )"
             ]
         ]|> List.concat
-    let getPrivateSetup (param : AppParam) =
+    let getSetup (param : AppParam) =
         [
             [
-                sprintf "    let setupAsync (_runner : IRunner) : Task<unit> = task {"
+                sprintf "    member this.SetupAsync () : Task<unit> = task {"
                 sprintf "        try"
             ]
             meta.Packs |> List.map (getPackSetups param []) |> List.concat
@@ -414,9 +421,6 @@ type ClassGenerator (meta : AppMeta) =
                 sprintf "            logException env \"%s.setupAsync\" \"Setup_Failed\" (encodeJson 4 args) e" param.Name
                 sprintf "            raise e"
                 sprintf "    }"
-                sprintf "    do ("
-                sprintf "        env.RunTask0 raiseOnFailed setupAsync"
-                sprintf "    )"
             ]
         ]|> List.concat
     let getClassMiddle (param : AppParam) =
@@ -433,22 +437,26 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "    member __.Args : %sArgs = args" param.Name
             sprintf "    member __.Env : IEnv = env"
             sprintf "    member __.SetupError : exn option = setupError"
-            sprintf "    interface ILogger with"
-            sprintf "        member __.Log m = env.Log m"
+            sprintf "    interface IApp<I%s> with" param.Name
+        #if FABLE_COMPILER
+            sprintf "        member this.Setup () = this.Setup ()"
+        #else
+            sprintf "        member this.SetupAsync () = this.SetupAsync ()"
+        #endif
             sprintf "    interface IRunner<I%s> with" param.Name
-            sprintf "        member __.Runner = this.As%s" param.Name
-            sprintf "        member __.RunFunc func = runFunc' this func"
-            sprintf "        member __.AddTask onFailed getTask = addTask' this onFailed getTask"
-            sprintf "        member __.RunTask onFailed getTask = runTask' this onFailed getTask"
+            sprintf "        member this.Runner = this.As%s" param.Name
         #if !FABLE_COMPILER
+            sprintf "        member this.RunFunc func = runFunc' this func"
+            sprintf "        member this.AddTask onFailed getTask = addTask' this onFailed getTask"
+            sprintf "        member this.RunTask onFailed getTask = runTask' this onFailed getTask"
         #endif
             sprintf "    interface IRunner with"
             sprintf "        member __.Clock = env.Clock"
         #if !FABLE_COMPILER
             sprintf "        member __.Console0 = env.Console0"
-            sprintf "        member __.RunFunc0 func = runFunc' this func"
-            sprintf "        member __.AddTask0 onFailed getTask = addTask' this onFailed getTask"
-            sprintf "        member __.RunTask0 onFailed getTask = runTask' this onFailed getTask"
+            sprintf "        member this.RunFunc0 func = runFunc' this func"
+            sprintf "        member this.AddTask0 onFailed getTask = addTask' this onFailed getTask"
+            sprintf "        member this.RunTask0 onFailed getTask = runTask' this onFailed getTask"
             sprintf "    interface ITaskManager with"
             sprintf "        member __.StartTask task = env.StartTask task"
             sprintf "        member __.ScheduleTask task = env.ScheduleTask task"
@@ -460,15 +468,17 @@ type ClassGenerator (meta : AppMeta) =
         #endif
             sprintf "    interface IPack with"
             sprintf "        member __.Env : IEnv = env"
+            sprintf "    interface ILogger with"
+            sprintf "        member __.Log m = env.Log m"
         ]
     let getClassFooter (param : AppParam) =
         [
             sprintf "    interface I%s with" param.Name
-            sprintf "        member __.Args : %sArgs = this.Args" param.Name
+            sprintf "        member this.Args : %sArgs = this.Args" param.Name
         ]
     let getClassEnd (param : AppParam) =
         [
-            sprintf "    member __.As%s = this :> I%s" param.Name param.Name
+            sprintf "    member this.As%s = this :> I%s" param.Name param.Name
         ]
     interface IGenerator<AppParam> with
         member this.Generate param =
@@ -478,12 +488,12 @@ type ClassGenerator (meta : AppMeta) =
                 clearProcessedPacks ()
                 yield meta.Packs |> List.map getPackFields |> List.concat
                 clearProcessedPacks ()
-            #if FABLE_COMPILER
-                yield getFablePrivateSetup param
-            #else
-                yield getPrivateSetup param
-            #endif
                 yield getExtraNews param
+            #if FABLE_COMPILER
+                yield getFableSetup param
+            #else
+                yield getSetup param
+            #endif
                 yield getClassMiddle param
                 clearProcessedPacks ()
                 yield meta.Packs |> List.map (getPackMembers []) |> List.concat

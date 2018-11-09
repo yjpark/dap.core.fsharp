@@ -18,3 +18,4 @@ Dap.Platform.Dsl.Args.compile ["src" ; "Dap.Platform"]
 
 Dap.Platform.Dsl.Stats.compile ["src" ; "Dap.Platform"]
 |> List.iter ^<| printfn "%s\n"
+

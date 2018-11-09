@@ -33,7 +33,10 @@
     <Compile Include="Dispatcher.fs" />
     <Compile Include="Runnable.fs" />
     <Compile Include="Types.fs" />
+    <Compile Include="Helper.fs" />
     <Compile Include="Logging.fs" />
+    <Compile Include="Features.fs" />
+    <Compile Include="Feature.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Actor.fs" />
     <Compile Include="Replier.fs" />
     <Compile Include="Tasks.fs" />
@@ -48,9 +51,6 @@
     <Compile Include="Replay/Types.fs" />
     <Compile Include="Env.fs" />
     <Compile Include="MailboxPlatform.fs" />
-    <Compile Include="Helper.fs" />
-    <Compile Include="Runtime.fs" />
-    <Compile Include="Feature.fs" />
     <Compile Include="Ticker/Types.fs" />
     <Compile Include="Ticker/Logic.fs" />
     <Compile Include="Registry/Types.fs" />

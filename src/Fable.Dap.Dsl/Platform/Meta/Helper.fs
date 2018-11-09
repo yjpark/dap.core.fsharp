@@ -11,7 +11,7 @@ open Dap.Context.Generator.Util
 open Dap.Platform
 
 let pack (parents : Expr<PackMeta> list) = new Pack.Builder (parents)
-let live = new App.Builder ("Env.live", "MailboxPlatform")
+let live = new App.Builder ("RealClock")
 
 let jsonInitValue (type' : string) (encoder : JsonEncoder<'args>) (args : 'args) =
 #if FABLE_COMPILER

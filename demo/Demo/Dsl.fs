@@ -57,7 +57,7 @@ let backupTickerArgs =
 
 let ICommonPack =
     pack [ <@ IServicesPack @> ] {
-        extra (M.codeArgs ([], "int", "100", "common"))
+        extra (M.codeArgs ("int", "100", "common"))
     }
 let IBackupPack =
     pack [ <@ ICommonPack @> ] {
@@ -67,7 +67,7 @@ let IBackupPack =
 let IAppPack =
     pack [ <@ ICommonPack @> ; <@ IServicesPack @> ] {
         //register (M.agent ("TestArgs", "TestAgent", "Test", "test"))
-        extra (M.codeArgs ([], "int", "100", "test"))
+        extra (M.codeArgs ("int", "100", "test"))
     }
 
 let App =

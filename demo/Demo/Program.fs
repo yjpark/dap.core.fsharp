@@ -124,7 +124,7 @@ type App with
             args
             |> AppArgs.SetScope "Demo"
             |> AppArgs.SetSetup onSetup.SetResult
-        new App (logging, args) |> ignore
+        new App (logging, args) |> Feature.startApp
         onSetup.Task
     static member Create (logging : ILogging, args : AppArgs) =
         App.CreateAsync (logging, args)

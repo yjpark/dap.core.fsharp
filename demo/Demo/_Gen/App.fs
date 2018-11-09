@@ -1,6 +1,7 @@
 [<AutoOpen>]
 module Demo.App
 
+open System.Threading
 open System.Threading.Tasks
 open FSharp.Control.Tasks.V2
 open Dap.Prelude
@@ -58,14 +59,14 @@ type IAppPack =
  *)
 type IBackupPackArgs =
     inherit ICommonPackArgs
-    abstract BackupTicker : TickerTypes.Args with get
+    abstract Backup : TickerTypes.Args with get
     abstract AsCommonPackArgs : ICommonPackArgs with get
 
 type IBackupPack =
     inherit IPack
     inherit ICommonPack
     abstract Args : IBackupPackArgs with get
-    abstract BackupTicker : TickerTypes.Agent with get
+    abstract Backup : TickerTypes.Agent with get
     abstract AsCommonPack : ICommonPack with get
 
 (*
@@ -74,13 +75,14 @@ type IBackupPack =
 
 type AppKinds () =
     static member Ticker (* IServicesPack *) = "Ticker"
-    static member BackupTicker (* IBackupPack *) = "Ticker"
+    static member Backup (* IBackupPack *) = "Backup"
 
 type AppKeys () =
     static member Ticker (* IServicesPack *) = ""
-    static member BackupTicker (* IBackupPack *) = "Backup"
+    static member Backup (* IBackupPack *) = ""
 
 type IApp =
+    inherit IApp<IApp>
     inherit IPack
     inherit IAppPack
     inherit IBackupPack
@@ -98,16 +100,16 @@ and AppArgs = {
     Ticker : (* IServicesPack *) TickerTypes.Args
     Common : (* ICommonPack *) int
     Test : (* IAppPack *) int
-    BackupTicker : (* IBackupPack *) TickerTypes.Args
+    Backup : (* IBackupPack *) TickerTypes.Args
 } with
     static member Create
         (
-            ?scope : Scope,
-            ?setup : IApp -> unit,
-            ?ticker : TickerTypes.Args,
-            ?common : int,
-            ?test : int,
-            ?backupTicker : TickerTypes.Args
+            ?scope : (* AppArgs *) Scope,
+            ?setup : (* AppArgs *) IApp -> unit,
+            ?ticker : (* IServicesPack *) TickerTypes.Args,
+            ?common : (* ICommonPack *) int,
+            ?test : (* IAppPack *) int,
+            ?backup : (* IBackupPack *) TickerTypes.Args
         ) : AppArgs =
         {
             Scope = (* AppArgs *) scope
@@ -120,18 +122,10 @@ and AppArgs = {
                 |> Option.defaultWith (fun () -> 100)
             Test = (* IAppPack *) test
                 |> Option.defaultWith (fun () -> 100)
-            BackupTicker = (* IBackupPack *) backupTicker
+            Backup = (* IBackupPack *) backup
                 |> Option.defaultWith (fun () -> (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}"""))
         }
-    static member Default () =
-        AppArgs.Create (
-            NoScope, (* AppArgs *) (* scope *)
-            ignore, (* AppArgs *) (* setup *)
-            (TickerTypes.Args.Default ()), (* IServicesPack *) (* ticker *)
-            100, (* ICommonPack *) (* common *)
-            100, (* IAppPack *) (* test *)
-            (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""") (* IBackupPack *) (* backupTicker *)
-        )
+    static member Default () = AppArgs.Create ()
     static member SetScope ((* AppArgs *) scope : Scope) (this : AppArgs) =
         {this with Scope = scope}
     static member SetSetup ((* AppArgs *) setup : IApp -> unit) (this : AppArgs) =
@@ -142,8 +136,8 @@ and AppArgs = {
         {this with Common = common}
     static member SetTest ((* IAppPack *) test : int) (this : AppArgs) =
         {this with Test = test}
-    static member SetBackupTicker ((* IBackupPack *) backupTicker : TickerTypes.Args) (this : AppArgs) =
-        {this with BackupTicker = backupTicker}
+    static member SetBackup ((* IBackupPack *) backup : TickerTypes.Args) (this : AppArgs) =
+        {this with Backup = backup}
     static member JsonEncoder : JsonEncoder<AppArgs> =
         fun (this : AppArgs) ->
             E.object [
@@ -160,7 +154,7 @@ and AppArgs = {
                     |> Option.defaultValue (TickerTypes.Args.Default ())
                 Common = (* (* ICommonPack *)  *) 100
                 Test = (* (* IAppPack *)  *) 100
-                BackupTicker = (* (* IBackupPack *)  *) (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
+                Backup = (* (* IBackupPack *)  *) (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
             }
         )
     static member JsonSpec =
@@ -178,8 +172,8 @@ and AppArgs = {
         this |> AppArgs.SetCommon common
     member this.WithTest ((* IAppPack *) test : int) =
         this |> AppArgs.SetTest test
-    member this.WithBackupTicker ((* IBackupPack *) backupTicker : TickerTypes.Args) =
-        this |> AppArgs.SetBackupTicker backupTicker
+    member this.WithBackup ((* IBackupPack *) backup : TickerTypes.Args) =
+        this |> AppArgs.SetBackup backup
     interface IServicesPackArgs with
         member this.Ticker (* IServicesPack *) : TickerTypes.Args = this.Ticker
     member this.AsServicesPackArgs = this :> IServicesPackArgs
@@ -193,7 +187,7 @@ and AppArgs = {
         member this.AsServicesPackArgs = this.AsServicesPackArgs
     member this.AsAppPackArgs = this :> IAppPackArgs
     interface IBackupPackArgs with
-        member this.BackupTicker (* IBackupPack *) : TickerTypes.Args = this.BackupTicker
+        member this.Backup (* IBackupPack *) : TickerTypes.Args = this.Backup
         member this.AsCommonPackArgs = this.AsCommonPackArgs
     member this.AsBackupPackArgs = this :> IBackupPackArgs
 
@@ -218,26 +212,34 @@ type AppArgsBuilder () =
     [<CustomOperation("test")>]
     member __.Test (target : AppArgs, (* IAppPack *) test : int) =
         target.WithTest test
-    [<CustomOperation("backup_ticker")>]
-    member __.BackupTicker (target : AppArgs, (* IBackupPack *) backupTicker : TickerTypes.Args) =
-        target.WithBackupTicker backupTicker
+    [<CustomOperation("backup")>]
+    member __.Backup (target : AppArgs, (* IBackupPack *) backup : TickerTypes.Args) =
+        target.WithBackup backup
 
-let app_args = AppArgsBuilder ()
+let app_args = new AppArgsBuilder ()
 
 (*
  * Generated: <App>
  *)
-type App (logging : ILogging, args : AppArgs) as this =
-    let env = Env.live MailboxPlatform logging args.Scope
+type App (param : EnvParam, args : AppArgs) =
+    let env = Env.create param
     let mutable setupError : exn option = None
     let mutable (* IServicesPack *) ticker : TickerTypes.Agent option = None
-    let mutable (* IBackupPack *) backupTicker : TickerTypes.Agent option = None
-    let setupAsync (_runner : IRunner) : Task<unit> = task {
+    let mutable (* IBackupPack *) backup : TickerTypes.Agent option = None
+    new (logging : ILogging, a : AppArgs) =
+        let platform = Feature.create<IPlatform> logging
+        let clock = new RealClock ()
+        App (Env.param platform logging a.Scope clock, a)
+    new (loggingArgs : LoggingArgs, a : AppArgs) =
+        App (Feature.createLogging loggingArgs, a)
+    new (a : AppArgs) =
+        App (getLogging (), a)
+    member this.SetupAsync () : Task<unit> = task {
         try
             let! (* IServicesPack *) ticker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args.Ticker) AppKinds.Ticker AppKeys.Ticker
             ticker <- Some ticker'
-            let! (* IBackupPack *) backupTicker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args.BackupTicker) AppKinds.BackupTicker AppKeys.BackupTicker
-            backupTicker <- Some backupTicker'
+            let! (* IBackupPack *) backup' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args.Backup) AppKinds.Backup AppKeys.Backup
+            backup <- Some backup'
             do! this.SetupAsync' ()
             logInfo env "App.setupAsync" "Setup_Succeed" (encodeJson 4 args)
             args.Setup this.AsApp
@@ -246,11 +248,6 @@ type App (logging : ILogging, args : AppArgs) as this =
             logException env "App.setupAsync" "Setup_Failed" (encodeJson 4 args) e
             raise e
     }
-    do (
-        env.RunTask0 raiseOnFailed setupAsync
-    )
-    new (loggingArgs : LoggingArgs, a : AppArgs) = new App (loggingArgs.CreateLogging (), a)
-    new (a : AppArgs) = new App (getLogging (), a)
     abstract member SetupAsync' : unit -> Task<unit>
     default __.SetupAsync' () = task {
         return ()
@@ -258,30 +255,51 @@ type App (logging : ILogging, args : AppArgs) as this =
     member __.Args : AppArgs = args
     member __.Env : IEnv = env
     member __.SetupError : exn option = setupError
-    interface ILogger with
-        member __.Log m = env.Log m
+    interface IApp<IApp> with
+        member this.SetupAsync () = this.SetupAsync ()
+    interface IRunner<IApp> with
+        member this.Runner = this.AsApp
+        member this.RunFunc func = runFunc' this func
+        member this.AddTask onFailed getTask = addTask' this onFailed getTask
+        member this.RunTask onFailed getTask = runTask' this onFailed getTask
+    interface IRunner with
+        member __.Clock = env.Clock
+        member __.Console0 = env.Console0
+        member this.RunFunc0 func = runFunc' this func
+        member this.AddTask0 onFailed getTask = addTask' this onFailed getTask
+        member this.RunTask0 onFailed getTask = runTask' this onFailed getTask
+    interface ITaskManager with
+        member __.StartTask task = env.StartTask task
+        member __.ScheduleTask task = env.ScheduleTask task
+        member __.PendingTasksCount = env.PendingTasksCount
+        member __.StartPendingTasks () = env.StartPendingTasks ()
+        member __.ClearPendingTasks () = env.ClearPendingTasks ()
+        member __.RunningTasksCount = env.RunningTasksCount
+        member __.CancelRunningTasks () = env.CancelRunningTasks ()
     interface IPack with
         member __.Env : IEnv = env
+    interface ILogger with
+        member __.Log m = env.Log m
     interface IServicesPack with
-        member __.Args = this.Args.AsServicesPackArgs
+        member this.Args = this.Args.AsServicesPackArgs
         member __.Ticker (* IServicesPack *) : TickerTypes.Agent = ticker |> Option.get
-    member __.AsServicesPack = this :> IServicesPack
+    member this.AsServicesPack = this :> IServicesPack
     interface ICommonPack with
-        member __.Args = this.Args.AsCommonPackArgs
-        member __.AsServicesPack = this.AsServicesPack
-    member __.AsCommonPack = this :> ICommonPack
+        member this.Args = this.Args.AsCommonPackArgs
+        member this.AsServicesPack = this.AsServicesPack
+    member this.AsCommonPack = this :> ICommonPack
     interface IAppPack with
-        member __.Args = this.Args.AsAppPackArgs
-        member __.AsCommonPack = this.AsCommonPack
-        member __.AsServicesPack = this.AsServicesPack
-    member __.AsAppPack = this :> IAppPack
+        member this.Args = this.Args.AsAppPackArgs
+        member this.AsCommonPack = this.AsCommonPack
+        member this.AsServicesPack = this.AsServicesPack
+    member this.AsAppPack = this :> IAppPack
     interface IBackupPack with
-        member __.Args = this.Args.AsBackupPackArgs
-        member __.BackupTicker (* IBackupPack *) : TickerTypes.Agent = backupTicker |> Option.get
-        member __.AsCommonPack = this.AsCommonPack
-    member __.AsBackupPack = this :> IBackupPack
+        member this.Args = this.Args.AsBackupPackArgs
+        member __.Backup (* IBackupPack *) : TickerTypes.Agent = backup |> Option.get
+        member this.AsCommonPack = this.AsCommonPack
+    member this.AsBackupPack = this :> IBackupPack
     interface IApp with
-        member __.Args : AppArgs = this.Args
-        member __.AsAppPack = this.AsAppPack
-        member __.AsBackupPack = this.AsBackupPack
-    member __.AsApp = this :> IApp
+        member this.Args : AppArgs = this.Args
+        member this.AsAppPack = this.AsAppPack
+        member this.AsBackupPack = this.AsBackupPack
+    member this.AsApp = this :> IApp

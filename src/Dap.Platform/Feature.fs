@@ -16,11 +16,15 @@ let private typeIContext = typeof<IContext>
 let private typeIUnsafeContext = typeof<IUnsafeContext>
 let private typeIFeature = typeof<IFeature>
 let private typeIFallback = typeof<IFallback>
+let private typeIOverride = typeof<IOverride>
 
 let private isFeature (type' : Type) =
     Array.contains typeIFeature <| type'.GetInterfaces ()
 
 let private isFallback (type' : Type) =
+    Array.contains typeIFallback <| type'.GetInterfaces ()
+
+let private isOverride (type' : Type) =
     Array.contains typeIFallback <| type'.GetInterfaces ()
 
 let mutable private features : Map<string, Type> option = None
@@ -30,7 +34,8 @@ let private getKind (type' : Type) = type'.FullName
 let private getFeatureKinds (type' : Type) =
     type'.GetInterfaces ()
     |> Array.filter (fun t ->
-        t <> typeIObj
+        (t.GetGenericArguments ()) .Length = 0
+            && t <> typeIObj
             && t <> typeILogger
             && t <> typeIOwner
             && t <> typeIJson
@@ -38,7 +43,7 @@ let private getFeatureKinds (type' : Type) =
             && t <> typeIUnsafeContext
             && t <> typeIFeature
             && t <> typeIFallback
-            && (t.GetGenericArguments ()) .Length = 0
+            && t <> typeIOverride
     )|> Array.map getKind
 
 let private addFeature (logger : ILogger) (features : Map<string, Type>) ((kind, type') : string * Type) : Map<string, Type> =
@@ -46,9 +51,11 @@ let private addFeature (logger : ILogger) (features : Map<string, Type>) ((kind,
     | None ->
         Map.add kind type' features
     | Some oldType ->
-        if isFallback oldType then
+        if isOverride type'
+            || isFallback oldType then
             Map.add kind type' features
-        elif isFallback type' then
+        elif isOverride oldType
+            || isFallback type' then
             features
         else
             logError logger "Conflicted" kind (oldType, type')
@@ -113,3 +120,15 @@ let create<'feature when 'feature :> IFeature> (logging : ILogging) : 'feature =
 
 let addToAgent<'feature when 'feature :> IFeature> (agent : IAgent) : 'feature =
     create<'feature> agent.Env.Logging
+
+let createLogging (args : LoggingArgs) : ILogging =
+    let provider = create<ILoggingProvider> (getLogging ())
+    provider.CreateLogging args
+
+let startApp<'app when 'app :> IPack> (app : IApp<'app>) : unit =
+    let runner = create<IAppRunner> (app.Env.Logging)
+    runner.Start app
+
+type IApp<'app when 'app :> IPack> with
+    member this.Start () =
+        startApp this

@@ -10,3 +10,4 @@ open Dap.Prelude
 
 Dap.Platform.Dsl.Packs.compile ["src" ; "Dap.Platform"]
 |> List.iter ^<| printfn "%s\n"
+

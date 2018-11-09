@@ -20,7 +20,7 @@ let private start (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'msg>) 
     runnable.SetDispatch mailbox.Post
     runnable.Start() |> runnable.Deliver
 
-type MailboxPlatform = MailboxPlatform
-with
-    interface IPlatform with
-        member __.Start runnable = start runnable
+type MailboxPlatform (logging) =
+    inherit BasePlatform (logging)
+    override this.Start runnable = start runnable
+    interface IFallback

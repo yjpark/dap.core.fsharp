@@ -85,13 +85,13 @@ type PackMeta = {
         }
 
 type AppMeta = {
-    Kind : string
-    Platform : string
+    Clock : string
+    Platform : string option
     Packs : (string * PackMeta) list
 } with
-    static member Create kind platform packs =
+    static member Create clock platform packs =
         {
-            Kind = kind
+            Clock = clock
             Platform = platform
             Packs = packs
         }

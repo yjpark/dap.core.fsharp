@@ -5,12 +5,12 @@ open Microsoft.FSharp.Quotations
 open Dap.Context.Meta
 open Dap.Context.Meta.Util
 
-type Builder (kind : string, platform : string) =
+type Builder (clock : string) =
     inherit MetaBuilder<AppMeta> ()
-    override __.Zero () = AppMeta.Create kind platform []
+    override __.Zero () = AppMeta.Create clock None []
     [<CustomOperation("platform")>]
     member __.Platform (meta : AppMeta, platform : string) =
-        {meta with Platform = platform}
+        {meta with Platform = Some platform}
     [<CustomOperation("has'")>]
     member __.Has' (meta : AppMeta, packName : string, packMeta : PackMeta) =
         {meta with Packs = meta.Packs @ [(packName, packMeta)]}
