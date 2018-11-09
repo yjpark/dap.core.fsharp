@@ -445,11 +445,13 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "    member __.Args : %sArgs = args" param.Name
             sprintf "    member __.Env : IEnv = env"
             sprintf "    member __.SetupResult : Result<bool, exn> option = setupResult"
-            sprintf "    interface IApp<I%s> with" param.Name
-            sprintf "       member this.SetupResult = this.SetupResult"
         #if FABLE_COMPILER
+            sprintf "    interface INeedSetup with"
+            sprintf "       member this.SetupResult = this.SetupResult"
             sprintf "        member this.Setup () = this.Setup ()"
         #else
+            sprintf "    interface INetSetupAsync with"
+            sprintf "       member this.SetupResult = this.SetupResult"
             sprintf "        member this.SetupAsync () = this.SetupAsync ()"
         #endif
             sprintf "    interface IRunner<I%s> with" param.Name

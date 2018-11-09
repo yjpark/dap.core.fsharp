@@ -54,8 +54,3 @@ type IPack =
 and IPackAgent<'pack when 'pack :> IPack> =
     inherit IAgent
     abstract Pack : 'pack with get
-
-type IApp<'app when 'app :> IPack and 'app :> INeedSetup> =
-    inherit IRunner<'app>
-    inherit IPack
-    inherit INeedSetup
