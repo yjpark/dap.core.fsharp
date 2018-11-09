@@ -25,7 +25,7 @@ let private isFallback (type' : Type) =
     Array.contains typeIFallback <| type'.GetInterfaces ()
 
 let private isOverride (type' : Type) =
-    Array.contains typeIFallback <| type'.GetInterfaces ()
+    Array.contains typeIOverride <| type'.GetInterfaces ()
 
 let mutable private features : Map<string, Type> option = None
 
@@ -53,9 +53,11 @@ let private addFeature (logger : ILogger) (features : Map<string, Type>) ((kind,
     | Some oldType ->
         if isOverride type'
             || isFallback oldType then
+            logInfo logger "Override" kind (oldType, type')
             Map.add kind type' features
         elif isOverride oldType
             || isFallback type' then
+            logInfo logger "Override" kind (type', oldType)
             features
         else
             logError logger "Conflicted" kind (oldType, type')
