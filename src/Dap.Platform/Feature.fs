@@ -127,13 +127,19 @@ let createLogging (args : LoggingArgs) : ILogging =
     let provider = create<ILoggingProvider> (getLogging ())
     provider.CreateLogging args
 
-let startApp<'app when 'app :> IPack and 'app :> INeedSetupAsync> (app : 'app) : unit =
+let tryStartApp<'app when 'app :> IPack and 'app :> INeedSetupAsync> (app : 'app) : unit =
     if app.SetupResult.IsNone then
         let runner = create<IAppRunner> (app.Env.Logging)
         runner.Start app
+
+let startApp<'app when 'app :> IPack and 'app :> INeedSetupAsync> (app : 'app) : unit =
+    if app.SetupResult.IsNone then
+        tryStartApp<'app> app
     else
         failWith "Already_Setup" app.SetupResult.Value
 
 type IApp<'app when 'app :> IPack and 'app :> INeedSetupAsync> with
+    member this.TryStart () =
+        tryStartApp this
     member this.Start () =
         startApp this
