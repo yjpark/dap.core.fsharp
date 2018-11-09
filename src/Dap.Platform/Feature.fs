@@ -133,3 +133,7 @@ let startApp<'app when 'app :> IPack and 'app :> INeedSetupAsync> (app : 'app) :
         runner.Start app
     else
         failWith "Already_Setup" app.SetupResult.Value
+
+type IApp<'app when 'app :> IPack and 'app :> INeedSetupAsync> with
+    member this.Start () =
+        startApp this
