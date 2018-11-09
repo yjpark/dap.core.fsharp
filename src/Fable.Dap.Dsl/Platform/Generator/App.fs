@@ -233,7 +233,7 @@ type ClassGenerator (meta : AppMeta) =
             yield sprintf "type %s (param : EnvParam, args : %sArgs) =" param.Name param.Name
             yield sprintf "    let env = Env.create param"
     #endif
-            yield sprintf "    let mutable setupResult : Result<unit, exn> option = None"
+            yield sprintf "    let mutable setupResult : Result<bool, exn> option = None"
         ]
     let getServiceField (packName : string) (service : AgentMeta) =
         let name = sprintf "%s%s" service.Key.AsCodeMemberName service.Kind.AsCodeMemberName
@@ -444,7 +444,7 @@ type ClassGenerator (meta : AppMeta) =
         #endif
             sprintf "    member __.Args : %sArgs = args" param.Name
             sprintf "    member __.Env : IEnv = env"
-            sprintf "    member __.SetupResult : Result<unit, exn> option = setupResult"
+            sprintf "    member __.SetupResult : Result<bool, exn> option = setupResult"
             sprintf "    interface IApp<I%s> with" param.Name
             sprintf "       member this.SetupResult = this.SetupResult"
         #if FABLE_COMPILER
