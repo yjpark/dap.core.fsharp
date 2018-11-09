@@ -128,8 +128,11 @@ let createLogging (args : LoggingArgs) : ILogging =
     provider.CreateLogging args
 
 let startApp<'app when 'app :> IPack> (app : IApp<'app>) : unit =
-    let runner = create<IAppRunner> (app.Env.Logging)
-    runner.Start app
+    if app.SetupResult.IsNone then
+        let runner = create<IAppRunner> (app.Env.Logging)
+        runner.Start app
+    else
+        failWith "Already_Setup" app.SetupResult.Value
 
 type IApp<'app when 'app :> IPack> with
     member this.Start () =

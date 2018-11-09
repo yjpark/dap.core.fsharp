@@ -154,6 +154,7 @@ and IPackAgent<'pack when 'pack :> IPack> =
 type IApp<'app when 'app :> IPack> =
     inherit IRunner<'app>
     inherit IPack
+    abstract SetupResult : Result<bool, exn> option
     abstract SetupAsync : unit -> Task<unit>
 
 let DoQuit (forceQuit : bool) callback =

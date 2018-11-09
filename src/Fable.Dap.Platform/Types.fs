@@ -51,11 +51,12 @@ type IPack =
     inherit IRunner
     abstract Env : IEnv with get
 
-type IApp<'app when 'app :> IPack> =
-    inherit IRunner<'app>
-    inherit IPack
-    abstract Setup : unit -> unit
-
 and IPackAgent<'pack when 'pack :> IPack> =
     inherit IAgent
     abstract Pack : 'pack with get
+
+type IApp<'app when 'app :> IPack> =
+    inherit IRunner<'app>
+    inherit IPack
+    abstract SetupResult : Result<bool, exn> option
+    abstract Setup : unit -> unit

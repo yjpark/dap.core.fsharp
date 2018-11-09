@@ -233,7 +233,7 @@ type ClassGenerator (meta : AppMeta) =
             yield sprintf "type %s (param : EnvParam, args : %sArgs) =" param.Name param.Name
             yield sprintf "    let env = Env.create param"
     #endif
-            yield sprintf "    let mutable setupError : exn option = None"
+            yield sprintf "    let mutable setupResult : Result<unit, exn> option = None"
         ]
     let getServiceField (packName : string) (service : AgentMeta) =
         let name = sprintf "%s%s" service.Key.AsCodeMemberName service.Kind.AsCodeMemberName
@@ -393,15 +393,19 @@ type ClassGenerator (meta : AppMeta) =
         [
             [
                 sprintf "    member this.Setup () : unit ="
+                sprintf "        if setupResult.IsSome then"
+                sprintf "           failWith \"Already_Setup\" setupResult.Value"
                 sprintf "        try"
+                sprintf "            setupResult <- Some (Ok false)"
             ]
             meta.Packs |> List.map (getFablePackSetups param []) |> List.concat
             [
                 sprintf "            this.Setup' ()"
                 sprintf "            logInfo env \"%s.setup\" \"Setup_Succeed\" (encodeJson 4 args)" param.Name
                 sprintf "            args.Setup this.As%s" param.Name
+                sprintf "            setupResult <- Some (Ok true)"
                 sprintf "        with e ->"
-                sprintf "            setupError <- Some e"
+                sprintf "            setupResult <- Some (Error e)"
                 sprintf "            logException env \"%s.setup\" \"Setup_Failed\" (encodeJson 4 args) e" param.Name
             ]
         ]|> List.concat
@@ -409,15 +413,19 @@ type ClassGenerator (meta : AppMeta) =
         [
             [
                 sprintf "    member this.SetupAsync () : Task<unit> = task {"
+                sprintf "        if setupResult.IsSome then"
+                sprintf "           failWith \"Already_Setup\" setupResult.Value"
                 sprintf "        try"
+                sprintf "            setupResult <- Some (Ok false)"
             ]
             meta.Packs |> List.map (getPackSetups param []) |> List.concat
             [
                 sprintf "            do! this.SetupAsync' ()"
                 sprintf "            logInfo env \"%s.setupAsync\" \"Setup_Succeed\" (encodeJson 4 args)" param.Name
                 sprintf "            args.Setup this.As%s" param.Name
+                sprintf "            setupResult <- Some (Ok true)"
                 sprintf "        with e ->"
-                sprintf "            setupError <- Some e"
+                sprintf "            setupResult <- Some (Error e)"
                 sprintf "            logException env \"%s.setupAsync\" \"Setup_Failed\" (encodeJson 4 args) e" param.Name
                 sprintf "            raise e"
                 sprintf "    }"
@@ -436,8 +444,9 @@ type ClassGenerator (meta : AppMeta) =
         #endif
             sprintf "    member __.Args : %sArgs = args" param.Name
             sprintf "    member __.Env : IEnv = env"
-            sprintf "    member __.SetupError : exn option = setupError"
+            sprintf "    member __.SetupResult : Result<unit, exn> option = setupResult"
             sprintf "    interface IApp<I%s> with" param.Name
+            sprintf "       member this.SetupResult = this.SetupResult"
         #if FABLE_COMPILER
             sprintf "        member this.Setup () = this.Setup ()"
         #else
