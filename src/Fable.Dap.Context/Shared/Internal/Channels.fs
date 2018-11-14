@@ -17,7 +17,7 @@ type internal Channels internal (owner', spec') =
         if sealed' then
             failWith "Channels_Sealed" <| sprintf "[%s] <%s> [%s]" spec.Luid evtType.FullName subSpec.Key
         value
-        |> List.tryFind (fun ch -> ch.Spec0.Key = subSpec.Key)
+        |> List.tryFind (fun ch -> ch.Key = subSpec.Key)
         |> Option.iter (fun ch ->
             failWith "Key_Exist" <| sprintf "[%s] <%s> [%s] -> %A" spec.Luid evtType.FullName subSpec.Luid ch
         )
@@ -28,6 +28,7 @@ type internal Channels internal (owner', spec') =
     interface IAspect with
         member __.Owner = owner
         member __.Ver = ver
+        member __.SpecA = spec
     interface IValue<IChannel list> with
         member __.Value = value
     interface IChannels with
@@ -37,7 +38,7 @@ type internal Channels internal (owner', spec') =
         member __.Sealed = sealed'
         member __.TryGet k =
             value
-            |> List.tryFind (fun ch -> k = ch.Spec0.Key)
+            |> List.tryFind (fun ch -> k = ch.Key)
         member this.Has k =
             (this.AsChannels.TryGet k).IsSome
         member this.Get k =

@@ -110,7 +110,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
             triggerAdded prop
             prop
         else
-            failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Count prop.Spec0.Key
+            failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Count prop.Key
     member private this.Remove (k : Key) =
         this.Value
         |> Map.tryFind k
@@ -121,7 +121,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
                 triggerRemoved prop
                 prop
             else
-                failWith "Remove_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Count prop.Spec0.Key
+                failWith "Remove_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Count prop.Key
         )
     interface IDictProperty<'p> with
         member this.Value = this.Value

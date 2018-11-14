@@ -23,13 +23,13 @@ type internal ComboProperty (owner, spec) =
     override __.ToJson (v : IProperty list) =
         v
         |> List.map (fun prop ->
-            prop.Spec0.Key, prop.ToJson ()
+            prop.Key, prop.ToJson ()
         )|> E.object
     override this.DoLoadJson value json =
         let mutable failedProps : IProperty list = []
         value
         |> List.iter (fun prop ->
-            match tryCastJson (D.field prop.Spec0.Key D.json) json with
+            match tryCastJson (D.field prop.Key D.json) json with
             | Ok propJson ->
                 if not (prop.LoadJson' propJson) then
                     failedProps <- prop :: failedProps
@@ -55,7 +55,7 @@ type internal ComboProperty (owner, spec) =
         if comboSealed then
             failWith "Combo_Sealed" <| sprintf "[%s] <%s> [%s]" spec.Luid subTypeName subSpec.Key
         this.Value
-        |> List.tryFind (fun prop -> prop.Spec0.Key = subSpec.Key)
+        |> List.tryFind (fun prop -> prop.Key = subSpec.Key)
         |> Option.iter (fun prop ->
             failWith "Key_Exist" <| sprintf "[%s] <%s> [%s] -> %A" spec.Luid subTypeName subSpec.Luid prop
         )
@@ -65,7 +65,7 @@ type internal ComboProperty (owner, spec) =
             onAdded.Trigger prop
             prop
         else
-            failWith "Add_Failed" <| sprintf "[%s] <%s> [%s]" spec.Luid (typeNameOf<'prop> ()) prop.Spec0.Key
+            failWith "Add_Failed" <| sprintf "[%s] <%s> [%s]" spec.Luid (typeNameOf<'prop> ()) prop.Key
     interface IComboProperty with
         member __.SealCombo () =
             if not comboSealed then
@@ -74,7 +74,7 @@ type internal ComboProperty (owner, spec) =
         member this.Value = this.Value
         member this.TryGet k =
             this.Value
-            |> List.tryFind (fun prop -> k = prop.Spec0.Key)
+            |> List.tryFind (fun prop -> k = prop.Key)
         member this.Has k =
             (this.AsCombo.TryGet k).IsSome
         member this.Get k =
@@ -115,9 +115,9 @@ type internal ComboProperty (owner, spec) =
         member this.SyncTo (other : IComboProperty) =
             this.Value
             |> List.iter (fun prop ->
-                match other.TryGet prop.Spec0.Key with
+                match other.TryGet prop.Key with
                 | None ->
-                    other.AddAny prop.Spec0.Key prop.Clone0 |> ignore
+                    other.AddAny prop.Key prop.Clone0 |> ignore
                 | Some t ->
                     prop.SyncTo0 t
             )

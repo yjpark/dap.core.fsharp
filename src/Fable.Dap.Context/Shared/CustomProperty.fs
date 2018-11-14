@@ -22,7 +22,7 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         #else
             let initValue = target'.ToJson ()
         #endif
-            new PropertySpec (target'.Spec0.Luid, target'.Spec0.Key, initValue)
+            new PropertySpec (target'.Luid, target'.Key, initValue)
             :> IPropertySpec
             |> Some
     abstract member Self : 'p with get
@@ -65,6 +65,7 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
     interface IAspect with
         member this.Owner = this.Target.Owner
         member this.Ver = this.Target.Ver
+        member this.SpecA = this.Spec :> IAspectSpec
     interface IJson with
         member this.ToJson () = this.Target.ToJson ()
 #if FABLE_COMPILER

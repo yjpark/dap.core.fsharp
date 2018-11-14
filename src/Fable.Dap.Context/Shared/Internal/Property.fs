@@ -138,5 +138,6 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
     interface IAspect with
         member __.Owner = owner
         member __.Ver = ver
+        member __.SpecA = spec :> IAspectSpec
     interface IJson with
         member this.ToJson () = this.ToJson value

@@ -66,6 +66,7 @@ type internal Handler<'req, 'res> private (owner', spec') =
     interface IAspect with
         member __.Owner = owner
         member __.Ver = ver
+        member __.SpecA = spec :> IAspectSpec
     interface IHandler with
         member __.Spec0 = spec :> IHandlerSpec
         member __.Seal () =

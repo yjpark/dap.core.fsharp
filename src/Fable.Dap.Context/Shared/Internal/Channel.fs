@@ -16,6 +16,7 @@ type internal Channel<'evt> private (owner', spec') =
     interface IAspect with
         member __.Owner = owner
         member __.Ver = ver
+        member __.SpecA = spec :> IAspectSpec
     interface IChannel with
         member __.Spec0 = spec :> IChannelSpec
         member __.Muted = muted

@@ -98,13 +98,10 @@ let AsyncHandlersKey = "_A_"
 
 let noOwner = new Owner (getLogging (), "<noOwner>") :> IOwner
 
-type IAspect =
+type IBus<'msg> =
     inherit IObj
     abstract Owner : IOwner with get
     abstract Ver : int with get
-
-type IBus<'msg> =
-    inherit IAspect
     abstract AddWatcher : IOwner -> Luid -> ('msg -> unit) -> unit
     abstract SetWatcher : IOwner -> Luid -> ('msg -> unit) -> bool    // -> isNew
     abstract RemoveWatcher' : IOwner -> Luid list                      // -> luid list
@@ -112,16 +109,22 @@ type IBus<'msg> =
     abstract RemoveWatcher : IOwner -> unit
     abstract RemoveWatcher : IOwner * Luid -> unit
 
-type IAspectSpec =
-    abstract Luid : Luid with get
-    abstract Key : Key with get
-
 and IValue<'v> =
     abstract Value : 'v with get
 
 type Validator<'v> = {
     Check : IValue<'v> -> 'v -> bool
 }
+
+type IAspectSpec =
+    abstract Luid : Luid with get
+    abstract Key : Key with get
+
+type IAspect =
+    inherit IObj
+    abstract Owner : IOwner with get
+    abstract Ver : int with get
+    abstract SpecA : IAspectSpec with get
 
 type IPropertySpec =
     inherit IAspectSpec
@@ -472,6 +475,9 @@ module Extensions =
             :> IOwner
         static member Create (luid) =
             IOwner.Create (getLogging(), luid)
+    type IAspect with
+        member this.Luid = this.SpecA.Luid
+        member this.Key = this.SpecA.Key
     type IProperty with
         member this.LoadJson (json : Json) =
             this.LoadJson' json |> ignore

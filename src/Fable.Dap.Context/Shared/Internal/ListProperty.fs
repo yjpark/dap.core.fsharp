@@ -99,7 +99,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
             let index = this.Value.Length
             let newValue = this.Value @ [prop]
             if not (this.SetValue newValue) then
-                failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Length prop.Spec0.Key
+                failWith "Add_Failed" <| sprintf "[%s] <%s> [%d] %s" spec.Luid (typeNameOf<'p> ()) this.Value.Length prop.Key
             index
         | Some toIndex ->
             let (before, after) = this.Value |> List.splitAt toIndex
@@ -196,7 +196,7 @@ type internal ListProperty<'p when 'p :> IProperty> private (owner, spec) =
             this.CheckIndex toIndex
             if fromIndex <> toIndex then
                 let prop = this.Remove (fromIndex, triggerEvent = false)
-                this.Insert prop.Spec0.Key prop (Some toIndex) |> ignore
+                this.Insert prop.Key prop (Some toIndex) |> ignore
                 this.Value
                 |> List.iteri (fun index prop ->
                     if index = toIndex then
