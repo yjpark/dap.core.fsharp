@@ -135,7 +135,6 @@ type LoggingArgs = {
             Console = (* LoggingArgs *) console
             File = (* LoggingArgs *) file
         }
-    static member Default () = LoggingArgs.Create ()
     static member SetConsole ((* LoggingArgs *) console : ConsoleSinkArgs option) (this : LoggingArgs) =
         {this with Console = console}
     static member SetFile ((* LoggingArgs *) file : FileSinkArgs option) (this : LoggingArgs) =
@@ -182,7 +181,6 @@ type TickerArgs = {
             AutoStart = (* TickerArgs *) autoStart
                 |> Option.defaultWith (fun () -> true)
         }
-    static member Default () = TickerArgs.Create ()
     static member SetFrameRate ((* TickerArgs *) frameRate : float) (this : TickerArgs) =
         {this with FrameRate = frameRate}
     static member SetAutoStart ((* TickerArgs *) autoStart : bool) (this : TickerArgs) =

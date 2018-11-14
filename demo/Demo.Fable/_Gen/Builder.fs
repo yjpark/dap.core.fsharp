@@ -9,7 +9,7 @@ open Dap.Context.Builder
  *)
 type AuthorBuilder () =
     inherit ObjBuilder<Author> ()
-    override __.Zero () = Author.Default ()
+    override __.Zero () = Author.Create ()
     [<CustomOperation("name")>]
     member __.Name (target : Author, (* IPerson *) name : string) =
         target.Name.SetValue name

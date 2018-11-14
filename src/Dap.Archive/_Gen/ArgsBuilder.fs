@@ -10,7 +10,7 @@ open Dap.Platform
  *)
 type RecorderArgsBuilder () =
     inherit ObjBuilder<RecorderArgs> ()
-    override __.Zero () = RecorderArgs.Default ()
+    override __.Zero () = RecorderArgs.Create ()
     [<CustomOperation("flush_interval")>]
     member __.FlushInterval (target : RecorderArgs, (* RecorderArgs *) flushInterval : Duration) =
         target.WithFlushInterval flushInterval

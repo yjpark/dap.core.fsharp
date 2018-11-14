@@ -6,8 +6,8 @@ open Dap.Context
 open Dap.Context.Internal
 
 type IComboProperty with
-    static member Create = Properties.combo
-    static member Default () = Properties.combo (noOwner, NoKey)
+    static member Create (o, k) = Properties.combo (o, k)
+    static member Create () = Properties.combo (noOwner, NoKey)
 
 type IComboProperty with
     member this.AddDict<'p when 'p :> IProperty> (spawner, key) =

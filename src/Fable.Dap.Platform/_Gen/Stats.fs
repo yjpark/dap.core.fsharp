@@ -35,14 +35,6 @@ type OpLog = {
             StackTrace = (* OpLog *) stackTrace
                 |> Option.defaultWith (fun () -> "")
         }
-    static member Default () =
-        OpLog.Create (
-            (* OpLog *) op = "",
-            (* OpLog *) msg = "",
-            (* OpLog *) time = (getNow' ()),
-            (* OpLog *) duration = noDuration,
-            (* OpLog *) stackTrace = ""
-        )
     static member SetOp ((* OpLog *) op : string) (this : OpLog) =
         {this with Op = op}
     static member SetMsg ((* OpLog *) msg : string) (this : OpLog) =
@@ -108,7 +100,7 @@ type DurationStats (owner : IOwner, key : Key) =
         base.Setup (target')
     )
     static member Create (o, k) = new DurationStats (o, k)
-    static member Default () = DurationStats.Create (noOwner, NoKey)
+    static member Create () = DurationStats.Create (noOwner, NoKey)
     static member AddToCombo key (combo : IComboProperty) =
         combo.AddCustom<DurationStats> (DurationStats.Create, key)
     override this.Self = this
@@ -131,13 +123,13 @@ type FuncStats (owner : IOwner, key : Key) =
     let pendingCount = target'.AddVar<(* FuncStats *) int> (E.int, D.int, "pending_count", 0, None)
     let succeedCount = target'.AddVar<(* FuncStats *) int> (E.int, D.int, "succeed_count", 0, None)
     let failedCount = target'.AddVar<(* FuncStats *) int> (E.int, D.int, "failed_count", 0, None)
-    let failedOps = target'.AddList<(* FuncStats *) OpLog> (OpLog.JsonEncoder, OpLog.JsonDecoder, "failed_ops", (OpLog.Default ()), None)
+    let failedOps = target'.AddList<(* FuncStats *) OpLog> (OpLog.JsonEncoder, OpLog.JsonDecoder, "failed_ops", (OpLog.Create ()), None)
     do (
         target'.SealCombo ()
         base.Setup (target')
     )
     static member Create (o, k) = new FuncStats (o, k)
-    static member Default () = FuncStats.Create (noOwner, NoKey)
+    static member Create () = FuncStats.Create (noOwner, NoKey)
     static member AddToCombo key (combo : IComboProperty) =
         combo.AddCustom<FuncStats> (FuncStats.Create, key)
     override this.Self = this
@@ -167,7 +159,7 @@ type Stats (owner : IOwner, key : Key) =
         base.Setup (target')
     )
     static member Create (o, k) = new Stats (o, k)
-    static member Default () = Stats.Create (noOwner, NoKey)
+    static member Create () = Stats.Create (noOwner, NoKey)
     static member AddToCombo key (combo : IComboProperty) =
         combo.AddCustom<Stats> (Stats.Create, key)
     override this.Self = this

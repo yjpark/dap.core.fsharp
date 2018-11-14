@@ -83,7 +83,6 @@ type AppKeys () =
 
 type IApp =
     inherit IApp<IApp>
-    inherit IPack
     inherit IAppPack
     inherit IBackupPack
     abstract Args : AppArgs with get
@@ -117,7 +116,7 @@ and AppArgs = {
             Setup = (* AppArgs *) setup
                 |> Option.defaultWith (fun () -> ignore)
             Ticker = (* IServicesPack *) ticker
-                |> Option.defaultWith (fun () -> (TickerTypes.Args.Default ()))
+                |> Option.defaultWith (fun () -> (TickerTypes.Args.Create ()))
             Common = (* ICommonPack *) common
                 |> Option.defaultWith (fun () -> 100)
             Test = (* IAppPack *) test
@@ -125,7 +124,6 @@ and AppArgs = {
             Backup = (* IBackupPack *) backup
                 |> Option.defaultWith (fun () -> (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}"""))
         }
-    static member Default () = AppArgs.Create ()
     static member SetScope ((* AppArgs *) scope : Scope) (this : AppArgs) =
         {this with Scope = scope}
     static member SetSetup ((* AppArgs *) setup : IApp -> unit) (this : AppArgs) =
@@ -151,7 +149,7 @@ and AppArgs = {
                     |> Option.defaultValue NoScope
                 Setup = (* (* AppArgs *)  *) ignore
                 Ticker = get.Optional.Field (* IServicesPack *) "ticker" TickerTypes.Args.JsonDecoder
-                    |> Option.defaultValue (TickerTypes.Args.Default ())
+                    |> Option.defaultValue (TickerTypes.Args.Create ())
                 Common = (* (* ICommonPack *)  *) 100
                 Test = (* (* IAppPack *)  *) 100
                 Backup = (* (* IBackupPack *)  *) (decodeJsonValue TickerTypes.Args.JsonDecoder """{"frame_rate":1.0,"auto_start":true}""")
@@ -196,7 +194,7 @@ and AppArgs = {
  *)
 type AppArgsBuilder () =
     inherit ObjBuilder<AppArgs> ()
-    override __.Zero () = AppArgs.Default ()
+    override __.Zero () = AppArgs.Create ()
     [<CustomOperation("scope")>]
     member __.Scope (target : AppArgs, (* AppArgs *) scope : Scope) =
         target.WithScope scope
@@ -223,7 +221,7 @@ let app_args = new AppArgsBuilder ()
  *)
 type App (param : EnvParam, args : AppArgs) =
     let env = Env.create param
-    let mutable setupError : exn option = None
+    let mutable setupResult : Result<bool, exn> option = None
     let mutable (* IServicesPack *) ticker : TickerTypes.Agent option = None
     let mutable (* IBackupPack *) backup : TickerTypes.Agent option = None
     new (logging : ILogging, a : AppArgs) =
@@ -235,7 +233,10 @@ type App (param : EnvParam, args : AppArgs) =
     new (a : AppArgs) =
         App (getLogging (), a)
     member this.SetupAsync () : Task<unit> = task {
+        if setupResult.IsSome then
+           failWith "Already_Setup" setupResult.Value
         try
+            setupResult <- Some (Ok false)
             let! (* IServicesPack *) ticker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args.Ticker) AppKinds.Ticker AppKeys.Ticker
             ticker <- Some ticker'
             let! (* IBackupPack *) backup' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args.Backup) AppKinds.Backup AppKeys.Backup
@@ -243,8 +244,9 @@ type App (param : EnvParam, args : AppArgs) =
             do! this.SetupAsync' ()
             logInfo env "App.setupAsync" "Setup_Succeed" (encodeJson 4 args)
             args.Setup this.AsApp
+            setupResult <- Some (Ok true)
         with e ->
-            setupError <- Some e
+            setupResult <- Some (Error e)
             logException env "App.setupAsync" "Setup_Failed" (encodeJson 4 args) e
             raise e
     }
@@ -254,8 +256,10 @@ type App (param : EnvParam, args : AppArgs) =
     }
     member __.Args : AppArgs = args
     member __.Env : IEnv = env
-    member __.SetupError : exn option = setupError
-    interface IApp<IApp> with
+    member __.SetupResult : Result<bool, exn> option = setupResult
+    interface IApp<IApp>
+    interface INeedSetupAsync with
+       member this.SetupResult = this.SetupResult
         member this.SetupAsync () = this.SetupAsync ()
     interface IRunner<IApp> with
         member this.Runner = this.AsApp

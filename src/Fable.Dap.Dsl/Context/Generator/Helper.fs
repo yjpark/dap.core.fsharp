@@ -238,7 +238,7 @@ type G with
         ]
     static member Default (code : string) (lines : Lines) =
         lines @ [
-            "    static member Default () ="
+            "    static member Create () ="
             "        " + code
         ]
     static member ToString (code : string) (lines : Lines) =

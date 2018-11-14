@@ -25,7 +25,7 @@ type private ArgsGenerator (meta : AppMeta) =
         let key = name.AsCodeJsonKey
         match args with
         | JsonArgs name ->
-            let initValue = sprintf "(%s.Default ())" name
+            let initValue = sprintf "(%s.Create ())" name
             M.custom (name, key, initValue)
         | CodeArgs (name, code) ->
             M.coded (name, key, code)

@@ -177,7 +177,7 @@ with
         D.succeed NoArgs
     static member JsonSpec =
         FieldSpec.Create<NoArgs> (NoArgs.JsonEncoder, NoArgs.JsonDecoder)
-    static member Default () = NoArgs
+    static member Create () = NoArgs
     interface IJson with
         member this.ToJson () = NoArgs.JsonEncoder this
     interface IObj

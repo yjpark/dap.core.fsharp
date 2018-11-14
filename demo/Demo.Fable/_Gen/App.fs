@@ -70,7 +70,7 @@ and AppArgs = {
             UserStub = (* IClientPack *) userStub
                 |> Option.defaultWith (fun () -> (Proxy.args UserHubTypes.StubSpec (getWebSocketUri "ws_user") (Some 5.000000<second>) true))
         }
-    static member Default () =
+    static member Create () =
         AppArgs.Create (
             NoScope, (* AppArgs *) (* scope *)
             ignore, (* AppArgs *) (* setup *)
@@ -119,7 +119,7 @@ and AppArgs = {
  *)
 type AppArgsBuilder () =
     inherit ObjBuilder<AppArgs> ()
-    override __.Zero () = AppArgs.Default ()
+    override __.Zero () = AppArgs.Create ()
     [<CustomOperation("scope")>]
     member __.Scope (target : AppArgs, (* AppArgs *) scope : Scope) =
         target.WithScope scope

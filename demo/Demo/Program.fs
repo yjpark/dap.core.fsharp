@@ -62,7 +62,7 @@ let doBuilderTest (env : IEnv) : unit =
             bool "published" false
             int "copies" 100
             combo "author" author
-            custom "publisher1" (PublisherProperty.Default ())
+            custom "publisher1" (PublisherProperty.Create ())
             custom "publisher" (publisher {
                 name "test"
                 year 2001
@@ -156,7 +156,7 @@ let main _argv =
     printResult <| tryDecodeJsonValue Duration.JsonDecoder json
     printResult <| tryDecodeJson Duration.JsonDecoder json
     *)
-    let app = App.Create (logging, AppArgs.Default ())
+    let app = App.Create (logging, AppArgs.Create ())
     app.Ticker.Actor.OnEvent.AddWatcher app.Env "Test" (fun evt ->
         logWarn app.Env "Ticker" "OnEvent" evt
     )

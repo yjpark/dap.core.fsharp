@@ -178,8 +178,6 @@ type RecordGenerator (meta : ComboMeta) =
                     yield sprintf "            %s = %s%s" field.Key.AsCodeMemberName field.CommentCode field.Key.AsCodeVariableName
                     yield sprintf "                |> Option.defaultWith (fun () -> %s)" field.InitValue
             yield sprintf "        }"
-            if meta.HasDefault' fields then
-                yield sprintf "    static member Default () = %s.Create ()" param.Name
         ] @ (
             getSelfComboHelper param
         ) @ (
@@ -270,7 +268,7 @@ type ClassGenerator (meta : ComboMeta) =
             yield sprintf "        base.Setup (target')"
             yield sprintf "    )"
             yield sprintf "    static member Create (o, k) = new %s (o, k)" param.Name
-            yield sprintf "    static member Default () = %s.Create (noOwner, NoKey)" param.Name
+            yield sprintf "    static member Create () = %s.Create (noOwner, NoKey)" param.Name
             yield sprintf "    static member AddToCombo key (combo : IComboProperty) ="
             yield sprintf "        combo.AddCustom<%s> (%s.Create, key)" param.Name param.Name
             yield sprintf "    override this.Self = this"
@@ -344,7 +342,7 @@ type BuilderGenerator (meta : ComboMeta) =
             [
                 yield sprintf "type %s () =" param.Name
                 yield sprintf "    inherit ObjBuilder<%s> ()" param.Kind
-                yield sprintf "    override __.Zero () = %s.Default ()" param.Kind
+                yield sprintf "    override __.Zero () = %s.Create ()" param.Kind
             ]
         else
             [

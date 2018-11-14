@@ -31,7 +31,7 @@ type Builder (parents : (string * ComboMeta) list) =
                 if prop.Value <> NoInitValue then
                     prop.Value
                 else
-                    sprintf "(%s.Default ())" t
+                    sprintf "(%s.Create ())" t
             let prop = FieldMeta.CreateProperty t prop.Key value prop.Validator
             meta.AddField prop
         | _ ->

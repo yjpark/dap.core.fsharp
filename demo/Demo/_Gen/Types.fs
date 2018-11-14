@@ -37,7 +37,6 @@ type Publisher = {
             Year = (* IPublisher *) year
                 |> Option.defaultWith (fun () -> 0)
         }
-    static member Default () = Publisher.Create ()
     static member SetName ((* IPublisher *) name : string) (this : Publisher) =
         {this with Name = name}
     static member SetYear ((* IPublisher *) year : int) (this : Publisher) =
@@ -87,7 +86,7 @@ type Author (owner : IOwner, key : Key) =
         base.Setup (target')
     )
     static member Create (o, k) = new Author (o, k)
-    static member Default () = Author.Create (noOwner, NoKey)
+    static member Create () = Author.Create (noOwner, NoKey)
     static member AddToCombo key (combo : IComboProperty) =
         combo.AddCustom<Author> (Author.Create, key)
     override this.Self = this

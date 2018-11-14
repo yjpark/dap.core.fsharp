@@ -32,13 +32,6 @@ type PktLog = {
             StackTrace = (* PktLog *) stackTrace
                 |> Option.defaultWith (fun () -> "")
         }
-    static member Default () =
-        PktLog.Create (
-            (* PktLog *) bytes = 0,
-            (* PktLog *) time = (getNow' ()),
-            (* PktLog *) duration = noDuration,
-            (* PktLog *) stackTrace = ""
-        )
     static member SetBytes ((* PktLog *) bytes : int) (this : PktLog) =
         {this with Bytes = bytes}
     static member SetTime ((* PktLog *) time : Instant) (this : PktLog) =
@@ -95,13 +88,13 @@ type TrafficStats (owner : IOwner, key : Key) =
     let pendingCount = target'.AddVar<(* TrafficStats *) int> (E.int, D.int, "pending_count", 0, None)
     let succeedCount = target'.AddVar<(* TrafficStats *) int> (E.int, D.int, "succeed_count", 0, None)
     let failedCount = target'.AddVar<(* TrafficStats *) int> (E.int, D.int, "failed_count", 0, None)
-    let failedPkts = target'.AddList<(* TrafficStats *) PktLog> (PktLog.JsonEncoder, PktLog.JsonDecoder, "failed_pkts", (PktLog.Default ()), None)
+    let failedPkts = target'.AddList<(* TrafficStats *) PktLog> (PktLog.JsonEncoder, PktLog.JsonDecoder, "failed_pkts", (PktLog.Create ()), None)
     do (
         target'.SealCombo ()
         base.Setup (target')
     )
     static member Create (o, k) = new TrafficStats (o, k)
-    static member Default () = TrafficStats.Create (noOwner, NoKey)
+    static member Create () = TrafficStats.Create (noOwner, NoKey)
     static member AddToCombo key (combo : IComboProperty) =
         combo.AddCustom<TrafficStats> (TrafficStats.Create, key)
     override this.Self = this
@@ -134,11 +127,6 @@ type StatusLog = {
             Status = (* StatusLog *) status
                 |> Option.defaultWith (fun () -> LinkStatus.Unknown)
         }
-    static member Default () =
-        StatusLog.Create (
-            (* StatusLog *) time = (getNow' ()),
-            (* StatusLog *) status = LinkStatus.Unknown
-        )
     static member SetTime ((* StatusLog *) time : Instant) (this : StatusLog) =
         {this with Time = time}
     static member SetStatus ((* StatusLog *) status : LinkStatus) (this : StatusLog) =
@@ -175,8 +163,8 @@ type StatusLog = {
 type LinkStats (owner : IOwner, key : Key) =
     inherit WrapProperties<LinkStats, IComboProperty> ()
     let target' = Properties.combo (owner, key)
-    let status = target'.AddVar<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status", (StatusLog.Default ()), None)
-    let statusHistory = target'.AddList<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status_history", (StatusLog.Default ()), None)
+    let status = target'.AddVar<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status", (StatusLog.Create ()), None)
+    let statusHistory = target'.AddList<(* LinkStats *) StatusLog> (StatusLog.JsonEncoder, StatusLog.JsonDecoder, "status_history", (StatusLog.Create ()), None)
     let send = target'.AddCustom<(* LinkStats *) TrafficStats> (TrafficStats.Create, "send")
     let receive = target'.AddCustom<(* LinkStats *) TrafficStats> (TrafficStats.Create, "receive")
     do (
@@ -184,7 +172,7 @@ type LinkStats (owner : IOwner, key : Key) =
         base.Setup (target')
     )
     static member Create (o, k) = new LinkStats (o, k)
-    static member Default () = LinkStats.Create (noOwner, NoKey)
+    static member Create () = LinkStats.Create (noOwner, NoKey)
     static member AddToCombo key (combo : IComboProperty) =
         combo.AddCustom<LinkStats> (LinkStats.Create, key)
     override this.Self = this

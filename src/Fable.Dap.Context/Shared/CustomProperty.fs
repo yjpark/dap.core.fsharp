@@ -97,7 +97,7 @@ type NoProperties (owner : IOwner, key : Key) =
         base.Setup (target')
     )
     static member Create (o, k) = new NoProperties (o, k)
-    static member Default () = NoProperties.Create (noOwner, NoKey)
+    static member Create () = NoProperties.Create (noOwner, NoKey)
     static member AddToCombo key (combo : IComboProperty) =
         combo.AddCustom<NoProperties> (NoProperties.Create, key)
     override this.Self = this

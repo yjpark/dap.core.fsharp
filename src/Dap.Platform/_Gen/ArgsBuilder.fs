@@ -53,7 +53,7 @@ let file_sink_args path =
  *)
 type LoggingArgsBuilder () =
     inherit ObjBuilder<LoggingArgs> ()
-    override __.Zero () = LoggingArgs.Default ()
+    override __.Zero () = LoggingArgs.Create ()
     [<CustomOperation("console")>]
     member __.Console (target : LoggingArgs, (* LoggingArgs *) console : ConsoleSinkArgs option) =
         target.WithConsole console
@@ -68,7 +68,7 @@ let logging_args = new LoggingArgsBuilder ()
  *)
 type TickerArgsBuilder () =
     inherit ObjBuilder<TickerArgs> ()
-    override __.Zero () = TickerArgs.Default ()
+    override __.Zero () = TickerArgs.Create ()
     [<CustomOperation("frame_rate")>]
     member __.FrameRate (target : TickerArgs, (* TickerArgs *) frameRate : float) =
         target.WithFrameRate frameRate

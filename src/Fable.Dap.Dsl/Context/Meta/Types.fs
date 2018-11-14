@@ -328,7 +328,7 @@ type ComboMeta = {
             |> convertInitValue name
             |> Option.defaultWith (fun () ->
                 if this.HasDefault name then
-                    sprintf "(%s.Default ())" name
+                    sprintf "(%s.Create ())" name
                 else
                     NoInitValue
             )
