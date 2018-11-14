@@ -34,16 +34,17 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
     member __.Spec = spec |> Option.get
     member __.Target = target |> Option.get
     member __.UnsafeTarget = target |> Option.get :> IProperty :?> IUnsafeProperty
+    member this.Clone (o, k) =
+        this.Spawn (o, k)
+        |> this.SetupClone<'p> (Some this.SyncTo)
+        |> fun clone ->
+            if this.AsProperty.Sealed then
+                (clone :> IProperty) .Seal ()
+            clone
     interface ICustomProperty<'p> with
         member this.Self = this.Self
         member this.SyncTo other = this.SyncTo other
-        member this.Clone (o, k) =
-            this.Spawn (o, k)
-            |> this.SetupClone<'p> (Some this.SyncTo)
-            |> fun clone ->
-                if this.AsProperty.Sealed then
-                    (clone :> IProperty) .Seal ()
-                clone
+        member this.Clone (o, k) = this.Clone (o, k)
     interface IProperty with
         member __.Kind = PropertyKind.CustomProperty
         member this.Spec0 = this.Spec

@@ -262,7 +262,7 @@ type ClassGenerator (meta : ComboMeta) =
             yield sprintf "    inherit WrapProperties<%s, IComboProperty> ()" param.Name
             yield sprintf "    let target' = Properties.combo (owner, key)"
         ]
-    let getClassMiddle (param : ComboParam) =
+    let getClassMiddle' (param : ComboParam) =
         [
             yield sprintf "    do ("
             if param.IsFinal then
@@ -277,6 +277,11 @@ type ClassGenerator (meta : ComboMeta) =
             yield sprintf "    override __.Spawn (o, k) = %s.Create (o, k)" param.Name
             yield sprintf "    override __.SyncTo t = target'.SyncTo t.Target"
         ]
+    let getClassMiddle (param : ComboParam) =
+        if param.IsAbstract then
+            []
+        else
+            getClassMiddle' param
     let getFieldAdder (prop : FieldMeta) =
         let varName = prop.Key.AsCodeVariableName
         sprintf "    let %s = target'.%s" varName prop.AddPropCode

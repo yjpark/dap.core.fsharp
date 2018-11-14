@@ -478,6 +478,9 @@ module Extensions =
         member this.SyncWith0 (other : IProperty) =
             other.SyncTo0 this
     type IComboProperty with
+        member this.Get<'p when 'p :> IProperty> (key : Key) =
+            this.Get key
+            :?> 'p
         member this.SyncWith (other : IComboProperty) =
             other.SyncTo this
     type IVarProperty<'v> with
