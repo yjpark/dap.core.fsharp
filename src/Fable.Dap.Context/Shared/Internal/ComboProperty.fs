@@ -81,7 +81,7 @@ type internal ComboProperty (owner, spec) =
             this.AsCombo.TryGet k
             |> function
                 | Some prop -> prop
-                | None -> failWith "Not_Found" k
+                | None -> failWith ("IComboProperty:Not_Found:" + k) this
         member this.AddAny (key : Key) (spawner : PropertySpawner) =
             let prop = spawner (owner, key)
             this.CheckAdd prop.Spec0 (getTypeName prop)

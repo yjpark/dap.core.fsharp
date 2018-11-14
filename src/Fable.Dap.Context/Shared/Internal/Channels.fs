@@ -45,7 +45,7 @@ type internal Channels internal (owner', spec') =
             this.AsChannels.TryGet k
             |> function
                 | Some ch -> ch
-                | None -> failWith "Not_Found" k
+                | None -> failWith ("IChannels:Not_Found:" + k) this
         member this.Add<'evt> (subSpec : IChannelSpec<'evt>) =
             checkAdd subSpec typeof<'evt>
             subSpec.AsSubSpec spec

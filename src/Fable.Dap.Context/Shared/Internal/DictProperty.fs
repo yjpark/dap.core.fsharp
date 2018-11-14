@@ -133,7 +133,7 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
             this.AsDictProperty.TryGet k
             |> function
                 | Some prop -> prop
-                | None -> failWith "Not_Found" k
+                | None -> failWith ("IDictProperty:Not_Found:" + k) this
         member this.Add k =
             this.CheckChange <| sprintf "Add: %s" k
             this.AsDictProperty.TryGet k

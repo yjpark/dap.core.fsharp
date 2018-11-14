@@ -45,7 +45,7 @@ type internal AsyncHandlers internal (owner', spec') =
             this.AsHandlers.TryGet k
             |> function
                 | Some ch -> ch
-                | None -> failWith "Not_Found" k
+                | None -> failWith ("IAsyncHandlers:Not_Found:" + k) this
         member this.Add<'req, 'res> (subSpec : IHandlerSpec<'req, 'res>) =
             checkAdd subSpec typeof<'req> typeof<'res>
             subSpec.AsSubSpec spec
