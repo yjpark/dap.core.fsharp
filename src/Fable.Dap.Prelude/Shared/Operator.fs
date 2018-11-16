@@ -12,6 +12,8 @@ let inline (^<|) f a = f a
 
 let (=?) a b = LanguagePrimitives.PhysicalEquality a b
 
+let (<>?) a b = not <| LanguagePrimitives.PhysicalEquality a b
+
 let typeNameOf<'t> () =
     #if FABLE_COMPILER
         "_?_"
