@@ -451,7 +451,7 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "        member this.Setup () = this.Setup ()"
         #else
             sprintf "    interface INeedSetupAsync with"
-            sprintf "       member this.SetupResult = this.SetupResult"
+            sprintf "        member this.SetupResult = this.SetupResult"
             sprintf "        member this.SetupAsync () = this.SetupAsync ()"
         #endif
             sprintf "    interface IRunner<I%s> with" param.Name
