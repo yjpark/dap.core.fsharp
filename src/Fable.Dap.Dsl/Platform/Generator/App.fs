@@ -393,7 +393,7 @@ type ClassGenerator (meta : AppMeta) =
             [
                 sprintf "    member this.Setup () : unit ="
                 sprintf "        if setupResult.IsSome then"
-                sprintf "           failWith \"Already_Setup\" setupResult.Value"
+                sprintf "            failWith \"Already_Setup\" setupResult.Value"
                 sprintf "        try"
                 sprintf "            setupResult <- Some (Ok false)"
             ]
@@ -413,7 +413,7 @@ type ClassGenerator (meta : AppMeta) =
             [
                 sprintf "    member this.SetupAsync () : Task<unit> = task {"
                 sprintf "        if setupResult.IsSome then"
-                sprintf "           failWith \"Already_Setup\" setupResult.Value"
+                sprintf "            failWith \"Already_Setup\" setupResult.Value"
                 sprintf "        try"
                 sprintf "            setupResult <- Some (Ok false)"
             ]
@@ -447,7 +447,7 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "    interface IApp<I%s>" param.Name
         #if FABLE_COMPILER
             sprintf "    interface INeedSetup with"
-            sprintf "       member this.SetupResult = this.SetupResult"
+            sprintf "        member this.SetupResult = this.SetupResult"
             sprintf "        member this.Setup () = this.Setup ()"
         #else
             sprintf "    interface INeedSetupAsync with"
