@@ -58,16 +58,16 @@ type internal DictProperty<'p when 'p :> IProperty> private (owner, spec) =
                         Some (k, prop)
                     | Error err ->
                         failedFields <- (k, err) :: failedFields
-                        logPropError this "DoLoadJson" "Decode_Field_Failed" (k, err)
+                        logAspectError this "DoLoadJson:Decode_Field_Failed" (k, err)
                         None
                 )|> Map.ofSeq
             let ok = failedFields.Length = 0 && failedProps.Length = 0
             if not ok then
-                logPropError this "DoLoadJson" "Decode_Got_Error" (E.encode 4 json)
+                logAspectError this "DoLoadJson:Decode_Got_Error" (E.encode 4 json)
                 if failedFields.Length > 0 then
-                    logPropError this "DoLoadJson" (sprintf "Failed_Fields: [%d]" failedFields.Length) failedProps
+                    logAspectError this (sprintf "DoLoadJson:Failed_Fields: [%d]" failedFields.Length) failedProps
                 if failedProps.Length > 0 then
-                    logPropError this "DoLoadJson" (sprintf "Failed_Properties: [%d]" failedProps.Length)
+                    logAspectError this (sprintf "DoLoadJson:Failed_Properties: [%d]" failedProps.Length)
                         (failedProps |> List.map (fun p -> (p.Spec0, p)))
             if this.SetValue newValue then
                 oldValue

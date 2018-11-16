@@ -35,12 +35,12 @@ type internal ComboProperty (owner, spec) =
                     failedProps <- prop :: failedProps
             | Error err ->
                 failedProps <- prop :: failedProps
-                logPropError prop "DoLoadJson" "Decode_Field_Failed" err
+                logAspectError prop "DoLoadJson:Decode_Field_Failed" err
         )
         let ok = failedProps.Length = 0
         if not ok then
-            logPropError this "DoLoadJson" "Decode_Got_Error" (E.encode 4 json)
-            logPropError this "DoLoadJson" (sprintf "Failed_Properties: [%d]" failedProps.Length)
+            logAspectError this "DoLoadJson:Decode_Got_Error" (E.encode 4 json)
+            logAspectError this (sprintf "DoLoadJson:Failed_Properties: [%d]" failedProps.Length)
                 (failedProps |> List.map (fun p -> (p.Spec0, p)))
         (ok, None)
     override this.Clone0 (o, k) = this.AsCombo.Clone (o, k) :> IProperty

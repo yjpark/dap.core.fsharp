@@ -3,25 +3,25 @@ module Dap.Context.Logging
 
 open Dap.Prelude
 
-let private tplPropertyDebug = LogEvent.Template4<string, string, IProperty, obj>(LogLevelDebug, "[{Section}] {Info}: {Prop} {Detail}")
+let private tplAspectDebug = LogEvent.Template4<string, string, IAspect, obj>(LogLevelDebug, "[{Section}] {Info}: {Aspect} {Detail}")
 
-let private tplPropertyInfo = LogEvent.Template4<string, string, IProperty, obj>(LogLevelInformation, "[{Section}] {Info}: {Prop} {Detail}")
-let private tplPropertyWarn = LogEvent.Template4<string, string, IProperty, obj>(LogLevelWarning, "[{Section}] {Warn}: {Prop} {Detail}")
-let private tplPropertyError = LogEvent.Template4<string, string, IProperty, obj>(LogLevelError, "[{Section}] {Err}: {Prop} {Detail}")
+let private tplAspectInfo = LogEvent.Template4<string, string, IAspect, obj>(LogLevelInformation, "[{Section}] {Info}: {Aspect} {Detail}")
+let private tplAspectWarn = LogEvent.Template4<string, string, IAspect, obj>(LogLevelWarning, "[{Section}] {Warn}: {Aspect} {Detail}")
+let private tplAspectError = LogEvent.Template4<string, string, IAspect, obj>(LogLevelError, "[{Section}] {Err}: {Aspect} {Detail}")
 
-let private tplPropertyException = LogEvent.Template4WithException<string, string, IProperty, obj>(LogLevelError, "[{Section}] {Err}: {Prop} {Detail}")
+let private tplAspectException = LogEvent.Template4WithException<string, string, IAspect, obj>(LogLevelError, "[{Section}] {Err}: {Aspect} {Detail}")
 
-let logPropDebug (prop : IProperty) section info detail : unit =
-    prop.Owner.Log <| tplPropertyDebug section info prop detail
+let logAspectDebug (aspect : IAspect) info detail : unit =
+    aspect.Owner.Log <| tplAspectDebug aspect.SpecA.Luid info aspect detail
 
-let logPropInfo (prop : IProperty) section info detail : unit =
-    prop.Owner.Log <| tplPropertyInfo section info prop detail
+let logAspectInfo (aspect : IAspect) info detail : unit =
+    aspect.Owner.Log <| tplAspectInfo aspect.SpecA.Luid info aspect detail
 
-let logPropWarn (prop : IProperty) section info detail : unit =
-    prop.Owner.Log <| tplPropertyWarn section info prop detail
+let logAspectWarn (aspect : IAspect) info detail : unit =
+    aspect.Owner.Log <| tplAspectWarn aspect.SpecA.Luid info aspect detail
 
-let logPropError (prop : IProperty) section info detail : unit =
-    prop.Owner.Log <| tplPropertyError section info prop detail
+let logAspectError (aspect : IAspect) info detail : unit =
+    aspect.Owner.Log <| tplAspectError aspect.SpecA.Luid info aspect detail
 
-let logPropException (prop : IProperty) section info detail e : unit =
-    prop.Owner.Log <| tplPropertyException section info prop detail e
+let logAspectException (aspect : IAspect) info detail e : unit =
+    aspect.Owner.Log <| tplAspectException aspect.SpecA.Luid info aspect detail e

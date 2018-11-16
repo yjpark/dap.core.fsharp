@@ -66,7 +66,7 @@ and internal VarProperty<'v> private (owner, spec) =
             | Ok v ->
                 (true, Some v)
             | Error err ->
-                logPropError this "DoLoadJson" "Decode_Failed" (this.Value, E.encode 4 json, err)
+                logAspectError this "DoLoadJson:Decode_Failed" (this.Value, E.encode 4 json, err)
                 (false, None)
     override this.Clone0 (o, k) = this.AsVarProperty.Clone (o, k) :> IProperty
     override this.SyncTo0 t = this.AsVarProperty.SyncTo (t :?> IVarProperty<'v>)
@@ -82,7 +82,7 @@ and internal VarProperty<'v> private (owner, spec) =
         |> Option.map (fun validator ->
             let valid = validator.Check this.AsValue v
             if not valid then
-                logPropDebug this "ShouldSetValue" "Validator_Denied" (this.Value, v, validator)
+                logAspectDebug this "ShouldSetValue:Validator_Denied" (this.Value, v, validator)
             valid
         )|> Option.defaultValue true
     override this.OnValueChanged (old : 'v) =

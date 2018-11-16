@@ -81,7 +81,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
     member __.Sealed = sealed'
     member internal this.SetValue v =
         if sealed' then
-            logPropError this "SetValue" "Already_Sealed" (value, v)
+            logAspectError this "SetValue:Already_Sealed" (value, v)
             false
         else
             if this.ShouldSetValue v then
@@ -117,7 +117,7 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
         member __.Sealed = sealed'
         member this.LoadJson' json =
             if sealed' then
-                logPropError this "LoadJson'" "Already_Sealed" (value, E.encode 4 json)
+                logAspectError this "LoadJson':Already_Sealed" (value, E.encode 4 json)
                 false
             else
                 let (ok, newValue) = this.DoLoadJson value json
@@ -128,10 +128,10 @@ type Property<'spec, 'value when 'spec :> IPropertySpec> internal (owner, spec',
         member this.Clone0 (o, k) = this.Clone0 (o, k)
         member this.SyncTo0 t =
             if this.Kind <> t.Kind then
-                logPropError this "SyncTo0" "InValid_Kind" t
+                logAspectError this "SyncTo0:InValid_Kind" t
         #if !FABLE_COMPILER
             elif this.GetType () <> t.GetType () then
-                logPropError this "SyncTo0" "InValid_Kind" t
+                logAspectError this "SyncTo0:InValid_Kind" t
         #endif
             else
                 this.SyncTo0 t

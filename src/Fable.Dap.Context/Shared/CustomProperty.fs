@@ -55,10 +55,10 @@ type WrapProperty<'p, 't when 'p :> ICustomProperty and 't :> IProperty> () =
         member this.Clone0 (o, k) = this.AsCustomProperty.Clone (o, k) :> IProperty
         member this.SyncTo0 t =
             if this.AsProperty.Kind <> t.Kind then
-                logPropError this "SyncTo0" "Invalid_Kind" t
+                logAspectError this "SyncTo0:Invalid_Kind" t
         #if !FABLE_COMPILER
             elif this.GetType () <> t.GetType () then
-                logPropError this "SyncTo0" "Invalid_Kind" t
+                logAspectError this "SyncTo0:Invalid_Kind" t
         #endif
             else
                 this.SyncTo (t :?> 'p)
