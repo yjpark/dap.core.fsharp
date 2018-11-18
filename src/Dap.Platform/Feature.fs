@@ -139,6 +139,15 @@ let startApp<'app when 'app :> IPack and 'app :> INeedSetupAsync> (app : 'app) :
         failWith "Already_Setup" app.SetupResult.Value
 
 type IApp<'app when 'app :> IPack and 'app :> INeedSetupAsync> with
+    member this.SetupStarted =
+        this.SetupResult.IsSome
+    member this.SetupFinished =
+        this.SetupResult.IsSome
+            && (this.SetupResult.Value.IsError || this.SetupResult.Value.Value)
+    member this.SetupSucceed =
+        this.SetupResult.IsSome && this.SetupResult.Value.IsOk && this.SetupResult.Value.Value
+    member this.SetupFailed =
+        this.SetupResult.IsSome && this.SetupResult.Value.IsError
     member this.TryStart () =
         tryStartApp this
     member this.Start () =

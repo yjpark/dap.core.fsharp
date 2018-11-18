@@ -234,7 +234,7 @@ type App (param : EnvParam, args : AppArgs) =
         App (getLogging (), a)
     member this.SetupAsync () : Task<unit> = task {
         if setupResult.IsSome then
-           failWith "Already_Setup" setupResult.Value
+            failWith "Already_Setup" setupResult.Value
         try
             setupResult <- Some (Ok false)
             let! (* IServicesPack *) ticker' = env |> Env.addServiceAsync (Dap.Platform.Ticker.Logic.spec args.Ticker) AppKinds.Ticker AppKeys.Ticker
@@ -259,7 +259,7 @@ type App (param : EnvParam, args : AppArgs) =
     member __.SetupResult : Result<bool, exn> option = setupResult
     interface IApp<IApp>
     interface INeedSetupAsync with
-       member this.SetupResult = this.SetupResult
+        member this.SetupResult = this.SetupResult
         member this.SetupAsync () = this.SetupAsync ()
     interface IRunner<IApp> with
         member this.Runner = this.AsApp
