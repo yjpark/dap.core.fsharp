@@ -25,6 +25,7 @@ type IEvent =
 
 type NoResult = NoResult
 with
+    static member Create () = NoResult
     static member JsonEncoder (__ : NoResult) =
         E.nil
     static member JsonDecoder =
@@ -35,6 +36,7 @@ with
 
 type NoError = NoError
 with
+    static member Create () = NoError
     static member JsonEncoder (__ : NoError) =
         E.nil
     static member JsonDecoder =
@@ -45,6 +47,7 @@ with
 
 type JsonNil = JsonNil
 with
+    static member Create () = JsonNil
     static member JsonEncoder (__ : JsonNil) =
         E.nil
     static member JsonDecoder =
@@ -55,6 +58,7 @@ with
 
 type JsonBool = JsonBool of bool
 with
+    static member Create (v) = JsonBool v
     member this.Value =
         let (JsonBool v) = this
         v
@@ -68,6 +72,7 @@ with
 
 type JsonInt = JsonInt of int
 with
+    static member Create (v) = JsonInt v
     member this.Value =
         let (JsonInt v) = this
         v
@@ -81,6 +86,7 @@ with
 
 type JsonString = JsonString of string
 with
+    static member Create (v) = JsonString v
     member this.Value =
         let (JsonString v) = this
         v
