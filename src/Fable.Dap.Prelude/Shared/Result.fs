@@ -45,6 +45,7 @@ type Result<'T, 'TError> with
     member this.IsOk = isOk this
     member this.IsError = isError this
     member this.Value = get this
+    member this.ErrorValue = getError this
 
 let ofTry (mapping : 'a -> 'b) (a : 'a) : Result<'b, exn> =
     try

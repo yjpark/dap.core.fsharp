@@ -148,6 +148,8 @@ type IApp<'app when 'app :> IPack and 'app :> INeedSetupAsync> with
         this.SetupResult.IsSome && this.SetupResult.Value.IsOk && this.SetupResult.Value.Value
     member this.SetupFailed =
         this.SetupResult.IsSome && this.SetupResult.Value.IsError
+    member this.SetupError =
+        this.SetupResult.Value.ErrorValue
     member this.TryStart () =
         tryStartApp this
     member this.Start () =
