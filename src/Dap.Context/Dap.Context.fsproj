@@ -12,6 +12,7 @@
     <Compile Include="../Fable.Dap.Context/Shared/Json.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/UnionSpec.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/EDS.fs" />
+    <Compile Include="Bytes.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Types.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Unsafe/Types.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Logging.fs" />
