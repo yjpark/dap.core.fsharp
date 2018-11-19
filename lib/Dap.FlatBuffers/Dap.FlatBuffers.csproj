@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageProjectUrl>https://github.com/google/flatbuffers</PackageProjectUrl>
+    <Authors>Google</Authors>
+    <Version>1.0.0</Version>
+    <Description>FlatBuffers</Description>
+  </PropertyGroup>
+</Project>

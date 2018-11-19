@@ -13,7 +13,8 @@ let feed =
     )
 
 let projects =
-    !! "src/Fable.Dap.Prelude/*.fsproj"
+    !! "lib/Dap.FlatBuffers/*.csproj"
+    ++ "src/Fable.Dap.Prelude/*.fsproj"
     ++ "src/Dap.Prelude/*.fsproj"
     ++ "src/Fable.Dap.Context/*.fsproj"
     ++ "src/Dap.Context/*.fsproj"
