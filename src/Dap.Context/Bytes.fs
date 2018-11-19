@@ -1,4 +1,5 @@
 [<AutoOpen>]
+[<RequireQualifiedAccess>]
 module Dap.Context.Bytes
 
 open System
@@ -42,3 +43,35 @@ with
             decoder
     member this.JsonSpec =
         FieldSpec.Create<Bytes> (this.JsonEncoder, this.JsonDecoder)
+
+let toChunk (pos : int) (len : int) (bytes : Bytes) : Bytes option =
+    let pos = if pos < 0 then 0 else pos
+    if pos >= bytes.Length then
+        None
+    else
+        let endPos =
+            if len <= 0 then
+                Int32.MaxValue
+            else
+                pos + len - 1
+        let endPos = min endPos (bytes.Length - 1)
+        Some bytes.[pos .. endPos]
+
+let toChunks (size : int) (bytes : Bytes) : Bytes list =
+    if size <= 0 then
+        failWith "Invalid_Size" size
+    elif bytes.Length = 0 then
+        []
+    else
+        let num = bytes.Length / size
+        let num =
+            if (bytes.Length % size) > 0 then
+                num + 1
+            else
+                num
+        [0 .. num - 1]
+        |> List.map (fun index ->
+            let pos = index * size
+            toChunk pos size bytes
+            |> Option.get
+        )
