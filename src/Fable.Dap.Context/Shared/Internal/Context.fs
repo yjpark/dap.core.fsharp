@@ -13,8 +13,8 @@ type IContext with
             setup clone
         )
         let clone' = clone :> IContext
-        this.Properties.ToJson () |> clone'.Properties.LoadJson' |> ignore
-        if this.Properties.Sealed then clone'.Properties.Seal ()
+        this.Properties0.ToJson () |> clone'.Properties0.LoadJson' |> ignore
+        if this.Properties0.Sealed then clone'.Properties0.Seal ()
         clone
 
 [<AbstractClass>]
@@ -68,7 +68,7 @@ type BaseContext<'c, 's, 'p when 'c :> IContext and 's :> IContextSpec<'p> and '
                 else false
             else false
         member __.Spec0 = spec :> IContextSpec
-        member __.Properties = properties :> IProperties
+        member __.Properties0 = properties :> IProperties
         member __.Channels = channels
         member __.Handlers = handlers
     #if !FABLE_COMPILER

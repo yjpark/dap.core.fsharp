@@ -449,7 +449,7 @@ type IContext =
     inherit IJson
     abstract Dispose : unit -> bool
     abstract Spec0 : IContextSpec with get
-    abstract Properties : IProperties with get
+    abstract Properties0 : IProperties with get
     abstract Channels : IChannels with get
     abstract Handlers : IHandlers with get
 #if !FABLE_COMPILER
