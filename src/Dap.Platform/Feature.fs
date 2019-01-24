@@ -21,11 +21,14 @@ let private typeIOverride = typeof<IOverride>
 let private isFeature (type' : Type) =
     Array.contains typeIFeature <| type'.GetInterfaces ()
 
-let private isFallback (type' : Type) =
-    Array.contains typeIFallback <| type'.GetInterfaces ()
-
 let private isOverride (type' : Type) =
     Array.contains typeIOverride <| type'.GetInterfaces ()
+
+let private isFallback (type' : Type) =
+    if isOverride type' then
+        false
+    else
+        Array.contains typeIFallback <| type'.GetInterfaces ()
 
 let mutable private features : Map<string, Type> option = None
 
