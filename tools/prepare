@@ -5,8 +5,6 @@ cd ..
 
 echo "================================ Build Dap.Context" && \
 fake build -t Dap.Context:Build -s && \
-echo "================================ Prepare Fable.Dap.Platform" && \
-fsharpi prepare-platform.fable.fsx && \
 echo "================================ Prepare Dap.Platform (Stage 1)" && \
 fsharpi prepare-platform.fsx && \
 echo "================================ Build Dap.Platform" && \

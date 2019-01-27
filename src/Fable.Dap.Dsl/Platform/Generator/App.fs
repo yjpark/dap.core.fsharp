@@ -464,7 +464,7 @@ type ClassGenerator (meta : AppMeta) =
             sprintf "    interface IRunner with"
             sprintf "        member __.Clock = env.Clock"
         #if !FABLE_COMPILER
-            sprintf "        member __.Console0 = env.Console0"
+            sprintf "        member __.Dash0 = env.Dash0"
             sprintf "        member this.RunFunc0 func = runFunc' this func"
             sprintf "        member this.AddTask0 onFailed getTask = addTask' this onFailed getTask"
             sprintf "        member this.RunTask0 onFailed getTask = runTask' this onFailed getTask"

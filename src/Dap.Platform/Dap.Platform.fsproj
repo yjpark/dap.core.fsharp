@@ -23,12 +23,12 @@
     <Compile Include="../Fable.Dap.Dsl/Platform/MG.fs" />
     <Compile Include="Const.fs" />
     <Compile Include="Dsl/Args.fs" />
-    <Compile Include="Dsl/Stats.fs" />
+    <Compile Include="Dsl/Dash.fs" />
     <Compile Include="_Gen/Args.fs" />
     <Compile Include="_Gen/ArgsBuilder.fs" />
-    <Compile Include="_Gen/Stats.fs" />
+    <Compile Include="_Gen/Dash.fs" />
     <Compile Include="StatsHelper.fs" />
-    <Compile Include="Console.fs" />
+    <Compile Include="Dash.fs" />
     <Compile Include="Runner.fs" />
     <Compile Include="Dispatcher.fs" />
     <Compile Include="Runnable.fs" />

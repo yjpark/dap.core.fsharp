@@ -55,7 +55,7 @@ type FuncStats with
         (duration, slowOp, failedOp)
 
 let callback' (runner : 'runner when 'runner :> IRunner) onNak onAck : Callback<'res> =
-    let stats = runner.Console0.Stats.Reply
+    let stats = runner.Dash0.Stats.Reply
     let sendTime = runner.Clock.Now'
     Some <| fun (r : Reply<'res>) ->
         let req =

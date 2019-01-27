@@ -4,8 +4,8 @@ module Dap.Platform.Const
 open Dap.Prelude
 
 [<Literal>]
-let EnvConsoleKind = "EnvConsole"
-let AgentConsoleKind = "AgentConsole"
+let EnvDashKind = "EnvDash"
+let AgentDashKind = "AgentDash"
 
 let DefaultSlowCap = NodaTime.Duration.FromMilliseconds 200L
 let DefaultTaskSlowCap = NodaTime.Duration.FromMilliseconds 500L

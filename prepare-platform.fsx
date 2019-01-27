@@ -11,11 +11,11 @@ open Dap.Prelude
 #load "src/Fable.Dap.Platform/Shared/EDS.fs"
 #load "src/Fable.Dap.Dsl/Platform/MG.fs"
 #load "src/Dap.Platform/Dsl/Args.fs"
-#load "src/Dap.Platform/Dsl/Stats.fs"
+#load "src/Dap.Platform/Dsl/Dash.fs"
 
 Dap.Platform.Dsl.Args.compile ["src" ; "Dap.Platform"]
 |> List.iter ^<| printfn "%s\n"
 
-Dap.Platform.Dsl.Stats.compile ["src" ; "Dap.Platform"]
+Dap.Platform.Dsl.Dash.compile ["src" ; "Dap.Platform"]
 |> List.iter ^<| printfn "%s\n"
 

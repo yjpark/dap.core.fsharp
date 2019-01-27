@@ -50,7 +50,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     let mutable logger : ILogger = env.Logging.GetLogger <| ident.ToLuid ()
     let mutable spec : ActorSpec<'runner, 'args, 'model, 'msg, 'req, 'evt> option = None
     let mutable logic : AgentLogic<'runner, 'args, 'model, 'msg, 'req, 'evt> option = None
-    let mutable console : AgentConsole = new AgentConsole (this, param, ident)
+    let mutable dash : AgentDash = new AgentDash (this, param, ident)
     let taskManager : ITaskManager = new TaskManager () :> ITaskManager
     let mutable disposed : bool = false
     let mutable dispatch : DispatchMsg<AgentMsg<'runner, 'args, 'model, 'msg, 'req, 'evt>> option = None
@@ -93,10 +93,10 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.Runner = this.Runner
     //IRunner
     member this.Clock = env.Clock
-    member this.Console = console
+    member this.Dash = dash
     interface IRunner with
         member this.Clock = this.Clock
-        member this.Console0 = this.Console :> IConsole
+        member this.Dash0 = this.Dash :> IDash
         member this.RunFunc0 func = runFunc' this func
         member this.AddTask0 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask0 onFailed getTask = runTask' this onFailed getTask
@@ -168,7 +168,7 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         member this.Handle req = this.Handle req
         member this.HandleAsync getReq = this.HandleAsync getReq
         member this.OnEvent = this.OnEvent
-        member this.Console = this.Console
+        member this.Dash = this.Dash
         member this.RunFunc1 func = runFunc' this func
         member this.AddTask1 onFailed getTask = addTask' this onFailed getTask
         member this.RunTask1 onFailed getTask = runTask' this onFailed getTask

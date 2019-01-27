@@ -26,7 +26,7 @@ let private getSlowTaskMessage (section : string)
     tplSlowTaskStats ("Slow_" + section) duration getTask stats
 
 let private logRunResult (runner : IRunner) (msg : string) (startTime : Instant) (result : exn option) =
-    let stats = runner.Console0.Stats.Task
+    let stats = runner.Dash0.Stats.Task
     let op = stats.Spec.Key
     let result' =
         match result with
@@ -68,7 +68,7 @@ type internal PendingTask<'runner> when 'runner :> IRunner = {
         member this.Run (cancellationToken : CancellationToken) =
             let runner = this.Runner
             let time = runner.Clock.Now'
-            (runner :> IRunner).Console0.Stats.Task.IncPendingCount ()
+            (runner :> IRunner).Dash0.Stats.Task.IncPendingCount ()
             let onDone = logRunResult' runner (this.GetTask.ToString()) time (this.OnFailed runner)
             let runTask = fun () ->
                 try

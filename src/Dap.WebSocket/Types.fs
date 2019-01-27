@@ -71,9 +71,9 @@ and ActorOperate<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq
 
 and Agent<'socket, 'pkt, 'req> when 'socket :> WebSocket and 'req :> IReq (pack, param) =
     inherit PackAgent<ITickingPack, Agent<'socket, 'pkt, 'req>, Args<'socket, 'pkt, 'req>, Model<'socket, 'pkt>, Msg<'pkt, 'req>, 'req, Evt<'pkt>> (pack, param)
-    let linkStats = base.Console.Stats.Target.AddCustom<LinkStats> (LinkStats.Create, "link")
+    let linkStats = base.Dash.Stats.Target.AddCustom<LinkStats> (LinkStats.Create, "link")
     do (
-        base.Console.ClearStats.OnRequest.AddWatcher base.Console "LinkStats.ClearStats" (fun _ ->
+        base.Dash.ClearStats.OnRequest.AddWatcher base.Dash "LinkStats.ClearStats" (fun _ ->
             linkStats.ClearStats ()
         )
     )

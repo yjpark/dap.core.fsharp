@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Platform.Stats
+module Dap.Platform.Dash
 
 open Dap.Prelude
 open Dap.Context
@@ -50,8 +50,8 @@ type OpLog = {
             E.object [
                 "op", E.string (* OpLog *) this.Op
                 "msg", E.string (* OpLog *) this.Msg
-                "time", E.instant (* OpLog *) this.Time
-                "duration", E.duration (* OpLog *) this.Duration
+                "time", InstantFormat.DateHourMinuteSecondSub.JsonEncoder (* OpLog *) this.Time
+                "duration", DurationFormat.Second.JsonEncoder (* OpLog *) this.Duration
                 "stack_trace", E.string (* OpLog *) this.StackTrace
             ]
     static member JsonDecoder : JsonDecoder<OpLog> =
@@ -61,9 +61,9 @@ type OpLog = {
                     |> Option.defaultValue ""
                 Msg = get.Optional.Field (* OpLog *) "msg" D.string
                     |> Option.defaultValue ""
-                Time = get.Optional.Field (* OpLog *) "time" D.instant
+                Time = get.Optional.Field (* OpLog *) "time" InstantFormat.DateHourMinuteSecondSub.JsonDecoder
                     |> Option.defaultValue (getNow' ())
-                Duration = get.Optional.Field (* OpLog *) "duration" D.duration
+                Duration = get.Optional.Field (* OpLog *) "duration" DurationFormat.Second.JsonDecoder
                     |> Option.defaultValue noDuration
                 StackTrace = get.Optional.Field (* OpLog *) "stack_trace" D.string
                     |> Option.defaultValue ""
@@ -92,7 +92,7 @@ type OpLog = {
 type DurationStats (owner : IOwner, key : Key) =
     inherit WrapProperties<DurationStats, IComboProperty> ()
     let target' = Properties.combo (owner, key)
-    let slowCap = target'.AddVar<(* DurationStats *) Duration> (E.duration, D.duration, "slow_cap", noDuration, None)
+    let slowCap = target'.AddVar<(* DurationStats *) Duration> (DurationFormat.Second.JsonEncoder, DurationFormat.Second.JsonDecoder, "slow_cap", DefaultSlowCap, None)
     let totalCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "total_count", 0, None)
     let slowCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "slow_count", 0, None)
     do (
@@ -117,7 +117,7 @@ type DurationStats (owner : IOwner, key : Key) =
 type FuncStats (owner : IOwner, key : Key) =
     inherit WrapProperties<FuncStats, IComboProperty> ()
     let target' = Properties.combo (owner, key)
-    let slowCap = target'.AddVar<(* DurationStats *) Duration> (E.duration, D.duration, "slow_cap", noDuration, None)
+    let slowCap = target'.AddVar<(* DurationStats *) Duration> (DurationFormat.Second.JsonEncoder, DurationFormat.Second.JsonDecoder, "slow_cap", DefaultSlowCap, None)
     let totalCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "total_count", 0, None)
     let slowCount = target'.AddVar<(* DurationStats *) int> (E.int, D.int, "slow_count", 0, None)
     let pendingCount = target'.AddVar<(* FuncStats *) int> (E.int, D.int, "pending_count", 0, None)
@@ -149,7 +149,6 @@ type FuncStats (owner : IOwner, key : Key) =
 type Stats (owner : IOwner, key : Key) =
     inherit WrapProperties<Stats, IComboProperty> ()
     let target' = Properties.combo (owner, key)
-    let time = target'.AddVar<(* Stats *) Instant> (E.instant, D.instant, "time", (getNow' ()), None)
     let deliver = target'.AddCustom<(* Stats *) DurationStats> (DurationStats.Create, "deliver")
     let process' = target'.AddCustom<(* Stats *) DurationStats> (DurationStats.Create, "process")
     let reply = target'.AddCustom<(* Stats *) FuncStats> (FuncStats.Create, "reply")
@@ -165,9 +164,57 @@ type Stats (owner : IOwner, key : Key) =
     override this.Self = this
     override __.Spawn (o, k) = Stats.Create (o, k)
     override __.SyncTo t = target'.SyncTo t.Target
-    member __.Time (* Stats *) : IVarProperty<Instant> = time
     member __.Deliver (* Stats *) : DurationStats = deliver
     member __.Process (* Stats *) : DurationStats = process'
     member __.Reply (* Stats *) : FuncStats = reply
     member __.Func (* Stats *) : FuncStats = func
     member __.Task (* Stats *) : FuncStats = task
+
+(*
+ * Generated: <Combo>
+ *)
+type DashProps (owner : IOwner, key : Key) =
+    inherit WrapProperties<DashProps, IComboProperty> ()
+    let target' = Properties.combo (owner, key)
+    let time = target'.AddVar<(* DashProps *) Instant> (InstantFormat.DateHourMinuteSecondSub.JsonEncoder, InstantFormat.DateHourMinuteSecondSub.JsonDecoder, "time", (getNow' ()), None)
+    let model = target'.AddVar<(* DashProps *) Json> (E.json, D.json, "model", (decodeJsonValue D.json """null"""), None)
+    let stats = target'.AddCustom<(* DashProps *) Stats> (Stats.Create, "stats")
+    do (
+        base.Setup (target')
+    )
+    static member Create (o, k) = new DashProps (o, k)
+    static member Create () = DashProps.Create (noOwner, NoKey)
+    static member AddToCombo key (combo : IComboProperty) =
+        combo.AddCustom<DashProps> (DashProps.Create, key)
+    override this.Self = this
+    override __.Spawn (o, k) = DashProps.Create (o, k)
+    override __.SyncTo t = target'.SyncTo t.Target
+    member __.Time (* DashProps *) : IVarProperty<Instant> = time
+    member __.Model (* DashProps *) : IVarProperty<Json> = model
+    member __.Stats (* DashProps *) : Stats = stats
+
+(*
+ * Generated: <Context>
+ *)
+type IDash =
+    inherit IContext<DashProps>
+    abstract DashProps : DashProps with get
+    abstract Inspect : IHandler<unit, Json> with get
+    abstract ClearStats : IHandler<unit, unit> with get
+
+(*
+ * Generated: <Context>
+ *)
+[<AbstractClass>]
+type BaseDash<'context when 'context :> IDash> (kind : Kind, logging : ILogging) =
+    inherit CustomContext<'context, ContextSpec<DashProps>, DashProps> (logging, new ContextSpec<DashProps>(kind, DashProps.Create))
+    let inspect = base.Handlers.Add<unit, Json> (E.unit, D.unit, E.json, D.json, "inspect")
+    let clearStats = base.Handlers.Add<unit, unit> (E.unit, D.unit, E.unit, D.unit, "clear_stats")
+    member this.DashProps : DashProps = this.Properties
+    member __.Inspect : IHandler<unit, Json> = inspect
+    member __.ClearStats : IHandler<unit, unit> = clearStats
+    interface IDash with
+        member this.DashProps : DashProps = this.Properties
+        member __.Inspect : IHandler<unit, Json> = inspect
+        member __.ClearStats : IHandler<unit, unit> = clearStats
+    member this.AsDash = this :> IDash

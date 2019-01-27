@@ -33,14 +33,14 @@ and EnvParam = {
     Clock : IClock
 }
 
-and EnvConsole (env : IEnv, param : EnvParam) =
-    inherit Console<EnvConsole> (EnvConsoleKind, param.Logging, param.Clock)
+and EnvDash (env : IEnv, param : EnvParam) =
+    inherit Dash<EnvDash> (EnvDashKind, param.Logging, param.Clock)
     do (
-        let scope = base.Stats.Target.AddVar<Scope> (E.string, D.string, "scope", param.Scope, None)
+        let scope = base.Properties.Target.AddVar<Scope> (E.string, D.string, "scope", param.Scope, None)
         scope.Seal ()
     )
     override this.Self = this
-    override __.Spawn l = failWith "Invalid_Operation" "EnvConsole.Spawn"
+    override __.Spawn l = failWith "Invalid_Operation" "EnvDash.Spawn"
 
 and IEnv =
     inherit IOwner
@@ -48,9 +48,9 @@ and IEnv =
     abstract Handle : EnvReq -> unit
     abstract HandleAsync<'res> : (Callback<'res> -> EnvReq) -> Task<'res>
     abstract Platform : IPlatform with get
-    abstract Console : EnvConsole with get
     abstract Logging : ILogging with get
     abstract Scope : Scope with get
+    abstract Dash : EnvDash with get
     abstract State : EnvModel with get
 
 and Spawner = AgentParam -> IAgent
@@ -87,14 +87,14 @@ and AgentParam = {
             Key = key
         }
 
-and AgentConsole (agent : IAgent, param : AgentParam, ident : Ident) =
-    inherit Console<AgentConsole> (AgentConsoleKind, param.Env.Logging, param.Env.Clock)
+and AgentDash (agent : IAgent, param : AgentParam, ident : Ident) =
+    inherit Dash<AgentDash> (AgentDashKind, param.Env.Logging, param.Env.Clock)
     do (
-        let ident' = base.Stats.Target.AddVar<Ident> (E.ident, D.ident, "ident", ident, None)
+        let ident' = base.Properties.Target.AddVar<Ident> (E.ident, D.ident, "ident", ident, None)
         ident'.Seal ()
     )
     override this.Self = this
-    override __.Spawn l = failWith "Invalid_Operation" "AgentConsole.Spawn"
+    override __.Spawn l = failWith "Invalid_Operation" "AgentDash.Spawn"
 
 and IAgent =
     inherit IOwner
@@ -104,7 +104,7 @@ and IAgent =
     abstract OnEvent : IBus<AgentEvt> with get
     abstract Env : IEnv with get
     abstract Ident : Ident with get
-    abstract Console : AgentConsole with get
+    abstract Dash : AgentDash with get
     abstract RunFunc1<'res> : Func<IAgent, 'res> -> Result<'res, exn>
     abstract AddTask1 : OnFailed<IAgent> -> GetTask<IAgent, unit> -> unit
     abstract RunTask1 : OnFailed<IAgent> -> GetTask<IAgent, unit> -> unit

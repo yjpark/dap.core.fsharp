@@ -42,7 +42,6 @@
     <Compile Include="Remote/Generator/Types.fs" />
     <Compile Include="Remote/Generator/Stub.fs" />
     <Compile Include="Remote/Generator/Helper.fs" />
-    <Compile Include="../Fable.Dap.Platform/Dsl/Stats.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Remote\Fable.Dap.Remote.fsproj" />

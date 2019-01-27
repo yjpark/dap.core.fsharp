@@ -52,7 +52,7 @@ let trackDeliverDuration (runnable : IRunnable<'initer, 'runner, 'args, 'model, 
         (platform : string)
         (fromTime : Instant)
         (msg : 'msg) : unit =
-    let stats = runnable.Console0.Stats.Deliver
+    let stats = runnable.Dash0.Stats.Deliver
     let (duration, slowOpLog) = stats.AddOp runnable platform fromTime
     slowOpLog
     |> Option.iter (fun opLog ->
@@ -73,7 +73,7 @@ let internal process' (runnable : IRunnable<'initer, 'runner, 'args, 'model, 'ms
                 runnable.Logic.Update runner msg state
         setState model
         (runner :> ITaskManager).StartPendingTasks () |> ignore
-        let stats = runnable.Console0.Stats.Process
+        let stats = runnable.Dash0.Stats.Process
         let (duration, slowOpLog) = stats.AddOp runnable "" time
         slowOpLog
         |> Option.iter (fun opLog ->

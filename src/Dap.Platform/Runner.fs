@@ -27,7 +27,7 @@ and IRunner =
     inherit ILogger
     inherit ITaskManager
     abstract Clock : IClock with get
-    abstract Console0 : IConsole with get
+    abstract Dash0 : IDash with get
     abstract RunFunc0<'res> : Func<IRunner, 'res> -> Result<'res, exn>
     abstract AddTask0 : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
     abstract RunTask0 : OnFailed<IRunner> -> GetTask<IRunner, unit> -> unit
@@ -88,7 +88,7 @@ type FuncStats with
 
 let private logRunResult (runner : 'runner when 'runner :> IRunner)
             (msg : string) (startTime : Instant) (result : Result<'res, exn>) =
-    let stats = runner.Console0.Stats.Func
+    let stats = runner.Dash0.Stats.Func
     let op = stats.Spec.Key
     let (duration, slowOp, _failedOp) = stats.AddResult runner msg startTime result
     slowOp
@@ -113,7 +113,7 @@ let raiseOnFailed : OnFailed<'runner> =
 
 let runFunc' (runner : 'runner when 'runner :> IRunner) (func : Func<'runner, 'res>) : Result<'res, exn> =
     let time = runner.Clock.Now'
-    (runner :> IRunner).Console0.Stats.Func.IncPendingCount ()
+    (runner :> IRunner).Dash0.Stats.Func.IncPendingCount ()
     try
         let res = func runner
         Ok res
