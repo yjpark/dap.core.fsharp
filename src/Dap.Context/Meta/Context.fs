@@ -29,9 +29,3 @@ type Builder (properties : string * ComboMeta) =
     member __.Handler (context: ContextMeta, req : FieldMeta, res : FieldMeta) =
         HandlerMeta.Create req res
         |> context.AddHandler
-#if !FABLE_COMPILER
-    [<CustomOperation("async_handler")>]
-    member __.AsyncHandler (context: ContextMeta, req : FieldMeta, res : FieldMeta) =
-        HandlerMeta.Create req res
-        |> context.AddAsyncHandler
-#endif

@@ -20,7 +20,8 @@
     <Compile Include="../Fable.Dap.Platform/Shared/Operator.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Util.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/EDS.fs" />
-    <Compile Include="../Fable.Dap.Dsl/Platform/MG.fs" />
+    <Compile Include="Meta/Extensions.fs" />
+    <Compile Include="Meta/Net/Extensions.fs" />
     <Compile Include="Const.fs" />
     <Compile Include="Dsl/Args.fs" />
     <Compile Include="Dsl/Dash.fs" />
@@ -55,16 +56,16 @@
     <Compile Include="Ticker/Logic.fs" />
     <Compile Include="Registry/Types.fs" />
     <Compile Include="Registry/Logic.fs" />
-    <Compile Include="../Fable.Dap.Dsl/Platform/Meta/Types.fs" />
-    <Compile Include="../Fable.Dap.Dsl/Platform/Meta/Pack.fs" />
-    <Compile Include="../Fable.Dap.Dsl/Platform/Meta/App.fs" />
-    <Compile Include="../Fable.Dap.Dsl/Platform/Meta/Helper.fs" />
-    <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Types.fs" />
-    <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Feature.fs" />
-    <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Pack.fs" />
-    <Compile Include="../Fable.Dap.Dsl/Platform/Generator/App.fs" />
-    <Compile Include="../Fable.Dap.Dsl/Platform/Generator/Helper.fs" />
+    <Compile Include="Meta/Types.fs" />
+    <Compile Include="Meta/Pack.fs" />
+    <Compile Include="Meta/App.fs" />
     <Compile Include="Meta/Helper.fs" />
+    <Compile Include="Meta/Net/Agents.fs" />
+    <Compile Include="Generator/Types.fs" />
+    <Compile Include="Generator/Feature.fs" />
+    <Compile Include="Generator/Pack.fs" />
+    <Compile Include="Generator/App.fs" />
+    <Compile Include="Generator/Helper.fs" />
     <Compile Include="Dsl/Packs.fs" />
     <Compile Include="_Gen/Packs.fs" />
   </ItemGroup>

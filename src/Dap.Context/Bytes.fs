@@ -34,9 +34,7 @@ with
         | Base64 ->
             fun path token ->
                 if token.IsString then
-                    match this with
-                    | Base64 ->
-                        Ok <| Convert.FromBase64String (token.ToStringValue ())
+                    Ok <| Convert.FromBase64String (token.ToStringValue ())
                 else
                     Error (path, TD.BadPrimitive("a string of base64 bytes", token))
         | Custom (_encoder, decoder) ->

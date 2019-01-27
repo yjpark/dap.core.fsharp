@@ -5,6 +5,8 @@ open Dap.Context
 open Dap.Context.Meta
 open Dap.Context.Generator
 open Dap.Platform
+open Dap.Platform.Meta
+open Dap.Platform.Meta.Net
 
 let OpLog =
     combo {

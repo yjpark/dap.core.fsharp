@@ -8,6 +8,7 @@ open Dap.Platform
 open Dap.Platform.Meta
 open Dap.Platform.Generator
 open Dap.Remote.Meta
+open Dap.Remote.Meta.Fable
 
 let IPublisher =
     combo {
@@ -64,6 +65,7 @@ let App =
     }
 
 let compile segments =
+    setFableGenerator ()
     [
         G.File (segments, ["_Gen"; "Types.fs"],
             G.AutoOpenModule ("Demo.Types",

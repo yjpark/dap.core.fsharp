@@ -47,11 +47,11 @@ let getAsPackName (packName : string) =
 
 let getArgsMemberName (name : string) =
     let name = name.AsCodeMemberName
-#if FABLE_COMPILER
-    //Fable records not allow same name for field and member
-    let name = sprintf "%s'" name
-#endif
-    name
+    if isFableGenerator then
+        //Fable records not allow same name for field and member
+        sprintf "%s'" name
+    else
+        name
 
 let mutable private processedPacks : Set<string> = Set.empty
 let clearProcessedPacks () =
@@ -84,9 +84,8 @@ type InterfaceGenerator (meta : PackMeta) =
         ]
     let getInterfaceMiddle (param : PackParam) =
         [
-        #if !FABLE_COMPILER
-            yield sprintf "    abstract Args : %sArgs with get" param.Name
-        #endif
+            if not isFableGenerator then
+                yield sprintf "    abstract Args : %sArgs with get" param.Name
         ]
     let getServiceMember (service : AgentMeta) =
         let name = sprintf "%s%s" service.Key service.Kind

@@ -4,6 +4,11 @@ module Dap.Context.Generator.Types
 open Dap.Prelude
 open Dap.Context
 
+let mutable isFableGenerator = false
+
+let setFableGenerator () =
+    isFableGenerator <- true
+
 type Lines = string list
 
 type IParam =

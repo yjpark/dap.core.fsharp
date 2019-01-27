@@ -89,10 +89,9 @@ type G with
         ]
     static member PackOpens =
         [
-#if !FABLE_COMPILER
-            "open System.Threading"
-            "open System.Threading.Tasks"
-            "open FSharp.Control.Tasks.V2"
-#endif
+            if not isFableGenerator then
+                yield "open System.Threading"
+                yield "open System.Threading.Tasks"
+                yield "open FSharp.Control.Tasks.V2"
         ] @ G.PlatformBuilderOpens
     static member AppOpens = G.PackOpens

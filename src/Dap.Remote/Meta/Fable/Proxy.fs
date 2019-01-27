@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Remote.Meta.Proxy
+module Dap.Remote.Meta.Fable.Proxy
 
 open Dap.Prelude
 open Dap.Context

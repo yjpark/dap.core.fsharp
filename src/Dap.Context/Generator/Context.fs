@@ -35,13 +35,13 @@ type InterfaceGenerator (meta : ContextMeta) =
     let getHandlers (param : ContextParam) =
         meta.Handlers
         |> List.map ^<| getHandler param
-#if !FABLE_COMPILER
     let getAsyncHandler (_param : ContextParam) (handler : HandlerMeta) =
+        if isFableGenerator then
+            failWith "FableGenerator: AsyncHandler_Not_Supported" handler
         sprintf "    abstract %sAsync : IAsyncHandler<%s, %s> with get" handler.Req.Key.AsCodeMemberName handler.Req.ValueType handler.Res.ValueType
     let getAsyncHandlers (param : ContextParam) =
         meta.AsyncHandlers
         |> List.map ^<| getAsyncHandler param
-#endif
     abstract member GetExtraInherits : ContextParam -> Lines
     default __.GetExtraInherits (_param : ContextParam) = []
     interface IGenerator<ContextParam> with
@@ -53,9 +53,7 @@ type InterfaceGenerator (meta : ContextMeta) =
                 getProperties param
                 getChannels param
                 getHandlers param
-            #if !FABLE_COMPILER
                 getAsyncHandlers param
-            #endif
             ]|> List.concat
 
 type ClassGenerator (meta : ContextMeta) =
@@ -100,8 +98,9 @@ type ClassGenerator (meta : ContextMeta) =
     let getHandlersField (param : ContextParam) =
         meta.Handlers
         |> List.map ^<| getHandlerField param
-#if !FABLE_COMPILER
     let getAsyncHandlerField (_param : ContextParam) (handler : HandlerMeta) =
+        if isFableGenerator then
+            failWith "FableGenerator: AsyncHandler_Not_Supported" handler
         sprintf "    let %sAsync = base.AsyncHandlers.Add<%s, %s> (%s, %s, %s, %s, \"%s\")"
             handler.Req.Key.AsCodeVariableName handler.Req.ValueType handler.Res.ValueType
             handler.Req.Encoder handler.Req.Decoder handler.Res.Encoder handler.Res.Decoder
@@ -109,7 +108,6 @@ type ClassGenerator (meta : ContextMeta) =
     let getAsyncHandlersField (param : ContextParam) =
         meta.AsyncHandlers
         |> List.map ^<| getAsyncHandlerField param
-#endif
     let getOverrides (param : ContextParam) =
         if meta.IsAbstract then
             []
@@ -144,13 +142,13 @@ type ClassGenerator (meta : ContextMeta) =
     let getHandlersMember (param : ContextParam) =
         meta.Handlers
         |> List.map ^<| getHandlerMember param
-#if !FABLE_COMPILER
     let getAsyncHandlerMember (_param : ContextParam) (handler : HandlerMeta) =
+        if isFableGenerator then
+            failWith "FableGenerator: AsyncHandler_Not_Supported" handler
         sprintf "    member __.%sAsync : IAsyncHandler<%s, %s> = %sAsync" handler.Req.Key.AsCodeMemberName handler.Req.ValueType handler.Res.ValueType handler.Req.Key.AsCodeVariableName
     let getAsyncHandlersMember (param : ContextParam) =
         meta.AsyncHandlers
         |> List.map ^<| getAsyncHandlerMember param
-#endif
     let getClassMiddle (param : ContextParam) =
         [
             sprintf "    interface I%s with" param.Name
@@ -168,23 +166,17 @@ type ClassGenerator (meta : ContextMeta) =
                 getClassHeader param
                 getChannelsField param
                 getHandlersField param
-            #if !FABLE_COMPILER
                 getAsyncHandlersField param
-            #endif
                 getOverrides param
                 getPropertiesMember param
                 getChannelsMember param
                 getHandlersMember param
-            #if !FABLE_COMPILER
                 getAsyncHandlersMember param
-            #endif
                 getClassMiddle param
                 getPropertiesMember param |> indentLines
                 getChannelsMember param |> indentLines
                 getHandlersMember param |> indentLines
-            #if !FABLE_COMPILER
                 getAsyncHandlersMember param |> indentLines
-            #endif
                 this.GetExtraInterfaces param
                 getClassFooter param
             ]|> List.concat

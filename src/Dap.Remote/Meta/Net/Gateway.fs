@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Remote.Meta.Gateway
+module Dap.Remote.Meta.Net.Gateway
 
 open Dap.Prelude
 open Dap.Context

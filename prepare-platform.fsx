@@ -9,7 +9,8 @@ open Dap.Prelude
 #load "src/Fable.Dap.Platform/Shared/Types.fs"
 #load "src/Fable.Dap.Platform/Shared/Clock.fs"
 #load "src/Fable.Dap.Platform/Shared/EDS.fs"
-#load "src/Fable.Dap.Dsl/Platform/MG.fs"
+#load "src/Dap.Platform/Meta/Extensions.fs"
+#load "src/Dap.Platform/Meta/Net/Extensions.fs"
 #load "src/Dap.Platform/Dsl/Args.fs"
 #load "src/Dap.Platform/Dsl/Dash.fs"
 

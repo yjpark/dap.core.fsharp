@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module Dap.Platform.Meta.Helper'
+module Dap.Platform.Meta.Helper
 
 open Microsoft.FSharp.Quotations
 
@@ -7,28 +7,86 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Context.Meta
 open Dap.Context.Meta.Util
+open Dap.Context.Generator.Util
 open Dap.Platform
-module TickerTypes = Dap.Platform.Ticker.Types
-module RegistryTypes = Dap.Platform.Registry.Types
+
+let pack (parents : Expr<PackMeta> list) = new Pack.Builder (parents)
+let live = new App.Builder ("RealClock")
+
+let jsonInitValue (type' : string) (encoder : JsonEncoder<'args>) (args : 'args) =
+    let json = E.encode 0 <| encoder args
+    if json.StartsWith "\"" then
+        sprintf "(decodeJsonString %s.JsonDecoder \"\"%s\"\")" type' json
+    else
+        sprintf "(decodeJsonValue %s.JsonDecoder \"\"\"%s\"\"\")" type' json
+
+let jsonCodeArgs (type' : string) (encoder : JsonEncoder<'args>) (args : 'args) =
+    args
+    |> jsonInitValue type' encoder
+    |> CodeArgs type'
 
 type M with
-    static member ticker (?args : ArgsMeta, ?kind : Kind, ?key : Key) =
-        let args = defaultArg args <| JsonArgs "TickerTypes.Args"
-        let kind = defaultArg kind TickerTypes.Kind
-        let alias = "TickerTypes", "Dap.Platform.Ticker.Types"
-        let type' = "TickerTypes.Agent"
-        let spec = "Dap.Platform.Ticker.Logic.spec"
-        M.agent (args, type', spec, kind, ?key = key, aliases = [alias])
-    static member ticker (tickerArgs : TickerArgs, ?kind : Kind, ?key : Key) =
-        let args = jsonCodeArgs "TickerTypes.Args" TickerArgs.JsonEncoder tickerArgs
-        M.ticker (args, ?kind = kind, ?key = key)
+    static member noArgs = CodeArgs "NoArgs" "NoArgs"
 
 type M with
-    static member registry (kv : string, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
-        let kind = defaultArg kind RegistryTypes.Kind
+    static member agent (args : ArgsMeta, type' : string, spec : string, kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let key = defaultArg key NoKey
         let aliases = defaultArg aliases []
-        let alias = "RegistryTypes", "Dap.Platform.Registry.Types"
-        let args = CodeArgs "NoArgs" "NoArgs"
-        let type' = sprintf "RegistryTypes.Agent<%s>" kv
-        let spec = "Dap.Platform.Registry.Logic.spec"
+        AgentMeta.Create aliases args type' spec None kind key
+
+type M with
+    static member jsonArgs (name : string, ?key : Key, ?aliases : ModuleAlias list) =
+        let key = defaultArg key name.AsCodeVariableName
+        let aliases = defaultArg aliases []
+        ExtraArgsMeta.Create aliases (JsonArgs name) key
+    static member jsonArgs (expr, ?key : Key, ?aliases : ModuleAlias list) =
+        let (name, _meta) = unquotePropertyGetExpr expr
+        M.jsonArgs (name, ?key = key, ?aliases = aliases)
+
+type M with
+    static member codeArgs (name : string, code : string, key : Key, ?aliases : ModuleAlias list) =
+        let aliases = defaultArg aliases []
+        ExtraArgsMeta.Create aliases (CodeArgs name code) key
+
+    static member codeArgs (expr : Expr<string>, key : Key, ?aliases : ModuleAlias list) =
+        let (name, code) = unquotePropertyGetExpr expr
+        M.codeArgs (name, code, key, ?aliases = aliases)
+
+let private getDefaultContextSpawner (name : string) =
+    if name.AsCodeClassName = name then
+        sprintf "(Context.addToAgent %s.Create)" name
+    else
+        sprintf "(fun (agent : IAgent) -> %s.Create agent.Env.Logging :> %s)" name.AsCodeClassName name
+
+type M with
+    static member state (name : string, ?spawner : string, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let spawner = defaultArg spawner <| getDefaultContextSpawner name
+        let kind = defaultArg kind name.AsCodeClassName
+        let aliases = defaultArg aliases []
+        let alias = "State", "Dap.Platform.State"
+        let args = CodeArgs (sprintf "State.Args<%s>" name) spawner
+        let type' = sprintf "State.Agent<%s>" name
+        let spec = "Dap.Platform.State.spec"
         M.agent (args, type', spec, kind, ?key = key, aliases = alias :: aliases)
+
+type M with
+    static member context (name : string, ?spawner : string, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let spawner = defaultArg spawner <| getDefaultContextSpawner name
+        let kind = defaultArg kind name.AsCodeClassName
+        let aliases = defaultArg aliases []
+        let alias = "Context", "Dap.Platform.Context"
+        let args = CodeArgs (sprintf "Context.Args<%s>" name) spawner
+        let type' = sprintf "Context.Agent<%s>" name
+        let spec = "Dap.Platform.Context.spec"
+        M.agent (args, type', spec, kind, ?key = key, aliases = alias :: aliases)
+    static member context (expr : Expr<ContextMeta>, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        M.context (name.AsCodeInterfaceName, ?kind = kind, ?key = key, ?aliases = aliases)
+
+type M with
+    static member feature (name : string, ?spawner : string, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let spawner = defaultArg spawner <| sprintf "Feature.addToAgent<%s>" name
+        M.context (name, spawner = spawner, ?kind = kind, ?key = key, ?aliases = aliases)
+    static member feature (expr : Expr<ContextMeta>, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let (name, meta) = unquotePropertyGetExpr expr
+        M.feature (name.AsCodeInterfaceName, ?kind = kind, ?key = key, ?aliases = aliases)

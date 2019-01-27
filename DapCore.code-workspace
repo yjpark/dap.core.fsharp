@@ -31,9 +31,6 @@
 			"path": "src/Dap.Remote"
 		},
 		{
-			"path": "src/Fable.Dap.Dsl"
-		},
-		{
 			"path": "src/Dap.Archive"
 		},
 		{

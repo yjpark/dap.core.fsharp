@@ -182,10 +182,6 @@ type FieldMeta = {
     member this.WithValue (value : string) =
         {this with Value = value}
     member this.WithValue (value : Json) =
-    #if FABLE_COMPILER
-        // this can't be called in Fable generators, since encoder calls js code
-        failWith "Fable:WithValue" <| sprintf "%s -> %s" this.AsString ^<| value.ToString ()
-    #else
         let json = E.encode 0 value
         let decoder = this.Decoder
         if decoder = NoDecoder then
@@ -196,7 +192,6 @@ type FieldMeta = {
             else
                 sprintf "(decodeJsonValue %s \"\"\"%s\"\"\")" this.Decoder json
             |> fun value -> {this with Value = value}
-    #endif
     member this.WithValidator validator =
         {this with Validator = validator}
     member this.WithComment comment =
@@ -389,9 +384,7 @@ type ContextMeta = {
     Properties : string * ComboMeta
     Channels : ChannelMeta list
     Handlers : HandlerMeta list
-#if !FABLE_COMPILER
     AsyncHandlers : HandlerMeta list
-#endif
 } with
     static member Create properties =
         {
@@ -399,20 +392,14 @@ type ContextMeta = {
             Properties = properties
             Channels = []
             Handlers = []
-    #if !FABLE_COMPILER
             AsyncHandlers = []
-    #endif
         }
     member this.AddChannel channel =
         {this with Channels = this.Channels @ [channel]}
     member this.AddHandler handler =
         {this with Handlers = this.Handlers @ [handler]}
-#if !FABLE_COMPILER
     member this.AddAsyncHandler handler =
         {this with AsyncHandlers = this.AsyncHandlers @ [handler]}
-#endif
     member this.IsAbstract =
         this.Handlers.Length > 0
-#if !FABLE_COMPILER
             || this.AsyncHandlers.Length > 0
-#endif

@@ -225,13 +225,12 @@ type InterfaceGenerator (meta : AppMeta) =
 type ClassGenerator (meta : AppMeta) =
     let getClassHeader (param : AppParam) =
         [
-    #if FABLE_COMPILER
-            yield sprintf "type %s (logging : ILogging, args : %sArgs) =" param.Name param.Name
-            yield sprintf "    let env = Env.create logging args.Scope (%s ())" meta.Clock
-    #else
-            yield sprintf "type %s (param : EnvParam, args : %sArgs) =" param.Name param.Name
-            yield sprintf "    let env = Env.create param"
-    #endif
+            if isFableGenerator then
+                yield sprintf "type %s (logging : ILogging, args : %sArgs) =" param.Name param.Name
+                yield sprintf "    let env = Env.create logging args.Scope (%s ())" meta.Clock
+            else
+                yield sprintf "type %s (param : EnvParam, args : %sArgs) =" param.Name param.Name
+                yield sprintf "    let env = Env.create param"
             yield sprintf "    let mutable setupResult : Result<bool, exn> option = None"
         ]
     let getServiceField (packName : string) (service : AgentMeta) =
@@ -278,9 +277,8 @@ type ClassGenerator (meta : AppMeta) =
                 |> List.concat
             ) @ [
                 yield sprintf "    interface %s with" name
-            #if !FABLE_COMPILER
-                yield sprintf "        member this.Args = this.Args.%sArgs" <| getAsPackName name
-            #endif
+                if not isFableGenerator then
+                    yield sprintf "        member this.Args = this.Args.%sArgs" <| getAsPackName name
             ] @ (
                 package.Services
                 |> List.map ^<| getServiceMember name
@@ -374,19 +372,18 @@ type ClassGenerator (meta : AppMeta) =
             )
     let getExtraNews (param : AppParam) =
         [
-        #if !FABLE_COMPILER
-            yield sprintf "    new (logging : ILogging, a : %sArgs) =" param.Name
-            if meta.Platform.IsSome then
-                yield sprintf "        let platform = new %s (logging)" meta.Platform.Value
-            else
-                yield sprintf "        let platform = Feature.create<IPlatform> logging"
-            yield sprintf "        let clock = new %s ()" meta.Clock
-            yield sprintf "        %s (Env.param platform logging a.Scope clock, a)" param.Name
-            yield sprintf "    new (loggingArgs : LoggingArgs, a : %sArgs) =" param.Name
-            yield sprintf "        %s (Feature.createLogging loggingArgs, a)" param.Name
-            yield sprintf "    new (a : %sArgs) =" param.Name
-            yield sprintf "        %s (getLogging (), a)" param.Name
-        #endif
+            if not isFableGenerator then
+                yield sprintf "    new (logging : ILogging, a : %sArgs) =" param.Name
+                if meta.Platform.IsSome then
+                    yield sprintf "        let platform = new %s (logging)" meta.Platform.Value
+                else
+                    yield sprintf "        let platform = Feature.create<IPlatform> logging"
+                yield sprintf "        let clock = new %s ()" meta.Clock
+                yield sprintf "        %s (Env.param platform logging a.Scope clock, a)" param.Name
+                yield sprintf "    new (loggingArgs : LoggingArgs, a : %sArgs) =" param.Name
+                yield sprintf "        %s (Feature.createLogging loggingArgs, a)" param.Name
+                yield sprintf "    new (a : %sArgs) =" param.Name
+                yield sprintf "        %s (getLogging (), a)" param.Name
         ]
     let getFableSetup (param : AppParam) =
         [
@@ -432,55 +429,51 @@ type ClassGenerator (meta : AppMeta) =
         ]|> List.concat
     let getClassMiddle (param : AppParam) =
         [
-        #if FABLE_COMPILER
-            sprintf "    abstract member Setup' : unit -> unit"
-            sprintf "    default __.Setup' () = ()"
-        #else
-            sprintf "    abstract member SetupAsync' : unit -> Task<unit>"
-            sprintf "    default __.SetupAsync' () = task {"
-            sprintf "        return ()"
-            sprintf "    }"
-        #endif
-            sprintf "    member __.Args : %sArgs = args" param.Name
-            sprintf "    member __.Env : IEnv = env"
-            sprintf "    member __.SetupResult : Result<bool, exn> option = setupResult"
-            sprintf "    interface IApp<I%s>" param.Name
-        #if FABLE_COMPILER
-            sprintf "    interface INeedSetup with"
-            sprintf "        member this.SetupResult = this.SetupResult"
-            sprintf "        member this.Setup () = this.Setup ()"
-        #else
-            sprintf "    interface INeedSetupAsync with"
-            sprintf "        member this.SetupResult = this.SetupResult"
-            sprintf "        member this.SetupAsync () = this.SetupAsync ()"
-        #endif
-            sprintf "    interface IRunner<I%s> with" param.Name
-            sprintf "        member this.Runner = this.As%s" param.Name
-        #if !FABLE_COMPILER
-            sprintf "        member this.RunFunc func = runFunc' this func"
-            sprintf "        member this.AddTask onFailed getTask = addTask' this onFailed getTask"
-            sprintf "        member this.RunTask onFailed getTask = runTask' this onFailed getTask"
-        #endif
-            sprintf "    interface IRunner with"
-            sprintf "        member __.Clock = env.Clock"
-        #if !FABLE_COMPILER
-            sprintf "        member __.Dash0 = env.Dash0"
-            sprintf "        member this.RunFunc0 func = runFunc' this func"
-            sprintf "        member this.AddTask0 onFailed getTask = addTask' this onFailed getTask"
-            sprintf "        member this.RunTask0 onFailed getTask = runTask' this onFailed getTask"
-            sprintf "    interface ITaskManager with"
-            sprintf "        member __.StartTask task = env.StartTask task"
-            sprintf "        member __.ScheduleTask task = env.ScheduleTask task"
-            sprintf "        member __.PendingTasksCount = env.PendingTasksCount"
-            sprintf "        member __.StartPendingTasks () = env.StartPendingTasks ()"
-            sprintf "        member __.ClearPendingTasks () = env.ClearPendingTasks ()"
-            sprintf "        member __.RunningTasksCount = env.RunningTasksCount"
-            sprintf "        member __.CancelRunningTasks () = env.CancelRunningTasks ()"
-        #endif
-            sprintf "    interface IPack with"
-            sprintf "        member __.Env : IEnv = env"
-            sprintf "    interface ILogger with"
-            sprintf "        member __.Log m = env.Log m"
+            if isFableGenerator then
+                yield sprintf "    abstract member Setup' : unit -> unit"
+                yield sprintf "    default __.Setup' () = ()"
+            else
+                yield sprintf "    abstract member SetupAsync' : unit -> Task<unit>"
+                yield sprintf "    default __.SetupAsync' () = task {"
+                yield sprintf "        return ()"
+                yield sprintf "    }"
+            yield sprintf "    member __.Args : %sArgs = args" param.Name
+            yield sprintf "    member __.Env : IEnv = env"
+            yield sprintf "    member __.SetupResult : Result<bool, exn> option = setupResult"
+            yield sprintf "    interface IApp<I%s>" param.Name
+            if isFableGenerator then
+                yield sprintf "    interface INeedSetup with"
+                yield sprintf "        member this.SetupResult = this.SetupResult"
+                yield sprintf "        member this.Setup () = this.Setup ()"
+            else
+                yield sprintf "    interface INeedSetupAsync with"
+                yield sprintf "        member this.SetupResult = this.SetupResult"
+                yield sprintf "        member this.SetupAsync () = this.SetupAsync ()"
+            yield sprintf "    interface IRunner<I%s> with" param.Name
+            yield sprintf "        member this.Runner = this.As%s" param.Name
+            if not isFableGenerator then
+                yield sprintf "        member this.RunFunc func = runFunc' this func"
+                yield sprintf "        member this.AddTask onFailed getTask = addTask' this onFailed getTask"
+                yield sprintf "        member this.RunTask onFailed getTask = runTask' this onFailed getTask"
+            yield sprintf "    interface IRunner with"
+            yield sprintf "        member __.Clock = env.Clock"
+            if not isFableGenerator then
+                yield sprintf "        member __.Dash0 = env.Dash0"
+                yield sprintf "        member this.RunFunc0 func = runFunc' this func"
+                yield sprintf "        member this.AddTask0 onFailed getTask = addTask' this onFailed getTask"
+                yield sprintf "        member this.RunTask0 onFailed getTask = runTask' this onFailed getTask"
+                yield sprintf "    interface ITaskManager with"
+                yield sprintf "        member __.StartTask task = env.StartTask task"
+                yield sprintf "        member __.ScheduleTask task = env.ScheduleTask task"
+                yield sprintf "        member __.PendingTasksCount = env.PendingTasksCount"
+                yield sprintf "        member __.StartPendingTasks () = env.StartPendingTasks ()"
+                yield sprintf "        member __.ClearPendingTasks () = env.ClearPendingTasks ()"
+                yield sprintf "        member __.RunningTasksCount = env.RunningTasksCount"
+                yield sprintf "        member __.CancelRunningTasks () = env.CancelRunningTasks ()"
+            yield sprintf "    interface IPack with"
+            yield sprintf "        member __.Env : IEnv = env"
+            yield sprintf "    interface ILogger with"
+            yield sprintf "        member __.Log m = env.Log m"
         ]
     let getClassFooter (param : AppParam) =
         [
@@ -500,11 +493,10 @@ type ClassGenerator (meta : AppMeta) =
                 yield meta.Packs |> List.map getPackFields |> List.concat
                 clearProcessedPacks ()
                 yield getExtraNews param
-            #if FABLE_COMPILER
-                yield getFableSetup param
-            #else
-                yield getSetup param
-            #endif
+                if isFableGenerator then
+                    yield getFableSetup param
+                else
+                    yield getSetup param
                 yield getClassMiddle param
                 clearProcessedPacks ()
                 yield meta.Packs |> List.map (getPackMembers []) |> List.concat
