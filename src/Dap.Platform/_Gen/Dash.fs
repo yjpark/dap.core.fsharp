@@ -177,7 +177,8 @@ type DashProps (owner : IOwner, key : Key) =
     inherit WrapProperties<DashProps, IComboProperty> ()
     let target' = Properties.combo (owner, key)
     let time = target'.AddVar<(* DashProps *) Instant> (InstantFormat.DateHourMinuteSecondSub.JsonEncoder, InstantFormat.DateHourMinuteSecondSub.JsonDecoder, "time", (getNow' ()), None)
-    let model = target'.AddVar<(* DashProps *) Json> (E.json, D.json, "model", (decodeJsonValue D.json """null"""), None)
+    let version = target'.AddVar<(* DashProps *) Json> (E.json, D.json, "version", (decodeJsonValue D.json """null"""), None)
+    let state = target'.AddVar<(* DashProps *) Json> (E.json, D.json, "state", (decodeJsonValue D.json """null"""), None)
     let stats = target'.AddCustom<(* DashProps *) Stats> (Stats.Create, "stats")
     do (
         base.Setup (target')
@@ -190,7 +191,8 @@ type DashProps (owner : IOwner, key : Key) =
     override __.Spawn (o, k) = DashProps.Create (o, k)
     override __.SyncTo t = target'.SyncTo t.Target
     member __.Time (* DashProps *) : IVarProperty<Instant> = time
-    member __.Model (* DashProps *) : IVarProperty<Json> = model
+    member __.Version (* DashProps *) : IVarProperty<Json> = version
+    member __.State (* DashProps *) : IVarProperty<Json> = state
     member __.Stats (* DashProps *) : Stats = stats
 
 (*

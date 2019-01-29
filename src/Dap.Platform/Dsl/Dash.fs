@@ -44,7 +44,8 @@ let Stats =
 let DashProps =
     combo {
         var (M.instant (InstantFormat.DateHourMinuteSecondSub, "time"))
-        var (M.json "model")
+        var (M.json "version")
+        var (M.json "state")
         prop (M.custom (<@ Stats @>, "stats"))
     }
 
