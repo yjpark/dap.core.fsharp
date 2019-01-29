@@ -60,6 +60,8 @@
     <Compile Include="Meta/Pack.fs" />
     <Compile Include="Meta/App.fs" />
     <Compile Include="Meta/Helper.fs" />
+    <Compile Include="Meta/Net/Pack.fs" />
+    <Compile Include="Meta/Net/Extensions.fs" />
     <Compile Include="Meta/Net/Agents.fs" />
     <Compile Include="Generator/Types.fs" />
     <Compile Include="Generator/Feature.fs" />
