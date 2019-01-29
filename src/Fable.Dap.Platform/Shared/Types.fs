@@ -115,6 +115,27 @@ type Version = {
         {this with StateVer = stateVer ; MsgCount = this.MsgCount + 1}
     member this.IncReq = {this with ReqCount = this.ReqCount + 1}
     member this.IncEvt = {this with EvtCount = this.EvtCount + 1}
+    static member JsonEncoder : JsonEncoder<Version> =
+        fun (this : Version) ->
+            E.object [
+                "state_ver", E.int this.StateVer
+                "msg_count", E.int this.MsgCount
+                "req_count", E.int this.ReqCount
+                "evt_count", E.int this.EvtCount
+            ]
+    static member JsonDecoder : JsonDecoder<Version> =
+        D.object (fun get ->
+            {
+                StateVer = get.Required.Field "state_ver" D.int
+                MsgCount = get.Required.Field "msg_count" D.int
+                ReqCount = get.Required.Field "req_count" D.int
+                EvtCount = get.Required.Field "evt_count" D.int
+            }
+        )
+    static member JsonSpec =
+        FieldSpec.Create<Version> (Version.JsonEncoder, Version.JsonDecoder)
+    interface IJson with
+        member this.ToJson () = Version.JsonEncoder this
 
 type IEvt = interface end
 
@@ -145,6 +166,7 @@ type IAsyncPoster<'req> when 'req :> IReq =
 
 and IActor =
     abstract Ident : Ident with get
+    abstract Version : Version with get
 
 and IActor<'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IActor
@@ -159,7 +181,6 @@ and IActor<'args, 'model, 'req, 'evt> when 'req :> IReq and 'evt :> IEvt =
     inherit IActor<'req, 'evt>
     abstract Args : 'args with get
     abstract State : 'model with get
-    abstract Version : Version with get
     abstract AsActor2 : IActor<'req, 'evt> with get
 
 and CastEvt<'msg, 'evt> = 'msg -> 'evt option

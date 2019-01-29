@@ -41,6 +41,10 @@ and EnvDash (env : IEnv, param : EnvParam) =
     )
     override this.Self = this
     override __.Spawn l = failWith "Invalid_Operation" "EnvDash.Spawn"
+    override __.GetVersion () =
+        toJson env.Version
+    override __.GetState () =
+        toJson env.State
 
 and IEnv =
     inherit IOwner
@@ -50,6 +54,7 @@ and IEnv =
     abstract Platform : IPlatform with get
     abstract Logging : ILogging with get
     abstract Scope : Scope with get
+    abstract Version : Version with get
     abstract Dash : EnvDash with get
     abstract State : EnvModel with get
 
@@ -59,7 +64,18 @@ and EnvModel = {
     Services : Map<Kind, Map<Key, IAgent>>
     Spawners : Map<Kind, Spawner>
     Agents : Map<Kind, Map<Key, IAgent>>
-}
+} with
+    interface IJson with
+        member this.ToJson () =
+            let encodeAgent = fun (agent : IAgent) ->
+                toJson agent.Actor1.Version
+            let encodeSpawner = fun (spawner : Spawner) ->
+                E.string <| spawner.ToString ()
+            E.object [
+                "services", (E.dict (E.dict encodeAgent)) this.Services
+                "spawners", (E.dict encodeSpawner) this.Spawners
+                "agents", (E.dict (E.dict encodeAgent)) this.Agents
+            ]
 
 and EnvReq =
     | DoQuit of bool * Callback<QuitStats>                      // forceQuit -> willQuit
@@ -95,10 +111,16 @@ and AgentDash (agent : IAgent, param : AgentParam, ident : Ident) =
     )
     override this.Self = this
     override __.Spawn l = failWith "Invalid_Operation" "AgentDash.Spawn"
+    override __.GetVersion () =
+        toJson agent.Actor1.Version
+    override __.GetState () =
+        agent.GetState ()
 
 and IAgent =
     inherit IOwner
     inherit IRunner
+    abstract Actor1 : IActor with get
+    abstract GetState : unit -> Json
     abstract Handle : AgentReq -> unit
     abstract HandleAsync<'res> : (Callback<'res> -> AgentReq) -> Task<'res>
     abstract OnEvent : IBus<AgentEvt> with get

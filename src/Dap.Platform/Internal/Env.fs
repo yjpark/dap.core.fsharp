@@ -64,6 +64,7 @@ type internal Env (param' : EnvParam, logic') as this =
         member __.Platform = param.Platform
         member __.Logging = param.Logging
         member __.Scope = param.Scope
+        member __.Version = version
         member __.Dash = dash
         member __.State = state |> Option.get
     interface IOwner with

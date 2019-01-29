@@ -154,6 +154,8 @@ type BasePart<'actorMsg, 'runner, 'args, 'model, 'msg, 'req, 'evt
     interface IAgent with
         member this.Env = this.Env
         member this.Ident = this.Ident
+        member this.Actor1 = this.Agent.Actor1
+        member this.GetState () = this.Agent.GetState ()
         member this.Dash = this.Agent.Dash
         member this.Handle req = this.Handle req
         member this.HandleAsync getReq = this.HandleAsync getReq

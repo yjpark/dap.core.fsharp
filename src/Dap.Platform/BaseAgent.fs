@@ -1,6 +1,8 @@
 [<AutoOpen>]
 module Dap.Platform.BaseAgent
 
+module TE = Thoth.Json.Net.Encode
+
 open Dap.Prelude
 open Dap.Context
 open Dap.Platform.Internal.Env
@@ -72,7 +74,9 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
         let stateChanged = state.IsNone || not (newState =? Option.get state)
         state <- Some newState
         version <- version.IncMsg stateChanged
-
+    abstract member GetState : unit -> Json
+    default __.GetState () =
+        E.string <| state.Value.Actor.State.ToString ()
     interface IRunnable<'runner, 'runner, NoArgs,
                         AgentModel<'runner, 'args, 'model, 'msg, 'req, 'evt>,
                         AgentMsg<'runner, 'args, 'model, 'msg, 'req, 'evt>> with
@@ -165,6 +169,8 @@ type BaseAgent<'runner, 'args, 'model, 'msg, 'req, 'evt
     interface IAgent with
         member this.Env = this.Env
         member this.Ident = this.Ident
+        member this.Actor1 = this.Actor :> IActor
+        member this.GetState () = this.GetState ()
         member this.Handle req = this.Handle req
         member this.HandleAsync getReq = this.HandleAsync getReq
         member this.OnEvent = this.OnEvent

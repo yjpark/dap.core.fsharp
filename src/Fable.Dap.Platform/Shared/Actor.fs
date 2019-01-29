@@ -114,17 +114,19 @@ type internal Actor<'args, 'model, 'msg, 'req, 'evt
     member __.Version = version
     member this.AsActor3 = this :> IActor<'args, 'model, 'req, 'evt>
     member this.AsActor = this.AsActor3
-    interface IActor<'args, 'model, 'req, 'evt> with
+    interface IActor with
+        member __.Ident = agent.Ident
+        member __.Version = version
+    interface IActor<'req, 'evt> with
         member this.Handle req = this.Handle' req
 #if !FABLE_COMPILER
         member this.HandleAsync getReq = this.HandleAsync getReq
 #endif
         member __.OnEvent = onEvent.Publish
-        member __.Ident = agent.Ident
+        member this.AsActor1 = this :> IActor
+    interface IActor<'args, 'model, 'req, 'evt> with
         member __.Args = spec.Args
         member __.State = state
-        member __.Version = version
-        member this.AsActor1 = this :> IActor
         member this.AsActor2 = this :> IActor<'req, 'evt>
 
 let internal createActor'

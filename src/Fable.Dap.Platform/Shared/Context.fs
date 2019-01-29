@@ -17,6 +17,10 @@ and Agent<'context when 'context : not struct and 'context :> IContext> (param) 
     override this.Runner = this
     static member Spawn (param) = new Agent<'context> (param)
     member this.Context = this.Actor.State
+#if !FABLE_COMPILER
+    override this.GetState () =
+        toJson this.Actor.State
+#endif
 
 let private init : ActorInit<Args<'context>, 'context, Msg> =
     fun runner args ->
