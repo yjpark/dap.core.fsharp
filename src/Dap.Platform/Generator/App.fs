@@ -232,6 +232,7 @@ type ClassGenerator (meta : AppMeta) =
                 yield sprintf "type %s (param : EnvParam, args : %sArgs) =" param.Name param.Name
                 yield sprintf "    let env = Env.create param"
             yield sprintf "    let mutable setupResult : Result<bool, exn> option = None"
+            yield sprintf "    let onSetup = new Bus<Result<bool, exn>> (env, \"App.OnSetup\")"
         ]
     let getServiceField (packName : string) (service : AgentMeta) =
         let name = sprintf "%s%s" service.Key.AsCodeMemberName service.Kind.AsCodeMemberName
@@ -420,9 +421,11 @@ type ClassGenerator (meta : AppMeta) =
                 sprintf "            logInfo env \"%s.setupAsync\" \"Setup_Succeed\" (encodeJson 4 args)" param.Name
                 sprintf "            args.Setup this.As%s" param.Name
                 sprintf "            setupResult <- Some (Ok true)"
+                sprintf "            onSetup.Trigger setupResult.Value"
                 sprintf "        with e ->"
                 sprintf "            setupResult <- Some (Error e)"
                 sprintf "            logException env \"%s.setupAsync\" \"Setup_Failed\" (encodeJson 4 args) e" param.Name
+                sprintf "            onSetup.Trigger setupResult.Value"
                 sprintf "            raise e"
                 sprintf "    }"
             ]
@@ -440,6 +443,7 @@ type ClassGenerator (meta : AppMeta) =
             yield sprintf "    member __.Args : %sArgs = args" param.Name
             yield sprintf "    member __.Env : IEnv = env"
             yield sprintf "    member __.SetupResult : Result<bool, exn> option = setupResult"
+            yield sprintf "    member __.OnSetup : IBus<Result<bool, exn>> = onSetup.Publish"
             yield sprintf "    interface IApp<I%s>" param.Name
             if isFableGenerator then
                 yield sprintf "    interface INeedSetup with"
@@ -449,6 +453,7 @@ type ClassGenerator (meta : AppMeta) =
                 yield sprintf "    interface INeedSetupAsync with"
                 yield sprintf "        member this.SetupResult = this.SetupResult"
                 yield sprintf "        member this.SetupAsync () = this.SetupAsync ()"
+                yield sprintf "        member this.OnSetup = this.OnSetup"
             yield sprintf "    interface IRunner<I%s> with" param.Name
             yield sprintf "        member this.Runner = this.As%s" param.Name
             if not isFableGenerator then

@@ -1,0 +1,3 @@
+## Pending Changes
+
+- Dap.Platform 0.6.5

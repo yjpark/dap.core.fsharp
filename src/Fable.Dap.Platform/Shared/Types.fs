@@ -246,4 +246,5 @@ type INeedSetup =
 type INeedSetupAsync =
     abstract SetupResult : Result<bool, exn> option
     abstract SetupAsync : unit -> Task<unit>
+    abstract OnSetup : IBus<Result<bool, exn>> with get
 #endif

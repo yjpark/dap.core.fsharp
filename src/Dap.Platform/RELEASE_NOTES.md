@@ -1,3 +1,6 @@
+## 0.6.5
+* Add INeedSetupAsync.OnSetup
+
 ## 0.6.4
 * Add Env Req: TryFindService
 * Add Registry Service
