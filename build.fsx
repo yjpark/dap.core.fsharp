@@ -9,8 +9,9 @@ module NuGet = Dap.Build.NuGet
 
 let feed =
     NuGet.Feed.Create (
-        server = NuGet.ProGet "https://nuget.yjpark.org/nuget/dap",
-        apiKey = NuGet.Environment "API_KEY_nuget_yjpark_org"
+        apiKey = NuGet.Environment "API_KEY_nuget_org"
+        //server = NuGet.ProGet "https://nuget.yjpark.org/nuget/dap",
+        //apiKey = NuGet.Environment "API_KEY_nuget_yjpark_org"
     )
 
 let projects =
