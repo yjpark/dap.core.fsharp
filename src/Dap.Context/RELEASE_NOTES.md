@@ -1,2 +1,5 @@
+## 0.6.1
+* Improve logging with UnionSpec
+
 ## 0.6.0
 * Libs for data context related logic

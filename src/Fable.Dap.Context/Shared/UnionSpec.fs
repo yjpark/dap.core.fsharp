@@ -64,7 +64,8 @@ type FieldSpec = {
             )|> List.toArray
             |> Ok
         with e ->
-            Error (path, TD.FailMessage e.Message)
+            //logException (getLogging ()) "FieldSpec.GetFieldsDecoder" "Failed" (path, TE.toString 4 json) e
+            Error (path, TD.FailMessage <| e.ToString ())
 
 type JsonKind = JsonKind of string
 with

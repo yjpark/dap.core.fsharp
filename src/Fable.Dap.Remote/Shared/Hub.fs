@@ -65,11 +65,20 @@ type HubSpec<'req, 'evt
         try
             let kind = JsonKind.Cast json
             this.Request
-            |> List.find (fun s -> s.Case.Name = kind.Value)
-            |> (fun spec ->
-                let param = spec.ParamDecoder "" json |> Result.get
+            |> List.tryFind (fun s -> s.Case.Name = kind.Value)
+            |> Option.defaultWith (fun () ->
+                this.Request
+                |> List.iter (fun s ->
+                    logWarn runner "Hub.DecodeRequest" ("Supported_Kind:" + s.Case.Name) s
+                )
+                failWith "Invalid_Kind" kind.Value
+            )|> (fun spec ->
+                let param = spec.ParamDecoder "$" json
+                if param.IsError then
+                    logWarn runner "Hub.DecodeRequest" ("Decode_Failed:" + kind.Value) (spec, param)
+                    failWith ("Decode_Failed:" + kind.Value) param.ErrorValue
                 let callback = spec.GetCallback runner onHandled
-                FSharpValue.MakeUnion(spec.Case, Array.append param [| callback |]) :?> 'req
+                FSharpValue.MakeUnion(spec.Case, Array.append param.Value [| callback |]) :?> 'req
             )
         with e ->
         #if FABLE_COMPILER
@@ -77,7 +86,7 @@ type HubSpec<'req, 'evt
         #else
             let reqType = typeof<'req>.FullName
         #endif
-            logException runner "Hub.DecodeRequest" reqType json e
+            logException runner "Hub.DecodeRequest" reqType (E.encode 4 json) e
             raise e
 
 let forwardAck<'res, 'err when 'res :> IResult and 'err :> IError> (onHandled : OnHandled) (res : Result<'res, 'err>) : unit =

@@ -126,11 +126,23 @@ with
     member this.JsonDecoder : JsonDecoder<Instant> =
         fun path token ->
             if token.IsDate then
-                Ok <| Instant.FromDateTimeUtc (token.Value<DateTime> ())
+                TD.datetime path token
+                |> Result.map (fun dateTime ->
+                    let utcDateTime, changed =
+                        if dateTime.Kind = DateTimeKind.Utc then
+                            dateTime, false
+                        elif dateTime.Kind = DateTimeKind.Unspecified then
+                            DateTime.SpecifyKind (dateTime, DateTimeKind.Utc), false
+                        else
+                            DateTime.SpecifyKind (dateTime, DateTimeKind.Utc), true
+                    if changed then
+                        logWarn (getLogging ()) "Instant.JsonDecoder" "UTC_Conversion" (dateTime.Kind, dateTime, utcDateTime)
+                    Instant.FromDateTimeUtc utcDateTime
+                )
             elif token.IsString then
                 this.Parse (token.ToStringValue ())
                 |> Result.mapError (fun e ->
-                    (path, TD.BadPrimitiveExtra ("parse Instant failed", token, e.Message))
+                    (path, TD.BadPrimitiveExtra ("a string of Instant", token, e.Message))
                 )
             else
                 Error (path, TD.BadPrimitive("a string of Instant", token))
@@ -178,7 +190,7 @@ with
             elif token.IsString then
                 this.Parse (token.ToStringValue ())
                 |> Result.mapError (fun e ->
-                    (path, TD.BadPrimitiveExtra ("parse Duration failed", token, e.Message))
+                    (path, TD.BadPrimitiveExtra ("a string of Duration", token, e.Message))
                 )
             else
                 Error (path, TD.BadPrimitive("a string of Duration", token))

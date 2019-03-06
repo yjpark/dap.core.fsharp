@@ -1,5 +1,6 @@
 ## 0.6.5
 * Add INeedSetupAsync.OnSetup
+* Bugfix with Instant.JsonDecoder
 
 ## 0.6.4
 * Add Env Req: TryFindService
