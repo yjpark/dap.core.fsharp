@@ -12,7 +12,7 @@ let AppRunnerKind = "AppRunner"
 
 type IAppRunner =
     inherit IFeature
-    abstract Start<'app when 'app :> IPack and 'app :> INeedSetupAsync> : 'app -> unit
+    abstract Start<'app when 'app :> IBaseApp> : 'app -> unit
 
 [<AbstractClass>]
 type BasePlatform (logging : ILogging) =
@@ -24,7 +24,7 @@ type BasePlatform (logging : ILogging) =
 [<AbstractClass>]
 type BaseAppRunner (logging : ILogging) =
     inherit EmptyContext (logging, AppRunnerKind)
-    abstract member Start<'app when 'app :> IPack and 'app :> INeedSetupAsync> : 'app -> unit
+    abstract member Start<'app when 'app :> IBaseApp> : 'app -> unit
     interface IAppRunner with
         member this.Start app = this.Start app
 

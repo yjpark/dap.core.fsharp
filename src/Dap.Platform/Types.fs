@@ -173,10 +173,13 @@ and IPackAgent<'pack when 'pack :> IPack> =
     inherit IAgent
     abstract Pack : 'pack with get
 
-type IApp<'app when 'app :> IPack and 'app :> INeedSetupAsync> =
-    inherit IRunner<'app>
+type IBaseApp =
     inherit IPack
     inherit INeedSetupAsync
+
+type IApp<'app when 'app :> IBaseApp> =
+    inherit IRunner<'app>
+    inherit IBaseApp
 
 let DoQuit (forceQuit : bool) callback =
     DoQuit (forceQuit, callback)

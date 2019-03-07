@@ -1,3 +1,7 @@
+## 0.6.6
+* TODO: Release New Version
+* Define IBaseApp
+
 ## 0.6.5
 * Add INeedSetupAsync.OnSetup
 * Bugfix with Instant.JsonDecoder
