@@ -132,6 +132,11 @@ let addToAgent<'feature when 'feature :> IFeature> (agent : IAgent) : 'feature =
 let createLogging (args : LoggingArgs) : ILogging =
     let provider = create<ILoggingProvider> (getLogging ())
     provider.CreateLogging args
+    |> (fun logging ->
+        let logger = logging.GetLogger "LoadFeatures"
+        logFeatures logger features.Value
+        logging
+    )
 
 let tryStartApp<'app when 'app :> IBaseApp> (app : 'app) : unit =
     if app.SetupResult.IsNone then

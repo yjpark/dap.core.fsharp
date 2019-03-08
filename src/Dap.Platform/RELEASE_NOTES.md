@@ -1,3 +1,6 @@
+## 0.6.8
+* log loaded features to logging
+
 ## 0.6.7
 * add Feature.tryCreate<'feature>
 
