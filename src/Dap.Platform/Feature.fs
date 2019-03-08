@@ -110,18 +110,21 @@ let getFeatures (logging : ILogging) =
         features.Value
     lock getFeaturesLock exec
 
-
-let create<'feature when 'feature :> IFeature> (logging : ILogging) : 'feature =
+let tryCreate<'feature when 'feature :> IFeature> (logging : ILogging) : 'feature option =
     let kind = getKind typeof<'feature>
-    let notLoaded = features.IsNone
     getFeatures logging
     |> Map.tryFind kind
-    |> function
-        | Some type' ->
-            Activator.CreateInstance (type', [| (logging :> obj) |])
-            :?> 'feature
-        | None ->
-            failWith "Feature_Not_Found" kind
+    |> Option.map (fun type' ->
+        Activator.CreateInstance (type', [| (logging :> obj) |])
+        :?> 'feature
+    )
+
+let create<'feature when 'feature :> IFeature> (logging : ILogging) : 'feature =
+    tryCreate<'feature> logging
+    |> Option.defaultWith (fun () ->
+        let kind = getKind typeof<'feature>
+        failWith "Feature_Not_Found" kind
+    )
 
 let addToAgent<'feature when 'feature :> IFeature> (agent : IAgent) : 'feature =
     create<'feature> agent.Env.Logging

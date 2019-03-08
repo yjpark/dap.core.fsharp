@@ -1,3 +1,6 @@
+## 0.6.7
+* add Feature.tryCreate<'feature>
+
 ## 0.6.6
 * TODO: Release New Version
 * Define IBaseApp
