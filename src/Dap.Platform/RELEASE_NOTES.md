@@ -1,3 +1,7 @@
+## 0.6.9
+* Logging format tweak
+* add support for IHook
+
 ## 0.6.8
 * log loaded features to logging
 

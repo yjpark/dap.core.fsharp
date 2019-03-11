@@ -4,17 +4,17 @@ module Dap.Platform.Util
 open Dap.Prelude
 open Dap.Context
 
-let private tplMsgInfo = LogEvent.Template4<string, IMsg, string, obj>(LogLevelInformation, "[{Section}] {Msg} ~> {Info}: {Detail}")
+let private tplMsgInfo = LogEvent.Template4<string, IMsg, string, obj>(LogLevelInformation, "[{Section}] {Msg} ~> {Info} : {Detail}")
 
-let private tplMsgError = LogEvent.Template4<string, IMsg, string, obj>(LogLevelError, "[{Section}] {Msg} ~> {Err}: {Detail}")
+let private tplMsgError = LogEvent.Template4<string, IMsg, string, obj>(LogLevelError, "[{Section}] {Msg} ~> {Err} : {Detail}")
 
-let private tplReqInfo = LogEvent.Template4<string, IReq, string, obj>(LogLevelInformation, "[{Section}] {Req} ~> {Info}: {Detail}")
+let private tplReqInfo = LogEvent.Template4<string, IReq, string, obj>(LogLevelInformation, "[{Section}] {Req} ~> {Info} : {Detail}")
 
-let private tplReqError = LogEvent.Template4<string, IReq, string, obj>(LogLevelError, "[{Section}] {Req} ~> {Err}: {Detail}")
+let private tplReqError = LogEvent.Template4<string, IReq, string, obj>(LogLevelError, "[{Section}] {Req} ~> {Err} : {Detail}")
 
-let private tplEvtInfo = LogEvent.Template4<string, IEvt, string, obj>(LogLevelInformation, "[{Section}] {Evt} ~> {Info}: {Detail}")
+let private tplEvtInfo = LogEvent.Template4<string, IEvt, string, obj>(LogLevelInformation, "[{Section}] {Evt} ~> {Info} : {Detail}")
 
-let private tplEvtError = LogEvent.Template4<string, IEvt, string, obj>(LogLevelError, "[{Section}] {Evt} ~> {Err}: {Detail}")
+let private tplEvtError = LogEvent.Template4<string, IEvt, string, obj>(LogLevelError, "[{Section}] {Evt} ~> {Err} : {Detail}")
 
 let logMsgInfo (logger : ILogger) section (msg : IMsg) info detail : unit =
     logger.Log <| tplMsgInfo section msg info detail

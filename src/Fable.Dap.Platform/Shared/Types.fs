@@ -231,6 +231,9 @@ with
     interface IJson with
         member this.ToJson () = LinkStatus.JsonEncoder this
 
+type IHook =
+    inherit IContext
+
 type IFeature =
     inherit IContext
 

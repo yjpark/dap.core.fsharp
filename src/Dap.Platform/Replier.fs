@@ -8,11 +8,11 @@ open Dap.Prelude
 open Dap.Context
 
 let private tplAckReply = LogEvent.Template3<string, IReq, obj>(AckLogLevel, "[{Section}] {Req} ~> {Res}") "Ack"
-let private tplNakReply = LogEvent.Template4<string, IReq, string, obj>(LogLevelError, "[{Section}] {Req} ~> {Err}: {Detail}") "Nak"
+let private tplNakReply = LogEvent.Template4<string, IReq, string, obj>(LogLevelError, "[{Section}] {Req} ~> {Err} : {Detail}") "Nak"
 
 let private tplAckCallback = LogEvent.Template4<string, Duration, IReq, obj>(AckLogLevel, "[{Section}] {Duration}<ms> {Req} ~> {Res}") "Ack"
 let private tplSlowAckCallback = LogEvent.Template4<string, Duration, IReq, obj>(LogLevelInformation, "[{Section}] {Duration} {Req} ~> {Res}") "Ack"
-let private tplNakCallback = LogEvent.Template5<string, Duration, IReq, string, obj>(LogLevelError, "[{Section}] {Duration} {Req} ~> {Err}: {Detail}") "Nak"
+let private tplNakCallback = LogEvent.Template5<string, Duration, IReq, string, obj>(LogLevelError, "[{Section}] {Duration} {Req} ~> {Err} : {Detail}") "Nak"
 
 let private tplSlowStats = LogEvent.Template5<string, Duration, IReq, string, string>(LogLevelInformation, "[{Section}] {Duration} {Msg} ~> {Detail}\n{StackTrace}")
 

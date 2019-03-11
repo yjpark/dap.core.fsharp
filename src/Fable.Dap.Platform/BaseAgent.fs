@@ -5,7 +5,7 @@ open Dap.Prelude
 open Dap.Context
 open Dap.Platform
 
-let private tplAgentErr = LogEvent.Template3<string, obj, obj>(LogLevelFatal, "[{Section}] {Err}: {Detail}")
+let private tplAgentErr = LogEvent.Template3<string, obj, obj>(LogLevelFatal, "[{Section}] {Err} : {Detail}")
 let private tplAgentFailed = LogEvent.Template2WithException<string, obj>(LogLevelError, "[{Section}] {Msg} -> Failed")
 
 //Can NOT use same name in Actor implementation in Fable 1.x

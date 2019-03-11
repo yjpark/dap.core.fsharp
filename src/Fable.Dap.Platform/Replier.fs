@@ -5,10 +5,10 @@ open Dap.Prelude
 open Dap.Context
 
 let private tplAckReply = LogEvent.Template2<IReq, obj>(AckLogLevel, "[Ack] {Req} ~> {Res}")
-let private tplNakReply = LogEvent.Template3<IReq, string, obj>(LogLevelError, "[Nak] {Req} ~> {Err}: {Detail}")
+let private tplNakReply = LogEvent.Template3<IReq, string, obj>(LogLevelError, "[Nak] {Req} ~> {Err} : {Detail}")
 let private tplAckCallback = LogEvent.Template3<int, IReq, obj>(AckLogLevel, "[Ack] {Duration}<ms> {Req} ~> {Res}")
 let private tplSlowAckCallback = LogEvent.Template3<int, IReq, obj>(LogLevelInformation, "[Ack] {Duration}<ms> {Req} ~> {Res}")
-let private tplNakCallback = LogEvent.Template4<int, obj, string, obj>(LogLevelError, "[Nak] {Duration}<ms> {Req} ~> {Err}: {Detail}")
+let private tplNakCallback = LogEvent.Template4<int, obj, string, obj>(LogLevelError, "[Nak] {Duration}<ms> {Req} ~> {Err} : {Detail}")
 
 let ack<'res> (req : IReq) (res : 'res) : Reply<'res> =
     Ack (req, res)

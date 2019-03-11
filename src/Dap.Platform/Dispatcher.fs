@@ -15,8 +15,8 @@ type DispatcherDetail =
     System.Type * //MsgType
     bool //Has Dispatch
 
-let private tplDispatchError = LogEvent.Template3<MessageDetail, obj, DispatcherDetail>(LogLevelError, "[Dispatch] {Msg} ~> {Err}: {Dispatcher}")
-let private tplInvalidMsgError = LogEvent.Template4<Type, MessageDetail, obj, DispatcherDetail>(LogLevelError, "[Post] <{ExpectType}> {Msg} ~> {Err}: {Dispatcher}")
+let private tplDispatchError = LogEvent.Template3<MessageDetail, obj, DispatcherDetail>(LogLevelError, "[Dispatch] {Msg} ~> {Err} : {Dispatcher}")
+let private tplInvalidMsgError = LogEvent.Template4<Type, MessageDetail, obj, DispatcherDetail>(LogLevelError, "[Post] <{ExpectType}> {Msg} ~> {Err} : {Dispatcher}")
 
 type IDispatcher<'msg> when 'msg :> IMsg =
     inherit IRunner

@@ -1,3 +1,6 @@
+## 0.6.2
+* Logging format tweak
+
 ## 0.6.1
 * Improve logging with UnionSpec
 

@@ -1,3 +1,6 @@
+## 0.6.3
+* Logging format tweak
+
 ## 0.6.2
 * Cleanup operators: |-|> |=|> |-|-
 

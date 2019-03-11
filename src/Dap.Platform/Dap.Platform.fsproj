@@ -5,7 +5,7 @@
     <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
     <PackageTags>fsharp;dap;</PackageTags>
     <Authors>YJ Park</Authors>
-    <Version>0.6.8</Version>
+    <Version>0.6.9</Version>
     <Description>Dap Platform, elmish actor runtime</Description>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
@@ -37,6 +37,8 @@
     <Compile Include="Helper.fs" />
     <Compile Include="Logging.fs" />
     <Compile Include="Features.fs" />
+    <Compile Include="Bootstrap.fs" />
+    <Compile Include="Hook.fs" />
     <Compile Include="Feature.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Actor.fs" />
     <Compile Include="Replier.fs" />

@@ -1,3 +1,6 @@
+## 0.6.1
+* Logging format tweak
+
 ## 0.6.0
 * Logging abstraction
 * `^<|` as right associative `<|`

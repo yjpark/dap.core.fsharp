@@ -205,12 +205,12 @@ type LogEvent with
                 Exception = Some e
             }
 
-let private tplInfo = LogEvent.Template3<string, string, obj>(LogLevelInformation, "[{Section}] {Info}: {Detail}")
+let private tplInfo = LogEvent.Template3<string, string, obj>(LogLevelInformation, "[{Section}] {Info} : {Detail}")
 
-let private tplWarn = LogEvent.Template3<string, string, obj>(LogLevelWarning, "[{Section}] {Warn}: {Detail}")
-let private tplError = LogEvent.Template3<string, string, obj>(LogLevelError, "[{Section}] {Err}: {Detail}")
+let private tplWarn = LogEvent.Template3<string, string, obj>(LogLevelWarning, "[{Section}] {Warn} : {Detail}")
+let private tplError = LogEvent.Template3<string, string, obj>(LogLevelError, "[{Section}] {Err} : {Detail}")
 
-let private tplException = LogEvent.Template3WithException<string, string, obj>(LogLevelError, "[{Section}] {Err}: {Detail}")
+let private tplException = LogEvent.Template3WithException<string, string, obj>(LogLevelError, "[{Section}] {Err} : {Detail}")
 
 let log (evt : LogEvent) (logger : ILogger) =
     logger.Log evt
