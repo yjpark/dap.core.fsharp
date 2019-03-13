@@ -38,8 +38,9 @@
     <Compile Include="Logging.fs" />
     <Compile Include="Features.fs" />
     <Compile Include="Bootstrap.fs" />
-    <Compile Include="Hook.fs" />
     <Compile Include="Feature.fs" />
+    <Compile Include="Hook.fs" />
+    <Compile Include="CliHook.fs" />
     <Compile Include="../Fable.Dap.Platform/Shared/Actor.fs" />
     <Compile Include="Replier.fs" />
     <Compile Include="Tasks.fs" />
@@ -75,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.Context\Dap.Context.fsproj" />
+    <ProjectReference Include="..\Dap.Platform.Cli\Dap.Platform.Cli.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-62925-02" PrivateAssets="All" />

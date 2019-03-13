@@ -21,6 +21,7 @@ let projects =
     ++ "src/Fable.Dap.Context/*.fsproj"
     ++ "src/Dap.Context/*.fsproj"
     ++ "src/Fable.Dap.Platform/*.fsproj"
+    ++ "src/Dap.Platform.Cli/*.csproj"
     ++ "src/Dap.Platform/*.fsproj"
     ++ "src/Fable.Dap.WebSocket/*.fsproj"
     ++ "src/Dap.WebSocket/*.fsproj"

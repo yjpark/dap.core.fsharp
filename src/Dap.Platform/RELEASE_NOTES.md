@@ -1,4 +1,8 @@
 ## 0.6.9
+* TODO:RELEASE
+* support bootstrap ICliHook
+
+## 0.6.9
 * Logging format tweak
 * add support for IHook
 

@@ -38,8 +38,9 @@ let createLogging (args : LoggingArgs) : ILogging =
     provider.CreateLogging args
     |> (fun logging ->
         let logger = logging.GetLogger "Bootstrap"
-        logHooks logging
         logFeatures logger
+        logHooks logging
+        logCliHooks logging
         logging
     )
 

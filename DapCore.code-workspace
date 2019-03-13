@@ -16,6 +16,9 @@
 			"path": "src/Fable.Dap.Platform"
 		},
 		{
+			"path": "src/Dap.Platform.Cli"
+		},
+		{
 			"path": "src/Dap.Platform"
 		},
 		{

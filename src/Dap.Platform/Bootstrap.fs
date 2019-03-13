@@ -8,6 +8,7 @@ open System.Reflection
 open Dap.Prelude
 open Dap.Context
 open Dap.Context.Unsafe
+open Dap.Platform.Cli
 
 let private typeIObj = typeof<IObj>
 let private typeILogger = typeof<ILogger>
@@ -19,12 +20,16 @@ let private typeIFeature = typeof<IFeature>
 let private typeIFallback = typeof<IFallback>
 let private typeIOverride = typeof<IOverride>
 let private typeIHook = typeof<IHook>
+let private typeICliHook = typeof<ICliHook>
+
+let private isFeature (type' : Type) =
+    Array.contains typeIFeature <| type'.GetInterfaces ()
 
 let private isHook (type' : Type) =
     Array.contains typeIHook <| type'.GetInterfaces ()
 
-let private isFeature (type' : Type) =
-    Array.contains typeIFeature <| type'.GetInterfaces ()
+let private isCliHook (type' : Type) =
+    Array.contains typeICliHook <| type'.GetInterfaces ()
 
 let private isOverride (type' : Type) =
     Array.contains typeIOverride <| type'.GetInterfaces ()
@@ -36,8 +41,9 @@ let private isFallback (type' : Type) =
         Array.contains typeIFallback <| type'.GetInterfaces ()
 
 let mutable private bootstrapped : bool = false
-let mutable private hooks : Map<string, Type list> = Map.empty
 let mutable private features : Map<string, Type> = Map.empty
+let mutable private hooks : Map<string, Type list> = Map.empty
+let mutable private cliHooks : Map<string, Type list> = Map.empty
 
 let getKind (type' : Type) = type'.FullName
 
@@ -69,14 +75,12 @@ let private getHookKinds (type' : Type) =
             && t <> typeIHook
     )|> Array.map getKind
 
-let private addHook (logger : ILogger) ((kind, type') : string * Type) : unit =
-    match Map.tryFind kind hooks with
-    | None ->
-        hooks <-
-            Map.add kind [ type' ] hooks
-    | Some types ->
-        hooks <-
-            Map.add kind (type' :: types) hooks
+let private getCliHookKinds (type' : Type) =
+    type'.GetInterfaces ()
+    |> Array.filter (fun t ->
+        (t.GetGenericArguments ()) .Length = 0
+            && t <> typeICliHook
+    )|> Array.map getKind
 
 let private addFeature (logger : ILogger) ((kind, type') : string * Type) : unit =
     match Map.tryFind kind features with
@@ -95,12 +99,37 @@ let private addFeature (logger : ILogger) ((kind, type') : string * Type) : unit
         else
             logError logger "Feature_Conflicted" kind (oldType, type')
 
+let private addHook (logger : ILogger) ((kind, type') : string * Type) : unit =
+    match Map.tryFind kind hooks with
+    | None ->
+        hooks <-
+            Map.add kind [ type' ] hooks
+    | Some types ->
+        hooks <-
+            Map.add kind (type' :: types) hooks
+
+let private addCliHook (logger : ILogger) ((kind, type') : string * Type) : unit =
+    match Map.tryFind kind cliHooks with
+    | None ->
+        cliHooks <-
+            Map.add kind [ type' ] cliHooks
+    | Some types ->
+        cliHooks <-
+            Map.add kind (type' :: types) cliHooks
+
 let private tryLoadTypes (logger : ILogger) (assembly : Assembly) =
     try
         assembly.GetTypes ()
     with e ->
         logWarn logger "LoadTypes_Failed" assembly.FullName (e)
         [| |]
+
+let logFeatures (logger : ILogger) =
+    logWarn logger "Features" "Total" (sprintf "[%d]" features.Count)
+    features
+    |> Map.iter (fun kind type' ->
+        logWarn logger "Features" (sprintf "<%s>" kind) type'.FullName
+    )
 
 let logHooks (logger : ILogger) =
     logWarn logger "Hooks" "Total" (sprintf "[%d]" hooks.Count)
@@ -114,11 +143,16 @@ let logHooks (logger : ILogger) =
         )
     )
 
-let logFeatures (logger : ILogger) =
-    logWarn logger "Features" "Total" (sprintf "[%d]" features.Count)
-    features
-    |> Map.iter (fun kind type' ->
-        logWarn logger "Features" (sprintf "<%s>" kind) type'.FullName
+let logCliHooks (logger : ILogger) =
+    logWarn logger "CliHooks" "Total" (sprintf "[%d]" cliHooks.Count)
+    cliHooks
+    |> Map.iter (fun kind types ->
+        let tip = (sprintf "<%s>" kind)
+        logWarn logger "CliHooks" tip (sprintf "[%d]" types.Length)
+        types
+        |> List.iter (fun type' ->
+            logWarn logger "CliHooks" tip type'.FullName
+        )
     )
 
 let private bootstrap (logging : ILogging) =
@@ -129,13 +163,6 @@ let private bootstrap (logging : ILogging) =
         tryLoadTypes logger assembly
         |> Array.iter (fun t ->
             if not t.IsInterface && not t.IsAbstract then
-                if isHook t then
-                    let hookKinds = getHookKinds t
-                    logInfo logger "Hook" t.FullName hookKinds
-                    hookKinds
-                    |> Array.iter (fun kind ->
-                        addHook logger (kind, t)
-                    )
                 if isFeature t then
                     let featureKinds = getFeatureKinds t
                     logInfo logger "Feature" t.FullName featureKinds
@@ -143,13 +170,35 @@ let private bootstrap (logging : ILogging) =
                     |> Array.iter (fun kind ->
                         addFeature logger (kind, t)
                     )
+                if isHook t then
+                    let hookKinds = getHookKinds t
+                    logInfo logger "Hook" t.FullName hookKinds
+                    hookKinds
+                    |> Array.iter (fun kind ->
+                        addHook logger (kind, t)
+                    )
+                if isCliHook t then
+                    let hookKinds = getCliHookKinds t
+                    logInfo logger "CliHook" t.FullName hookKinds
+                    hookKinds
+                    |> Array.iter (fun kind ->
+                        addCliHook logger (kind, t)
+                    )
         )
     )
-    logHooks logger
     logFeatures logger
+    logHooks logger
+    logCliHooks logger
     bootstrapped <- true
 
 let private bootstrapLock = obj ()
+
+let getFeatures (logging : ILogging) =
+    let exec = fun () ->
+        if not bootstrapped then
+            bootstrap logging
+        features
+    lock bootstrapLock exec
 
 let getHooks (logging : ILogging) =
     let exec = fun () ->
@@ -158,9 +207,9 @@ let getHooks (logging : ILogging) =
         hooks
     lock bootstrapLock exec
 
-let getFeatures (logging : ILogging) =
+let getCliHooks (logging : ILogging) =
     let exec = fun () ->
         if not bootstrapped then
             bootstrap logging
-        features
+        cliHooks
     lock bootstrapLock exec
