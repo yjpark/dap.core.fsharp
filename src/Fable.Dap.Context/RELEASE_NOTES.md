@@ -1,3 +1,6 @@
+## 0.6.2
+* Bugfix with newLuidOfKind
+
 ## 0.6.1
 * Logging format tweak
 

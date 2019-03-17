@@ -24,18 +24,18 @@ type Key = string
 type Index = int
 
 let private newLuidOfKindLock = obj ()
+let mutable nextLuidOfKinds : Map<string, int> = Map.empty
 
 let newLuidOfKind' kind =
-    let mutable nexts : Map<string, int> = Map.empty
     let calc = fun () ->
-        nexts
+        nextLuidOfKinds
         |> Map.tryFind kind
         |> function
             | None ->
-                nexts <- nexts |> Map.add kind 1
+                nextLuidOfKinds <- nextLuidOfKinds |> Map.add kind 1
                 1
             | Some v ->
-                nexts <- nexts |> Map.add kind (v + 1)
+                nextLuidOfKinds <- nextLuidOfKinds |> Map.add kind (v + 1)
                 (v + 1)
 #if FABLE_COMPILER
     calc ()
