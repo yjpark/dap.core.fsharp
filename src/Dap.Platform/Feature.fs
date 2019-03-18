@@ -27,7 +27,7 @@ let create<'feature when 'feature :> IFeature> (logging : ILogging) : 'feature =
     tryCreate<'feature> logging
     |> Option.defaultWith (fun () ->
         let kind = getKind typeof<'feature>
-        failWith "Feature_Not_Found" kind
+        failWith "Feature_Not_Created" kind
     )
 
 let addToAgent<'feature when 'feature :> IFeature> (agent : IAgent) : 'feature =

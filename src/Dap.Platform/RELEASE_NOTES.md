@@ -1,5 +1,4 @@
-## 0.6.9
-* TODO:RELEASE
+## 0.6.10
 * support bootstrap ICliHook
 
 ## 0.6.9
