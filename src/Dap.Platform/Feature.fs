@@ -19,7 +19,7 @@ let tryCreate<'feature when 'feature :> IFeature> (logging : ILogging) : 'featur
             :?> 'feature
             |> Some
         with e ->
-            logException logging "Feature.tryCreate" "Exception_Raised" typeof<'feature> e
+            logException logging "Feature.tryCreate" "Exception_Raised" (typeof<'feature>, type') e
             None
     )
 
