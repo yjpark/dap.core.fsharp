@@ -1,3 +1,6 @@
+## 0.6.2
+* and AutoConnect args for WebSocket Proxy
+
 ## 0.6.1
 * Improve logging with HubSpec
 

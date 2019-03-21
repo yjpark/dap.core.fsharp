@@ -6,7 +6,7 @@
     <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
     <PackageTags>fsharp;dap;</PackageTags>
     <Authors>YJ Park</Authors>
-    <Version>0.6.0</Version>
+    <Version>0.6.1</Version>
     <Description>Dap Remote on fable</Description>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
