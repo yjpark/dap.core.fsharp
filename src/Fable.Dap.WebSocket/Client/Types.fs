@@ -12,13 +12,15 @@ type Args<'pkt> = {
     Encode : Encode<'pkt>
     Decode : Decode<'pkt>
     Uri : string
+    AutoConnect : bool
     LogTraffic : bool
 } with
-    static member Create encode decode uri logTraffic =
+    static member Create encode decode uri autoConnect logTraffic =
         {
             Encode = encode
             Decode = decode
             Uri = uri
+            AutoConnect = autoConnect
             LogTraffic = logTraffic
         }
 

@@ -20,10 +20,14 @@ module WebSocketClientTypes = Dap.WebSocket.Client.Types
 let private doReconnect : ActorOperate<'req, 'res, 'evt> =
     fun runner (model, cmd) ->
         let socket = model.Extra.Socket |> Option.get
-        let cts = new CancellationTokenSource ()
-        socket.Actor.Handle <| WebSocketClientTypes.DoConnect runner.Actor.Args.Uri cts.Token None
-        (runner, model, cmd)
-        |=|> updateExtra (fun x -> {x with Cts = cts})
+        let status = socket.Actor.State.Status
+        if status = LinkStatus.Linked || status = LinkStatus.Linking then
+            (model, cmd)
+        else
+            let cts = new CancellationTokenSource ()
+            socket.Actor.Handle <| WebSocketClientTypes.DoConnect runner.Actor.Args.Uri cts.Token None
+            (runner, model, cmd)
+            |=|> updateExtra (fun x -> {x with Cts = cts})
 
 let internal doSend (runner : Proxy<'req, 'res, 'evt>)
                     (pkt : Packet) (callback : Callback<DateTime>) : unit =
@@ -62,7 +66,12 @@ let private setSocket (socket : WebSocketClientTypes.Agent<Packet>) : ActorOpera
         | None ->
             socket.Actor.OnEvent.AddWatcher runner "SocketEvt" (runner.Deliver << SubEvt << SocketEvt)
             updateModel (fun m -> m.WithExtra {m.Extra with Socket = Some socket})
-            |-|- addFutureCmd 1.0<second> ^<| SubEvt DoReconnect
+            |-|- (
+                if runner.Actor.Args.AutoConnect then
+                    addFutureCmd 1.0<second> ^<| SubEvt DoReconnect
+                else
+                    noOperation
+            )
         | Some socket' ->
             logError runner "WebSocketGateway" "Socket_Exist" (socket', socket)
             noOperation

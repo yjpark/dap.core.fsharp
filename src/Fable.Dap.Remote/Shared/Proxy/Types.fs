@@ -18,14 +18,16 @@ and Args<'extra, 'sub, 'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEven
     Sub : SubSpec<'extra, 'sub, 'req, 'res, 'evt>
     Spec : StubSpec<'req, 'res, 'evt>
     Uri : string
-    RetryDelay : float<second> option
+    AutoConnect : bool
+    mutable RetryDelay : float<second> option
     LogTraffic : bool
 } with
-    static member Create sub spec uri retryDelay logTraffic =
+    static member Create sub spec uri autoConnect retryDelay logTraffic =
         {
             Sub = sub
             Spec = spec
             Uri = uri
+            AutoConnect = autoConnect
             RetryDelay = retryDelay
             LogTraffic = logTraffic
         }

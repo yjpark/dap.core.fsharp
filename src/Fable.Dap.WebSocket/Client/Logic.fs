@@ -93,11 +93,16 @@ let private update : Update<Agent<'pkt>, Model<'pkt>, Msg<'pkt>> =
         <| runner <| (model, noCmd)
 
 let private init : ActorInit<Args<'pkt>, Model<'pkt>, Msg<'pkt>> =
-    fun _runner _args ->
+    fun _runner args ->
+        let cmd =
+            if args.AutoConnect then
+                cmdOfMsg <| WebSocketReq DoConnect
+            else
+                noCmd
         ({
             Socket = None
             Status = LinkStatus.NoLink
-        }, cmdOfMsg <| WebSocketReq DoConnect)
+        }, cmd)
 
 let spec<'pkt> (args : Args<'pkt>) =
     new ActorSpec<Agent<'pkt>, Args<'pkt>, Model<'pkt>, Msg<'pkt>, Req<'pkt>, Evt<'pkt>>

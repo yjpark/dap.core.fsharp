@@ -75,7 +75,7 @@ let internal doInit : ActorOperate<'req, 'res, 'evt> =
                 decodeJson Packet.JsonDecoder pkt
             | _ ->
                 castJson Packet.JsonDecoder json
-        let args = WebSocketTypes.Args<Packet>.Create encode decode runner.Actor.Args.Uri false
+        let args = WebSocketTypes.Args<Packet>.Create encode decode runner.Actor.Args.Uri runner.Actor.Args.AutoConnect false
         let spec = WebSocketLogic.spec args
         let socket =
             runner.Env

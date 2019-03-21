@@ -8,6 +8,7 @@ open Dap.Prelude
 open Dap.Platform
 open Dap.WebSocket
 open Dap.WebSocket.Types
+open System.Net.WebSockets
 
 let private doReadPktAsync (link : Link<'socket>)
                             : GetTask<Agent<'socket, 'pkt, 'req>, bool> =
@@ -86,7 +87,13 @@ let internal tryCloseSocketAsync : GetTask<Agent<'socket, 'pkt, 'req>, unit> =
                 logInfo runner "Link" "Closing" link.Ident
                 try
                     do! socket.CloseAsync (WebSocketCloseStatus.Empty, "", link.Token)
-                with e ->
+                with
+                | :? WebSocketException as e ->
+                    if e.WebSocketErrorCode = WebSocketError.ConnectionClosedPrematurely then
+                        logWarn runner "Link" "ConnectionClosedPrematurely" link.Ident
+                    else
+                        logException runner "Link" "Exception_Raised" link.Ident e
+                | _ as e ->
                     logException runner "Link" "Exception_Raised" link.Ident e
         | None -> ()
         runner.Deliver <| InternalEvt ^<| DoRefreshStatus None

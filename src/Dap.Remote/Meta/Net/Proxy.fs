@@ -40,7 +40,8 @@ type M with
         M.agent (args, type', spec, kind, ?key = key, aliases = [alias])
 
 type M with
-    static member proxy (reqResEvt : string, stubSpec : string, url : string, ?retryDelay : float<second>, ?logTraffic : bool, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+    static member proxy (reqResEvt : string, stubSpec : string, url : string, ?autoConnect : bool, ?retryDelay : float<second>, ?logTraffic : bool, ?kind : Kind, ?key : Key, ?aliases : ModuleAlias list) =
+        let autoConnect = defaultArg autoConnect true
         let logTraffic = defaultArg logTraffic true
         let kind = defaultArg kind Dap.Remote.WebSocketProxy.Proxy.Kind
         let retryDelay =
@@ -51,7 +52,7 @@ type M with
         let alias = "Proxy", "Dap.Remote.WebSocketProxy.Proxy"
         let args = sprintf "Proxy.Args<%s>" reqResEvt
         let args =
-            sprintf "(Proxy.args %s %s %s %b)" stubSpec url retryDelay logTraffic
+            sprintf "(Proxy.args %s %s %b %s %b)" stubSpec url autoConnect retryDelay logTraffic
             |> CodeArgs args
         let type' = sprintf "Proxy.Proxy<%s>" reqResEvt
         let spec = "Dap.Remote.Proxy.Logic.Logic.spec"

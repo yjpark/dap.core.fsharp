@@ -27,3 +27,5 @@ let args (stubSpec : Stub.StubSpec<'req, 'res, 'evt>) uri retryDelay logTraffic 
         DoSend = Logic.doSend
     }
     Args<'req, 'res, 'evt>.Create subSpec stubSpec uri retryDelay logTraffic
+let doReconnect<'req, 'res, 'evt when 'req :> IRequest and 'evt :> IEvent> (proxy : Proxy<'req, 'res, 'evt>) =
+    proxy.Deliver <| BaseTypes.SubEvt DoReconnect
