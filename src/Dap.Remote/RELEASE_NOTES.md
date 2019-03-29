@@ -1,3 +1,6 @@
+## 0.6.3
+* Make some Proxy Args mutable
+
 ## 0.6.2
 * and AutoConnect args for WebSocket Proxy
 

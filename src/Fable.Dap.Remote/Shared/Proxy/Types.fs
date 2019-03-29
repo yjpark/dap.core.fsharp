@@ -17,10 +17,10 @@ type SubSpec<'extra, 'sub, 'req, 'res, 'evt> when 'req :> IRequest and 'evt :> I
 and Args<'extra, 'sub, 'req, 'res, 'evt> when 'req :> IRequest and 'evt :> IEvent = {
     Sub : SubSpec<'extra, 'sub, 'req, 'res, 'evt>
     Spec : StubSpec<'req, 'res, 'evt>
-    Uri : string
-    AutoConnect : bool
+    mutable Uri : string
+    mutable AutoConnect : bool
     mutable RetryDelay : float<second> option
-    LogTraffic : bool
+    mutable LogTraffic : bool
 } with
     static member Create sub spec uri autoConnect retryDelay logTraffic =
         {
