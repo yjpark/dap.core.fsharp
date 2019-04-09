@@ -5,7 +5,7 @@
     <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
     <PackageTags>fsharp;dap;</PackageTags>
     <Authors>YJ Park</Authors>
-    <Version>0.6.3</Version>
+    <Version>0.6.4</Version>
     <Description>Dap Remote, link client and server actors in generic way</Description>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
@@ -38,6 +38,7 @@
     <Compile Include="Generator/Types.fs" />
     <Compile Include="Generator/Stub.fs" />
     <Compile Include="Generator/Helper.fs" />
+    <Compile Include="Address.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.WebSocket\Dap.WebSocket.fsproj" />

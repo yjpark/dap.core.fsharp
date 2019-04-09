@@ -31,6 +31,10 @@ type M with
         |> fun m -> m.ToAlias "Instant"
 
 type M with
+    static member timeSpan (key, ?value : string, ?validator : string) =
+        let value = value |> Option.defaultValue "System.TimeSpan.Zero"
+        M.basic ("timeSpan", key, value, ?validator=validator)
+        |> fun m -> m.ToAlias "System.TimeSpan"
     static member duration (key, ?value : string, ?validator : string) =
         let value = value |> Option.defaultValue "noDuration"
         M.basic ("duration", key, value, ?validator=validator)

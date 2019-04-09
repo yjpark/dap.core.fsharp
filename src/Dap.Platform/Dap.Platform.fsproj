@@ -5,7 +5,7 @@
     <PackageProjectUrl>https://github.com/yjpark/dap.core.fsharp</PackageProjectUrl>
     <PackageTags>fsharp;dap;</PackageTags>
     <Authors>YJ Park</Authors>
-    <Version>0.6.10</Version>
+    <Version>0.6.11</Version>
     <Description>Dap Platform, elmish actor runtime</Description>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
@@ -34,6 +34,7 @@
     <Compile Include="Dispatcher.fs" />
     <Compile Include="Runnable.fs" />
     <Compile Include="Types.fs" />
+    <Compile Include="Sha256.fs" />
     <Compile Include="Helper.fs" />
     <Compile Include="Logging.fs" />
     <Compile Include="Features.fs" />

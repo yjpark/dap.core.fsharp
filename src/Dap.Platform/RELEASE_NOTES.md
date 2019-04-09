@@ -1,3 +1,6 @@
+## 0.6.11
+* Add M.timeSpan
+
 ## 0.6.10
 * support bootstrap ICliHook
 

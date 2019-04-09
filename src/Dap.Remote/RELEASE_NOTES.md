@@ -1,3 +1,6 @@
+## 0.6.4
+* Add Address.fs
+
 ## 0.6.3
 * Make some Proxy Args mutable
 
