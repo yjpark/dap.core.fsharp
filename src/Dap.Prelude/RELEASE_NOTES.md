@@ -1,3 +1,6 @@
+## 0.6.2
+* Task.mapList and Task.chooseList
+
 ## 0.6.1
 * Logging format tweak
 

@@ -3,7 +3,8 @@
 module Dap.Platform.Feature
 
 open System
-open System.Reflection
+open System.Threading.Tasks
+open FSharp.Control.Tasks.V2
 
 open Dap.Prelude
 open Dap.Context
@@ -55,6 +56,18 @@ let startApp<'app when 'app :> IBaseApp> (app : 'app) : unit =
     else
         failWith "Already_Setup" app.SetupResult.Value
 
+let tryStartAppAsync<'app when 'app :> IBaseApp> (app : 'app) : Task<unit> = task {
+    if app.SetupResult.IsNone then
+        let runner = create<IAppRunner> (app.Env.Logging)
+        do! runner.StartAsync app
+}
+
+let startAppAsync<'app when 'app :> IBaseApp> (app : 'app) : Task<unit> =
+    if app.SetupResult.IsNone then
+        tryStartAppAsync<'app> app
+    else
+        failWith "Already_Setup" app.SetupResult.Value
+
 type IApp<'app when 'app :> IBaseApp> with
     member this.SetupStarted =
         this.SetupResult.IsSome
@@ -71,3 +84,7 @@ type IApp<'app when 'app :> IBaseApp> with
         tryStartApp this.Runner
     member this.Start () =
         startApp this.Runner
+    member this.TryStartAsync () =
+        tryStartAppAsync this.Runner
+    member this.StartAsync () =
+        startAppAsync this.Runner

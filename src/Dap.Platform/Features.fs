@@ -1,6 +1,8 @@
 [<AutoOpen>]
 module Dap.Platform.Features
 
+open System.Threading.Tasks
+
 open Dap.Prelude
 open Dap.Context
 
@@ -13,6 +15,7 @@ let AppRunnerKind = "AppRunner"
 type IAppRunner =
     inherit IFeature
     abstract Start<'app when 'app :> IBaseApp> : 'app -> unit
+    abstract StartAsync<'app when 'app :> IBaseApp> : 'app -> Task<unit>
 
 [<AbstractClass>]
 type BasePlatform (logging : ILogging) =
@@ -24,12 +27,16 @@ type BasePlatform (logging : ILogging) =
 [<AbstractClass>]
 type BaseAppRunner (logging : ILogging) =
     inherit EmptyContext (logging, AppRunnerKind)
+    abstract member StartAsync<'app when 'app :> IBaseApp> : 'app -> Task<unit>
     abstract member Start<'app when 'app :> IBaseApp> : 'app -> unit
+    default this.Start app =
+        app.Env.RunTask0 raiseOnFailed (fun _ -> this.StartAsync app)
     interface IAppRunner with
         member this.Start app = this.Start app
+        member this.StartAsync app = this.StartAsync app
 
 type AppRunner (logging) =
     inherit BaseAppRunner (logging)
-    override this.Start app =
-        app.Env.RunTask0 raiseOnFailed (fun _ -> app.SetupAsync ())
+    override this.StartAsync app =
+        app.SetupAsync ()
     interface IFallback

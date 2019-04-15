@@ -1,3 +1,6 @@
+## 0.6.12
+* add StartAsync()
+
 ## 0.6.11
 * Add M.timeSpan
 
