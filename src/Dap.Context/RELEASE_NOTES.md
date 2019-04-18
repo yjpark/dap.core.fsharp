@@ -1,3 +1,6 @@
+## 0.6.4
+* Update Thoth.Json.Net to 3.0
+
 ## 0.6.3
 * Bugfix with newLuidOfKind
 

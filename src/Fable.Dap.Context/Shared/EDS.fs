@@ -80,7 +80,7 @@ type E = JsonEncodeHelper with
 
 type D = JsonDecodeHelper with
     static member failWith path err detail =
-        Error (path, TD.FailMessage ^<| sprintf "%s: %A" err detail)
+        Error (path, JsonErrorReason.FailMessage ^<| sprintf "%s: %A" err detail)
     static member json : JsonDecoder<Json> = TD.value
     static member unit : JsonDecoder<unit> = TD.succeed ()
     static member long = TD.int64
@@ -200,7 +200,7 @@ type E with
     static member option (encoder : JsonEncoder<'a>) = TE.option encoder
 
 type D with
-    static member unwrap (path : string) (decoder : JsonDecoder<'a>) (value : Json) = TD.unwrap path decoder value
+    //static member unwrap (path : string) (decoder : JsonDecoder<'a>) (value : Json) = TD.unwrap path decoder value
     static member fromValue (path : string) (decoder : JsonDecoder<'a>) = TD.fromValue path decoder
     static member fromString (decoder : JsonDecoder<'a>) = TD.fromString decoder
     static member string = TD.string

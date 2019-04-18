@@ -1,3 +1,6 @@
+## 0.6.5
+* Update Thoth.Json.Net to 3.0
+
 ## 0.6.4
 * Add Address.fs
 

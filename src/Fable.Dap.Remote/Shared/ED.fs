@@ -31,8 +31,8 @@ type E with
     static member inline encodeFable (indent : int) (v : 't) = fableEncodeJson indent v
 
 type D with
-    static member inline fable<'t> (path : string) (json : Json) : Result<'t, TD.DecoderError> =
+    static member inline fable<'t> (path : string) (json : Json) : Result<'t, JsonDecoderError> =
         try
             Ok <| fableCastJson<'t> json
         with e ->
-            Error (path, TD.FailMessage e.Message)
+            Error (path, JsonErrorReason.FailMessage e.Message)

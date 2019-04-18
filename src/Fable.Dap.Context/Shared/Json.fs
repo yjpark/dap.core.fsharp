@@ -7,21 +7,27 @@ open Microsoft.FSharp.Reflection
 #if FABLE_COMPILER
 open Fable.Core
 open Fable.Core.JsInterop
-open Fable.Import
 
 module TE = Thoth.Json.Encode
 module TD = Thoth.Json.Decode
-type Json = TE.Value
+
+type Json = Thoth.Json.JsonValue
+type JsonDecoder<'json> = Thoth.Json.Decoder<'json>
+type JsonDecoderError = Thoth.Json.DecoderError
+type JsonErrorReason = Thoth.Json.ErrorReason
 #else
 open Newtonsoft.Json.Linq
 module TE = Thoth.Json.Net.Encode
 module TD = Thoth.Json.Net.Decode
+
 type Json = JToken
+type JsonDecoder<'json> = Thoth.Json.Net.Decoder<'json>
+type JsonDecoderError = Thoth.Json.Net.DecoderError
+type JsonErrorReason = Thoth.Json.Net.ErrorReason
 #endif
 
 open Dap.Prelude
 
-type JsonDecoder<'json> = TD.Decoder<'json>
 type JsonEncoder<'json> = 'json -> Json
 
 type IJson =
@@ -63,7 +69,7 @@ let returnJson (wrapper : 'a -> 'b) (result : Result<'a, string>) : 'b =
 // Actually Newtonsoft works fine, though not sure about the fable
 // So use some wrapping here to decode the properly
 // https://stackoverflow.com/questions/13318420/is-a-single-string-value-considered-valid-json
-let tryDecodeJsonValue (decoder : JsonDecoder<'res>) (pkt : string) =
+let tryDecodeJsonValue (decoder : JsonDecoder<'res>) (pkt : string) : Result<'res, string> =
     if pkt.StartsWith ("{") || pkt.StartsWith ("[") then
         tryDecodeJson decoder pkt
     else
@@ -87,7 +93,7 @@ let decodeJsonString (decoder : JsonDecoder<'res>) (pkt : string) =
 
 #if FABLE_COMPILER
 [<Import("parseJson", "../Native/Util.js")>]
-let parseJson : string -> TE.Value = jsNative
+let parseJson : string -> Json = jsNative
 #else
 
 let parseJson (pkt : string) =
@@ -155,6 +161,7 @@ type Object with
     member this.IsNaN = JsonHelpers.isNaN this
     member this.IsDefined = JsonHelpers.isDefined this
     member this.IsFunction = JsonHelpers.isFunction this
+    member this.ToStringValue () : string = this.ToString ()
     member this.ToArrayValue () = JsonHelpers.asArray this |> Array.toSeq
     member this.ToObjectKeys () : string seq = JsonHelpers.objectKeys this
 #else

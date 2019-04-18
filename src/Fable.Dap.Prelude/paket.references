@@ -1,6 +1,5 @@
 Fable.Core
-Fable.Import.Browser
-Fable.PowerPack
+Fable.Browser.Dom
 
 group Build
     dotnet-sourcelink

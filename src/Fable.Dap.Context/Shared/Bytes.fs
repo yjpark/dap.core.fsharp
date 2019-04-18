@@ -36,7 +36,7 @@ with
                 if token.IsString then
                     Ok <| Convert.FromBase64String (token.ToStringValue ())
                 else
-                    Error (path, TD.BadPrimitive("a string of base64 bytes", token))
+                    Error (path, JsonErrorReason.BadPrimitive("a string of base64 bytes", token))
         | Custom (_encoder, decoder) ->
             decoder
     member this.JsonSpec =

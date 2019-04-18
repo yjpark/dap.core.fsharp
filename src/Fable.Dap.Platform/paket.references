@@ -1,4 +1,7 @@
 Fable.Elmish
+Fable.Promise
+Fable.Browser.Url
+
 
 group Build
     dotnet-sourcelink

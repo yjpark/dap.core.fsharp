@@ -142,10 +142,10 @@ with
             elif token.IsString then
                 this.Parse (token.ToStringValue ())
                 |> Result.mapError (fun e ->
-                    (path, TD.BadPrimitiveExtra ("a string of Instant", token, e.Message))
+                    (path, JsonErrorReason.BadPrimitiveExtra ("a string of Instant", token, e.Message))
                 )
             else
-                Error (path, TD.BadPrimitive("a string of Instant", token))
+                Error (path, JsonErrorReason.BadPrimitive("a string of Instant", token))
     member this.JsonSpec =
         FieldSpec.Create<Instant> (this.JsonEncoder, this.JsonDecoder)
 
@@ -190,10 +190,10 @@ with
             elif token.IsString then
                 this.Parse (token.ToStringValue ())
                 |> Result.mapError (fun e ->
-                    (path, TD.BadPrimitiveExtra ("a string of Duration", token, e.Message))
+                    (path, JsonErrorReason.BadPrimitiveExtra ("a string of Duration", token, e.Message))
                 )
             else
-                Error (path, TD.BadPrimitive("a string of Duration", token))
+                Error (path, JsonErrorReason.BadPrimitive("a string of Duration", token))
     member this.JsonSpec =
         FieldSpec.Create<Duration> (this.JsonEncoder, this.JsonDecoder)
 

@@ -52,7 +52,7 @@ type FieldSpec = {
                 (FieldSpec.GetFieldJsonKey index, field.Encoder v)
             )|> List.append head
             |> TE.object
-    static member GetFieldsDecoder (fields : FieldSpec list) (path : string) (json : Json) : Result<obj array, TD.DecoderError> =
+    static member GetFieldsDecoder (fields : FieldSpec list) (path : string) (json : Json) : Result<obj array, JsonDecoderError> =
         try
             fields
             |> List.mapi (fun index field ->
@@ -65,7 +65,7 @@ type FieldSpec = {
             |> Ok
         with e ->
             //logException (getLogging ()) "FieldSpec.GetFieldsDecoder" "Failed" (path, TE.toString 4 json) e
-            Error (path, TD.FailMessage <| e.ToString ())
+            Error (path, JsonErrorReason.FailMessage <| e.ToString ())
 
 type JsonKind = JsonKind of string
 with
@@ -148,11 +148,11 @@ type Union with
                     let values =
                         spec.Decoder path json
                         |> Result.mapError (fun err ->
-                            (path, TD.FailMessage <| sprintf "%s -> %A" spec.Case.Name err)
+                            (path, JsonErrorReason.FailMessage <| sprintf "%s -> %A" spec.Case.Name err)
                         )|> Result.get
                     FSharpValue.MakeUnion(spec.Case, values) :?> 'u
                     |> Ok
                 )
             with err ->
                 let err = sprintf "Json.UnionDecoder<%s> -> %A" uType.FullName err
-                Error (path, TD.FailMessage err)
+                Error (path, JsonErrorReason.FailMessage err)

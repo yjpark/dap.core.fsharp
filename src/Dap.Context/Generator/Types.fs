@@ -6,8 +6,11 @@ open Dap.Context
 
 let mutable isFableGenerator = false
 
-let setFableGenerator () =
+let generateFable (generate : unit -> string list) =
     isFableGenerator <- true
+    let lines = generate ()
+    isFableGenerator <- false
+    lines
 
 type Lines = string list
 

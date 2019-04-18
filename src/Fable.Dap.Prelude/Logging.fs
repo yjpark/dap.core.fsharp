@@ -33,17 +33,17 @@ type ConsoleLogger (minimumLevel : int, prefix : string,
             let args = List.toArray evt.Params
             match evt.Level with
             | LogLevelFatal | LogLevelError ->
-                Fable.Import.Browser.console.error (time, message, args)
+                Browser.Dom.console.error (time, message, args)
             | LogLevelWarning ->
-                Fable.Import.Browser.console.warn (time, message, args)
+                Browser.Dom.console.warn (time, message, args)
             | LogLevelInformation ->
-                Fable.Import.Browser.console.info (time, message, args)
+                Browser.Dom.console.info (time, message, args)
             | LogLevelDebug | LogLevelVerbose ->
-                Fable.Import.Browser.console.trace (time, message, args)
+                Browser.Dom.console.trace (time, message, args)
             match evt.Exception with
             | None -> ()
             | Some e ->
-                Fable.Import.Browser.console.error ("Exception:", [|box e.Message ; box "\nStackTrace:" ; box e.StackTrace|])
+                Browser.Dom.console.error ("Exception:", [|box e.Message ; box "\nStackTrace:" ; box e.StackTrace|])
         else
             ()
     with

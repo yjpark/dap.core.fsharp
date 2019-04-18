@@ -1,3 +1,6 @@
+## 0.6.3
+* Update with Fable.Core 3.0
+
 ## 0.6.2
 * Bugfix with newLuidOfKind
 

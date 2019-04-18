@@ -15,7 +15,11 @@ nuget Serilog.Sinks.Console
 nuget Serilog.Sinks.File
 nuget Serilog.Formatting.Compact
 
-nuget Fable.Elmish
+nuget Fable.Elmish 3.0.0-beta-8
+nuget Fable.Promise
+nuget Fable.Browser.Dom
+nuget Fable.Browser.Url
+nuget Fable.Browser.WebSocket
 
 nuget Thoth.Json
 nuget Thoth.Json.Net

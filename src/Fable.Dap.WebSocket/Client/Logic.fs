@@ -8,7 +8,7 @@ open Dap.WebSocket.Client.Types
 type ActorOperate<'pkt> = Operate<Agent<'pkt>, Model<'pkt>, Msg<'pkt>>
 
 let private createSocket (runner : Agent<'pkt>)  =
-    let socket = Fable.Import.Browser.WebSocket.Create runner.Actor.Args.Uri
+    let socket = Browser.WebSocket.WebSocket.Create runner.Actor.Args.Uri
     socket.onopen <- fun _ ->
         runner.Deliver <| InternalEvt OnLinked
     socket.onclose <- fun _ ->
@@ -47,7 +47,7 @@ let private doSend req ((pkt, callback) : 'pkt * Callback<System.DateTime>) : Ac
         | None ->
             reply runner callback <| nak req "Socket_Not_Exist" runner.Actor.Args.Uri
         | Some socket ->
-            if socket.readyState <> socket.OPEN then
+            if socket.readyState <> Browser.Types.WebSocketState.OPEN then
                 reply runner callback <| nak req "Invalid_State" runner.Actor.Args.Uri
             else
                 let mutable encoded = false

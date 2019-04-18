@@ -26,7 +26,7 @@ type Args<'pkt> = {
 
 
 and Model<'pkt> = {
-    Socket : Fable.Import.Browser.WebSocket option
+    Socket : Browser.Types.WebSocket option
     Status : LinkStatus
 }
 

@@ -2,7 +2,8 @@
 module Dap.Platform.Helper
 
 open Fable.Core
-open Fable.PowerPack
+
+let promise = new Promise.PromiseBuilder ()
 
 let utcNow = System.DateTime.UtcNow
 
@@ -12,17 +13,17 @@ let private sleepForSeconds (delay : float<second>) = promise {
 }
 
 let addFutureCmd (delay : float<second>) (msg : 'msg) : Operate<'runner, 'model, 'msg> =
-    Elmish.Cmd.ofPromise
+    Elmish.Cmd.OfPromise.either
         sleepForSeconds delay
         (fun _ -> msg)
         (fun e ->
-            Fable.Import.Browser.console.error ("addFutureCmd Failed:", [|box delay ; box msg |])
-            Fable.Import.Browser.console.error ("Exception:", [|box e.Message ; box "\nStackTrace:" ; box e.StackTrace|])
+            Browser.Dom.console.error ("addFutureCmd Failed:", [|box delay ; box msg |])
+            Browser.Dom.console.error ("Exception:", [|box e.Message ; box "\nStackTrace:" ; box e.StackTrace|])
             msg
         )
     |> addCmd'
 
 let getWebSocketUri (path : string) : string =
-    let url = Fable.Import.Browser.URL.Create(Fable.Import.Browser.window.location.href)
+    let url = Browser.Url.URL.Create(Browser.Dom.window.location.href)
     let protocol = url.protocol.Replace ("http", "ws")
     sprintf "%s//%s/%s" protocol url.host path
