@@ -1,3 +1,6 @@
+## 0.6.5
+* remove IApp<> interface
+
 ## 0.6.4
 * Update with Fable.Core 3.0
 

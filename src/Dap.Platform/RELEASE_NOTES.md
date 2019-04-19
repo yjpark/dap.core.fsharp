@@ -1,3 +1,6 @@
+## 0.6.14
+* remove IApp<> interface
+
 ## 0.6.13
 * Update Thoth.Json.Net to 3.0
 
