@@ -28,8 +28,8 @@ type Publisher = {
 } with
     static member Create
         (
-            ?name : string,
-            ?year : int
+            ?name : (* IPublisher *) string,
+            ?year : (* IPublisher *) int
         ) : Publisher =
         {
             Name = (* IPublisher *) name
@@ -37,11 +37,6 @@ type Publisher = {
             Year = (* IPublisher *) year
                 |> Option.defaultWith (fun () -> 0)
         }
-    static member Create () =
-        Publisher.Create (
-            "", (* IPublisher *) (* name *)
-            0 (* IPublisher *) (* year *)
-        )
     static member SetName ((* IPublisher *) name : string) (this : Publisher) =
         {this with Name = name}
     static member SetYear ((* IPublisher *) year : int) (this : Publisher) =
@@ -76,7 +71,7 @@ type Publisher = {
     member this.AsPublisher = this :> IPublisher
 
 (*
- * Generated: <Class>
+ * Generated: <Combo>
  *     IsFinal
  *)
 type Author (owner : IOwner, key : Key) =

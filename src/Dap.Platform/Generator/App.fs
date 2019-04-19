@@ -132,7 +132,8 @@ type InterfaceGenerator (meta : AppMeta) =
         [
             sprintf ""
             sprintf "type I%s =" param.Name
-            sprintf "    inherit IApp<I%s>" param.Name
+            sprintf "    inherit IBaseApp"
+            sprintf "    inherit IRunner<I%s>" param.Name
         ]
     let getInterfaceFooter (param : AppParam) =
         [
@@ -444,7 +445,7 @@ type ClassGenerator (meta : AppMeta) =
             yield sprintf "    member __.Env : IEnv = env"
             yield sprintf "    member __.SetupResult : Result<bool, exn> option = setupResult"
             yield sprintf "    member __.OnSetup : IBus<Result<bool, exn>> = onSetup.Publish"
-            yield sprintf "    interface IApp<I%s>" param.Name
+            yield sprintf "    interface IBaseApp"
             if isFableGenerator then
                 yield sprintf "    interface INeedSetup with"
                 yield sprintf "        member this.SetupResult = this.SetupResult"

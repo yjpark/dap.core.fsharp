@@ -58,8 +58,3 @@ and IPackAgent<'pack when 'pack :> IPack> =
 type IBaseApp =
     inherit IPack
     inherit INeedSetup
-
-type IApp<'app when 'app :> IBaseApp> =
-    inherit IRunner<'app>
-    inherit IPack
-    inherit INeedSetup

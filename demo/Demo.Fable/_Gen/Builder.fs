@@ -23,4 +23,4 @@ type AuthorBuilder () =
         target.Publisher.SetValue publisher
         target
 
-let author = AuthorBuilder ()
+let author = new AuthorBuilder ()

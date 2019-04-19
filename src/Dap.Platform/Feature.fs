@@ -68,7 +68,7 @@ let startAppAsync<'app when 'app :> IBaseApp> (app : 'app) : Task<unit> =
     else
         failWith "Already_Setup" app.SetupResult.Value
 
-type IApp<'app when 'app :> IBaseApp> with
+type IBaseApp with
     member this.SetupStarted =
         this.SetupResult.IsSome
     member this.SetupFinished =
@@ -81,10 +81,10 @@ type IApp<'app when 'app :> IBaseApp> with
     member this.SetupError =
         this.SetupResult.Value.ErrorValue
     member this.TryStart () =
-        tryStartApp this.Runner
+        tryStartApp this
     member this.Start () =
-        startApp this.Runner
+        startApp this
     member this.TryStartAsync () =
-        tryStartAppAsync this.Runner
+        tryStartAppAsync this
     member this.StartAsync () =
-        startAppAsync this.Runner
+        startAppAsync this

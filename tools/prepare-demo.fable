@@ -3,12 +3,11 @@
 cd `dirname $0`
 cd ..
 
-fake build -t Fable.Dap.Prelude:build -s && \
-fake build -t Fable.Dap.Context:build -s && \
-fake build -t Fable.Dap.Platform:build -s && \
-fake build -t Fable.Dap.WebSocket:build -s && \
-fake build -t Fable.Dap.Remote:build -s && \
-fake build -t Fable.Dap.Dsl:build -s && \
+fake build -t Dap.Prelude:build -s && \
+fake build -t Dap.Context:build -s && \
+fake build -t Dap.Platform:build -s && \
+fake build -t Dap.WebSocket:build -s && \
+fake build -t Dap.Remote:build -s && \
 echo "" && \
 fsharpi prepare-demo.fable.fsx
 

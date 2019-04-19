@@ -177,10 +177,6 @@ type IBaseApp =
     inherit IPack
     inherit INeedSetupAsync
 
-type IApp<'app when 'app :> IBaseApp> =
-    inherit IRunner<'app>
-    inherit IBaseApp
-
 let DoQuit (forceQuit : bool) callback =
     DoQuit (forceQuit, callback)
 

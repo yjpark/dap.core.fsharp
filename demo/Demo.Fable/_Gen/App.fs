@@ -42,7 +42,8 @@ type AppKeys () =
     static member UserStub (* IClientPack *) = ""
 
 type IApp =
-    inherit IPack
+    inherit IBaseApp
+    inherit IRunner<IApp>
     inherit IAppPack
     abstract Args : AppArgs with get
     abstract AsAppPack : IAppPack with get
@@ -58,9 +59,9 @@ and AppArgs = {
 } with
     static member Create
         (
-            ?scope : Scope,
-            ?setup : IApp -> unit,
-            ?userStub : Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt>
+            ?scope : (* AppArgs *) Scope,
+            ?setup : (* AppArgs *) IApp -> unit,
+            ?userStub : (* IClientPack *) Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt>
         ) : AppArgs =
         {
             Scope = (* AppArgs *) scope
@@ -68,14 +69,8 @@ and AppArgs = {
             Setup = (* AppArgs *) setup
                 |> Option.defaultWith (fun () -> ignore)
             UserStub = (* IClientPack *) userStub
-                |> Option.defaultWith (fun () -> (Proxy.args UserHubTypes.StubSpec (getWebSocketUri "ws_user") (Some 5.000000<second>) true))
+                |> Option.defaultWith (fun () -> (Proxy.args UserHubTypes.StubSpec (getWebSocketUri "ws_user") true (Some 5.000000<second>) true))
         }
-    static member Create () =
-        AppArgs.Create (
-            NoScope, (* AppArgs *) (* scope *)
-            ignore, (* AppArgs *) (* setup *)
-            (Proxy.args UserHubTypes.StubSpec (getWebSocketUri "ws_user") (Some 5.000000<second>) true) (* IClientPack *) (* userStub *)
-        )
     static member SetScope ((* AppArgs *) scope : Scope) (this : AppArgs) =
         {this with Scope = scope}
     static member SetSetup ((* AppArgs *) setup : IApp -> unit) (this : AppArgs) =
@@ -93,7 +88,7 @@ and AppArgs = {
                 Scope = get.Optional.Field (* AppArgs *) "scope" Scope.JsonDecoder
                     |> Option.defaultValue NoScope
                 Setup = (* (* AppArgs *)  *) ignore
-                UserStub = (* (* IClientPack *)  *) (Proxy.args UserHubTypes.StubSpec (getWebSocketUri "ws_user") (Some 5.000000<second>) true)
+                UserStub = (* (* IClientPack *)  *) (Proxy.args UserHubTypes.StubSpec (getWebSocketUri "ws_user") true (Some 5.000000<second>) true)
             }
         )
     static member JsonSpec =
@@ -130,44 +125,55 @@ type AppArgsBuilder () =
     member __.UserStub (target : AppArgs, (* IClientPack *) userStub : Proxy.Args<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt>) =
         target.WithUserStub userStub
 
-let app_args = AppArgsBuilder ()
+let app_args = new AppArgsBuilder ()
 
 (*
  * Generated: <App>
  *)
-type App (logging : ILogging, args : AppArgs) as this =
-    let env = Env.live logging args.Scope
-    let mutable setupError : exn option = None
+type App (logging : ILogging, args : AppArgs) =
+    let env = Env.create logging args.Scope (RealClock ())
+    let mutable setupResult : Result<bool, exn> option = None
+    let onSetup = new Bus<Result<bool, exn>> (env, "App.OnSetup")
     let mutable (* IClientPack *) userStub : Proxy.Proxy<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt> option = None
-    let setup () : unit =
+    member this.Setup () : unit =
+        if setupResult.IsSome then
+            failWith "Already_Setup" setupResult.Value
         try
+            setupResult <- Some (Ok false)
             let (* IClientPack *) userStub' = env |> Env.spawn (Dap.Remote.Proxy.Logic.Logic.spec args.UserStub) AppKinds.UserStub AppKeys.UserStub
             userStub <- Some userStub'
             this.Setup' ()
             logInfo env "App.setup" "Setup_Succeed" (encodeJson 4 args)
             args.Setup this.AsApp
+            setupResult <- Some (Ok true)
         with e ->
-            setupError <- Some e
+            setupResult <- Some (Error e)
             logException env "App.setup" "Setup_Failed" (encodeJson 4 args) e
-    do (
-        setup ()
-    )
     abstract member Setup' : unit -> unit
     default __.Setup' () = ()
     member __.Args : AppArgs = args
     member __.Env : IEnv = env
-    member __.SetupError : exn option = setupError
-    interface ILogger with
-        member __.Log m = env.Log m
+    member __.SetupResult : Result<bool, exn> option = setupResult
+    member __.OnSetup : IBus<Result<bool, exn>> = onSetup.Publish
+    interface IBaseApp
+    interface INeedSetup with
+        member this.SetupResult = this.SetupResult
+        member this.Setup () = this.Setup ()
+    interface IRunner<IApp> with
+        member this.Runner = this.AsApp
+    interface IRunner with
+        member __.Clock = env.Clock
     interface IPack with
         member __.Env : IEnv = env
+    interface ILogger with
+        member __.Log m = env.Log m
     interface IClientPack with
         member __.UserStub (* IClientPack *) : Proxy.Proxy<UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt> = userStub |> Option.get
-    member __.AsClientPack = this :> IClientPack
+    member this.AsClientPack = this :> IClientPack
     interface IAppPack with
-        member __.AsClientPack = this.AsClientPack
-    member __.AsAppPack = this :> IAppPack
+        member this.AsClientPack = this.AsClientPack
+    member this.AsAppPack = this :> IAppPack
     interface IApp with
-        member __.Args : AppArgs = this.Args
-        member __.AsAppPack = this.AsAppPack
-    member __.AsApp = this :> IApp
+        member this.Args : AppArgs = this.Args
+        member this.AsAppPack = this.AsAppPack
+    member this.AsApp = this :> IApp

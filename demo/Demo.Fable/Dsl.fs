@@ -46,9 +46,10 @@ let Status =
 let IClientPack =
     pack [] {
         add (M.proxy (
-                [("UserHubTypes", "Demo.UserHub.Types")],
-                "UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt", "UserHubTypes.StubSpec",
-                uri = "(getWebSocketUri \"ws_user\")",
+                aliases = [("UserHubTypes", "Demo.UserHub.Types")],
+                reqResEvt = "UserHubTypes.Req, UserHubTypes.ClientRes, UserHubTypes.Evt",
+                stubSpec = "UserHubTypes.StubSpec",
+                url = "(getWebSocketUri \"ws_user\")",
                 retryDelay = 5.0<second>,
                 kind = "UserStub"
             ))
@@ -65,8 +66,7 @@ let App =
     }
 
 let compile segments =
-    setFableGenerator ()
-    [
+    fun () -> [
         G.File (segments, ["_Gen"; "Types.fs"],
             G.AutoOpenModule ("Demo.Types",
                 [
@@ -95,4 +95,4 @@ let compile segments =
                 ]
             )
         )
-    ]
+    ]|> generateFable

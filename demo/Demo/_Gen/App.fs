@@ -82,7 +82,8 @@ type AppKeys () =
     static member Backup (* IBackupPack *) = ""
 
 type IApp =
-    inherit IApp<IApp>
+    inherit IBaseApp
+    inherit IRunner<IApp>
     inherit IAppPack
     inherit IBackupPack
     abstract Args : AppArgs with get
@@ -222,6 +223,7 @@ let app_args = new AppArgsBuilder ()
 type App (param : EnvParam, args : AppArgs) =
     let env = Env.create param
     let mutable setupResult : Result<bool, exn> option = None
+    let onSetup = new Bus<Result<bool, exn>> (env, "App.OnSetup")
     let mutable (* IServicesPack *) ticker : TickerTypes.Agent option = None
     let mutable (* IBackupPack *) backup : TickerTypes.Agent option = None
     new (logging : ILogging, a : AppArgs) =
@@ -245,9 +247,11 @@ type App (param : EnvParam, args : AppArgs) =
             logInfo env "App.setupAsync" "Setup_Succeed" (encodeJson 4 args)
             args.Setup this.AsApp
             setupResult <- Some (Ok true)
+            onSetup.Trigger setupResult.Value
         with e ->
             setupResult <- Some (Error e)
             logException env "App.setupAsync" "Setup_Failed" (encodeJson 4 args) e
+            onSetup.Trigger setupResult.Value
             raise e
     }
     abstract member SetupAsync' : unit -> Task<unit>
@@ -257,10 +261,12 @@ type App (param : EnvParam, args : AppArgs) =
     member __.Args : AppArgs = args
     member __.Env : IEnv = env
     member __.SetupResult : Result<bool, exn> option = setupResult
-    interface IApp<IApp>
+    member __.OnSetup : IBus<Result<bool, exn>> = onSetup.Publish
+    interface IBaseApp
     interface INeedSetupAsync with
         member this.SetupResult = this.SetupResult
         member this.SetupAsync () = this.SetupAsync ()
+        member this.OnSetup = this.OnSetup
     interface IRunner<IApp> with
         member this.Runner = this.AsApp
         member this.RunFunc func = runFunc' this func
