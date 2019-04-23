@@ -1,3 +1,6 @@
+## 0.6.2
+* Remove Type Alias to Context
+
 ## 0.6.1
 * Update Thoth.Json.Net to 3.0
 

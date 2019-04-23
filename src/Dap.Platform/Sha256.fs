@@ -10,9 +10,7 @@ let computeHash (content : Bytes) : Bytes =
     sha256.ComputeHash (content)
 
 let encodeHash (hash : Bytes) : string =
-    hash
-    |> Array.map (fun b -> b.ToString ("x2"))
-    |> String.concat ""
+    Base64.encode hash
 
 let ofBytes (content : Bytes) =
     computeHash content |> encodeHash

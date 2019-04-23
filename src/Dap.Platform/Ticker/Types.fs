@@ -2,6 +2,7 @@ module Dap.Platform.Ticker.Types
 
 open NodaTime
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform
 
 [<Literal>]

@@ -1,3 +1,6 @@
+## 0.6.6
+* Common Base64 encoding for url friendly string
+
 ## 0.6.5
 * Use ShortGuid for guid
 

@@ -3,6 +3,7 @@
 module Dap.Platform.Env
 
 open Dap.Prelude
+open Dap.Context
 
 type internal Env (logging', scope', clock') =
     let logging : ILogging = logging'

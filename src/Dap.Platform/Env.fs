@@ -5,6 +5,7 @@ open System.Threading.Tasks
 open FSharp.Control.Tasks.V2
 
 open Dap.Prelude
+open Dap.Context
 open Dap.Platform.Internal.Env
 open Dap.Platform.Internal.Agent
 

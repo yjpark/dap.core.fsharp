@@ -7,25 +7,6 @@ open System.Threading.Tasks
 open Dap.Prelude
 open Dap.Context
 
-module ContextTypes = Dap.Context.Types
-
-//Alias Context Types Begin
-type Luid = ContextTypes.Luid
-type Guid = ContextTypes.Guid
-
-let newGuid () = ContextTypes.newGuid ()
-let newLuid () = ContextTypes.newLuid ()
-let newLuidOfKind kind = ContextTypes.newLuidOfKind kind
-
-type Kind = ContextTypes.Kind
-type Key = ContextTypes.Key
-type Index = ContextTypes.Index
-
-type IOwner = ContextTypes.IOwner
-type IBus<'evt> = ContextTypes.IBus<'evt>
-
-//Alias Context Types End
-
 [<Measure>]
 type second = Microsoft.FSharp.Data.UnitSystems.SI.UnitNames.second
 
@@ -41,7 +22,7 @@ let NoScope = ""
 
 let private calVersion scope kind key =
     sprintf "%s:%s:%s" scope kind key
-    |> ContextTypes.newLuidOfKind'
+    |> newLuidOfKind'
 
 [<StructuredFormatDisplay("{AsDisplay}")>]
 type Ident = {

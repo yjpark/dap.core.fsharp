@@ -1,3 +1,6 @@
+## 0.6.7
+* Remove Type Alias to Context
+
 ## 0.6.6
 * Use ShortGuid for guid
 
