@@ -1,3 +1,6 @@
+## 0.6.7
+* Bug fix with Base64.decode
+
 ## 0.6.6
 * Common Base64 encoding for url friendly string
 

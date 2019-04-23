@@ -4,6 +4,7 @@ module Dap.Context.Base64
 
 open System
 
+open Dap.Prelude
 let encode (bytes : Bytes) : string =
     bytes
     |> Convert.ToBase64String
@@ -14,9 +15,10 @@ let encode (bytes : Bytes) : string =
     )
 
 let decode (str : string) : Bytes =
-    match str.Length % 3 with
-    | 1 -> str + "=="
-    | 2 -> str + "="
+    match str.Length % 4 with
+    | 3 -> str + "="
+    | 2 -> str + "=="
+    | 1 -> failWith "Invalid_Base64" str
     | _ -> str
     |> (fun str ->
         str.Replace("_", "/")
