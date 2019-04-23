@@ -1,3 +1,6 @@
+## 0.6.5
+* Use ShortGuid for guid
+
 ## 0.6.4
 * Update Thoth.Json.Net to 3.0
 

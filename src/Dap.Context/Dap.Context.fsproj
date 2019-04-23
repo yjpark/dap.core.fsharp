@@ -4,7 +4,7 @@
     <PackageProjectUrl>https://github.com/yjpark/dap.lib.fsharp</PackageProjectUrl>
     <PackageTags>fsharp;dap;</PackageTags>
     <Authors>YJ Park</Authors>
-    <Version>0.6.4</Version>
+    <Version>0.6.5</Version>
     <Description>Dap Context Libs</Description>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
@@ -13,6 +13,7 @@
     <Compile Include="../Fable.Dap.Context/Shared/UnionSpec.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/EDS.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Bytes.fs" />
+    <Compile Include="../Fable.Dap.Context/Shared/ShortGuid.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Types.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Unsafe/Types.fs" />
     <Compile Include="../Fable.Dap.Context/Shared/Logging.fs" />

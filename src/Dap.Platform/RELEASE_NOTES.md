@@ -1,3 +1,6 @@
+## 0.6.15
+* Use ShortGuid for guid
+
 ## 0.6.14
 * remove IApp<> interface
 

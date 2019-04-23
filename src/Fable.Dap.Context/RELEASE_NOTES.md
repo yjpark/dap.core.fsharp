@@ -1,3 +1,6 @@
+## 0.6.4
+* Use ShortGuid for guid
+
 ## 0.6.3
 * Update with Fable.Core 3.0
 

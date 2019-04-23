@@ -14,10 +14,10 @@ type Luid = string  //Local Unique ID
 type Guid = string  //Global Unique ID
 
 let newGuid () : Guid =
-    (System.Guid.NewGuid ()) .ToString ()
+    ShortGuid.fromGuid (System.Guid.NewGuid ())
 
 let newLuid () : Guid =
-    (System.Guid.NewGuid ()) .ToString ()
+    ShortGuid.fromGuid (System.Guid.NewGuid ())
 
 type Kind = string
 type Key = string
