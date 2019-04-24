@@ -1,3 +1,6 @@
+## 0.6.7
+* Improve Base64 api
+
 ## 0.6.6
 * Bug fix with Base64.decode
 
