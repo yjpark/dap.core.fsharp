@@ -22,6 +22,7 @@
     <Compile Include="Shared/Clock.fs" />
     <Compile Include="Shared/EDS.fs" />
     <Compile Include="Const.fs" />
+    <Compile Include="Native.fs" />
     <Compile Include="Runner.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Shared/Actor.fs" />
