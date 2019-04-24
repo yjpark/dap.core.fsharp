@@ -7,9 +7,9 @@ open Fable.Core.JsInterop
 open Dap.Prelude
 open Dap.Context
 
-[<Import("calcSum", "Native/sha256.js")>]
-let calcSha256Sum' : string -> Bytes = jsNative
+[<Import("calcSha256Sum", "./Native/forge_helper.js")>]
+let calcSha256Sum' : string -> string = jsNative
 
 let calcSha256Sum (content : string) =
     calcSha256Sum' content
-    |> Base64.encode
+    |> Base64.encode'

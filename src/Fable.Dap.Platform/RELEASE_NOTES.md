@@ -1,3 +1,6 @@
+## 0.6.8
+* Use node-forge to calc sha256 hash
+
 ## 0.6.7
 * Remove Type Alias to Context
 

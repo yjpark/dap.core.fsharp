@@ -5,16 +5,18 @@ module Dap.Context.Base64
 open System
 
 open Dap.Prelude
+
+let encode' (str : string) =
+    str.Replace("/", "_")
+        .Replace("+", "-")
+        .Replace("=", "")
+
 let encode (bytes : Bytes) : string =
     bytes
     |> Convert.ToBase64String
-    |> (fun str ->
-        str.Replace("/", "_")
-            .Replace("+", "-")
-            .Replace("=", "")
-    )
+    |> encode'
 
-let decode (str : string) : Bytes =
+let decode' (str : string) =
     match str.Length % 4 with
     | 3 -> str + "="
     | 2 -> str + "=="
@@ -23,7 +25,11 @@ let decode (str : string) : Bytes =
     |> (fun str ->
         str.Replace("_", "/")
             .Replace("-", "+")
-    )|> Convert.FromBase64String
+    )
+
+let decode (str : string) : Bytes =
+    decode' str
+    |> Convert.FromBase64String
 
 let encodeGuid (guid : Guid) =
     guid.ToByteArray()
