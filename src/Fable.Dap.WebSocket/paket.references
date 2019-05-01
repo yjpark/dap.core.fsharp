@@ -1,5 +1,4 @@
 Fable.Browser.WebSocket
 
-group Build
-    dotnet-sourcelink
-    Microsoft.SourceLink.GitHub
+dotnet-sourcelink
+Microsoft.SourceLink.GitHub

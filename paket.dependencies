@@ -1,4 +1,4 @@
-version 5.198.0
+version 5.203.2
 
 source https://www.nuget.org/api/v2
 storage: none
@@ -15,7 +15,7 @@ nuget Serilog.Sinks.Console
 nuget Serilog.Sinks.File
 nuget Serilog.Formatting.Compact
 
-nuget Fable.Elmish 3.0.0-beta-8
+nuget Fable.Elmish
 nuget Fable.Promise
 nuget Fable.Browser.Dom
 nuget Fable.Browser.Url
@@ -26,15 +26,11 @@ nuget Thoth.Json.Net
 
 clitool dotnet-fable
 
-group Build
-    source https://www.nuget.org/api/v2
-    storage: none
-    framework: netstandard2.0
+# Build
+nuget Dap.Build
 
-    nuget Dap.Build
-
-    clitool dotnet-sourcelink
-    nuget Microsoft.SourceLink.GitHub 1.0.0-beta-62925-02
-    nuget Microsoft.Build.Tasks.Git 1.0.0-beta-62925-02
-    nuget Microsoft.SourceLink.Common 1.0.0-beta-62925-02
+clitool dotnet-sourcelink
+nuget Microsoft.SourceLink.GitHub prerelease
+nuget Microsoft.Build.Tasks.Git prerelease
+nuget Microsoft.SourceLink.Common prerelease
 

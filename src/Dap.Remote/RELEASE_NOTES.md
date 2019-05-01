@@ -1,3 +1,6 @@
+## 0.6.6
+* Follow Dap.Platform changes
+
 ## 0.6.5
 * Update Thoth.Json.Net to 3.0
 

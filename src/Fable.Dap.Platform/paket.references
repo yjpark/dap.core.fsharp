@@ -3,6 +3,5 @@ Fable.Promise
 Fable.Browser.Url
 
 
-group Build
-    dotnet-sourcelink
-    Microsoft.SourceLink.GitHub
+dotnet-sourcelink
+Microsoft.SourceLink.GitHub

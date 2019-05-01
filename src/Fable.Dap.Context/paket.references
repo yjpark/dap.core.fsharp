@@ -1,6 +1,5 @@
 Thoth.Json
 
-group Build
-    dotnet-sourcelink
-    Microsoft.SourceLink.GitHub
+dotnet-sourcelink
+Microsoft.SourceLink.GitHub
 

@@ -8,6 +8,5 @@ Serilog.Sinks.Seq
 Serilog.Formatting.Compact
 Serilog.Enrichers.Thread
 
-group Build
-    dotnet-sourcelink
-    Microsoft.SourceLink.GitHub
+dotnet-sourcelink
+Microsoft.SourceLink.GitHub
