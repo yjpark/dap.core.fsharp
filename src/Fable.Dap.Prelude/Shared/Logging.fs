@@ -40,6 +40,14 @@ type ILogging =
     abstract Close : unit -> unit
     abstract GetLogger : string -> ILogger
 
+type NoLogging () =
+    interface ILogging with
+        member __.Close () = ()
+        member this.GetLogger (context : string) =
+            this :> ILogger
+    interface ILogger with
+        member __.Log _evt = ()
+
 type FallbackLogger (prefix : string) =
     member __.Prefix = prefix
     member this.Log (evt : LogEvent) =
@@ -55,14 +63,14 @@ type FallbackLogger (prefix : string) =
 
 type FallBackLogging () =
     member __.Logger = FallbackLogger ""
-    with
-        interface ILogging with
-            member __.Close () = ()
-            member __.GetLogger (context : string) =
-                FallbackLogger (sprintf "<%s> " context)
-                :> ILogger
-        interface ILogger with
-            member this.Log evt = this.Logger.Log evt
+with
+    interface ILogging with
+        member __.Close () = ()
+        member __.GetLogger (context : string) =
+            FallbackLogger (sprintf "<%s> " context)
+            :> ILogger
+    interface ILogger with
+        member this.Log evt = this.Logger.Log evt
 
 let mutable private ``_Logging`` = FallBackLogging () :> ILogging
 
@@ -74,6 +82,12 @@ let getLogging () = _Logging
 let setLogging'<'logging when 'logging :> ILogging> (logging : 'logging) =
     _Logging <- logging
     logging
+
+let noLogging (action : unit -> unit) =
+    let logging = _Logging
+    _Logging <- NoLogging ()
+    action ()
+    _Logging <- logging
 
 let private checkTemplateParamCount (_format : string) (_count : int) : unit =
     //TODO
