@@ -40,8 +40,17 @@ let inline getNow' () = SystemClock.Instance.GetCurrentInstant ()
 let toDateTimeUtc (time : Instant) =
     time.ToDateTimeUtc ()
 
-let ofDateTimeUtc (time : System.DateTime) =
-    Instant.FromDateTimeUtc time
+let ofDateTimeUtc (dateTime : System.DateTime) =
+    let utcDateTime, changed =
+        if dateTime.Kind = DateTimeKind.Utc then
+            dateTime, false
+        elif dateTime.Kind = DateTimeKind.Unspecified then
+            DateTime.SpecifyKind (dateTime, DateTimeKind.Utc), false
+        else
+            DateTime.SpecifyKind (dateTime, DateTimeKind.Utc), true
+    if changed then
+        logWarn (getLogging ()) "Clock.ofDateTimeUtc" "UTC_Conversion" (dateTime.Kind, dateTime, utcDateTime)
+    Instant.FromDateTimeUtc utcDateTime
 #endif
 
 let private calcDuration (fromTime : Instant) =
@@ -127,18 +136,7 @@ with
         fun path token ->
             if token.IsDate then
                 TD.datetime path token
-                |> Result.map (fun dateTime ->
-                    let utcDateTime, changed =
-                        if dateTime.Kind = DateTimeKind.Utc then
-                            dateTime, false
-                        elif dateTime.Kind = DateTimeKind.Unspecified then
-                            DateTime.SpecifyKind (dateTime, DateTimeKind.Utc), false
-                        else
-                            DateTime.SpecifyKind (dateTime, DateTimeKind.Utc), true
-                    if changed then
-                        logWarn (getLogging ()) "Instant.JsonDecoder" "UTC_Conversion" (dateTime.Kind, dateTime, utcDateTime)
-                    Instant.FromDateTimeUtc utcDateTime
-                )
+                |> Result.map ofDateTimeUtc
             elif token.IsString then
                 this.Parse (token.ToStringValue ())
                 |> Result.mapError (fun e ->
