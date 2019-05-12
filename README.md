@@ -1,5 +1,10 @@
 ## Dependencies
 
+### DotNet Core
+
+- https://dotnet.microsoft.com/download
+- SDK v2.2.106
+
 ### DotNet Tools
 
 Need `paket` and `fake` command in path
