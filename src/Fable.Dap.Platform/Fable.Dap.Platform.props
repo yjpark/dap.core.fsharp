@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ItemGroup>
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\Logic.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\Cmd.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\Types.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\Reply.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\Callback.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\Wrapping.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\Operator.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\Util.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\Clock.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\EDS.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Const.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Native.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Runner.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Types.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\Actor.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Replier.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Logging.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\BaseAgent.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Agent.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\State.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Shared\Context.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Env.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Platform\Helper.fs" />
+  </ItemGroup>
+</Project>

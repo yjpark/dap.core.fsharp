@@ -1,4 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <DefineConstants>FABLE_COMPILER</DefineConstants>
@@ -9,50 +10,15 @@
     <Description>Dap Context on fable</Description>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="Shared/Json.fs" />
-    <Compile Include="Shared/UnionSpec.fs" />
-    <Compile Include="Shared/EDS.fs" />
-    <Compile Include="Shared/Bytes.fs" />
-    <Compile Include="Shared/Base64.fs" />
-    <Compile Include="Shared/Types.fs" />
-    <Compile Include="Shared/Unsafe/Types.fs" />
-    <Compile Include="Shared/Logging.fs" />
-    <Compile Include="Shared/Bus.fs" />
-    <Compile Include="Shared/Internal/Spec.fs" />
-    <Compile Include="Shared/Internal/GenericSpec.fs" />
-    <Compile Include="Shared/Internal/Property.fs" />
-    <Compile Include="Shared/Internal/VarProperty.fs" />
-    <Compile Include="Shared/Internal/DictProperty.fs" />
-    <Compile Include="Shared/Internal/ListProperty.fs" />
-    <Compile Include="Shared/Internal/ComboProperty.fs" />
-    <Compile Include="Shared/Internal/Channel.fs" />
-    <Compile Include="Shared/Internal/Channels.fs" />
-    <Compile Include="Shared/Internal/Handler.fs" />
-    <Compile Include="Shared/Internal/Handlers.fs" />
-    <Compile Include="Shared/Internal/Context.fs" />
-    <Compile Include="Shared/Property.fs" />
-    <Compile Include="Shared/Properties.fs" />
-    <Compile Include="Shared/Extension/Properties.fs" />
-    <Compile Include="Shared/Extension/Channels.fs" />
-    <Compile Include="Shared/Extension/Handlers.fs" />
-    <Compile Include="Shared/CustomProperty.fs" />
-    <Compile Include="Shared/LinkProperty.fs" />
-    <Compile Include="Shared/ContextSpec.fs" />
-    <Compile Include="Shared/BaseContext.fs" />
-    <Compile Include="Shared/Context.fs" />
-    <Compile Include="Shared/Extension/Context.fs" />
-    <Compile Include="Shared/Unsafe/Context.fs" />
-    <Compile Include="Shared/Builder/Types.fs" />
-    <Compile Include="Shared/Builder/Combo.fs" />
-    <Compile Include="Shared/Builder/Context.fs" />
-    <Compile Include="Shared/Builder/Helper.fs" />
-  </ItemGroup>
+  <PropertyGroup Label="UserMacros">
+      <DapCoreSrcDir>..</DapCoreSrcDir>
+  </PropertyGroup>
+  <Import Project="Fable.Dap.Context.props" />
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Prelude\Fable.Dap.Prelude.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.js" PackagePath="fable" />
+    <Content Include="*.fsproj; *.props; **\*.fs; **\*.js" PackagePath="fable" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-18618-05" PrivateAssets="All" />

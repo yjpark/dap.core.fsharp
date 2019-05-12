@@ -10,16 +10,15 @@
     <Description>Dap WebSocket wrapper on fable, client only</Description>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="Client/Types.fs" />
-    <Compile Include="Client/Logic.fs" />
-    <Compile Include="Client/TextClient.fs" />
-  </ItemGroup>
+  <PropertyGroup Label="UserMacros">
+      <DapCoreSrcDir>..</DapCoreSrcDir>
+  </PropertyGroup>
+  <Import Project="Fable.Dap.WebSocket.props" />
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Platform\Fable.Dap.Platform.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.js" PackagePath="fable" />
+    <Content Include="*.fsproj; *.props; **\*.fs; **\*.js" PackagePath="fable" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-18618-05" PrivateAssets="All" />

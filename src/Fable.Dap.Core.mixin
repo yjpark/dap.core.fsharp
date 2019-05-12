@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <Import Project="Fable.Dap.Prelude\Fable.Dap.Prelude.props" />
+  <Import Project="Fable.Dap.Context\Fable.Dap.Context.props" />
+  <Import Project="Fable.Dap.Platform\Fable.Dap.Platform.props" />
+  <Import Project="Fable.Dap.WebSocket\Fable.Dap.WebSocket.props" />
+  <Import Project="Fable.Dap.Remote\Fable.Dap.Remote.props" />
+</Project>

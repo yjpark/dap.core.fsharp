@@ -10,36 +10,15 @@
     <Description>Dap Platform on Fable, elmish actor runtime</Description>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="Shared/Logic.fs" />
-    <Compile Include="Shared/Cmd.fs" />
-    <Compile Include="Shared/Types.fs" />
-    <Compile Include="Shared/Reply.fs" />
-    <Compile Include="Shared/Callback.fs" />
-    <Compile Include="Shared/Wrapping.fs" />
-    <Compile Include="Shared/Operator.fs" />
-    <Compile Include="Shared/Util.fs" />
-    <Compile Include="Shared/Clock.fs" />
-    <Compile Include="Shared/EDS.fs" />
-    <Compile Include="Const.fs" />
-    <Compile Include="Native.fs" />
-    <Compile Include="Runner.fs" />
-    <Compile Include="Types.fs" />
-    <Compile Include="Shared/Actor.fs" />
-    <Compile Include="Replier.fs" />
-    <Compile Include="Logging.fs" />
-    <Compile Include="BaseAgent.fs" />
-    <Compile Include="Agent.fs" />
-    <Compile Include="Shared/State.fs" />
-    <Compile Include="Shared/Context.fs" />
-    <Compile Include="Env.fs" />
-    <Compile Include="Helper.fs" />
-  </ItemGroup>
+  <PropertyGroup Label="UserMacros">
+      <DapCoreSrcDir>..</DapCoreSrcDir>
+  </PropertyGroup>
+  <Import Project="Fable.Dap.Platform.props" />
   <ItemGroup>
     <ProjectReference Include="..\Fable.Dap.Context\Fable.Dap.Context.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.js" PackagePath="fable" />
+    <Content Include="*.fsproj; *.props; **\*.fs; **\*.js" PackagePath="fable" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-18618-05" PrivateAssets="All" />

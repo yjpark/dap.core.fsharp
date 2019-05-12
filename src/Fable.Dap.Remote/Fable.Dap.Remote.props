@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ItemGroup>
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\Shared\ED.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\Shared\Types.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\Shared\Internal\Types.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\Shared\Hub.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\Shared\Stub.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\Shared\Internal\Client.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\Shared\Internal\Gateway.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\Shared\Proxy\Types.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\Shared\Proxy\Logic.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\WebSocketProxy\Types.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\WebSocketProxy\Logic.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Remote\WebSocketProxy\Proxy.fs" />
+  </ItemGroup>
+</Project>

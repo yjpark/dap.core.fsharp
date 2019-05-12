@@ -10,19 +10,12 @@
     <Description>Dap Prelude on Fable, provide logging and other basic abstractions</Description>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
+  <PropertyGroup Label="UserMacros">
+      <DapCoreSrcDir>..</DapCoreSrcDir>
+  </PropertyGroup>
+  <Import Project="Fable.Dap.Prelude.props" />
   <ItemGroup>
-    <Compile Include="Shared/Operator.fs" />
-    <Compile Include="Shared/Logging.fs" />
-    <Compile Include="Shared/String.fs" />
-    <Compile Include="Shared/Option.fs" />
-    <Compile Include="Shared/Result.fs" />
-    <Compile Include="Shared/Union.fs" />
-    <Compile Include="Shared/List.fs" />
-    <Compile Include="Shared/Bool.fs" />
-    <Compile Include="Logging.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.js" PackagePath="fable" />
+    <Content Include="*.fsproj; *.props; **\*.fs; **\*.js" PackagePath="fable" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-18618-05" PrivateAssets="All" />

@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ItemGroup>
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Json.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\UnionSpec.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\EDS.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Bytes.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Base64.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Types.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Unsafe/Types.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Logging.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Bus.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\Spec.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\GenericSpec.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\Property.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\VarProperty.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\DictProperty.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\ListProperty.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\ComboProperty.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\Channel.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\Channels.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\Handler.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\Handlers.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Internal\Context.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Property.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Properties.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Extension\Properties.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Extension\Channels.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Extension\Handlers.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\CustomProperty.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\LinkProperty.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\ContextSpec.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\BaseContext.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Context.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Extension\Context.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Unsafe\Context.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Builder\Types.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Builder\Combo.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Builder\Context.fs" />
+    <Compile Include="$(DapCoreSrcDir)\Fable.Dap.Context\Shared\Builder\Helper.fs" />
+  </ItemGroup>
+</Project>
