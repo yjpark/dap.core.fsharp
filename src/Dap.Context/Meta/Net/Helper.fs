@@ -5,6 +5,7 @@ open Microsoft.FSharp.Quotations
 
 open Dap.Prelude
 open Dap.Context
+open Dap.Context.Meta
 open Dap.Context.Meta.Util
 
 type M with

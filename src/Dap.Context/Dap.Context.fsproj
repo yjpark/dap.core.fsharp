@@ -4,7 +4,7 @@
     <PackageProjectUrl>https://github.com/yjpark/dap.lib.fsharp</PackageProjectUrl>
     <PackageTags>fsharp;dap;</PackageTags>
     <Authors>YJ Park</Authors>
-    <Version>0.7.0</Version>
+    <Version>0.7.1</Version>
     <Description>Dap Context Libs</Description>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
@@ -57,6 +57,7 @@
     <Compile Include="Meta/Context.fs" />
     <Compile Include="Meta/Helper.fs" />
     <Compile Include="Meta/Net/Context.fs" />
+    <Compile Include="Meta/Net/Helper.fs" />
     <Compile Include="Generator/Util.fs" />
     <Compile Include="Generator/Types.fs" />
     <Compile Include="Generator/Combo.fs" />
