@@ -1,3 +1,6 @@
+## 0.7.2
+* Support minus as separator is dsl
+
 ## 0.7.1
 * add M.bytes
 
