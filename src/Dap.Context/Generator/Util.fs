@@ -10,7 +10,7 @@ open Dap.Context.Meta.Util
 let private textInfo = (new CultureInfo("en-US", false)) .TextInfo
 
 let private split (key : string) =
-    key.Split('_')
+    key.Split([| '_' ; '-' |])
     |> Array.map (fun segment ->
         let mutable word = ""
         let mutable words = []
