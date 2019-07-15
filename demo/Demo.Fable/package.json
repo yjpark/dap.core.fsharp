@@ -27,7 +27,8 @@
     "html-webpack-plugin": "2.29.0",
     "html-webpack-polyfill-io-plugin": "^1.0.0",
     "remotedev": "^0.2.7",
-    "webpack": "3.8.1",
-    "webpack-dev-server": "2.9.4"
+    "webpack": "^4.20.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "3.1.11"
   }
 }
