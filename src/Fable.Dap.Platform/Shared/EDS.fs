@@ -7,10 +7,12 @@ open System
 open Fable.Core
 module TE = Thoth.Json.Encode
 module TD = Thoth.Json.Decode
+open Thoth.Json
 #else
 open Newtonsoft.Json.Linq
 module TE = Thoth.Json.Net.Encode
 module TD = Thoth.Json.Net.Decode
+open Thoth.Json.Net
 #endif
 
 open Dap.Prelude
@@ -24,18 +26,27 @@ type DateTime with
 
 type TimeSpan with
     static member JsonEncoder : JsonEncoder<TimeSpan> =
-        fun (v : TimeSpan) ->
-            TE.decimal <| (decimal) v.TotalSeconds
+        TE.timespan
     static member JsonDecoder : JsonDecoder<TimeSpan> =
         fun path json ->
-            TD.decimal path json
-            |> Result.map (fun v ->
-            #if FABLE_COMPILER
-                TimeSpan.FromSeconds <| (double) v
-            #else
-                TimeSpan.FromSeconds <| System.Decimal.ToDouble v
-            #endif
-            )
+            if JsonHelpers.isString json then
+                let v = JsonHelpers.asString json
+                match System.TimeSpan.TryParse (v) with
+                | true, x ->
+                    Ok x
+                | false, x ->
+                    try
+                        let segments = v.Split ([| ':' |])
+                        //TODO: Temp fix for now, seems Fable's TimeSpan.TryParse is not working properly ATM
+                        if segments.Length = 4 then
+                            let segments = segments |> Array.map (System.Convert.ToInt32)
+                            Ok (new TimeSpan (segments.[0], segments.[1], segments.[2], segments.[3]))
+                        else
+                            Error (path, BadPrimitive ("a timespan", json))
+                    with e ->
+                        Error (path, BadPrimitiveExtra ("a timespan", json, e.Message))
+            else
+                Error (path, BadPrimitive("a timespan", json))
     static member JsonSpec = FieldSpec.Create<TimeSpan> (TimeSpan.JsonEncoder, TimeSpan.JsonDecoder)
     member this.ToJson () = TimeSpan.JsonEncoder this
 

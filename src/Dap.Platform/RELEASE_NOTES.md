@@ -1,3 +1,6 @@
+## 0.7.2
+* Update TimeSpan Json Encode and Decode
+
 ## 0.7.1
 * Tweak Clock.ofDateTimeUtc to handle more kinds
 

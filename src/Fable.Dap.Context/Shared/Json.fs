@@ -16,6 +16,7 @@ type JsonDecoder<'json> = Thoth.Json.Decoder<'json>
 type JsonDecoderError = Thoth.Json.DecoderError
 type JsonErrorReason = Thoth.Json.ErrorReason
 #else
+open Newtonsoft.Json
 open Newtonsoft.Json.Linq
 module TE = Thoth.Json.Net.Encode
 module TD = Thoth.Json.Net.Decode
@@ -145,7 +146,40 @@ module JsonHelpers =
     let inline asFloat (o: obj): float = unbox o
     let inline asString (o: obj): string = unbox o
     let inline asArray (o: obj): obj [] = unbox o
+#else
+module JsonHelpers =
+    let anyToString (token: Json) : string =
+        if isNull token then "null"
+        else
+            use stream = new System.IO.StringWriter(NewLine = "\n")
+            use jsonWriter = new JsonTextWriter(
+                                    stream,
+                                    Formatting = Formatting.Indented,
+                                    Indentation = 4 )
 
+            token.WriteTo(jsonWriter)
+            stream.ToString()
+
+    let inline getField (fieldName: string) (token: Json) = token.Item(fieldName)
+    let inline isBool (token: Json) = not(isNull token) && token.Type = JTokenType.Boolean
+    let inline isNumber (token: Json) = not(isNull token) && (token.Type = JTokenType.Float || token.Type = JTokenType.Integer)
+    let inline isInteger (token: Json) = not(isNull token) && (token.Type = JTokenType.Integer)
+    let inline isString (token: Json) = not(isNull token) && token.Type = JTokenType.String
+    let inline isGuid (token: Json) = not(isNull token) && token.Type = JTokenType.Guid
+    let inline isDate (token: Json) = not(isNull token) && token.Type = JTokenType.Date
+    let inline isArray (token: Json) = not(isNull token) && token.Type = JTokenType.Array
+    let inline isObject (token: Json) = not(isNull token) && token.Type = JTokenType.Object
+    let inline isUndefined (token: Json) = isNull token
+    let inline isNullValue (token: Json) = isNull token || token.Type = JTokenType.Null
+    let inline asBool (token: Json): bool = token.Value<bool>()
+    let inline asInt (token: Json): int = token.Value<int>()
+    let inline asFloat (token: Json): float = token.Value<float>()
+    let inline asDecimal (token: Json): System.Decimal = token.Value<System.Decimal>()
+    let inline asString (token: Json): string = token.Value<string>()
+    let inline asArray (token: Json): Json[] = token.Value<JArray>().Values() |> Seq.toArray
+#endif
+
+#if FABLE_COMPILER
 type Object with
     (*
     static member JsonDecoder : JsonDecoder<Object> = TD.value
