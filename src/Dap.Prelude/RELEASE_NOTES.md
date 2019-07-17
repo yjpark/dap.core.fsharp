@@ -1,3 +1,6 @@
+## 0.7.2
+* Add List.tryHead
+
 ## 0.7.1
 * Add Logging.noLogging
 
