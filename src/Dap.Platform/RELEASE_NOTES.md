@@ -1,3 +1,6 @@
+## 0.7.3
+* Make App.Start() synchronously waiting start finished
+
 ## 0.7.2
 * Update TimeSpan Json Encode and Decode
 

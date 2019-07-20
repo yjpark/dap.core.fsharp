@@ -30,7 +30,9 @@ type BaseAppRunner (logging : ILogging) =
     abstract member StartAsync<'app when 'app :> IBaseApp> : 'app -> Task<unit>
     abstract member Start<'app when 'app :> IBaseApp> : 'app -> unit
     default this.Start app =
-        app.Env.RunTask0 raiseOnFailed (fun _ -> this.StartAsync app)
+        this.StartAsync app
+        |> Async.AwaitTask
+        |> Async.RunSynchronously
     interface IAppRunner with
         member this.Start app = this.Start app
         member this.StartAsync app = this.StartAsync app
