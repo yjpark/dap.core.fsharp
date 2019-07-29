@@ -17,6 +17,9 @@ type M with
             sprintf "InstantFormat.%s" <| Union.getKind format
         |> fun t -> FieldMeta.CreateCustom t key value validator
         |> fun m -> m.ToAlias "Instant"
+    static member instant (key, v : Instant, ?validator : string) =
+        let v = InstantFormat.General.Format v
+        M.instant (InstantFormat.General, key, value = v, ?validator = validator)
 
 type M with
     static member duration (key, value : Duration, ?validator : string) =
