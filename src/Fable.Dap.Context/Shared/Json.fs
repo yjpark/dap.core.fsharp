@@ -190,6 +190,7 @@ type Object with
     member this.IsString = JsonHelpers.isString this
     member this.IsObject = JsonHelpers.isObject this
     member this.IsArray = JsonHelpers.isArray this
+    member this.IsNull = JsonHelpers.isNull this
     // Fable Only
     member this.IsNumber = JsonHelpers.isNumber this
     member this.IsNaN = JsonHelpers.isNaN this
@@ -208,8 +209,8 @@ type JToken with
     member this.IsString = (this.Type = JTokenType.String)
     member this.IsObject = (this.Type = JTokenType.Object)
     member this.IsArray = (this.Type = JTokenType.Array)
-    // DotNet Only
     member this.IsNull = (this.Type = JTokenType.Null)
+    // DotNet Only
     member this.IsDate = (this.Type = JTokenType.Date)
     member this.IsTimeSpan = (this.Type = JTokenType.TimeSpan)
     member this.ToArrayValue () : Json seq =
