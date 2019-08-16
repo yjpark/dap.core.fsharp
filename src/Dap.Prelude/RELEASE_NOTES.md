@@ -1,3 +1,6 @@
+## 0.7.3
+* Add logDebug and log
+
 ## 0.7.2
 * Add List.tryHead
 

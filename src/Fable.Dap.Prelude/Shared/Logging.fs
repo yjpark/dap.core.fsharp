@@ -219,31 +219,30 @@ type LogEvent with
                 Exception = Some e
             }
 
-let private tplInfo = LogEvent.Template3<string, string, obj>(LogLevelInformation, "[{Section}] {Info} : {Detail}")
-
-let private tplWarn = LogEvent.Template3<string, string, obj>(LogLevelWarning, "[{Section}] {Warn} : {Detail}")
-let private tplError = LogEvent.Template3<string, string, obj>(LogLevelError, "[{Section}] {Err} : {Detail}")
-
 let private tplException = LogEvent.Template3WithException<string, string, obj>(LogLevelError, "[{Section}] {Err} : {Detail}")
 
-let log (evt : LogEvent) (logger : ILogger) =
-    logger.Log evt
-    logger
+let private tpl (level : LogLevel) = LogEvent.Template3<string, string, obj>(level, "[{Section}] {Info} : {Detail}")
 
 let failWith err detail =
     failwithf "%s: %s" err <| detail.ToString ()
 
-let logInfo (logger : ILogger) section info detail : unit =
-    logger.Log <| tplInfo section info detail
-
-let logWarn (logger : ILogger) section info detail : unit =
-    logger.Log <| tplWarn section info detail
-
-let logError (logger : ILogger) section err detail : unit =
-    logger.Log <| tplError section err detail
-
 let logException (logger : ILogger) section err detail e : unit =
     logger.Log <| tplException section err detail e
 
-let logWip (logger : ILogger) err detail =
-    logError logger "WIP" err detail
+let log (logger : ILogger) (level : LogLevel) section err detail : unit =
+    logger.Log <| tpl level section err detail
+
+let logError (logger : ILogger) =
+    log logger LogLevelError
+
+let logWarn (logger : ILogger) =
+    log logger LogLevelWarning
+
+let logInfo (logger : ILogger) =
+    log logger LogLevelInformation
+
+let logDebug (logger : ILogger) =
+    log logger LogLevelDebug
+
+let logWip (logger : ILogger) =
+    logError logger "WIP"
