@@ -1,3 +1,6 @@
+## 0.8.0
+* log API changes
+
 ## 0.7.4
 * add M.instant with instant an param
 

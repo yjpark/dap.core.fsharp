@@ -1,3 +1,6 @@
+## 0.8.0
+* log API changes
+
 ## 0.7.1
 * Update TimeSpan Json Encode and Decode
 
