@@ -1,3 +1,6 @@
+## 0.8.1
+* Cleanup logging in bootstrap
+
 ## 0.8.0
 * log API changes
 

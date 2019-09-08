@@ -10,6 +10,14 @@ open Dap.Context
 open Dap.Context.Unsafe
 open Dap.Platform.Cli
 
+[<Literal>]
+let DAP_PLATFORM_LOG_BOOTSTRAP = "DAP_PLATFORM_LOG_BOOTSTRAP";
+
+let logBootstrap = lazy (
+    let v = System.Environment.GetEnvironmentVariable DAP_PLATFORM_LOG_BOOTSTRAP
+    v <> null && v.Trim().ToLower() = "true"
+)
+
 let private typeIObj = typeof<IObj>
 let private typeILogger = typeof<ILogger>
 let private typeIOwner = typeof<IOwner>
@@ -90,12 +98,14 @@ let private addFeature (logger : ILogger) ((kind, type') : string * Type) : unit
     | Some oldType ->
         if isOverride type'
             || isFallback oldType then
-            logInfo logger "Feature_Overridden" kind (oldType, "->", type')
+            if logBootstrap.Force () then
+                logWarn logger "Feature_Overridden" kind (oldType, "->", type')
             features <-
                 Map.add kind type' features
         elif isOverride oldType
             || isFallback type' then
-            logInfo logger "Feature_Overridden" kind (type', "->", oldType)
+            if logBootstrap.Force () then
+                logWarn logger "Feature_Overridden" kind (type', "->", oldType)
         else
             logError logger "Feature_Conflicted" kind (oldType, type')
 
@@ -159,36 +169,41 @@ let private bootstrap (logging : ILogging) =
     let logger = logging.GetLogger "Bootstrap"
     AppDomain.CurrentDomain.GetAssemblies ()
     |> Array.iter (fun assembly ->
-        logInfo logger "Assembly" assembly.FullName (assembly.CodeBase)
+        if logBootstrap.Force () then
+            logInfo logger "Assembly" assembly.FullName (assembly.CodeBase)
         tryLoadTypes logger assembly
         |> Array.iter (fun t ->
             if not t.IsInterface && not t.IsAbstract then
                 if isFeature t then
                     let featureKinds = getFeatureKinds t
-                    logInfo logger "Feature" t.FullName featureKinds
+                    if logBootstrap.Force () then
+                        logInfo logger "Feature" t.FullName featureKinds
                     featureKinds
                     |> Array.iter (fun kind ->
                         addFeature logger (kind, t)
                     )
                 if isHook t then
                     let hookKinds = getHookKinds t
-                    logInfo logger "Hook" t.FullName hookKinds
+                    if logBootstrap.Force () then
+                        logInfo logger "Hook" t.FullName hookKinds
                     hookKinds
                     |> Array.iter (fun kind ->
                         addHook logger (kind, t)
                     )
                 if isCliHook t then
                     let hookKinds = getCliHookKinds t
-                    logInfo logger "CliHook" t.FullName hookKinds
+                    if logBootstrap.Force () then
+                        logInfo logger "CliHook" t.FullName hookKinds
                     hookKinds
                     |> Array.iter (fun kind ->
                         addCliHook logger (kind, t)
                     )
         )
     )
-    logFeatures logger
-    logHooks logger
-    logCliHooks logger
+    if logBootstrap.Force () then
+        logFeatures logger
+        logHooks logger
+        logCliHooks logger
     bootstrapped <- true
 
 let private bootstrapLock = obj ()

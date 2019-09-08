@@ -6,7 +6,12 @@ open System.IO
 open Serilog
 
 [<Literal>]
-let UseJsonFormatter = false
+let DAP_PRELUDE_USE_TEXT_FORMATTER = "DAP_PRELUDE_USE_TEXT_FORMATTER";
+
+let useTextFormatter = lazy (
+    let v = System.Environment.GetEnvironmentVariable DAP_PRELUDE_USE_TEXT_FORMATTER
+    v <> null && v.Trim().ToLower() = "true"
+)
 
 [<Literal>]
 let TextOutputTemplate = "{Timestamp:HH:mm:ss.fff} {Level:u3} <{Context}> {Message:lj}{NewLine}{Exception}"
@@ -135,10 +140,15 @@ let setupSerilog (sinks : AddSink list) : SerilogLogging =
 let addConsoleSink (minimumLevel : LogLevel) : AddSink =
     fun config ->
         let theme = Serilog.Sinks.SystemConsole.Themes.AnsiConsoleTheme.Code
-        Serilog.ConsoleLoggerConfigurationExtensions.Console(config.WriteTo,
-            restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
-            outputTemplate = TextOutputTemplate,
-            theme = theme)
+        if useTextFormatter.Force () then
+            Serilog.ConsoleLoggerConfigurationExtensions.Console(config.WriteTo,
+                restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
+                outputTemplate = TextOutputTemplate,
+                theme = theme)
+        else
+            Serilog.ConsoleLoggerConfigurationExtensions.Console(config.WriteTo,
+                formatter = Serilog.Formatting.Compact.CompactJsonFormatter(),
+                restrictedToMinimumLevel = minimumLevel.ToSerilogLevel)
 
 let private checkDirectory (path : string) =
     let dirInfo = (new FileInfo (path)).Directory;
@@ -148,16 +158,16 @@ let private checkDirectory (path : string) =
 let addRollingFileSink (rollingInterval : RollingInterval) (path : string) (minimumLevel : LogLevel) : AddSink =
     checkDirectory path
     fun config ->
-        if UseJsonFormatter then
+        if useTextFormatter.Force () then
             Serilog.FileLoggerConfigurationExtensions.File(config.WriteTo,
-                Serilog.Formatting.Compact.CompactJsonFormatter(),
-                path,
+                path = path,
+                outputTemplate = TextOutputTemplate,
                 restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
                 rollingInterval = rollingInterval)
         else
             Serilog.FileLoggerConfigurationExtensions.File(config.WriteTo,
-                path,
-                outputTemplate = TextOutputTemplate,
+                formatter = Serilog.Formatting.Compact.CompactJsonFormatter(),
+                path = path,
                 restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
                 rollingInterval = rollingInterval)
 

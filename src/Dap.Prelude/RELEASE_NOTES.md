@@ -1,3 +1,6 @@
+## 0.8.1
+* Default to use json formatter for logging
+
 ## 0.8.0
 * log API changes
 
