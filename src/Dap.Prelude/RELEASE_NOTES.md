@@ -1,3 +1,6 @@
+## 0.8.2
+* Default to use text formatter for logging in console
+
 ## 0.8.1
 * Default to use json formatter for logging
 

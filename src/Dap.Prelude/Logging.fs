@@ -6,10 +6,18 @@ open System.IO
 open Serilog
 
 [<Literal>]
-let DAP_PRELUDE_USE_TEXT_FORMATTER = "DAP_PRELUDE_USE_TEXT_FORMATTER";
+let DAP_PRELUDE_CONSOLE_USE_JSON_FORMATTER = "DAP_PRELUDE_USE_JSON_FORMATTER";
 
-let useTextFormatter = lazy (
-    let v = System.Environment.GetEnvironmentVariable DAP_PRELUDE_USE_TEXT_FORMATTER
+[<Literal>]
+let DAP_PRELUDE_FILE_USE_TEXT_FORMATTER = "DAP_PRELUDE_USE_TEXT_FORMATTER";
+
+let consoleUseJsonFormatter = lazy (
+    let v = System.Environment.GetEnvironmentVariable DAP_PRELUDE_CONSOLE_USE_JSON_FORMATTER
+    v <> null && v.Trim().ToLower() = "true"
+)
+
+let fileUseTextFormatter = lazy (
+    let v = System.Environment.GetEnvironmentVariable DAP_PRELUDE_FILE_USE_TEXT_FORMATTER
     v <> null && v.Trim().ToLower() = "true"
 )
 
@@ -140,15 +148,15 @@ let setupSerilog (sinks : AddSink list) : SerilogLogging =
 let addConsoleSink (minimumLevel : LogLevel) : AddSink =
     fun config ->
         let theme = Serilog.Sinks.SystemConsole.Themes.AnsiConsoleTheme.Code
-        if useTextFormatter.Force () then
+        if consoleUseJsonFormatter.Force () then
+            Serilog.ConsoleLoggerConfigurationExtensions.Console(config.WriteTo,
+                formatter = Serilog.Formatting.Compact.CompactJsonFormatter(),
+                restrictedToMinimumLevel = minimumLevel.ToSerilogLevel)
+        else
             Serilog.ConsoleLoggerConfigurationExtensions.Console(config.WriteTo,
                 restrictedToMinimumLevel = minimumLevel.ToSerilogLevel,
                 outputTemplate = TextOutputTemplate,
                 theme = theme)
-        else
-            Serilog.ConsoleLoggerConfigurationExtensions.Console(config.WriteTo,
-                formatter = Serilog.Formatting.Compact.CompactJsonFormatter(),
-                restrictedToMinimumLevel = minimumLevel.ToSerilogLevel)
 
 let private checkDirectory (path : string) =
     let dirInfo = (new FileInfo (path)).Directory;
@@ -158,7 +166,7 @@ let private checkDirectory (path : string) =
 let addRollingFileSink (rollingInterval : RollingInterval) (path : string) (minimumLevel : LogLevel) : AddSink =
     checkDirectory path
     fun config ->
-        if useTextFormatter.Force () then
+        if fileUseTextFormatter.Force () then
             Serilog.FileLoggerConfigurationExtensions.File(config.WriteTo,
                 path = path,
                 outputTemplate = TextOutputTemplate,
