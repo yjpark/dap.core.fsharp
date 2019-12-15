@@ -126,10 +126,10 @@ module JsonHelpers =
     let inline isString (o: obj) : bool = o :? string
     let inline isBoolean (o: obj) : bool = o :? bool
     let inline isNumber (o: obj) : bool = jsTypeof o = "number"
-    let inline isArray (o: obj) : bool = JS.Array.isArray(o)
+    let inline isArray (o: obj) : bool = JS.Constructors.Array.isArray(o)
     [<Emit("Object.getPrototypeOf($0 || false) === Object.prototype")>]
     let isObject (_ : obj) : bool = jsNative
-    let inline isNaN (o: obj) : bool = JS.Number.isNaN(!!o)
+    let inline isNaN (o: obj) : bool = JS.Constructors.Number.isNaN(!!o)
     let inline isNull (o: obj): bool = isNull o
     [<Emit("-2147483648 < $0 && $0 < 2147483647 && ($0 | 0) === $0")>]
     let isValidIntRange (_: obj) : bool = jsNative
@@ -140,7 +140,7 @@ module JsonHelpers =
     [<Emit("JSON.stringify($0, null, 4) + ''")>]
     let anyToString (_: obj) : string= jsNative
     let inline isFunction (o: obj) : bool = jsTypeof o = "function"
-    let inline objectKeys (o: obj) : string seq = upcast JS.Object.keys(o)
+    let inline objectKeys (o: obj) : string seq = upcast JS.Constructors.Object.keys(o)
     let inline asBool (o: obj): bool = unbox o
     let inline asInt (o: obj): int = unbox o
     let inline asFloat (o: obj): float = unbox o
