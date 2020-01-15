@@ -8,7 +8,6 @@ open Dap.Context
 open Dap.Context.Meta
 open Dap.Context.Generator.Util
 open Dap.Context.Internal
-
 let getAsInterfaceName (iName : string) =
     if iName.StartsWith ("I") then
         iName.Substring (1, iName.Length - 1)
@@ -101,7 +100,11 @@ type RecordGenerator (meta : ComboMeta) =
                 yield sprintf "            E.object ["
                 for prop in fields do
                     if prop.Encoder <> NoEncoder then
-                        yield sprintf "                \"%s\", %s%sthis.%s" prop.Key prop.EncoderCall prop.CommentCode prop.Key.AsCodeMemberName
+                        if prop.Variation = FieldVariation.Option then
+                            yield sprintf "                if this.%s.IsSome then" prop.Key.AsCodeMemberName
+                            yield sprintf "                    yield \"%s\", %s%sthis.%s" prop.Key prop.EncoderCall prop.CommentCode prop.Key.AsCodeMemberName
+                        else
+                            yield sprintf "                yield \"%s\", %s%sthis.%s" prop.Key prop.EncoderCall prop.CommentCode prop.Key.AsCodeMemberName
                 yield sprintf "            ]"
             else
                 yield sprintf "            E.object []"
