@@ -44,10 +44,10 @@ type UnionGenerator (meta : UnionMeta) =
                 |> List.map (fun f -> f.Key.AsCodeVariableName)
                 |> String.concat ", "
                 |> sprintf " (%s)"
-        let createKind = if meta.Cases.Length = 1 then "" else case.Kind
+        let createKind = if meta.Cases.Length = 1 then "" else case.Kind.AsCodeMemberName
         [
             sprintf "    static member Create%s %s : %s =" createKind names param.Name
-            sprintf "        %s%s" case.Kind values
+            sprintf "        %s%s" case.Kind.AsCodeMemberName values
         ]
     let getUnionMiddle (param : UnionParam) =
         [
@@ -85,7 +85,7 @@ type UnionGenerator (meta : UnionMeta) =
                 |> List.map getFieldDefinition
                 |> String.concat " * "
                 |> sprintf " of %s"
-        sprintf "    | %s%s" case.Kind fields
+        sprintf "    | %s%s" case.Kind.AsCodeMemberName fields
     interface IGenerator<UnionParam> with
         member __.Generate param =
             [
