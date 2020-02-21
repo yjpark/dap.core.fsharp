@@ -7,6 +7,3 @@ Serilog.Sinks.File
 Serilog.Sinks.Seq
 Serilog.Formatting.Compact
 Serilog.Enrichers.Thread
-
-dotnet-sourcelink
-Microsoft.SourceLink.GitHub
