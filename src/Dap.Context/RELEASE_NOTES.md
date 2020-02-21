@@ -1,3 +1,6 @@
+## 0.8.3
+* update dependencies
+
 ## 0.8.2
 * do not include option fields in json when is none
 
