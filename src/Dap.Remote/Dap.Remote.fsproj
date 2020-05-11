@@ -10,6 +10,9 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="../Fable.Dap.Remote/Shared/ED.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Types.fs" />
     <Compile Include="../Fable.Dap.Remote/Shared/Internal/Types.fs" />
@@ -42,9 +45,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.WebSocket\Dap.WebSocket.fsproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <!--<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />-->
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

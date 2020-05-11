@@ -10,6 +10,9 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="Dsl.fs" />
     <Compile Include="_Gen/Args.fs" />
     <Compile Include="_Gen/ArgsBuilder.fs" />
@@ -31,9 +34,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dap.Remote\Dap.Remote.fsproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <!--<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />-->
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

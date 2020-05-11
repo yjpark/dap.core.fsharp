@@ -10,6 +10,9 @@
     <Description>Dap Platform on Fable, elmish actor runtime</Description>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
   <PropertyGroup>
     <NpmDependencies>
       <NpmPackage Name="node-forge" Version="^0.9.1"/>
@@ -24,9 +27,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="*.fsproj; *.props; **\*.fs; **\*.js" PackagePath="fable" />
-  </ItemGroup>
-  <ItemGroup>
-    <!--<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />-->
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
