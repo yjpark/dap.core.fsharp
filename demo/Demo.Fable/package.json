@@ -7,7 +7,7 @@
     "webpack": "^4.46.0",
     "webpack-cli": "^3.3.0",
     "webpack-dev-server": "^3.11.2",
-    "node-forge": "^0.9.1"
+    "node-forge": "^0.10.0"
   },
   "name": "Demo",
   "version": "1.0.0"
