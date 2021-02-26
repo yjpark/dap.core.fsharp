@@ -170,7 +170,7 @@ let private bootstrap (logging : ILogging) =
     AppDomain.CurrentDomain.GetAssemblies ()
     |> Array.iter (fun assembly ->
         if logBootstrap.Force () then
-            logInfo logger "Assembly" assembly.FullName (assembly.CodeBase)
+            logInfo logger "Assembly" assembly.FullName (assembly.Location)
         tryLoadTypes logger assembly
         |> Array.iter (fun t ->
             if not t.IsInterface && not t.IsAbstract then

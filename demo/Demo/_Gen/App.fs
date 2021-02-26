@@ -140,8 +140,8 @@ and AppArgs = {
     static member JsonEncoder : JsonEncoder<AppArgs> =
         fun (this : AppArgs) ->
             E.object [
-                "scope", Scope.JsonEncoder (* AppArgs *) this.Scope
-                "ticker", TickerTypes.Args.JsonEncoder (* IServicesPack *) this.Ticker
+                yield "scope", Scope.JsonEncoder (* AppArgs *) this.Scope
+                yield "ticker", TickerTypes.Args.JsonEncoder (* IServicesPack *) this.Ticker
             ]
     static member JsonDecoder : JsonDecoder<AppArgs> =
         D.object (fun get ->

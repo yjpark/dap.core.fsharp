@@ -1,6 +1,10 @@
 [<AutoOpen>]
 module Dap.Context.Internal.Handler
 
+#if FABLE_COMPILER
+open Fable.Core
+#endif
+
 open Dap.Prelude
 open Dap.Context
 

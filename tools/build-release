@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+cd `dirname $0`
+cd ..
+
+echo "================================ Build Dap.Archive"
+cd src/Dap.Archive
+dotnet build -c Release
+
+echo "================================ Build Fable.Dap.Remote"
+cd ../Fable.Dap.Remote
+dotnet build -c Release
+

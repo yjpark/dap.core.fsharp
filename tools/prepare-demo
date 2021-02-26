@@ -3,9 +3,11 @@
 cd `dirname $0`
 cd ..
 
-fake build -t Dap.Prelude:build -s && \
-fake build -t Dap.Context:build -s && \
-fake build -t Dap.Platform:build -s && \
+echo "================================ Build Dap.Platform"
+cd src/Dap.Platform
+dotnet build -c Release
+cd ../../
+
 echo "" && \
-fsharpi prepare-demo.fsx
+dotnet fsi prepare-demo.fsx
 

@@ -1,13 +1,26 @@
 [<AutoOpen>]
 module Dap.Context.HandlersExtension
 
+#if FABLE_COMPILER
+open Fable.Core
+#endif
+
 open Dap.Prelude
 open Dap.Context
 open Dap.Context.Internal
 
 type IHandlers with
-    member this.Add<'req, 'res> (qe : JsonEncoder<'req>, qd : JsonDecoder<'req>, se : JsonEncoder<'res>, sd : JsonDecoder<'res>, key : Key) =
+    member this.Add<'req, 'res> (qe : JsonEncoder<'req>, qd : JsonDecoder<'req>, se : JsonEncoder<'res>, sd : JsonDecoder<'res>, key : Key
+            #if FABLE_COMPILER
+                , [<Inject>] ?reqResolver: ITypeResolver<'req>
+                , [<Inject>] ?resResolver: ITypeResolver<'res>
+            #endif
+            ) =
+    #if FABLE_COMPILER
+        (HandlerSpec<'req, 'res>.Create key qe qd se sd, reqResolver, resResolver)
+    #else
         HandlerSpec<'req, 'res>.Create key qe qd se sd
+    #endif
         |> this.Add<'req, 'res>
 
 type IHandlers with

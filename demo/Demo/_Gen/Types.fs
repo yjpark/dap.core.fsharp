@@ -44,8 +44,8 @@ type Publisher = {
     static member JsonEncoder : JsonEncoder<Publisher> =
         fun (this : Publisher) ->
             E.object [
-                "name", E.string (* IPublisher *) this.Name
-                "year", E.int (* IPublisher *) this.Year
+                yield "name", E.string (* IPublisher *) this.Name
+                yield "year", E.int (* IPublisher *) this.Year
             ]
     static member JsonDecoder : JsonDecoder<Publisher> =
         D.object (fun get ->

@@ -105,9 +105,9 @@ type IBus<'msg> =
     abstract AddWatcher : IOwner -> Luid -> ('msg -> unit) -> unit
     abstract SetWatcher : IOwner -> Luid -> ('msg -> unit) -> bool    // -> isNew
     abstract RemoveWatcher' : IOwner -> Luid list                      // -> luid list
-    abstract RemoveWatcher' : IOwner * Luid -> Luid list             // -> luid list
+    abstract RemoveWatcher1' : IOwner * Luid -> Luid list             // -> luid list
     abstract RemoveWatcher : IOwner -> unit
-    abstract RemoveWatcher : IOwner * Luid -> unit
+    abstract RemoveWatcher1 : IOwner * Luid -> unit
 
 and IValue<'v> =
     abstract Value : 'v with get
@@ -335,7 +335,11 @@ and IChannels =
     abstract TryGet : Key -> IChannel option
     abstract Has : Key -> bool
     abstract Get : Key -> IChannel
+#if !FABLE_COMPILER
     abstract Add<'evt> : IChannelSpec<'evt> -> IChannel<'evt>
+#else
+    abstract Add<'evt> : IChannelSpec<'evt> * ITypeResolver<'evt> option -> IChannel<'evt>
+#endif
     abstract OnAdded : IBus<IChannel> with get
 
 type IHandlerSpec =
@@ -401,7 +405,11 @@ and IHandlers =
     abstract TryGet : Key -> IHandler option
     abstract Has : Key -> bool
     abstract Get : Key -> IHandler
+#if !FABLE_COMPILER
     abstract Add<'req, 'res> : IHandlerSpec<'req, 'res> -> IHandler<'req, 'res>
+#else
+    abstract Add<'req, 'res> : IHandlerSpec<'req, 'res> * ITypeResolver<'req> option * ITypeResolver<'res> option -> IHandler<'req, 'res>
+#endif
     abstract OnAdded : IBus<IHandler> with get
 
 #if !FABLE_COMPILER

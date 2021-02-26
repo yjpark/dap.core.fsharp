@@ -3,6 +3,10 @@ module Dap.Context.Internal.Handlers
 
 open System
 
+#if FABLE_COMPILER
+open Fable.Core
+#endif
+
 open Dap.Prelude
 open Dap.Context
 
@@ -46,8 +50,17 @@ type internal Handlers internal (owner', spec') =
             |> function
                 | Some ch -> ch
                 | None -> failWith ("IHandlers:Not_Found:" + k) this
-        member this.Add<'req, 'res> (subSpec : IHandlerSpec<'req, 'res>) =
+        member this.Add<'req, 'res> (subSpec : IHandlerSpec<'req, 'res>
+            #if FABLE_COMPILER
+                , [<Inject>] ?reqResolver: ITypeResolver<'req>
+                , [<Inject>] ?resResolver: ITypeResolver<'res>
+            #endif
+                ) =
+        #if FABLE_COMPILER
+            checkAdd subSpec (reqResolver.Value.ResolveType ()) (resResolver.Value.ResolveType ())
+        #else
             checkAdd subSpec typeof<'req> typeof<'res>
+        #endif
             subSpec.AsSubSpec spec
             |> Handler<'req, 'res>.Create owner
             |> fun h ->

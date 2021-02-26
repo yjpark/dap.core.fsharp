@@ -168,7 +168,7 @@ type Bus<'msg> (owner : IOwner, luid : Luid) =
                 | old ->
                     removeWatchers old
                     old |> List.map (fun w -> w.Luid)
-            member _x.RemoveWatcher' (watcherOwner, watcherLuid) =
+            member _x.RemoveWatcher1' (watcherOwner, watcherLuid) =
                 match this.TryFindWatchers watcherOwner (Some watcherLuid) with
                 | [] ->
                     []
@@ -177,7 +177,7 @@ type Bus<'msg> (owner : IOwner, luid : Luid) =
                     old |> List.map (fun w -> w.Luid)
             member x.RemoveWatcher watcherOwner =
                 x.RemoveWatcher' watcherOwner |> ignore
-            member x.RemoveWatcher (watcherOwner, watcherLuid) =
-                x.RemoveWatcher' (watcherOwner, watcherLuid) |> ignore
+            member x.RemoveWatcher1 (watcherOwner, watcherLuid) =
+                x.RemoveWatcher1' (watcherOwner, watcherLuid) |> ignore
             member x.Owner = owner
         }

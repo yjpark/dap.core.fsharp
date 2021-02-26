@@ -1,13 +1,25 @@
 [<AutoOpen>]
 module Dap.Context.ChannelsExtension
 
+#if FABLE_COMPILER
+open Fable.Core
+#endif
+
 open Dap.Prelude
 open Dap.Context
 open Dap.Context.Internal
 
 type IChannels with
-    member this.Add<'evt> (encoder : JsonEncoder<'evt>, decoder : JsonDecoder<'evt>, key : Key) =
+    member this.Add<'evt> (encoder : JsonEncoder<'evt>, decoder : JsonDecoder<'evt>, key : Key
+            #if FABLE_COMPILER
+                , [<Inject>] ?resolver: ITypeResolver<'evt>
+            #endif
+                ) =
+    #if FABLE_COMPILER
+        (ChannelSpec<'evt>.Create key encoder decoder, resolver)
+    #else
         ChannelSpec<'evt>.Create key encoder decoder
+    #endif
         |> this.Add<'evt>
 
 type IChannels with

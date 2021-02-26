@@ -3,6 +3,10 @@ module Dap.Context.Internal.Channels
 
 open System
 
+#if FABLE_COMPILER
+open Fable.Core
+#endif
+
 open Dap.Prelude
 open Dap.Context
 
@@ -46,8 +50,16 @@ type internal Channels internal (owner', spec') =
             |> function
                 | Some ch -> ch
                 | None -> failWith ("IChannels:Not_Found:" + k) this
-        member this.Add<'evt> (subSpec : IChannelSpec<'evt>) =
+        member this.Add<'evt> (subSpec : IChannelSpec<'evt>
+            #if FABLE_COMPILER
+                , [<Inject>] ?resolver: ITypeResolver<'evt>
+            #endif
+                ) =
+        #if FABLE_COMPILER
+            checkAdd subSpec (resolver.Value.ResolveType ())
+        #else
             checkAdd subSpec typeof<'evt>
+        #endif
             subSpec.AsSubSpec spec
             |> Channel<'evt>.Create owner
             |> fun ch ->

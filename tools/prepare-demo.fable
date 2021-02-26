@@ -3,11 +3,11 @@
 cd `dirname $0`
 cd ..
 
-fake build -t Dap.Prelude:build -s && \
-fake build -t Dap.Context:build -s && \
-fake build -t Dap.Platform:build -s && \
-fake build -t Dap.WebSocket:build -s && \
-fake build -t Dap.Remote:build -s && \
+echo "================================ Build Dap.Remote"
+cd src/Dap.Remote
+dotnet build -c Release
+cd ../../
+
 echo "" && \
-fsharpi prepare-demo.fable.fsx
+dotnet fsi prepare-demo.fable.fsx
 

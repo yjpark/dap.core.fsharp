@@ -1,4 +1,4 @@
-version 5.241.2
+version 5.257.0
 
 source https://www.nuget.org/api/v2
 storage: none
@@ -24,17 +24,7 @@ nuget Fable.Browser.WebSocket
 nuget Thoth.Json
 nuget Thoth.Json.Net
 
-clitool dotnet-fable
-
-clitool dotnet-sourcelink
 nuget Microsoft.SourceLink.GitHub
 nuget Microsoft.Build.Tasks.Git
 nuget Microsoft.SourceLink.Common
-
-group Build
-    source https://www.nuget.org/api/v2
-    framework: netstandard2.0
-    storage:none
-
-    nuget Dap.Build
 

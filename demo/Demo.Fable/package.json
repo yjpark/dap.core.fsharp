@@ -1,34 +1,14 @@
 {
   "private": true,
-  "fable": {
-    "entry": "Demo.Fable.fsproj"
-  },
   "scripts": {
-    "postinstall": "dotnet restore",
-    "build": "dotnet fable webpack -- -p --config webpack.config.prod.js",
-    "start": "dotnet fable webpack-dev-server --port free -- --config webpack.config.dev.js",
-    "debug": "dotnet fable webpack-dev-server --port free --verbose -- --config webpack.config.dev.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "json-formatter-js": "^2.2.1",
-    "node-forge": "^0.7.5",
-    "react": "^16.3.2",
-    "react-dom": "^16.3.2",
-    "recharts": "^1.0.0-beta.10"
+    "start": "fable watch src --outDir .fable --extension .fs.js --noRestore --run webpack-dev-server"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0",
-    "@babel/preset-env": "^7.0.0",
-    "babel-loader": "^8.0.0",
-    "copy-webpack-plugin": "^4.4.1",
-    "fable-loader": "^2.0.0",
-    "fable-utils": "1.0.6",
-    "html-webpack-plugin": "2.29.0",
-    "html-webpack-polyfill-io-plugin": "^1.0.0",
-    "remotedev": "^0.2.7",
-    "webpack": "^4.20.2",
-    "webpack-cli": "^3.1.2",
-    "webpack-dev-server": "3.1.11"
-  }
+    "webpack": "^4.46.0",
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.11.2",
+    "node-forge": "^0.9.1"
+  },
+  "name": "Demo",
+  "version": "1.0.0"
 }

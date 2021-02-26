@@ -3,15 +3,16 @@
 cd `dirname $0`
 cd ..
 
-echo "================================ Build Dap.Context" && \
-fake build -t Dap.Context:Build -s && \
+echo "================================ Build Dap.Platform"
+cd src/Dap.Platform
+dotnet build -c Release
+cd ../../
+
 echo "================================ Prepare Dap.Platform (Stage 1)" && \
-fsharpi prepare-platform.fsx && \
-echo "================================ Build Dap.Platform" && \
-fake build -t Dap.Platform:Build -s && \
+dotnet fsi prepare-platform.fsx && \
 echo "================================ Prepare Dap.Platform (Stage 2)" && \
-fsharpi prepare-platform-packs.fsx && \
+dotnet fsi prepare-platform-packs.fsx && \
 echo "================================ Prepare Dap.WebSocket" && \
-fsharpi prepare-websocket.fsx && \
+dotnet fsi prepare-websocket.fsx && \
 echo "================================ Prepare Dap.Archive" && \
-fsharpi prepare-archive.fsx
+dotnet fsi prepare-archive.fsx

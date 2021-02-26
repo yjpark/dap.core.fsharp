@@ -11,6 +11,7 @@ type Builder (kind : Kind) =
     override __.Zero () =
         IContext.Default kind
 
+#if !FABLE_COMPILER
     [<CustomOperation("properties")>]
     member __.Properties (context: IContext, properties : IProperties) =
         let propertiesType = properties.GetType()
@@ -31,21 +32,12 @@ type Builder (kind : Kind) =
             Context.combo kind
             |> syncProperties properties.SyncTo
         | :? IDictProperty as properties ->
-#if !FABLE_COMPILER
             newContext "map0" properties.ElementType properties.ElementSpawner
-#else
-            //TODO
-            context
-#endif
         | :? IListProperty as properties ->
-#if !FABLE_COMPILER
             newContext "list0" properties.ElementType properties.ElementSpawner
-#else
-            //TODO
-            context
-#endif
         | :? ICustomProperties as properties ->
             newContext "custom0" propertiesType properties.Clone0
         | _ ->
             logError "Not_Support"
             context
+#endif
