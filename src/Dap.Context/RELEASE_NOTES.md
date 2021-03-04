@@ -1,3 +1,6 @@
+## 0.9.0
+* Update for DotNet 5.0 and Fable 3
+
 ## 0.8.3
 * update dependencies
 
