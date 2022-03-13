@@ -14,7 +14,7 @@ type Dap.Platform.Meta.Pack.Builder with
     [<CustomOperation("register")>]
     member __.Register (meta : PackMeta, spawner : AgentMeta) =
         {meta with Spawners = meta.Spawners @ [spawner]}
-    [<CustomOperation("register_pack'")>]
+    [<CustomOperation("register_pack")>]
     member this.RegisterPack' (meta : PackMeta, pack : string, spawner : AgentMeta) =
         this.Register (meta, {spawner with Pack = Some pack})
     [<CustomOperation("register_pack")>]

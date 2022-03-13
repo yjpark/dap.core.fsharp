@@ -10,8 +10,8 @@ open Dap.Prelude
 
 //https://www.c-sharpcorner.com/UploadFile/dhananjaycoder/triple-des-encryption-and-decryption-using-user-provided-key/
 let private createDes (key : string) =
-    let md5 = new MD5CryptoServiceProvider()
-    let des = new TripleDESCryptoServiceProvider()
+    let md5 = MD5.Create()
+    let des = System.Security.Cryptography.TripleDES.Create()
     des.Key <- md5.ComputeHash (Encoding.UTF8.GetBytes (key))
     des.IV <- Array.create<byte> (des.BlockSize / 8) 0uy
     des

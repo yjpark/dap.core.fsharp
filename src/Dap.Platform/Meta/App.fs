@@ -11,7 +11,7 @@ type Builder (clock : string) =
     [<CustomOperation("platform")>]
     member __.Platform (meta : AppMeta, platform : string) =
         {meta with Platform = Some platform}
-    [<CustomOperation("has'")>]
+    [<CustomOperation("has")>]
     member __.Has' (meta : AppMeta, packName : string, packMeta : PackMeta) =
         {meta with Packs = meta.Packs @ [(packName, packMeta)]}
     [<CustomOperation("has")>]

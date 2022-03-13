@@ -331,3 +331,5 @@ obj
 
 **/.ionide
 **/.fable
+
+*.fsx.lock

@@ -43,10 +43,10 @@ type PktLog = {
     static member JsonEncoder : JsonEncoder<PktLog> =
         fun (this : PktLog) ->
             E.object [
-                "bytes", E.int (* PktLog *) this.Bytes
-                "time", E.instant (* PktLog *) this.Time
-                "duration", DurationFormat.Second.JsonEncoder (* PktLog *) this.Duration
-                "stack_trace", E.string (* PktLog *) this.StackTrace
+                yield "bytes", E.int (* PktLog *) this.Bytes
+                yield "time", E.instant (* PktLog *) this.Time
+                yield "duration", DurationFormat.Second.JsonEncoder (* PktLog *) this.Duration
+                yield "stack_trace", E.string (* PktLog *) this.StackTrace
             ]
     static member JsonDecoder : JsonDecoder<PktLog> =
         D.object (fun get ->
@@ -134,8 +134,8 @@ type StatusLog = {
     static member JsonEncoder : JsonEncoder<StatusLog> =
         fun (this : StatusLog) ->
             E.object [
-                "time", E.instant (* StatusLog *) this.Time
-                "status", LinkStatus.JsonEncoder (* StatusLog *) this.Status
+                yield "time", E.instant (* StatusLog *) this.Time
+                yield "status", LinkStatus.JsonEncoder (* StatusLog *) this.Status
             ]
     static member JsonDecoder : JsonDecoder<StatusLog> =
         D.object (fun get ->

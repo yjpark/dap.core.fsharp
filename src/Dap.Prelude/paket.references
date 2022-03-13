@@ -1,5 +1,4 @@
 FSharp.Core
-TaskBuilder.fs
 
 Serilog
 Serilog.Sinks.Console

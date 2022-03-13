@@ -3,7 +3,6 @@ module Dap.Remote.WebSocketProxy.Tasks
 open System.Threading
 open System.Threading.Tasks
 open System.Net.WebSockets
-open FSharp.Control.Tasks.V2
 
 open Dap.Prelude
 open Dap.Platform

@@ -5,7 +5,6 @@ module Dap.Archive.Storages.FileStorage
 open System
 open System.IO
 open System.Threading.Tasks
-open FSharp.Control.Tasks.V2
 
 open Dap.Prelude
 open Dap.Context

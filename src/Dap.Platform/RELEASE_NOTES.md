@@ -1,3 +1,9 @@
+## 0.10.1
+* use overloaded custom operations in computation expressions
+
+## 0.10.0
+* Update for DotNet 6.0
+
 ## 0.9.0
 * Update for DotNet 5.0 and Fable 3
 

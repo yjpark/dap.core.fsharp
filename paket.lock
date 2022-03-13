@@ -1,6 +1,6 @@
 GENERATE-LOAD-SCRIPTS: ON
 STORAGE: NONE
-RESTRICTION: == net5.0
+RESTRICTION: == net6.0
 NUGET
   remote: https://www.nuget.org/api/v2
     Elmish (3.1)

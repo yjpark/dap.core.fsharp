@@ -22,7 +22,7 @@ type Builder (parents : (string * PackMeta) list) =
     [<CustomOperation("add")>]
     member __.Add (meta : PackMeta, service : AgentMeta) =
         {meta with Services = meta.Services @ [service]}
-    [<CustomOperation("add_pack'")>]
+    [<CustomOperation("add_pack")>]
     member this.AddPack' (meta : PackMeta, pack : string, service : AgentMeta) =
         this.Add (meta, {service with Pack = Some pack})
     [<CustomOperation("add_pack")>]

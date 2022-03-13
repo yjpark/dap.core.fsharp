@@ -4,7 +4,6 @@ module Dap.Platform.Feature
 
 open System
 open System.Threading.Tasks
-open FSharp.Control.Tasks.V2
 
 open Dap.Prelude
 open Dap.Context

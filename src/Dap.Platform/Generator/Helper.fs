@@ -92,6 +92,5 @@ type G with
             if not isFableGenerator then
                 yield "open System.Threading"
                 yield "open System.Threading.Tasks"
-                yield "open FSharp.Control.Tasks.V2"
         ] @ G.PlatformBuilderOpens
     static member AppOpens = G.PackOpens

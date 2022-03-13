@@ -23,7 +23,7 @@ type ConsoleSinkArgs = {
     static member JsonEncoder : JsonEncoder<ConsoleSinkArgs> =
         fun (this : ConsoleSinkArgs) ->
             E.object [
-                "min_level", LogLevel.JsonEncoder (* ConsoleSinkArgs *) this.MinLevel
+                yield "min_level", LogLevel.JsonEncoder (* ConsoleSinkArgs *) this.MinLevel
             ]
     static member JsonDecoder : JsonDecoder<ConsoleSinkArgs> =
         D.object (fun get ->
@@ -93,9 +93,10 @@ type FileSinkArgs = {
     static member JsonEncoder : JsonEncoder<FileSinkArgs> =
         fun (this : FileSinkArgs) ->
             E.object [
-                "path", E.string (* FileSinkArgs *) this.Path
-                "min_level", LogLevel.JsonEncoder (* FileSinkArgs *) this.MinLevel
-                "rolling", (E.option RollingInterval.JsonEncoder) (* FileSinkArgs *) this.Rolling
+                yield "path", E.string (* FileSinkArgs *) this.Path
+                yield "min_level", LogLevel.JsonEncoder (* FileSinkArgs *) this.MinLevel
+                if this.Rolling.IsSome then
+                    yield "rolling", (E.option RollingInterval.JsonEncoder) (* FileSinkArgs *) this.Rolling
             ]
     static member JsonDecoder : JsonDecoder<FileSinkArgs> =
         D.object (fun get ->
@@ -142,8 +143,10 @@ type LoggingArgs = {
     static member JsonEncoder : JsonEncoder<LoggingArgs> =
         fun (this : LoggingArgs) ->
             E.object [
-                "console", (E.option ConsoleSinkArgs.JsonEncoder) (* LoggingArgs *) this.Console
-                "file", (E.option FileSinkArgs.JsonEncoder) (* LoggingArgs *) this.File
+                if this.Console.IsSome then
+                    yield "console", (E.option ConsoleSinkArgs.JsonEncoder) (* LoggingArgs *) this.Console
+                if this.File.IsSome then
+                    yield "file", (E.option FileSinkArgs.JsonEncoder) (* LoggingArgs *) this.File
             ]
     static member JsonDecoder : JsonDecoder<LoggingArgs> =
         D.object (fun get ->
@@ -188,8 +191,8 @@ type TickerArgs = {
     static member JsonEncoder : JsonEncoder<TickerArgs> =
         fun (this : TickerArgs) ->
             E.object [
-                "frame_rate", E.float (* TickerArgs *) this.FrameRate
-                "auto_start", E.bool (* TickerArgs *) this.AutoStart
+                yield "frame_rate", E.float (* TickerArgs *) this.FrameRate
+                yield "auto_start", E.bool (* TickerArgs *) this.AutoStart
             ]
     static member JsonDecoder : JsonDecoder<TickerArgs> =
         D.object (fun get ->

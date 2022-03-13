@@ -2,8 +2,6 @@
 [<RequireQualifiedAccess>]
 module Dap.Platform.Part
 
-open FSharp.Control.Tasks.V2
-
 open Dap.Prelude
 open Dap.Context
 

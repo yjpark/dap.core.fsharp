@@ -37,9 +37,6 @@
 			"path": "src/Dap.Archive"
 		},
 		{
-			"path": "lib/Dap.FlatBuffers"
-		},
-		{
 			"path": "demo/Demo.Fable"
 		},
 		{

@@ -25,7 +25,7 @@ type RecorderArgs = {
     static member JsonEncoder : JsonEncoder<RecorderArgs> =
         fun (this : RecorderArgs) ->
             E.object [
-                "flush_interval", E.duration (* RecorderArgs *) this.FlushInterval
+                yield "flush_interval", E.duration (* RecorderArgs *) this.FlushInterval
             ]
     static member JsonDecoder : JsonDecoder<RecorderArgs> =
         D.object (fun get ->

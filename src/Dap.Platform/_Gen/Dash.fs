@@ -48,11 +48,11 @@ type OpLog = {
     static member JsonEncoder : JsonEncoder<OpLog> =
         fun (this : OpLog) ->
             E.object [
-                "op", E.string (* OpLog *) this.Op
-                "msg", E.string (* OpLog *) this.Msg
-                "time", InstantFormat.DateHourMinuteSecondSub.JsonEncoder (* OpLog *) this.Time
-                "duration", DurationFormat.Second.JsonEncoder (* OpLog *) this.Duration
-                "stack_trace", E.string (* OpLog *) this.StackTrace
+                yield "op", E.string (* OpLog *) this.Op
+                yield "msg", E.string (* OpLog *) this.Msg
+                yield "time", InstantFormat.DateHourMinuteSecondSub.JsonEncoder (* OpLog *) this.Time
+                yield "duration", DurationFormat.Second.JsonEncoder (* OpLog *) this.Duration
+                yield "stack_trace", E.string (* OpLog *) this.StackTrace
             ]
     static member JsonDecoder : JsonDecoder<OpLog> =
         D.object (fun get ->

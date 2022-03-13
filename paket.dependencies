@@ -9,7 +9,6 @@ nuget NodaTime
 nuget Elmish
 nuget Serilog.Enrichers.Thread
 nuget Serilog.Sinks.Seq
-nuget TaskBuilder.fs
 nuget Serilog
 nuget Serilog.Sinks.Console
 nuget Serilog.Sinks.File

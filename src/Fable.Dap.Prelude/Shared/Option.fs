@@ -5,7 +5,6 @@ module Dap.Prelude.Option
 #if !FABLE_COMPILER
 open System.Threading
 open System.Threading.Tasks
-open FSharp.Control.Tasks.V2
 #endif
 
 type Option<'T> with

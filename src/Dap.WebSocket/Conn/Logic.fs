@@ -4,7 +4,6 @@ module Dap.WebSocket.Conn.Logic
 open System
 open System.Threading.Tasks
 open System.Net.WebSockets
-open FSharp.Control.Tasks.V2
 
 open Dap.Prelude
 open Dap.Platform
