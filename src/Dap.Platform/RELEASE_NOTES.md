@@ -1,3 +1,6 @@
+## 0.10.2
+* NOT use overloaded custom operations in computation expressions because the fake runner is not supporting it yet
+
 ## 0.10.1
 * use overloaded custom operations in computation expressions
 
