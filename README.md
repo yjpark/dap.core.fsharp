@@ -3,7 +3,7 @@
 ### DotNet Core
 
 - https://dotnet.microsoft.com/download
-- SDK v2.2.106
+- SDK v6.0.201
 
 ### DotNet Tools
 
@@ -27,7 +27,3 @@ dotnet tool update --global fake-cli
 
 Note: need to add `~/.dotnet/tools` to `PATH`
 
-### TaskBuilder
-
-- https://github.com/rspeele/TaskBuilder.fs
-- https://github.com/fsharp/fslang-suggestions/issues/581
