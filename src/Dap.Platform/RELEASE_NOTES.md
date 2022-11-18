@@ -1,3 +1,6 @@
+## 0.11.0
+* Update for DotNet 7.0
+
 ## 0.10.2
 * NOT use overloaded custom operations in computation expressions because the fake runner is not supporting it yet
 

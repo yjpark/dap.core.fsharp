@@ -135,7 +135,7 @@ with
     member this.JsonDecoder : JsonDecoder<Instant> =
         fun path token ->
             if token.IsDate then
-                TD.datetime path token
+                TD.datetimeUtc path token
                 |> Result.map ofDateTimeUtc
             elif token.IsString then
                 this.Parse (token.ToStringValue ())

@@ -1,9 +1,11 @@
-version 6.2.1
+version 7.1.5
 
 source https://www.nuget.org/api/v2
 storage: none
 framework: auto-detect
 generate_load_scripts: true
+
+nuget Dap.Build
 
 nuget NodaTime
 nuget Elmish
@@ -26,12 +28,4 @@ nuget Thoth.Json.Net
 nuget Microsoft.SourceLink.GitHub
 nuget Microsoft.Build.Tasks.Git
 nuget Microsoft.SourceLink.Common
-
-group Build
-    source https://www.nuget.org/api/v2
-    framework: net6.0
-    storage:none
-
-    nuget Dap.Build
-
 

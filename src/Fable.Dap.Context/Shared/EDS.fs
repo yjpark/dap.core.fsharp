@@ -212,7 +212,7 @@ type D with
     static member bool = TD.bool
     static member float = TD.float
     static member decimal = TD.decimal
-    static member datetime = TD.datetime
+    static member datetime = TD.datetimeUtc
     static member datetimeOffset = TD.datetimeOffset
     static member field (fieldName : string) (decoder : JsonDecoder<'a>) = TD.field fieldName decoder
     static member at (fieldNames : string list) (decoder : JsonDecoder<'a>) = TD.at fieldNames decoder
